@@ -1,36 +1,210 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TeamFlow - Team Project Management Platform
 
-## Getting Started
+TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projektami dla zespołów. Inspirowana funkcjonalnością systemu Asana, ma na celu usprawnienie współpracy, centralizację komunikacji i zwiększenie produktywności.
 
-First, run the development server:
+## 🚀 Funkcjonalności
 
+### ✅ Zaimplementowane (MVP)
+- **Uwierzytelnianie użytkowników** - Rejestracja i logowanie z NextAuth.js
+- **Zarządzanie zespołami** - Tworzenie zespołów i zarządzanie członkami
+- **Zarządzanie projektami** - Tworzenie projektów w ramach zespołów
+- **Zarządzanie zadaniami** - Pełna funkcjonalność CRUD dla zadań
+- **Dashboard** - Przegląd statystyk i ostatnich aktywności
+- **Widok kalendarza** - Wyświetlanie zadań według terminów wykonania
+- **Responsywny interfejs** - Zbudowany z shadcn/ui i Tailwind CSS
+
+### 🔄 Planowane funkcjonalności
+- Widok tablicy Kanban dla projektów
+- System komentarzy i podzadań
+- Zaproszenia do zespołów przez email
+- Powiadomienia w aplikacji
+- Załączniki do zadań
+- Zaawansowane raporty i analityka
+- Wyszukiwarka globalna
+
+## 🛠 Technologie
+
+- **Framework**: Next.js 15 (React) z App Router
+- **UI**: shadcn/ui + Tailwind CSS + Radix UI
+- **ORM**: Prisma
+- **Baza danych**: SQLite (łatwa migracja na PostgreSQL)
+- **Uwierzytelnianie**: NextAuth.js
+- **Ikony**: Lucide React
+- **TypeScript**: Pełne wsparcie typów
+
+## 📦 Instalacja i uruchomienie
+
+### Wymagania
+- Node.js 18+
+- npm/yarn/pnpm
+
+### Kroki instalacji
+
+1. **Sklonuj repozytorium**
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository-url>
+cd teamflow
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Zainstaluj zależności**
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. **Skonfiguruj bazę danych**
+```bash
+# Wygeneruj klienta Prisma
+npx prisma generate
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Utwórz bazę danych
+npx prisma db push
+```
 
-## Learn More
+4. **Skonfiguruj zmienne środowiskowe**
+Plik `.env` jest już skonfigurowany z podstawowymi ustawieniami:
+```env
+DATABASE_URL="file:./dev.db"
+NEXTAUTH_SECRET="your-secret-key-here"
+NEXTAUTH_URL="http://localhost:3000"
+```
 
-To learn more about Next.js, take a look at the following resources:
+5. **Uruchom aplikację**
+```bash
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Aplikacja będzie dostępna pod adresem [http://localhost:3000](http://localhost:3000)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📱 Jak korzystać z aplikacji
 
-## Deploy on Vercel
+### Pierwsze kroki
+1. **Rejestracja** - Utwórz konto na stronie `/auth/signup`
+2. **Logowanie** - Zaloguj się na stronie `/auth/signin`
+3. **Utwórz zespół** - Przejdź do sekcji "Teams" i utwórz swój pierwszy zespół
+4. **Utwórz projekt** - W sekcji "Projects" utwórz projekt przypisany do zespołu
+5. **Dodaj zadania** - W sekcji "Tasks" lub w projekcie dodaj zadania
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Nawigacja
+- **Dashboard** - Przegląd statystyk i ostatnich aktywności
+- **My Tasks** - Zadania przypisane do Ciebie
+- **Teams** - Zarządzanie zespołami
+- **Projects** - Zarządzanie projektami
+- **Calendar** - Widok kalendarza z zadaniami
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🗄 Struktura bazy danych
+
+```prisma
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  password  String
+  avatarUrl String?
+  teams     Team[]   @relation("TeamMembers")
+  assignedTasks Task[]
+  comments  Comment[]
+}
+
+model Team {
+  id        String    @id @default(cuid())
+  name      String
+  members   User[]    @relation("TeamMembers")
+  projects  Project[]
+}
+
+model Project {
+  id          String @id @default(cuid())
+  name        String
+  description String?
+  status      String @default("In Progress")
+  teamId      String
+  team        Team   @relation(fields: [teamId], references: [id])
+  tasks       Task[]
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  status      String    @default("To Do")
+  priority    String?
+  dueDate     DateTime?
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id])
+  assigneeId  String?
+  assignee    User?     @relation(fields: [assigneeId], references: [id])
+  subtasks    Subtask[]
+  comments    Comment[]
+}
+```
+
+## 🔧 Komendy deweloperskie
+
+```bash
+# Uruchomienie w trybie deweloperskim
+npm run dev
+
+# Budowanie aplikacji
+npm run build
+
+# Uruchomienie produkcyjne
+npm start
+
+# Linting
+npm run lint
+
+# Resetowanie bazy danych
+npx prisma db push --force-reset
+
+# Przeglądanie bazy danych
+npx prisma studio
+```
+
+## 📁 Struktura projektu
+
+```
+teamflow/
+├── src/
+│   ├── app/                 # App Router (Next.js 13+)
+│   │   ├── api/            # API endpoints
+│   │   ├── auth/           # Strony uwierzytelniania
+│   │   ├── dashboard/      # Główne strony aplikacji
+│   │   └── layout.tsx      # Root layout
+│   ├── components/         # Komponenty React
+│   │   ├── ui/            # Komponenty shadcn/ui
+│   │   ├── dashboard/     # Komponenty dashboardu
+│   │   ├── teams/         # Komponenty zespołów
+│   │   ├── projects/      # Komponenty projektów
+│   │   └── tasks/         # Komponenty zadań
+│   └── lib/               # Utilities i konfiguracja
+├── prisma/                # Schema bazy danych
+├── public/                # Pliki statyczne
+└── package.json
+```
+
+## 🚀 Deployment
+
+Aplikacja jest gotowa do wdrożenia na platformach takich jak:
+- **Vercel** (zalecane dla Next.js)
+- **Netlify**
+- **Railway**
+- **Heroku**
+
+Przed wdrożeniem pamiętaj o:
+1. Ustawieniu zmiennych środowiskowych
+2. Migracji na bazę danych produkcyjną (np. PostgreSQL)
+3. Wygenerowaniu bezpiecznego `NEXTAUTH_SECRET`
+
+## 🤝 Rozwój
+
+Projekt jest otwarty na współpracę. Aby dodać nowe funkcjonalności:
+
+1. Utwórz fork repozytorium
+2. Utwórz branch dla nowej funkcjonalności
+3. Zaimplementuj zmiany
+4. Dodaj testy (jeśli dotyczy)
+5. Utwórz Pull Request
+
+## 📄 Licencja
+
+Ten projekt jest dostępny na licencji MIT.
