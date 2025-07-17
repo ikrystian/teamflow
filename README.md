@@ -6,7 +6,7 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 
 ### ✅ Zaimplementowane (MVP)
 - **Uwierzytelnianie użytkowników** - Rejestracja i logowanie z NextAuth.js
-- **Zarządzanie zespołami** - Tworzenie zespołów i zarządzanie członkami
+- **Zarządzanie zespołami** - Tworzenie zespołów, edycja nazw zespołów i zarządzanie członkami
 - **Zarządzanie projektami** - Tworzenie projektów w ramach zespołów
 - **Zarządzanie zadaniami** - Pełna funkcjonalność CRUD dla zadań
 - **Dashboard** - Przegląd statystyk i ostatnich aktywności
@@ -83,13 +83,14 @@ Aplikacja będzie dostępna pod adresem [http://localhost:3000](http://localhost
 1. **Rejestracja** - Utwórz konto na stronie `/auth/signup`
 2. **Logowanie** - Zaloguj się na stronie `/auth/signin`
 3. **Utwórz zespół** - Przejdź do sekcji "Teams" i utwórz swój pierwszy zespół
-4. **Utwórz projekt** - W sekcji "Projects" utwórz projekt przypisany do zespołu
-5. **Dodaj zadania** - W sekcji "Tasks" lub w projekcie dodaj zadania
+4. **Edytuj zespół** - Kliknij przycisk Settings (⚙️) w karcie zespołu, aby zmienić nazwę
+5. **Utwórz projekt** - W sekcji "Projects" utwórz projekt przypisany do zespołu
+6. **Dodaj zadania** - W sekcji "Tasks" lub w projekcie dodaj zadania
 
 ### Nawigacja
 - **Dashboard** - Przegląd statystyk i ostatnich aktywności
 - **My Tasks** - Zadania przypisane do Ciebie
-- **Teams** - Zarządzanie zespołami
+- **Teams** - Zarządzanie zespołami (tworzenie, edycja nazw)
 - **Projects** - Zarządzanie projektami
 - **Calendar** - Widok kalendarza z zadaniami
 

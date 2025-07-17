@@ -89,7 +89,14 @@ Relacje:
 ### Teams
 - GET /api/teams - Lista zespołów użytkownika
 - POST /api/teams - Tworzenie nowego zespołu
+- GET /api/teams/[teamId] - Szczegóły pojedynczego zespołu
+- PATCH /api/teams/[teamId] - Edycja zespołu (nazwa i członkowie)
 - GET /api/teams/[teamId]/members - Lista członków zespołu
+- POST /api/teams/[teamId]/members - Dodawanie członka do zespołu
+- DELETE /api/teams/[teamId]/members?userId=X - Usuwanie członka z zespołu
+
+### Users
+- GET /api/users - Lista wszystkich użytkowników (z opcjonalnym wyszukiwaniem)
 
 ### Projects
 - GET /api/projects - Lista projektów (z filtrowaniem po teamId)
@@ -128,6 +135,7 @@ Relacje:
 - CreateTaskDialog - Dialog tworzenia zadania (ogólny)
 - CreateTaskDialog (projects) - Dialog tworzenia zadania dla konkretnego projektu
 - CreateTeamDialog - Dialog tworzenia zespołu
+- EditTeamDialog - Dialog edycji zespołu (nazwa)
 - ProjectMembersDialog - Dialog zarządzania członkami projektu
 
 ### UI Components (shadcn/ui)
@@ -175,3 +183,47 @@ Relacje:
 - TypeScript (typy)
 - Tailwind CSS + shadcn/ui (UI)
 - React 19 (frontend)
+
+## Nowe funkcjonalności - Edycja zespołów
+
+### Implementacja edycji zespołów ✅
+**Data implementacji**: 2025-01-17
+
+**Dodane pliki**:
+- `src/app/api/teams/[teamId]/route.ts` - API endpoint dla operacji na konkretnym zespole
+- `src/components/teams/edit-team-dialog.tsx` - Dialog do edycji zespołu
+
+**Zmodyfikowane pliki**:
+- `src/components/teams/teams-content.tsx` - Dodano obsługę edycji zespołu
+
+**Funkcjonalności**:
+1. **GET /api/teams/[teamId]** - Pobieranie szczegółów zespołu
+   - Walidacja członkostwa w zespole
+   - Zwraca pełne dane zespołu z członkami i projektami
+
+2. **PATCH /api/teams/[teamId]** - Edycja nazwy zespołu
+   - Walidacja członkostwa w zespole
+   - Walidacja wymaganej nazwy zespołu
+   - Aktualizacja nazwy zespołu
+
+3. **EditTeamDialog** - Komponent do edycji zespołu
+   - Formularz z walidacją
+   - Obsługa błędów
+   - Automatyczne wypełnianie aktualną nazwą
+   - Dezaktywacja przycisku gdy brak zmian
+
+4. **TeamsContent** - Rozszerzony o edycję
+   - Przycisk Settings teraz funkcjonalny
+   - Obsługa stanu edycji (editDialogOpen, selectedTeam)
+   - Funkcje handleEditTeam i handleTeamUpdated
+
+**Bezpieczeństwo**:
+- Tylko członkowie zespołu mogą edytować zespół
+- Walidacja na poziomie API i UI
+- Sprawdzanie sesji użytkownika
+
+**UX/UI**:
+- Przycisk Settings w karcie zespołu otwiera dialog edycji
+- Dialog podobny do CreateTeamDialog dla spójności
+- Automatyczne odświeżanie listy po edycji
+- Obsługa stanów ładowania i błędów

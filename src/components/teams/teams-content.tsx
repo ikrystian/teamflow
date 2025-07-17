@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Plus, Users, Settings } from "lucide-react"
 import { CreateTeamDialog } from "./create-team-dialog"
+import { EditTeamDialog } from "./edit-team-dialog"
 
 interface Team {
   id: string
@@ -29,6 +30,8 @@ export function TeamsContent() {
   const [teams, setTeams] = useState<Team[]>([])
   const [loading, setLoading] = useState(true)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null)
 
   const fetchTeams = async () => {
     try {
@@ -51,6 +54,17 @@ export function TeamsContent() {
   const handleTeamCreated = () => {
     fetchTeams()
     setCreateDialogOpen(false)
+  }
+
+  const handleTeamUpdated = () => {
+    fetchTeams()
+    setEditDialogOpen(false)
+    setSelectedTeam(null)
+  }
+
+  const handleEditTeam = (team: Team) => {
+    setSelectedTeam(team)
+    setEditDialogOpen(true)
   }
 
   if (loading) {
@@ -113,7 +127,11 @@ export function TeamsContent() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">{team.name}</CardTitle>
-                  <Button variant="ghost" size="sm">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEditTeam(team)}
+                  >
                     <Settings className="h-4 w-4" />
                   </Button>
                 </div>
@@ -146,7 +164,7 @@ export function TeamsContent() {
                       )}
                     </div>
                   </div>
-                  
+
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium text-gray-700">Projects</span>
@@ -157,7 +175,7 @@ export function TeamsContent() {
                         {team.projects.slice(0, 3).map((project) => (
                           <div key={project.id} className="flex items-center justify-between text-sm">
                             <span className="text-gray-600 truncate">{project.name}</span>
-                            <Badge 
+                            <Badge
                               variant={project.status === "Completed" ? "default" : "secondary"}
                               className="text-xs"
                             >
@@ -182,10 +200,17 @@ export function TeamsContent() {
         </div>
       )}
 
-      <CreateTeamDialog 
+      <CreateTeamDialog
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onTeamCreated={handleTeamCreated}
+      />
+
+      <EditTeamDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onTeamUpdated={handleTeamUpdated}
+        team={selectedTeam}
       />
     </div>
   )
