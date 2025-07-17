@@ -47,6 +47,19 @@ interface KanbanBoardProps {
   canEditTask: (task: Task) => boolean
 }
 
+const getPriorityColor = (priority?: string) => {
+  switch (priority) {
+    case "High":
+      return "bg-red-100 text-red-800 border-red-200"
+    case "Medium":
+      return "bg-yellow-100 text-yellow-800 border-yellow-200"
+    case "Low":
+      return "bg-green-100 text-green-800 border-green-200"
+    default:
+      return "bg-gray-100 text-gray-800 border-gray-200"
+  }
+}
+
 function SortableTaskCard({
   task,
   onEdit,
@@ -78,19 +91,6 @@ function SortableTaskCard({
     transition: isDragging ? 'none' : transition,
     opacity: isDragging ? 0.3 : isUpdating ? 0.8 : 1,
     scale: isDragging ? 1.05 : 1,
-  }
-
-  const getPriorityColor = (priority?: string) => {
-    switch (priority) {
-      case "High":
-        return "bg-red-100 text-red-800 border-red-200"
-      case "Medium":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200"
-      case "Low":
-        return "bg-green-100 text-green-800 border-green-200"
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200"
-    }
   }
 
   const isOverdue = (dueDate?: string) => {
@@ -355,19 +355,6 @@ export function KanbanBoard({
     }
   }, [displayTasks]);
 
-  const getPriorityColor = (priority?: string) => {
-    switch (priority) {
-      case "High":
-        return "bg-red-100 text-red-800 border-red-200"
-      case "Medium":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200"
-      case "Low":
-        return "bg-green-100 text-green-800 border-green-200"
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200"
-    }
-  }
-
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -441,7 +428,7 @@ export function KanbanBoard({
     )
 
     // Prepare update data - don't send statusId for default statuses
-    const updateData: any = {
+    const updateData: { status: string, statusId?: string } = {
       status: newStatus.name,
     }
 

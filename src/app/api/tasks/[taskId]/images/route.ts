@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { writeFile, mkdir } from "fs/promises"
+import { writeFile, mkdir, unlink } from "fs/promises"
 import { join } from "path"
 import { existsSync } from "fs"
 
@@ -150,10 +150,9 @@ export async function DELETE(
 
     // Try to delete file from filesystem (don't fail if it doesn't exist)
     try {
-      const fs = require('fs')
       const filepath = join(process.cwd(), "public", image.url)
-      if (fs.existsSync(filepath)) {
-        fs.unlinkSync(filepath)
+      if (existsSync(filepath)) {
+        await unlink(filepath)
       }
     } catch (error) {
       console.warn("Could not delete file:", error)

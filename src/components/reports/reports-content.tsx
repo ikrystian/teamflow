@@ -257,7 +257,7 @@ export function ReportsContent() {
                 ? "ring-2 ring-blue-500 bg-blue-50"
                 : "hover:shadow-md"
             }`}
-            onClick={() => setActiveReport(report.id as any)}
+            onClick={() => setActiveReport(report.id as "time-tracking" | "project-progress")}
           >
             <CardContent className="p-6">
               <div className="flex items-center">

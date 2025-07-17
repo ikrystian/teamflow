@@ -172,7 +172,7 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
   useEffect(() => {
     fetchProject()
     fetchTaskStatuses()
-  }, [projectId])
+  }, [projectId, fetchProject, fetchTaskStatuses])
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event

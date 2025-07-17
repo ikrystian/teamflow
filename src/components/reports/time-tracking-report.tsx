@@ -297,7 +297,7 @@ export function TimeTrackingReport({ filters, onDataLoaded }: TimeTrackingReport
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ user, totalHours, percent }) =>
+                  label={({ user, totalHours, percent }: { user: { name: string, email: string }, totalHours: number, percent: number }) =>
                     `${user.name || user.email} (${((percent || 0) * 100).toFixed(0)}%)`
                   }
                   outerRadius={80}

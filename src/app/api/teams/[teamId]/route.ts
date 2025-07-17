@@ -104,7 +104,7 @@ export async function PATCH(
     }
 
     // Prepare update data
-    const updateData: any = {
+    const updateData: { name: string, members?: { set: { id: string }[] } } = {
       name: name.trim()
     }
 

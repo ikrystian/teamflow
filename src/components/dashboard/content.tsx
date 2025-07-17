@@ -405,7 +405,7 @@ export function DashboardContent() {
     <TaskDetailsDialog
       open={taskDetailsDialogOpen}
       onOpenChange={setTaskDetailsDialogOpen}
-      task={selectedTask as any}
+      task={selectedTask as Task}
       onEdit={handleEditTask}
       onTimeTracking={handleTimeTracking}
       canEdit={selectedTask ? canEditTask(selectedTask) : false}
@@ -415,7 +415,7 @@ export function DashboardContent() {
     <EditTaskDialog
       open={editTaskDialogOpen}
       onOpenChange={setEditTaskDialogOpen}
-      task={selectedTask as any}
+      task={selectedTask as Task}
       onTaskUpdated={fetchDashboardData}
       teamMembers={teamMembers}
     />
@@ -424,7 +424,7 @@ export function DashboardContent() {
     <TimeTrackingDialog
       open={timeTrackingDialogOpen}
       onOpenChange={setTimeTrackingDialogOpen}
-      task={selectedTask as any}
+      task={selectedTask as Task}
       onTimeLogged={fetchDashboardData}
     />
     </>

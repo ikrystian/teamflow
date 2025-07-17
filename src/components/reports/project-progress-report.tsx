@@ -104,7 +104,7 @@ export function ProjectProgressReport({ filters, onDataLoaded }: ProjectProgress
 
   useEffect(() => {
     fetchReportData()
-  }, [filters])
+  }, [filters, fetchReportData])
 
   const fetchReportData = async () => {
     setLoading(true)

@@ -322,7 +322,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     )
   }
 
-  const stats = getTaskStats(project.tasks)
+  const stats = getTaskStats(project.tasks);
 
   return (
         <div>

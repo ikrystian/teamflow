@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import type { Session } from "next-auth"
+import { Prisma } from "@prisma/client"
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get("endDate")
 
     // Build where clause for projects
-    const projectWhereClause: any = {
+    const projectWhereClause: Prisma.ProjectWhereInput = {
       team: {
         members: {
           some: {
@@ -95,7 +96,7 @@ export async function GET(request: NextRequest) {
 
         task.timeEntries.forEach(entry => {
           totalLoggedHours += entry.hours
-          
+
           const userId = entry.user.id
           if (!userHours.has(userId)) {
             userHours.set(userId, {
@@ -111,9 +112,9 @@ export async function GET(request: NextRequest) {
 
       // Calculate overdue tasks
       const now = new Date()
-      const overdueTasks = tasks.filter(task => 
-        task.dueDate && 
-        new Date(task.dueDate) < now && 
+      const overdueTasks = tasks.filter(task =>
+        task.dueDate &&
+        new Date(task.dueDate) < now &&
         task.status !== "Done"
       ).length
 
@@ -191,8 +192,8 @@ export async function GET(request: NextRequest) {
       totalCompletedTasks: projectReports.reduce((sum, p) => sum + p.taskStats.completed, 0),
       totalLoggedHours: projectReports.reduce((sum, p) => sum + p.timeStats.totalLoggedHours, 0),
       totalEstimatedHours: projectReports.reduce((sum, p) => sum + p.timeStats.totalEstimatedHours, 0),
-      averageCompletionRate: projectReports.length > 0 
-        ? projectReports.reduce((sum, p) => sum + p.taskStats.completionRate, 0) / projectReports.length 
+      averageCompletionRate: projectReports.length > 0
+        ? projectReports.reduce((sum, p) => sum + p.taskStats.completionRate, 0) / projectReports.length
         : 0
     }
 

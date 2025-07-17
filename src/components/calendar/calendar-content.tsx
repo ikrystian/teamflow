@@ -261,7 +261,7 @@ export function CalendarContent() {
       {/* Task Details Dialog */}
       {selectedTask && (
         <TaskDetailsDialog
-          task={selectedTask as any}
+          task={selectedTask as Task}
           open={taskDetailsDialogOpen}
           onOpenChange={setTaskDetailsDialogOpen}
         />

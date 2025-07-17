@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import type { Session } from "next-auth"
+import { Prisma } from "@prisma/client"
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
     const teamId = searchParams.get("teamId")
 
     // Build where clause for filtering
-    const whereClause: any = {
+    const whereClause: Prisma.TimeEntryWhereInput = {
       task: {
         project: {
           team: {

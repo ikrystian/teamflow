@@ -382,9 +382,11 @@ export function CreateTaskDialog({
                   {pendingImages.map((image) => (
                     <div key={image.id} className="relative group">
                       <div className="relative aspect-square overflow-hidden rounded-lg border bg-muted">
-                        <img
+                        <Image
                           src={image.preview}
                           alt={image.file.name}
+                          layout="fill"
+                          objectFit="cover"
                           className="w-full h-full object-cover"
                         />
                       </div>

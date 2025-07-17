@@ -110,7 +110,7 @@ export function TaskStatusDialog({
         const data = await response.json()
         setError(data.error || `Nie udało się ${isEditing ? "zaktualizować" : "utworzyć"} statusu`)
       }
-    } catch (error) {
+    } catch (e) {
       setError("Wystąpił błąd. Spróbuj ponownie.")
     } finally {
       setLoading(false)

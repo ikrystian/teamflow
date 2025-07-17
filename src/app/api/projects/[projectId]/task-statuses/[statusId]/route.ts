@@ -4,6 +4,13 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import type { Session } from "next-auth"
 
+interface TaskStatusUpdateInput {
+  name?: string;
+  color?: string;
+  order?: number;
+  isDefault?: boolean;
+}
+
 // PATCH /api/projects/[projectId]/task-statuses/[statusId] - Update a task status
 export async function PATCH(
   request: NextRequest,
@@ -105,7 +112,7 @@ export async function PATCH(
     }
 
     // Prepare update data
-    const updateData: any = {}
+    const updateData: TaskStatusUpdateInput = {}
     if (name !== undefined) updateData.name = name
     if (color !== undefined) updateData.color = color
     if (order !== undefined) updateData.order = order

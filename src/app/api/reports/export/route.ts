@@ -4,6 +4,40 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import type { Session } from "next-auth"
 import * as XLSX from 'xlsx'
+import { Prisma } from "@prisma/client"
+
+interface TimeTrackingReportEntry {
+  "Date": string;
+  "User": string;
+  "Team": string;
+  "Project": string;
+  "Task": string;
+  "Task Status": string;
+  "Task Priority": string;
+  "Hours Logged": number;
+  "Estimated Hours": number;
+  "Description": string;
+  "Created At": string;
+}
+
+interface ProjectProgressReportEntry {
+  "Team": string;
+  "Project": string;
+  "Project Status": string;
+  "Task ID": string;
+  "Task Title": string;
+  "Task Status": string;
+  "Task Priority": string;
+  "Assignee": string;
+  "Assignee Email": string;
+  "Due Date": string;
+  "Is Overdue": "Yes" | "No";
+  "Estimated Hours": number;
+  "Logged Hours": number;
+  "Hours Variance": number;
+  "Created At": string;
+  "Updated At": string;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,14 +47,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { 
-      reportType, 
-      format, 
-      startDate, 
-      endDate, 
-      projectId, 
-      userId, 
-      teamId 
+    const {
+      reportType,
+      format,
+      startDate,
+      endDate,
+      projectId,
+      userId,
+      teamId
     } = await request.json()
 
     if (!reportType || !format) {
@@ -30,12 +64,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    let data: any[] = []
+    let data: TimeTrackingReportEntry[] | ProjectProgressReportEntry[] = []
     let filename = ""
 
     if (reportType === "time-tracking") {
       // Fetch time tracking data
-      const whereClause: any = {
+      const whereClause: Prisma.TimeEntryWhereInput = {
         task: {
           project: {
             team: {
@@ -55,9 +89,16 @@ export async function POST(request: NextRequest) {
         if (endDate) whereClause.date.lte = new Date(endDate)
       }
 
-      if (projectId) whereClause.task.projectId = projectId
-      if (userId) whereClause.userId = userId
-      if (teamId) whereClause.task.project.teamId = teamId
+      if (projectId) {
+        if (!whereClause.task) whereClause.task = {};
+        whereClause.task.projectId = projectId;
+      }
+      if (userId) whereClause.userId = userId;
+      if (teamId) {
+        if (!whereClause.task) whereClause.task = {};
+        if (!whereClause.task.project) whereClause.task.project = {};
+        whereClause.task.project.teamId = teamId;
+      }
 
       const timeEntries = await prisma.timeEntry.findMany({
         where: whereClause,
@@ -108,13 +149,13 @@ export async function POST(request: NextRequest) {
         "Estimated Hours": entry.task.estimatedHours || 0,
         "Description": entry.description || "",
         "Created At": entry.createdAt.toISOString()
-      }))
+      })) as TimeTrackingReportEntry[];
 
       filename = `time-tracking-report-${new Date().toISOString().split('T')[0]}`
 
     } else if (reportType === "project-progress") {
       // Fetch project progress data
-      const projectWhereClause: any = {
+      const projectWhereClause: Prisma.ProjectWhereInput = {
         team: {
           members: {
             some: {
@@ -156,11 +197,11 @@ export async function POST(request: NextRequest) {
         }
       })
 
-      data = projects.flatMap(project => 
+      data = projects.flatMap(project =>
         project.tasks.map(task => {
           const totalLoggedHours = task.timeEntries.reduce((sum, entry) => sum + entry.hours, 0)
           const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== "Done"
-          
+
           return {
             "Team": project.team.name,
             "Project": project.name,
@@ -180,7 +221,7 @@ export async function POST(request: NextRequest) {
             "Updated At": task.updatedAt.toISOString().split('T')[0]
           }
         })
-      )
+      ) as ProjectProgressReportEntry[];
 
       filename = `project-progress-report-${new Date().toISOString().split('T')[0]}`
 
@@ -196,9 +237,9 @@ export async function POST(request: NextRequest) {
       const worksheet = XLSX.utils.json_to_sheet(data)
       const workbook = XLSX.utils.book_new()
       XLSX.utils.book_append_sheet(workbook, worksheet, "Report")
-      
+
       const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' })
-      
+
       return new NextResponse(excelBuffer, {
         headers: {
           'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -210,7 +251,7 @@ export async function POST(request: NextRequest) {
       // Generate CSV file
       const worksheet = XLSX.utils.json_to_sheet(data)
       const csvContent = XLSX.utils.sheet_to_csv(worksheet)
-      
+
       return new NextResponse(csvContent, {
         headers: {
           'Content-Type': 'text/csv',
