@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { title, description, projectId, assigneeId, priority, dueDate, estimatedHours } = await request.json()
+    const { title, description, projectId, assigneeId, priority, dueDate, estimatedHours, statusId } = await request.json()
 
     if (!title || !projectId) {
       return NextResponse.json(
@@ -129,6 +129,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // If statusId is provided, verify it belongs to this project
+    if (statusId) {
+      const taskStatus = await prisma.taskStatus.findFirst({
+        where: {
+          id: statusId,
+          projectId
+        }
+      })
+
+      if (!taskStatus) {
+        return NextResponse.json(
+          { error: "Invalid status for this project" },
+          { status: 400 }
+        )
+      }
+    }
+
     const task = await prisma.task.create({
       data: {
         title,
@@ -138,6 +155,7 @@ export async function POST(request: NextRequest) {
         priority,
         dueDate: dueDate ? new Date(dueDate) : null,
         estimatedHours,
+        statusId,
         createdById: session.user.id || null
       },
       include: {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -28,6 +28,14 @@ interface TeamMember {
   avatarUrl?: string
 }
 
+interface TaskStatus {
+  id: string
+  name: string
+  color: string
+  order: number
+  isDefault: boolean
+}
+
 interface CreateTaskDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -49,8 +57,36 @@ export function CreateTaskDialog({
   const [priority, setPriority] = useState("")
   const [dueDate, setDueDate] = useState("")
   const [estimatedHours, setEstimatedHours] = useState("")
+  const [statusId, setStatusId] = useState("")
+  const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+
+  const fetchTaskStatuses = async () => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}/task-statuses`)
+      if (response.ok) {
+        const data = await response.json()
+        setTaskStatuses(data.taskStatuses)
+
+        // Set default status if available
+        const defaultStatus = data.taskStatuses.find((status: TaskStatus) => status.isDefault)
+        if (defaultStatus) {
+          setStatusId(defaultStatus.id)
+        } else if (data.taskStatuses.length > 0) {
+          setStatusId(data.taskStatuses[0].id)
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching task statuses:", error)
+    }
+  }
+
+  useEffect(() => {
+    if (open && projectId) {
+      fetchTaskStatuses()
+    }
+  }, [open, projectId])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -77,6 +113,7 @@ export function CreateTaskDialog({
           priority: priority === "none" ? undefined : priority,
           dueDate: dueDate || undefined,
           estimatedHours: estimatedHours ? parseFloat(estimatedHours) : undefined,
+          statusId: statusId || undefined,
         }),
       })
 
@@ -102,6 +139,7 @@ export function CreateTaskDialog({
     setPriority("none")
     setDueDate("")
     setEstimatedHours("")
+    setStatusId("")
     setError("")
     onOpenChange(false)
   }
@@ -150,6 +188,31 @@ export function CreateTaskDialog({
                   {teamMembers.map((member) => (
                     <SelectItem key={member.id} value={member.id}>
                       {member.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="status">Status</Label>
+              <Select value={statusId} onValueChange={setStatusId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {taskStatuses.map((status) => (
+                    <SelectItem key={status.id} value={status.id}>
+                      <div className="flex items-center space-x-2">
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: status.color }}
+                        />
+                        <span>{status.name}</span>
+                        {status.isDefault && (
+                          <span className="text-xs text-gray-500">(default)</span>
+                        )}
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -28,11 +28,20 @@ interface User {
   avatarUrl?: string
 }
 
+interface TaskStatus {
+  id: string
+  name: string
+  color: string
+  order: number
+  isDefault: boolean
+}
+
 interface Task {
   id: string
   title: string
   description?: string
   status: string
+  statusId?: string
   priority?: string
   dueDate?: string
   estimatedHours?: number
@@ -89,12 +98,28 @@ export function EditTaskDialog({
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [status, setStatus] = useState("")
+  const [statusId, setStatusId] = useState("")
   const [assigneeId, setAssigneeId] = useState("")
   const [priority, setPriority] = useState("")
   const [dueDate, setDueDate] = useState("")
   const [estimatedHours, setEstimatedHours] = useState("")
+  const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+
+  const fetchTaskStatuses = async () => {
+    if (!task?.project?.id) return
+
+    try {
+      const response = await fetch(`/api/projects/${task.project.id}/task-statuses`)
+      if (response.ok) {
+        const data = await response.json()
+        setTaskStatuses(data.taskStatuses)
+      }
+    } catch (error) {
+      console.error("Error fetching task statuses:", error)
+    }
+  }
 
   // Update form when task changes
   useEffect(() => {
@@ -102,10 +127,12 @@ export function EditTaskDialog({
       setTitle(task.title)
       setDescription(task.description || "")
       setStatus(task.status)
+      setStatusId(task.statusId || "")
       setAssigneeId(task.assignee?.id || "unassigned")
       setPriority(task.priority || "")
       setDueDate(task.dueDate ? task.dueDate.split('T')[0] : "")
       setEstimatedHours(task.estimatedHours ? task.estimatedHours.toString() : "none")
+      fetchTaskStatuses()
     } else {
       resetForm()
     }
@@ -129,6 +156,7 @@ export function EditTaskDialog({
           title: title.trim(),
           description: description.trim() || undefined,
           status,
+          statusId: statusId || undefined,
           assigneeId: assigneeId === "unassigned" ? undefined : assigneeId,
           priority: priority || undefined,
           dueDate: dueDate || undefined,
@@ -154,6 +182,7 @@ export function EditTaskDialog({
     setTitle("")
     setDescription("")
     setStatus("")
+    setStatusId("")
     setAssigneeId("unassigned")
     setPriority("")
     setDueDate("")
@@ -212,14 +241,41 @@ export function EditTaskDialog({
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="status">Status</Label>
-                <Select value={status} onValueChange={setStatus} required>
+                <Select value={statusId || status} onValueChange={(value) => {
+                  const selectedStatus = taskStatuses.find(s => s.id === value)
+                  if (selectedStatus) {
+                    setStatusId(value)
+                    setStatus(selectedStatus.name)
+                  } else {
+                    // Fallback for old status values
+                    setStatus(value)
+                    setStatusId("")
+                  }
+                }} required>
                   <SelectTrigger>
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="To Do">To Do</SelectItem>
-                    <SelectItem value="In Progress">In Progress</SelectItem>
-                    <SelectItem value="Done">Done</SelectItem>
+                    {taskStatuses.length > 0 ? (
+                      taskStatuses.map((taskStatus) => (
+                        <SelectItem key={taskStatus.id} value={taskStatus.id}>
+                          <div className="flex items-center space-x-2">
+                            <div
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: taskStatus.color }}
+                            />
+                            <span>{taskStatus.name}</span>
+                          </div>
+                        </SelectItem>
+                      ))
+                    ) : (
+                      // Fallback to default statuses if no custom ones are configured
+                      <>
+                        <SelectItem value="To Do">To Do</SelectItem>
+                        <SelectItem value="In Progress">In Progress</SelectItem>
+                        <SelectItem value="Done">Done</SelectItem>
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
               </div>

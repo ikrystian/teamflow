@@ -9,19 +9,22 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 - **Zarządzanie zespołami** - Tworzenie zespołów, edycja nazw zespołów i pełne zarządzanie członkami
 - **Zarządzanie projektami** - Tworzenie projektów w ramach zespołów
 - **Zarządzanie zadaniami** - Pełna funkcjonalność CRUD dla zadań z szacowanym czasem i edycją
+- **Widok tablicy Kanban** - Przeciąganie zadań między kolumnami statusów z konfigurowalnymi statusami
+- **Konfigurowalne statusy zadań** - Możliwość definiowania własnych statusów dla każdego projektu
+- **Ustawienia projektu** - Zarządzanie statusami zadań z kolorami i kolejnością
 - **Time tracking** - Logowanie czasu pracy nad zadaniami, śledzenie postępu względem szacowanego czasu
 - **Dashboard** - Przegląd statystyk i ostatnich aktywności
 - **Widok kalendarza** - Wyświetlanie zadań według terminów wykonania
 - **Responsywny interfejs** - Zbudowany z shadcn/ui i Tailwind CSS
 
 ### 🔄 Planowane funkcjonalności
-- Widok tablicy Kanban dla projektów
 - System komentarzy i podzadań
 - Zaproszenia do zespołów przez email
 - Powiadomienia w aplikacji
 - Załączniki do zadań
 - Zaawansowane raporty i analityka
 - Wyszukiwarka globalna
+- Szablony projektów z predefiniowanymi statusami
 
 ## 🛠 Technologie
 
@@ -77,6 +80,27 @@ npm run dev
 Aplikacja będzie dostępna pod adresem [http://localhost:3000](http://localhost:3000)
 
 **Status**: ✅ Aplikacja została naprawiona i działa poprawnie z Next.js 15
+
+## 🎯 Nowe funkcjonalności - Tablica Kanban i konfigurowalne statusy
+
+### Tablica Kanban
+- **Widok tablicy** - Przełączanie między widokiem listy a tablicą Kanban w szczegółach projektu
+- **Przeciąganie zadań** - Intuicyjne przenoszenie zadań między kolumnami statusów
+- **Wizualne kolumny** - Każdy status ma swoją kolumnę z kolorowym oznaczeniem
+- **Liczniki zadań** - Wyświetlanie liczby zadań w każdej kolumnie
+
+### Konfigurowalne statusy zadań
+- **Ustawienia projektu** - Dostęp przez przycisk "Settings" w szczegółach projektu
+- **Własne statusy** - Tworzenie niestandardowych statusów (np. "Review", "Testing", "Blocked")
+- **Kolory statusów** - Wybór kolorów z palety lub własny kolor hex
+- **Kolejność statusów** - Przeciąganie statusów w ustawieniach aby zmienić kolejność na tablicy
+- **Status domyślny** - Oznaczanie statusu jako domyślny dla nowych zadań
+- **Zarządzanie statusami** - Edycja i usuwanie statusów (z ochroną przed usunięciem używanych)
+
+### Kompatybilność wsteczna
+- Istniejące zadania zachowują swoje statusy
+- Domyślne statusy (To Do, In Progress, Done) są dostępne gdy nie skonfigurowano własnych
+- Płynne przejście między starym a nowym systemem statusów
 
 ## 📱 Jak korzystać z aplikacji
 

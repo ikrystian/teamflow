@@ -40,12 +40,14 @@ Relacje:
 Relacje:
 - team: Team (many-to-one)
 - tasks: Task[] (one-to-many)
+- taskStatuses: TaskStatus[] (one-to-many) - konfigurowalne statusy zadań
 
 ### Task (Zadanie)
 - id: String (PK)
 - title: String
 - description: String?
-- status: String (default: "To Do")
+- status: String (default: "To Do") - przestarzałe, zastąpione przez statusId
+- statusId: String? (FK) - referencja do TaskStatus
 - priority: String?
 - dueDate: DateTime?
 - estimatedHours: Float? (szacowany czas w godzinach)
@@ -57,11 +59,30 @@ Relacje:
 
 Relacje:
 - project: Project (many-to-one)
+- taskStatus: TaskStatus? (many-to-one) - konfigurowalny status
 - assignee: User? (many-to-one)
 - createdBy: User (many-to-one) - autor zadania
 - subtasks: Subtask[] (one-to-many)
 - comments: Comment[] (one-to-many)
 - timeEntries: TimeEntry[] (one-to-many) - wpisy czasu pracy
+
+### TaskStatus (Status Zadania)
+- id: String (PK)
+- name: String - nazwa statusu (np. "To Do", "In Progress", "Done", "Review")
+- color: String (default: "#6B7280") - kolor hex dla statusu
+- order: Int - kolejność statusu na tablicy (0, 1, 2, etc.)
+- isDefault: Boolean (default: false) - czy to domyślny status dla nowych zadań
+- createdAt: DateTime
+- updatedAt: DateTime
+- projectId: String (FK)
+
+Relacje:
+- project: Project (many-to-one)
+- tasks: Task[] (one-to-many) - zadania z tym statusem
+
+Ograniczenia:
+- Unikalna nazwa statusu per projekt
+- Unikalna kolejność per projekt
 
 ### Subtask (Podzadanie)
 - id: String (PK)

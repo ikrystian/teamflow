@@ -121,7 +121,7 @@ export async function PATCH(
     }
 
     const { taskId } = await params
-    const { title, description, status, priority, dueDate, assigneeId, estimatedHours } = await request.json()
+    const { title, description, status, statusId, priority, dueDate, assigneeId, estimatedHours } = await request.json()
 
     // Fetch task to check permissions
     const existingTask = await prisma.task.findFirst({
@@ -151,7 +151,7 @@ export async function PATCH(
     }
 
     // Check if user can edit this task (creator or assignee)
-    const canEdit = existingTask.createdById === session.user.id || 
+    const canEdit = existingTask.createdById === session.user.id ||
                    existingTask.assigneeId === session.user.id
 
     if (!canEdit) {
@@ -161,11 +161,29 @@ export async function PATCH(
       )
     }
 
+    // If statusId is provided, verify it belongs to this project
+    if (statusId !== undefined) {
+      const taskStatus = await prisma.taskStatus.findFirst({
+        where: {
+          id: statusId,
+          projectId: existingTask.projectId
+        }
+      })
+
+      if (!taskStatus) {
+        return NextResponse.json(
+          { error: "Invalid status for this project" },
+          { status: 400 }
+        )
+      }
+    }
+
     // Prepare update data
     const updateData: any = {}
     if (title !== undefined) updateData.title = title
     if (description !== undefined) updateData.description = description
     if (status !== undefined) updateData.status = status
+    if (statusId !== undefined) updateData.statusId = statusId
     if (priority !== undefined) updateData.priority = priority
     if (dueDate !== undefined) updateData.dueDate = dueDate ? new Date(dueDate) : null
     if (assigneeId !== undefined) updateData.assigneeId = assigneeId

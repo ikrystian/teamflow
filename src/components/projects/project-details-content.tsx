@@ -16,10 +16,16 @@ import {
   AlertCircle,
   Plus,
   Edit,
-  Trash2
+  Trash2,
+  List,
+  LayoutGrid,
+  Settings
 } from "lucide-react"
 import Link from "next/link"
 import { CreateTaskDialog } from "./create-task-dialog"
+import { KanbanBoard } from "./kanban-board"
+import { EditTaskDialog } from "../tasks/edit-task-dialog"
+import { TimeTrackingDialog } from "../tasks/time-tracking-dialog"
 
 interface ProjectDetails {
   id: string
@@ -77,6 +83,10 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   const [project, setProject] = useState<ProjectDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [createTaskDialogOpen, setCreateTaskDialogOpen] = useState(false)
+  const [editTaskDialogOpen, setEditTaskDialogOpen] = useState(false)
+  const [timeTrackingDialogOpen, setTimeTrackingDialogOpen] = useState(false)
+  const [selectedTask, setSelectedTask] = useState<any>(null)
+  const [viewMode, setViewMode] = useState<"list" | "board">("list")
   const router = useRouter()
 
   const fetchProject = async () => {
@@ -102,6 +112,25 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   const handleTaskCreated = () => {
     fetchProject()
     setCreateTaskDialogOpen(false)
+  }
+
+  const handleTaskUpdated = () => {
+    fetchProject()
+  }
+
+  const handleEditTask = (task: any) => {
+    setSelectedTask(task)
+    setEditTaskDialogOpen(true)
+  }
+
+  const handleTimeTracking = (task: any) => {
+    setSelectedTask(task)
+    setTimeTrackingDialogOpen(true)
+  }
+
+  const canEditTask = (task: any) => {
+    // User can edit if they are the assignee, creator, or team member
+    return true // Simplified for now
   }
 
   const getStatusColor = (status: string) => {
@@ -201,6 +230,34 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
           <Badge className={getStatusColor(project.status)}>
             {project.status}
           </Badge>
+
+          {/* View Toggle */}
+          <div className="flex items-center border rounded-lg">
+            <Button
+              variant={viewMode === "list" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("list")}
+              className="rounded-r-none"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "board" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("board")}
+              className="rounded-l-none"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <Link href={`/dashboard/projects/${projectId}/settings`}>
+            <Button variant="outline" size="sm">
+              <Settings className="mr-2 h-4 w-4" />
+              Settings
+            </Button>
+          </Link>
+
           <Button onClick={() => setCreateTaskDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Add Task
@@ -277,81 +334,116 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
       </Card>
 
       {/* Tasks */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Tasks</CardTitle>
-              <CardDescription>All tasks in this project</CardDescription>
-            </div>
-            <Button onClick={() => setCreateTaskDialogOpen(true)} size="sm">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Task
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {project.tasks.length === 0 ? (
-            <div className="text-center py-8">
-              <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No tasks yet</h3>
-              <p className="text-gray-500 mb-4">Create your first task to get started</p>
-              <Button onClick={() => setCreateTaskDialogOpen(true)}>
+      {viewMode === "list" ? (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Tasks</CardTitle>
+                <CardDescription>All tasks in this project</CardDescription>
+              </div>
+              <Button onClick={() => setCreateTaskDialogOpen(true)} size="sm">
                 <Plus className="mr-2 h-4 w-4" />
-                Create Task
+                Add Task
               </Button>
             </div>
-          ) : (
-            <div className="space-y-4">
-              {project.tasks.map((task) => (
-                <div key={task.id} className="border rounded-lg p-4 hover:bg-gray-50">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <h4 className="font-medium">{task.title}</h4>
-                        <Badge className={getStatusColor(task.status)} variant="secondary">
-                          {task.status}
-                        </Badge>
-                        {task.priority && (
-                          <Badge className={getPriorityColor(task.priority)} variant="outline">
-                            {task.priority}
+          </CardHeader>
+          <CardContent>
+            {project.tasks.length === 0 ? (
+              <div className="text-center py-8">
+                <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No tasks yet</h3>
+                <p className="text-gray-500 mb-4">Create your first task to get started</p>
+                <Button onClick={() => setCreateTaskDialogOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Task
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {project.tasks.map((task) => (
+                  <div key={task.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <h4 className="font-medium">{task.title}</h4>
+                          <Badge className={getStatusColor(task.status)} variant="secondary">
+                            {task.status}
                           </Badge>
+                          {task.priority && (
+                            <Badge className={getPriorityColor(task.priority)} variant="outline">
+                              {task.priority}
+                            </Badge>
+                          )}
+                        </div>
+                        {task.description && (
+                          <p className="text-sm text-gray-600 mb-2">{task.description}</p>
                         )}
-                      </div>
-                      {task.description && (
-                        <p className="text-sm text-gray-600 mb-2">{task.description}</p>
-                      )}
-                      <div className="flex items-center space-x-4 text-xs text-gray-500">
-                        {task.assignee && (
+                        <div className="flex items-center space-x-4 text-xs text-gray-500">
+                          {task.assignee && (
+                            <div className="flex items-center space-x-1">
+                              <Avatar className="h-4 w-4">
+                                <AvatarImage src={task.assignee.avatarUrl} />
+                                <AvatarFallback className="text-xs">
+                                  {task.assignee.name?.split(' ').map(n => n[0]).join('') || 'U'}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span>{task.assignee.name}</span>
+                            </div>
+                          )}
+                          {task.dueDate && (
+                            <div className="flex items-center space-x-1">
+                              <Calendar className="h-3 w-3" />
+                              <span>Due {new Date(task.dueDate).toLocaleDateString()}</span>
+                            </div>
+                          )}
                           <div className="flex items-center space-x-1">
-                            <Avatar className="h-4 w-4">
-                              <AvatarImage src={task.assignee.avatarUrl} />
-                              <AvatarFallback className="text-xs">
-                                {task.assignee.name?.split(' ').map(n => n[0]).join('') || 'U'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span>{task.assignee.name}</span>
+                            <CheckCircle className="h-3 w-3" />
+                            <span>{task.subtasks.filter(st => st.isCompleted).length}/{task.subtasks.length} subtasks</span>
                           </div>
-                        )}
-                        {task.dueDate && (
-                          <div className="flex items-center space-x-1">
-                            <Calendar className="h-3 w-3" />
-                            <span>Due {new Date(task.dueDate).toLocaleDateString()}</span>
-                          </div>
-                        )}
-                        <div className="flex items-center space-x-1">
-                          <CheckCircle className="h-3 w-3" />
-                          <span>{task.subtasks.filter(st => st.isCompleted).length}/{task.subtasks.length} subtasks</span>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        <div>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-lg font-semibold">Task Board</h2>
+              <p className="text-sm text-gray-500">Drag tasks between columns to update their status</p>
             </div>
+          </div>
+          {project.tasks.length === 0 ? (
+            <Card>
+              <CardContent className="py-12">
+                <div className="text-center">
+                  <LayoutGrid className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No tasks yet</h3>
+                  <p className="text-gray-500 mb-4">Create your first task to see the board</p>
+                  <Button onClick={() => setCreateTaskDialogOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create Task
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <KanbanBoard
+              projectId={projectId}
+              tasks={project.tasks}
+              onTaskUpdated={handleTaskUpdated}
+              onTaskEdit={handleEditTask}
+              onTimeTracking={handleTimeTracking}
+              canEditTask={canEditTask}
+            />
           )}
-        </CardContent>
-      </Card>
+        </div>
+      )}
 
       <CreateTaskDialog
         open={createTaskDialogOpen}
@@ -359,6 +451,21 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         onTaskCreated={handleTaskCreated}
         projectId={projectId}
         teamMembers={project.team.members}
+      />
+
+      <EditTaskDialog
+        open={editTaskDialogOpen}
+        onOpenChange={setEditTaskDialogOpen}
+        onTaskUpdated={handleTaskUpdated}
+        task={selectedTask}
+        teamMembers={project.team.members}
+      />
+
+      <TimeTrackingDialog
+        open={timeTrackingDialogOpen}
+        onOpenChange={setTimeTrackingDialogOpen}
+        onTimeLogged={handleTaskUpdated}
+        task={selectedTask}
       />
     </div>
   )
