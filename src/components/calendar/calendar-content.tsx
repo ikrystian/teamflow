@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
+import { TaskDetailsDialog } from "@/components/tasks/task-details-dialog"
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react"
 
 interface Task {
@@ -30,6 +31,8 @@ export function CalendarContent() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [currentDate, setCurrentDate] = useState(new Date())
+  const [taskDetailsDialogOpen, setTaskDetailsDialogOpen] = useState(false)
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
 
   const fetchTasks = async () => {
     try {
@@ -99,6 +102,11 @@ export function CalendarContent() {
 
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
+  const handleTaskDetails = (task: Task) => {
+    setSelectedTask(task)
+    setTaskDetailsDialogOpen(true)
+  }
+
   const daysInMonth = getDaysInMonth(currentDate)
   const firstDay = getFirstDayOfMonth(currentDate)
   const today = new Date()
@@ -108,6 +116,7 @@ export function CalendarContent() {
   }
 
   return (
+    <>
         <div>
               {/* Top bar */}
         <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
@@ -219,7 +228,11 @@ export function CalendarContent() {
                 .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
                 .slice(0, 10)
                 .map(task => (
-                  <div key={task.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div 
+                    key={task.id} 
+                    className="flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                    onClick={() => handleTaskDetails(task)}
+                  >
                     <div className="flex-1">
                       <h4 className="font-medium text-gray-900">{task.title}</h4>
                       <p className="text-sm text-gray-500">
@@ -246,5 +259,15 @@ export function CalendarContent() {
     </div>
     </main>
     </div>
+
+    {/* Task Details Dialog */}
+    {selectedTask && (
+      <TaskDetailsDialog
+        task={selectedTask as any}
+        open={taskDetailsDialogOpen}
+        onOpenChange={setTaskDetailsDialogOpen}
+      />
+    )}
+    </>
   )
 }
