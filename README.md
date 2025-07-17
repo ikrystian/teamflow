@@ -9,7 +9,7 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 - **Zarządzanie zespołami** - Tworzenie zespołów, edycja nazw zespołów i pełne zarządzanie członkami
 - **Zarządzanie projektami** - Tworzenie projektów w ramach zespołów
 - **Zarządzanie zadaniami** - Pełna funkcjonalność CRUD dla zadań z szacowanym czasem i edycją
-- **Widok tablicy Kanban** - Przeciąganie zadań między kolumnami statusów z konfigurowalnymi statusami
+- **Widok tablicy Kanban w stylu Trello** - Nowoczesna tablica z uproszczonymi kartami, drag & drop i szczegółami po kliknięciu
 - **Konfigurowalne statusy zadań** - Możliwość definiowania własnych statusów dla każdego projektu
 - **Ustawienia projektu** - Zarządzanie statusami zadań z kolorami i kolejnością
 - **Time tracking** - Logowanie czasu pracy nad zadaniami, śledzenie postępu względem szacowanego czasu
@@ -95,13 +95,20 @@ Aplikacja będzie dostępna pod adresem [http://localhost:3000](http://localhost
 - **Elastyczna konfiguracja** - Możliwość dostosowania liczby elementów, kolumn i wyglądu
 - **Lepsza UX** - Płynne przejścia między stanami ładowania a zawartością
 
-### Tablica Kanban i konfigurowalne statusy
+### Tablica Kanban w stylu Trello
 
-### Tablica Kanban
+### Nowy wygląd tablicy Kanban
 - **Widok tablicy** - Przełączanie między widokiem listy a tablicą Kanban w szczegółach projektu
-- **Przeciąganie zadań** - Intuicyjne przenoszenie zadań między kolumnami statusów
-- **Wizualne kolumny** - Każdy status ma swoją kolumnę z kolorowym oznaczeniem
-- **Liczniki zadań** - Wyświetlanie liczby zadań w każdej kolumnie
+- **Karty w stylu Trello** - Uproszczone karty pokazujące tylko najważniejsze informacje:
+  - Tytuł zadania
+  - Avatar przypisanej osoby
+  - Etykiety priorytetu (kolorowe badges)
+  - Licznik subtasków (jeśli istnieją)
+  - Data deadline z ostrzeżeniem o przeterminowaniu
+- **Szczegóły po kliknięciu** - Kliknięcie na kartę otwiera modal z pełnymi szczegółami zadania
+- **Przeciąganie zadań** - Intuicyjne przenoszenie zadań między kolumnami statusów z animacjami
+- **Wizualne kolumny** - Kolumny w stylu Trello z szarym tłem i białymi kartami
+- **Animacje i efekty** - Płynne animacje hover, drag & drop z wizualnym feedbackiem
 
 ### Konfigurowalne statusy zadań
 - **Ustawienia projektu** - Dostęp przez przycisk "Settings" w szczegółach projektu
@@ -110,6 +117,13 @@ Aplikacja będzie dostępna pod adresem [http://localhost:3000](http://localhost
 - **Kolejność statusów** - Przeciąganie statusów w ustawieniach aby zmienić kolejność na tablicy
 - **Status domyślny** - Oznaczanie statusu jako domyślny dla nowych zadań
 - **Zarządzanie statusami** - Edycja i usuwanie statusów (z ochroną przed usunięciem używanych)
+
+### Szczegóły implementacji tablicy Trello
+- **TaskDetailsDialog** - Nowy komponent do wyświetlania pełnych szczegółów zadania
+- **Uproszczone karty** - Karty pokazują tylko kluczowe informacje, reszta dostępna po kliknięciu
+- **Optimistic updates** - Natychmiastowe aktualizacje UI podczas przeciągania z rollback w przypadku błędu
+- **Responsywny design** - Kolumny przewijane poziomo, karty dostosowują się do szerokości
+- **Accessibility** - Obsługa klawiatury, tooltips, odpowiednie kontrasty kolorów
 
 ### Kompatybilność wsteczna
 - Istniejące zadania zachowują swoje statusy
