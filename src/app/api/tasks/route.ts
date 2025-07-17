@@ -74,6 +74,21 @@ export async function GET(request: NextRequest) {
           orderBy: {
             createdAt: "desc"
           }
+        },
+        timeEntries: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                avatarUrl: true
+              }
+            }
+          },
+          orderBy: {
+            date: "desc"
+          }
         }
       },
       orderBy: {
