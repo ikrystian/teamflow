@@ -108,13 +108,13 @@ export function ProjectsContent() {
   return (
         <div>
               {/* Top bar */}
-        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
+        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-border bg-background px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
             <div id="dynamic-header" className="flex flex-1" >
       <div id="page-header"className="flex justify-between items-center w-full">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Projekty</h1>
-          <p className="text-gray-500">Zarządzaj swoimi projektami i śledź postępy</p>
+          <h1 className="text-2xl font-bold text-foreground">Projekty</h1>
+          <p className="text-muted-foreground">Zarządzaj swoimi projektami i śledź postępy</p>
         </div>
         <Button onClick={() => setCreateDialogOpen(true)} disabled={teams.length === 0}>
           <Plus className="mr-2 h-4 w-4" />

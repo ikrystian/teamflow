@@ -26,13 +26,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Sidebar - always visible, narrow on mobile, full width on desktop */}
       <div className="fixed inset-y-0 left-0 flex w-16 lg:w-64 flex-col">
-        <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
+        <div className="flex flex-col flex-grow bg-card border-r border-border">
           {/* Header - show logo on desktop, hide on mobile */}
           <div className="hidden lg:flex h-16 items-center px-4">
-            <h1 className="text-xl font-bold text-gray-900 flex-1">TeamFlow</h1>
+            <h1 className="text-xl font-bold text-foreground flex-1">TeamFlow</h1>
             <TopBarUser />
           </div>
 
@@ -47,7 +47,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <Link
                 key={item.name}
                 href={item.href}
-                className="group flex items-center justify-center lg:justify-start px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                className="group flex items-center justify-center lg:justify-start px-2 py-2 text-sm font-medium rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                 title={item.name} // Show tooltip on mobile
               >
                 <item.icon className="h-5 w-5 lg:mr-3" />

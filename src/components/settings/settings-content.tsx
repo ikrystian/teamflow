@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTheme } from "next-themes"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,7 +14,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
 import {
   User,
-  Settings,
   Bell,
   Shield,
   Palette,
@@ -40,6 +40,7 @@ interface UserProfile {
 
 export function SettingsContent() {
   const { data: session } = useSession()
+  const { theme, setTheme } = useTheme()
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
@@ -75,7 +76,6 @@ export function SettingsContent() {
       activityVisible: true
     },
     appearance: {
-      theme: "light",
       language: "pl",
       timezone: "Europe/Warsaw"
     }
@@ -582,32 +582,23 @@ export function SettingsContent() {
                     <Label>Motyw</Label>
                     <div className="flex gap-2">
                       <Button
-                        variant={otherSettings.appearance.theme === "light" ? "default" : "outline"}
+                        variant={theme === "light" ? "default" : "outline"}
                         size="sm"
-                        onClick={() => setOtherSettings(prev => ({
-                          ...prev,
-                          appearance: { ...prev.appearance, theme: "light" }
-                        }))}
+                        onClick={() => setTheme("light")}
                       >
                         Jasny
                       </Button>
                       <Button
-                        variant={otherSettings.appearance.theme === "dark" ? "default" : "outline"}
+                        variant={theme === "dark" ? "default" : "outline"}
                         size="sm"
-                        onClick={() => setOtherSettings(prev => ({
-                          ...prev,
-                          appearance: { ...prev.appearance, theme: "dark" }
-                        }))}
+                        onClick={() => setTheme("dark")}
                       >
                         Ciemny
                       </Button>
                       <Button
-                        variant={otherSettings.appearance.theme === "system" ? "default" : "outline"}
+                        variant={theme === "system" ? "default" : "outline"}
                         size="sm"
-                        onClick={() => setOtherSettings(prev => ({
-                          ...prev,
-                          appearance: { ...prev.appearance, theme: "system" }
-                        }))}
+                        onClick={() => setTheme("system")}
                       >
                         Systemowy
                       </Button>

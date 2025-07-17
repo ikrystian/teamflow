@@ -17,6 +17,7 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 - **Lista todos** - Funkcjonalność checklist w zadaniach z możliwością dodawania, edycji i usuwania elementów
 - **Dashboard** - Przegląd statystyk i ostatnich aktywności
 - **Widok kalendarza** - Wyświetlanie zadań według terminów wykonania
+- **Dark mode** - Tryb ciemny jako domyślny z możliwością przełączania (jasny/ciemny/systemowy)
 - **Responsywny interfejs** - Zbudowany z shadcn/ui i Tailwind CSS
 
 ### 🔄 Planowane funkcjonalności
@@ -31,6 +32,7 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 
 - **Framework**: Next.js 15 (React) z App Router
 - **UI**: shadcn/ui + Tailwind CSS + Radix UI
+- **Motywy**: next-themes (dark mode jako domyślny)
 - **ORM**: Prisma
 - **Baza danych**: SQLite (łatwa migracja na PostgreSQL)
 - **Uwierzytelnianie**: NextAuth.js
@@ -579,6 +581,24 @@ Projekt jest otwarty na współpracę. Aby dodać nowe funkcjonalności:
 - **Komponenty**: TaskTodos, TaskDetailsDialog, TasksContent
 - **API**: Pełna obsługa CRUD dla todos z odpowiednimi endpoint'ami
 - **Dokumentacja**: Utworzono `RELACJE_TODOS.txt` z szczegółowym opisem relacji i rozwiązania
+
+### Implementacja Dark Mode
+- **Biblioteka**: Zainstalowano i skonfigurowano `next-themes` dla zarządzania motywami
+- **Domyślny motyw**: Dark mode ustawiony jako domyślny dla lepszego doświadczenia użytkownika
+- **Przełączanie motywów**:
+  - Przycisk toggle w górnym pasku nawigacji (obok menu użytkownika)
+  - Funkcjonalne przyciski w ustawieniach aplikacji (zakładka "Wygląd")
+  - Obsługa trzech trybów: jasny, ciemny, systemowy
+- **CSS Variables**: Wykorzystano istniejące zmienne CSS dla dark mode w `globals.css`
+- **Komponenty**:
+  - Utworzono `ThemeToggle` component z dropdown menu
+  - Zaktualizowano `TopBarUser` o przełącznik motywu
+  - Zintegrowano `useTheme` hook w ustawieniach
+- **Provider**: Dodano `ThemeProvider` do głównego layoutu aplikacji
+- **Hydration**: Dodano `suppressHydrationWarning` dla poprawnej obsługi SSR
+- **Kolory**: Zamieniono wszystkie hardcoded kolory Tailwind na CSS variables w komponentach dashboardu
+- **Layout**: Sidebar, top bar i wszystkie główne komponenty obsługują dark mode
+- **Funkcje kolorów**: Priority i status badges używają CSS variables z fallback dla dark mode
 
 ## 📄 Licencja
 

@@ -183,7 +183,7 @@ export function DashboardContent() {
       value: stats.myTasks.toString(),
       description: "Aktywne zadania przypisane do Ciebie",
       icon: CheckSquare,
-      color: "text-blue-600",
+      color: "text-blue-600 dark:text-blue-400",
       href: "/dashboard/tasks"
     },
     {
@@ -191,7 +191,7 @@ export function DashboardContent() {
       value: stats.teams.toString(),
       description: "Zespoły, do których należysz",
       icon: Users,
-      color: "text-green-600",
+      color: "text-green-600 dark:text-green-400",
       href: "/dashboard/teams"
     },
     {
@@ -199,7 +199,7 @@ export function DashboardContent() {
       value: stats.projects.toString(),
       description: "Aktywne projekty",
       icon: FolderOpen,
-      color: "text-purple-600",
+      color: "text-purple-600 dark:text-purple-400",
       href: "/dashboard/projects"
     },
     {
@@ -207,7 +207,7 @@ export function DashboardContent() {
       value: stats.dueToday.toString(),
       description: "Zadania z terminem na dziś",
       icon: Calendar,
-      color: "text-red-600",
+      color: "text-red-600 dark:text-red-400",
       href: "/dashboard/calendar"
     },
   ]
@@ -215,26 +215,26 @@ export function DashboardContent() {
   const getPriorityColor = (priority?: string) => {
     switch (priority) {
       case "High":
-        return "bg-red-100 text-red-800"
+        return "bg-destructive/10 text-destructive"
       case "Medium":
-        return "bg-yellow-100 text-yellow-800"
+        return "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400"
       case "Low":
-        return "bg-green-100 text-green-800"
+        return "bg-green-500/10 text-green-600 dark:text-green-400"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-muted text-muted-foreground"
     }
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Done":
-        return "bg-green-100 text-green-800"
+        return "bg-green-500/10 text-green-600 dark:text-green-400"
       case "In Progress":
-        return "bg-blue-100 text-blue-800"
+        return "bg-blue-500/10 text-blue-600 dark:text-blue-400"
       case "To Do":
-        return "bg-gray-100 text-gray-800"
+        return "bg-muted text-muted-foreground"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-muted text-muted-foreground"
     }
   }
 
@@ -262,15 +262,15 @@ export function DashboardContent() {
     <>
     <div>
               {/* Top bar */}
-        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8 bg-white">
+        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-border bg-background px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
             <div id="dynamic-header" className="flex flex-1" >
       {/* Welcome section */}
       <div id="page-header">
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-foreground">
           Witaj ponownie, {session?.user?.name?.split(" ")[0] || "Użytkowniku"}!
         </h1>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-muted-foreground">
           Oto, co dzieje się z Twoimi projektami dzisiaj.
         </p>
       </div>
@@ -296,17 +296,17 @@ export function DashboardContent() {
                   </div>
                   <div className="ml-4 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
+                      <dt className="text-sm font-medium text-muted-foreground truncate">
                         {stat.name}
                       </dt>
-                      <dd className="text-lg font-medium text-gray-900">
+                      <dd className="text-lg font-medium text-foreground">
                         {stat.value}
                       </dd>
                     </dl>
                   </div>
                 </div>
                 <div className="mt-4">
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-muted-foreground">
                     {stat.description}
                   </div>
                 </div>
@@ -368,8 +368,8 @@ export function DashboardContent() {
         <CardContent>
           {recentTasks.length === 0 ? (
             <div className="text-center py-8">
-              <CheckSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500 mb-4">Nie masz jeszcze przypisanych zadań</p>
+              <CheckSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground mb-4">Nie masz jeszcze przypisanych zadań</p>
               <Button asChild>
                 <Link href="/dashboard/tasks">
                   <Plus className="mr-2 h-4 w-4" />
@@ -382,14 +382,14 @@ export function DashboardContent() {
               {recentTasks.map((task) => (
                 <div
                   key={task.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent cursor-pointer transition-colors"
                   onClick={() => handleTaskDetails(task)}
                 >
                   <div className="flex-1">
-                    <h4 className="text-sm font-medium text-gray-900">
+                    <h4 className="text-sm font-medium text-foreground">
                       {task.title}
                     </h4>
-                    <div className="flex items-center space-x-3 text-sm text-gray-500">
+                    <div className="flex items-center space-x-3 text-sm text-muted-foreground">
                       <span>{task.project.name}</span>
                       {task.subtasks.length > 0 && (
                         <span>
@@ -412,7 +412,7 @@ export function DashboardContent() {
                     <Badge className={getStatusColor(task.status)}>
                       {task.status === "Done" ? "Ukończono" : task.status === "In Progress" ? "W toku" : "Do zrobienia"}
                     </Badge>
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-muted-foreground">
                       {formatDueDate(task.dueDate)}
                     </span>
                   </div>

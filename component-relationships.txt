@@ -32,6 +32,15 @@ SHADCN/UI COMPONENTS STATUS:
 - Key components verified: Card, Button, DropdownMenu, Avatar, Badge
 - All components follow latest shadcn/ui patterns and best practices
 
+DARK MODE IMPLEMENTATION:
+- next-themes library installed and configured
+- ThemeProvider added to src/components/providers.tsx with dark as default theme
+- Dark mode CSS variables already configured in src/app/globals.css
+- ThemeToggle component created in src/components/ui/theme-toggle.tsx
+- Theme toggle added to TopBarUser component (top navigation)
+- Settings page updated to use real theme switching with useTheme hook
+- Supports light, dark, and system themes
+
 TEAMS PAGE UPDATES:
 - Updated TeamsContent component to use latest shadcn/ui patterns
 - Replaced hardcoded colors with semantic color tokens:

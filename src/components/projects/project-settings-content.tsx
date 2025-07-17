@@ -79,7 +79,7 @@ function SortableTaskStatus({
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center justify-between p-4 bg-white border rounded-lg shadow-sm"
+      className="flex items-center justify-between p-4 bg-card border rounded-lg shadow-sm"
     >
       <div className="flex items-center space-x-3">
         <div
@@ -87,7 +87,7 @@ function SortableTaskStatus({
           {...listeners}
           className="cursor-grab active:cursor-grabbing"
         >
-          <GripVertical className="h-5 w-5 text-gray-400" />
+          <GripVertical className="h-5 w-5 text-muted-foreground" />
         </div>
         <div
           className="w-4 h-4 rounded-full"

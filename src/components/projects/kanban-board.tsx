@@ -56,7 +56,7 @@ const getPriorityColor = (priority?: string) => {
     case "Low":
       return "bg-green-100 text-green-800 border-green-200"
     default:
-      return "bg-gray-100 text-gray-800 border-gray-200"
+      return "bg-muted text-muted-foreground border-border"
   }
 }
 
@@ -122,7 +122,7 @@ function SortableTaskCard({
       <Card
         className={`group hover:shadow-lg transition-all duration-200 ${
           isUpdating ? 'ring-2 ring-blue-300 shadow-lg' : ''
-        } cursor-pointer hover:translate-y-[-1px] bg-white border-0 shadow-sm rounded-lg`}
+        } cursor-pointer hover:translate-y-[-1px] bg-card border-0 shadow-sm rounded-lg`}
         onClick={handleCardClick}
       >
         <CardContent className="p-3">
@@ -132,7 +132,7 @@ function SortableTaskCard({
               {...listeners}
               className="flex-1 cursor-grab active:cursor-grabbing pr-2"
             >
-              <h3 className={`text-sm font-medium leading-tight text-gray-900 ${
+              <h3 className={`text-sm font-medium leading-tight text-foreground ${
                 isUpdating ? 'text-blue-600' : ''
               }`}>
                 {task.title}
@@ -190,7 +190,7 @@ function SortableTaskCard({
               {task.subtasks.length > 0 && (
                 <Badge
                   variant="outline"
-                  className="bg-gray-50 text-gray-700 text-xs px-2 py-0.5 h-5 border-gray-300"
+                  className="bg-muted text-muted-foreground text-xs px-2 py-0.5 h-5 border-border"
                 >
                   {completedSubtasks}/{task.subtasks.length}
                 </Badge>
@@ -199,7 +199,7 @@ function SortableTaskCard({
               {task.todos && task.todos.length > 0 && (
                 <Badge
                   variant="outline"
-                  className="bg-gray-50 text-gray-700 text-xs px-2 py-0.5 h-5 border-gray-300"
+                  className="bg-muted text-muted-foreground text-xs px-2 py-0.5 h-5 border-border"
                 >
                   {completedTodos}/{task.todos.length} Todos
                 </Badge>
@@ -223,7 +223,7 @@ function SortableTaskCard({
               <div className={`flex items-center text-xs px-2 py-1 rounded-md ${
                 isOverdue(task.dueDate)
                   ? "bg-red-50 text-red-700 border border-red-200"
-                  : "bg-gray-50 text-gray-600 border border-gray-200"
+                  : "bg-muted text-muted-foreground border border-border"
               }`}>
                 {isOverdue(task.dueDate) ? (
                   <AlertCircle className="mr-1 h-3 w-3" />
@@ -278,12 +278,12 @@ function KanbanColumn({
       >
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-2">
-            <h3 className="font-semibold text-gray-800 text-sm uppercase tracking-wide">
+            <h3 className="font-semibold text-foreground text-sm uppercase tracking-wide">
               {status.name}
             </h3>
             <Badge
               variant="secondary"
-              className="text-xs bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+              className="text-xs bg-muted text-muted-foreground hover:bg-accent transition-colors"
             >
               {tasks.length}
             </Badge>
@@ -531,9 +531,9 @@ export function KanbanBoard({
 
         <DragOverlay>
           {activeTask ? (
-            <Card className="w-72 opacity-95 shadow-2xl rotate-3 transform bg-white border-0 rounded-lg">
+            <Card className="w-72 opacity-95 shadow-2xl rotate-3 transform bg-card border-0 rounded-lg">
               <CardContent className="p-3">
-                <h3 className="text-sm font-medium text-gray-900 leading-tight">
+                <h3 className="text-sm font-medium text-foreground leading-tight">
                   {activeTask.title}
                 </h3>
                 <div className="flex items-center justify-between mt-2">

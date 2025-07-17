@@ -16,12 +16,14 @@ import {
   Settings,
   LogOut,
 } from "lucide-react"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 
 export function TopBarUser() {
   const { data: session } = useSession()
 
   return (
     <div className="flex items-center gap-x-4 lg:gap-x-6">
+      <ThemeToggle />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-8 w-8 rounded-full">
