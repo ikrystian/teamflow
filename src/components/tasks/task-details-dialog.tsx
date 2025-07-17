@@ -50,10 +50,30 @@ export function TaskDetailsDialog({
   const [comments, setComments] = useState(task?.comments || [])
   const [todos, setTodos] = useState(task?.todos || [])
 
+  // Fetch fresh task data when dialog opens
   useEffect(() => {
-    setComments(task?.comments || [])
-    setTodos(task?.todos || [])
-  }, [task?.comments, task?.todos])
+    const fetchTaskData = async () => {
+      if (open && task?.id) {
+        try {
+          const response = await fetch(`/api/tasks/${task.id}`)
+          if (response.ok) {
+            const data = await response.json()
+            setComments(data.task.comments || [])
+            setTodos(data.task.todos || [])
+          }
+        } catch (error) {
+          console.error("Error fetching task data:", error)
+        }
+      }
+    }
+
+    if (open && task?.id) {
+      fetchTaskData()
+    } else {
+      setComments(task?.comments || [])
+      setTodos(task?.todos || [])
+    }
+  }, [open, task?.id, task?.comments, task?.todos])
 
   const handleCommentAdded = (newComment: { id: string; content: string; createdAt: string; author: { id: string; name: string; avatarUrl?: string } }) => {
     setComments(prev => [newComment, ...prev])

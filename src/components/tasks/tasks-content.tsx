@@ -476,6 +476,7 @@ export function TasksContent() {
         onEdit={handleEditTask}
         onTimeTracking={handleTimeTracking}
         onDelete={handleDeleteTask}
+        onTaskUpdated={fetchTasks}
         canEdit={selectedTask ? canEditTask(selectedTask) : false}
       />
 

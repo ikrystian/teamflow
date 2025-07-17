@@ -16,6 +16,12 @@ model User {
   email         String      @unique
   password      String
   avatarUrl     String?
+  phone         String?
+  location      String?
+  bio           String?
+  jobTitle      String?
+  company       String?
+  website       String?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
   teams         Team[]      @relation("TeamMembers")

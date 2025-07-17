@@ -14,12 +14,12 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 - **Ustawienia projektu** - Zarządzanie statusami zadań z kolorami i kolejnością
 - **Time tracking** - Logowanie czasu pracy nad zadaniami, śledzenie postępu względem szacowanego czasu
 - **Załączniki obrazków** - Możliwość dodawania obrazków do zadań podczas tworzenia i edycji
+- **Lista todos** - Funkcjonalność checklist w zadaniach z możliwością dodawania, edycji i usuwania elementów
 - **Dashboard** - Przegląd statystyk i ostatnich aktywności
 - **Widok kalendarza** - Wyświetlanie zadań według terminów wykonania
 - **Responsywny interfejs** - Zbudowany z shadcn/ui i Tailwind CSS
 
 ### 🔄 Planowane funkcjonalności
-- System komentarzy i podzadań
 - Zaproszenia do zespołów przez email
 - Powiadomienia w aplikacji
 - Załączniki plików (dokumenty, PDF, itp.)
@@ -133,6 +133,14 @@ Aplikacja będzie dostępna pod adresem [http://localhost:3000](http://localhost
 - **Optimistic updates** - Natychmiastowe aktualizacje UI podczas przeciągania z rollback w przypadku błędu
 - **Responsywny design** - Kolumny przewijane poziomo, karty dostosowują się do szerokości
 - **Accessibility** - Obsługa klawiatury, tooltips, odpowiednie kontrasty kolorów
+
+### Lista todos w zadaniach
+- **Checklist w zadaniach** - Każde zadanie może mieć listę elementów do zrobienia (todos)
+- **Zarządzanie todos** - Dodawanie, edycja, usuwanie i oznaczanie jako ukończone
+- **Progress tracking** - Pasek postępu pokazujący procent ukończonych todos
+- **Liczniki** - Wyświetlanie liczby ukończonych/wszystkich todos
+- **Integracja z API** - Pełna obsługa CRUD przez REST API
+- **Real-time updates** - Natychmiastowe aktualizacje UI po zmianach
 
 ### Kompatybilność wsteczna
 - Istniejące zadania zachowują swoje statusy
@@ -279,6 +287,17 @@ model Task {
   subtasks      Subtask[]
   comments      Comment[]
   timeEntries   TimeEntry[] // Wpisy czasu pracy
+  todos         Todo[]      // Lista do zrobienia
+}
+
+model Todo {
+  id          String   @id @default(cuid())
+  title       String
+  isCompleted Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  taskId      String
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
 }
 
 model TimeEntry {
@@ -402,6 +421,12 @@ DELETE /api/tasks/[taskId]
 - Wpisy czasu (timeEntries)
 - Załączone obrazy (taskImages)
 
+### Todos
+- `GET /api/tasks/[taskId]/todos` - Lista todos dla zadania
+- `POST /api/tasks/[taskId]/todos` - Tworzenie nowego todo
+- `PATCH /api/tasks/[taskId]/todos/[todoId]` - Aktualizacja todo (title, isCompleted)
+- `DELETE /api/tasks/[taskId]/todos/[todoId]` - Usuwanie todo
+
 ### Inne endpoints
 - `GET /api/tasks` - Lista zadań
 - `POST /api/tasks` - Tworzenie zadania
@@ -489,6 +514,17 @@ Projekt jest otwarty na współpracę. Aby dodać nowe funkcjonalności:
 - **UX**: Dialog potwierdzenia z ostrzeżeniem o nieodwracalności operacji
 - **Komponenty**: Nowy komponent AlertDialog do potwierdzania operacji usuwania
 - **Dokumentacja**: Zaktualizowano `relations.txt` z opisem uprawnień i relacji
+
+### Poprawka funkcjonalności todos
+- **Problem**: Dane z listy todo nie dodawały się do bazy danych i nie były wyświetlane
+- **Przyczyna**: Brak `todos: true` w include API endpoint `/api/tasks`, brak odświeżania danych w TaskDetailsDialog
+- **Rozwiązanie**:
+  - Dodano `todos: true` w include dla GET /api/tasks aby todos były pobierane z bazy danych
+  - Dodano pobieranie aktualnych danych zadania w TaskDetailsDialog przy otwieraniu
+  - Dodano onTaskUpdated callback do odświeżania listy zadań po zmianach todos
+- **Komponenty**: TaskTodos, TaskDetailsDialog, TasksContent
+- **API**: Pełna obsługa CRUD dla todos z odpowiednimi endpoint'ami
+- **Dokumentacja**: Utworzono `RELACJE_TODOS.txt` z szczegółowym opisem relacji i rozwiązania
 
 ## 📄 Licencja
 

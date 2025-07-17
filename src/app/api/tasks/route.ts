@@ -61,6 +61,7 @@ export async function GET(request: NextRequest) {
         },
 
         subtasks: true,
+        todos: true,
         comments: {
           include: {
             author: {
@@ -174,7 +175,7 @@ export async function POST(request: NextRequest) {
           isDefault: true
         }
       })
-      
+
       if (defaultStatus) {
         finalStatusId = defaultStatus.id
       }
