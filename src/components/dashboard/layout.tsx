@@ -17,12 +17,12 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: Home },
-    { name: "My Tasks", href: "/dashboard/tasks", icon: CheckSquare },
-    { name: "Teams", href: "/dashboard/teams", icon: Users },
-    { name: "Projects", href: "/dashboard/projects", icon: FolderOpen },
-    { name: "Reports", href: "/dashboard/reports", icon: BarChart3 },
-    { name: "Calendar", href: "/dashboard/calendar", icon: Calendar },
+    { name: "Panel", href: "/dashboard", icon: Home },
+    { name: "Moje zadania", href: "/dashboard/tasks", icon: CheckSquare },
+    { name: "Zespoły", href: "/dashboard/teams", icon: Users },
+    { name: "Projekty", href: "/dashboard/projects", icon: FolderOpen },
+    { name: "Raporty", href: "/dashboard/reports", icon: BarChart3 },
+    { name: "Kalendarz", href: "/dashboard/calendar", icon: Calendar },
   ]
 
   return (

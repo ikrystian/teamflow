@@ -91,7 +91,7 @@ export function DashboardContent() {
   })
   const [recentTasks, setRecentTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
-  
+
   // Task dialog states
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [taskDetailsDialogOpen, setTaskDetailsDialogOpen] = useState(false)
@@ -126,7 +126,7 @@ export function DashboardContent() {
       })
 
       setRecentTasks(tasksData.tasks.slice(0, 5))
-      
+
       // For dashboard view, we'll use an empty array for team members
       // In a real app, you might want to fetch team members from the user's teams
       setTeamMembers([])
@@ -165,33 +165,33 @@ export function DashboardContent() {
 
   const statsConfig = [
     {
-      name: "My Tasks",
+      name: "Moje zadania",
       value: stats.myTasks.toString(),
-      description: "Active tasks assigned to you",
+      description: "Aktywne zadania przypisane do Ciebie",
       icon: CheckSquare,
       color: "text-blue-600",
       href: "/dashboard/tasks"
     },
     {
-      name: "Teams",
+      name: "Zespoły",
       value: stats.teams.toString(),
-      description: "Teams you're part of",
+      description: "Zespoły, do których należysz",
       icon: Users,
       color: "text-green-600",
       href: "/dashboard/teams"
     },
     {
-      name: "Projects",
+      name: "Projekty",
       value: stats.projects.toString(),
-      description: "Active projects",
+      description: "Aktywne projekty",
       icon: FolderOpen,
       color: "text-purple-600",
       href: "/dashboard/projects"
     },
     {
-      name: "Due Today",
+      name: "Termin dzisiaj",
       value: stats.dueToday.toString(),
-      description: "Tasks due today",
+      description: "Zadania z terminem na dziś",
       icon: Calendar,
       color: "text-red-600",
       href: "/dashboard/calendar"
@@ -225,16 +225,16 @@ export function DashboardContent() {
   }
 
   const formatDueDate = (dueDate?: string) => {
-    if (!dueDate) return "No due date"
+    if (!dueDate) return "Brak terminu"
     const date = new Date(dueDate)
     const today = new Date()
     const tomorrow = new Date(today)
     tomorrow.setDate(tomorrow.getDate() + 1)
 
     if (date.toDateString() === today.toDateString()) {
-      return "Today"
+      return "Dzisiaj"
     } else if (date.toDateString() === tomorrow.toDateString()) {
-      return "Tomorrow"
+      return "Jutro"
     } else {
       return date.toLocaleDateString()
     }
@@ -254,10 +254,10 @@ export function DashboardContent() {
       {/* Welcome section */}
       <div id="page-header">
         <h1 className="text-2xl font-bold text-gray-900">
-          Welcome back, {session?.user?.name?.split(" ")[0] || "User"}!
+          Witaj ponownie, {session?.user?.name?.split(" ")[0] || "Użytkowniku"}!
         </h1>
         <p className="text-sm text-gray-500">
-          Here&apos;s what&apos;s happening with your projects today.
+          Oto, co dzieje się z Twoimi projektami dzisiaj.
         </p>
       </div>
             </div>
@@ -305,9 +305,9 @@ export function DashboardContent() {
       {/* Quick actions */}
       <Card>
         <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
+          <CardTitle>Szybkie działania</CardTitle>
           <CardDescription>
-            Get started with common tasks
+            Rozpocznij od typowych zadań
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -315,19 +315,19 @@ export function DashboardContent() {
             <Link href="/dashboard/tasks">
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
-                Create Task
+                Utwórz zadanie
               </Button>
             </Link>
             <Link href="/dashboard/teams">
               <Button variant="outline">
                 <Users className="mr-2 h-4 w-4" />
-                Create Team
+                Utwórz zespół
               </Button>
             </Link>
             <Link href="/dashboard/projects">
               <Button variant="outline">
                 <FolderOpen className="mr-2 h-4 w-4" />
-                New Project
+                Nowy projekt
               </Button>
             </Link>
           </div>
@@ -339,14 +339,14 @@ export function DashboardContent() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Recent Tasks</CardTitle>
+              <CardTitle>Ostatnie zadania</CardTitle>
               <CardDescription>
-                Your most recent task activity
+                Twoja ostatnia aktywność w zadaniach
               </CardDescription>
             </div>
             <Link href="/dashboard/tasks">
               <Button variant="outline" size="sm">
-                View All
+                Wyświetl wszystko
               </Button>
             </Link>
           </div>
@@ -355,11 +355,11 @@ export function DashboardContent() {
           {recentTasks.length === 0 ? (
             <div className="text-center py-8">
               <CheckSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500 mb-4">No tasks assigned to you yet</p>
+              <p className="text-gray-500 mb-4">Nie masz jeszcze przypisanych zadań</p>
               <Link href="/dashboard/tasks">
                 <Button>
                   <Plus className="mr-2 h-4 w-4" />
-                  Create Your First Task
+                  Utwórz swoje pierwsze zadanie
                 </Button>
               </Link>
             </div>
@@ -380,11 +380,11 @@ export function DashboardContent() {
                   <div className="flex items-center space-x-2">
                     {task.priority && (
                       <Badge className={getPriorityColor(task.priority)}>
-                        {task.priority}
+                        {task.priority === "High" ? "Wysoki" : task.priority === "Medium" ? "Średni" : "Niski"}
                       </Badge>
                     )}
                     <Badge className={getStatusColor(task.status)}>
-                      {task.status}
+                      {task.status === "Done" ? "Ukończono" : task.status === "In Progress" ? "W toku" : "Do zrobienia"}
                     </Badge>
                     <span className="text-sm text-gray-500">
                       {formatDueDate(task.dueDate)}

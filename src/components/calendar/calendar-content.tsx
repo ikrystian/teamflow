@@ -96,11 +96,11 @@ export function CalendarContent() {
   }
 
   const monthNames = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+    "Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
+    "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"
   ]
 
-  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+  const dayNames = ["Niedz.", "Pon.", "Wt.", "Śr.", "Czw.", "Pt.", "Sob."]
 
   const handleTaskDetails = (task: Task) => {
     setSelectedTask(task)
@@ -117,17 +117,17 @@ export function CalendarContent() {
 
   return (
     <>
-        <div>
-              {/* Top bar */}
+      <div>
+        {/* Top bar */}
         <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
             <div id="dynamic-header" className="flex flex-1" >
-      <div id="page-header"  className="flex justify-between items-center w-full">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Calendar</h1>
-          <p className="text-gray-500">View tasks by their due dates</p>
-        </div>
-      </div>
+              <div id="page-header" className="flex justify-between items-center w-full">
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Kalendarz</h1>
+                  <p className="text-gray-500">Wyświetl zadania według daty ich wykonania</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -135,139 +135,137 @@ export function CalendarContent() {
         {/* Page content */}
         <main className="py-10">
           <div className="px-4 sm:px-6 lg:px-8">
-    <div className="space-y-6">
+            <div className="space-y-6">
 
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-xl">
-              {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-            </CardTitle>
-            <div className="flex space-x-2">
-              <Button variant="outline" size="sm" onClick={() => navigateMonth('prev')}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => navigateMonth('next')}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-7 gap-1 mb-4">
-            {dayNames.map(day => (
-              <div key={day} className="p-2 text-center font-medium text-gray-500 text-sm">
-                {day}
-              </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-7 gap-1">
-            {/* Empty cells for days before the first day of the month */}
-            {Array.from({ length: firstDay }).map((_, index) => (
-              <div key={`empty-${index}`} className="h-24 p-1"></div>
-            ))}
-
-            {/* Days of the month */}
-            {Array.from({ length: daysInMonth }).map((_, index) => {
-              const day = index + 1
-              const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
-              const tasksForDay = getTasksForDate(date)
-              const isToday = date.toDateString() === today.toDateString()
-
-              return (
-                <div
-                  key={day}
-                  className={`h-24 p-1 border rounded-lg ${
-                    isToday ? 'bg-blue-50 border-blue-200' : 'border-gray-200'
-                  }`}
-                >
-                  <div className={`text-sm font-medium mb-1 ${
-                    isToday ? 'text-blue-600' : 'text-gray-900'
-                  }`}>
-                    {day}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-xl">
+                      {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+                    </CardTitle>
+                    <div className="flex space-x-2">
+                      <Button variant="outline" size="sm" onClick={() => navigateMonth('prev')}>
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => navigateMonth('next')}>
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    {tasksForDay.slice(0, 2).map(task => (
-                      <div
-                        key={task.id}
-                        className="text-xs p-1 rounded bg-blue-100 text-blue-800 truncate"
-                        title={`${task.title} - ${task.project.name}`}
-                      >
-                        {task.title}
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-7 gap-1 mb-4">
+                    {dayNames.map(day => (
+                      <div key={day} className="p-2 text-center font-medium text-gray-500 text-sm">
+                        {day}
                       </div>
                     ))}
-                    {tasksForDay.length > 2 && (
-                      <div className="text-xs text-gray-500">
-                        +{tasksForDay.length - 2} more
-                      </div>
-                    )}
                   </div>
-                </div>
-              )
-            })}
+
+                  <div className="grid grid-cols-7 gap-1">
+                    {/* Empty cells for days before the first day of the month */}
+                    {Array.from({ length: firstDay }).map((_, index) => (
+                      <div key={`empty-${index}`} className="h-24 p-1"></div>
+                    ))}
+
+                    {/* Days of the month */}
+                    {Array.from({ length: daysInMonth }).map((_, index) => {
+                      const day = index + 1
+                      const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
+                      const tasksForDay = getTasksForDate(date)
+                      const isToday = date.toDateString() === today.toDateString()
+
+                      return (
+                        <div
+                          key={day}
+                          className={`h-24 p-1 border rounded-lg ${isToday ? 'bg-blue-50 border-blue-200' : 'border-gray-200'
+                            }`}
+                        >
+                          <div className={`text-sm font-medium mb-1 ${isToday ? 'text-blue-600' : 'text-gray-900'
+                            }`}>
+                            {day}
+                          </div>
+                          <div className="space-y-1">
+                            {tasksForDay.slice(0, 2).map(task => (
+                              <div
+                                key={task.id}
+                                className="text-xs p-1 rounded bg-blue-100 text-blue-800 truncate"
+                                title={`${task.title} - ${task.project.name}`}
+                              >
+                                {task.title}
+                              </div>
+                            ))}
+                            {tasksForDay.length > 2 && (
+                              <div className="text-xs text-gray-500">
+                                +{tasksForDay.length - 2} więcej
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Upcoming tasks */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Nadchodzące zadania</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {tasks.length === 0 ? (
+                    <div className="text-center py-8">
+                      <CalendarIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">Nie znaleziono zadań z terminami wykonania</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {tasks
+                        .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+                        .slice(0, 10)
+                        .map(task => (
+                          <div
+                            key={task.id}
+                            className="flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                            onClick={() => handleTaskDetails(task)}
+                          >
+                            <div className="flex-1">
+                              <h4 className="font-medium text-gray-900">{task.title}</h4>
+                              <p className="text-sm text-gray-500">
+                                {task.project.name} • {task.project.team.name}
+                              </p>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              {task.priority && (
+                                <Badge className={getPriorityColor(task.priority)}>
+                                  {task.priority === "High" ? "Wysoki" : task.priority === "Medium" ? "Średni" : "Niski"}
+                                </Badge>
+                              )}
+                              <span className="text-sm text-gray-500">
+                                {new Date(task.dueDate).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </main>
+      </div>
 
-      {/* Upcoming tasks */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Upcoming Tasks</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {tasks.length === 0 ? (
-            <div className="text-center py-8">
-              <CalendarIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">No tasks with due dates found</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {tasks
-                .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
-                .slice(0, 10)
-                .map(task => (
-                  <div 
-                    key={task.id} 
-                    className="flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
-                    onClick={() => handleTaskDetails(task)}
-                  >
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900">{task.title}</h4>
-                      <p className="text-sm text-gray-500">
-                        {task.project.name} • {task.project.team.name}
-                      </p>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {task.priority && (
-                        <Badge className={getPriorityColor(task.priority)}>
-                          {task.priority}
-                        </Badge>
-                      )}
-                      <span className="text-sm text-gray-500">
-                        {new Date(task.dueDate).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-    </div>
-    </main>
-    </div>
-
-    {/* Task Details Dialog */}
-    {selectedTask && (
-      <TaskDetailsDialog
-        task={selectedTask as any}
-        open={taskDetailsDialogOpen}
-        onOpenChange={setTaskDetailsDialogOpen}
-      />
-    )}
+      {/* Task Details Dialog */}
+      {selectedTask && (
+        <TaskDetailsDialog
+          task={selectedTask as any}
+          open={taskDetailsDialogOpen}
+          onOpenChange={setTaskDetailsDialogOpen}
+        />
+      )}
     </>
   )
 }

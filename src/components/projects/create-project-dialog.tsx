@@ -33,11 +33,11 @@ interface CreateProjectDialogProps {
   teams: Team[]
 }
 
-export function CreateProjectDialog({ 
-  open, 
-  onOpenChange, 
-  onProjectCreated, 
-  teams 
+export function CreateProjectDialog({
+  open,
+  onOpenChange,
+  onProjectCreated,
+  teams
 }: CreateProjectDialogProps) {
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
@@ -56,10 +56,10 @@ export function CreateProjectDialog({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ 
-          name, 
+        body: JSON.stringify({
+          name,
           description: description || undefined,
-          teamId 
+          teamId
         }),
       })
 
@@ -70,10 +70,10 @@ export function CreateProjectDialog({
         onProjectCreated()
       } else {
         const data = await response.json()
-        setError(data.error || "Failed to create project")
+        setError(data.error || "Nie udało się utworzyć projektu")
       }
     } catch (error) {
-      setError("An error occurred. Please try again.")
+      setError("Wystąpił błąd. Spróbuj ponownie.")
     } finally {
       setLoading(false)
     }
@@ -91,29 +91,29 @@ export function CreateProjectDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
-          <DialogTitle>Create New Project</DialogTitle>
+          <DialogTitle>Utwórz nowy projekt</DialogTitle>
           <DialogDescription>
-            Create a new project to organize tasks and collaborate with your team.
+            Utwórz nowy projekt, aby organizować zadania i współpracować z zespołem.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Project Name</Label>
+              <Label htmlFor="name">Nazwa projektu</Label>
               <Input
                 id="name"
-                placeholder="Enter project name"
+                placeholder="Wprowadź nazwę projektu"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
               />
             </div>
-            
+
             <div className="grid gap-2">
-              <Label htmlFor="description">Description (Optional)</Label>
+              <Label htmlFor="description">Opis (opcjonalnie)</Label>
               <Textarea
                 id="description"
-                placeholder="Enter project description"
+                placeholder="Wprowadź opis projektu"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
@@ -121,10 +121,10 @@ export function CreateProjectDialog({
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="team">Team</Label>
+              <Label htmlFor="team">Zespół</Label>
               <Select value={teamId} onValueChange={setTeamId} required>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a team" />
+                  <SelectValue placeholder="Wybierz zespół" />
                 </SelectTrigger>
                 <SelectContent>
                   {teams.map((team) => (
@@ -142,10 +142,10 @@ export function CreateProjectDialog({
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
+              Anuluj
             </Button>
             <Button type="submit" disabled={loading || !name.trim() || !teamId}>
-              {loading ? "Creating..." : "Create Project"}
+              {loading ? "Tworzenie..." : "Utwórz projekt"}
             </Button>
           </DialogFooter>
         </form>
