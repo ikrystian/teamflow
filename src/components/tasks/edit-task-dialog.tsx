@@ -126,7 +126,7 @@ export function EditTaskDialog({
       if (response.ok) {
         const data = await response.json()
         setTaskStatuses(data.taskStatuses)
-        
+
         // After loading task statuses, ensure the current task's status is properly set
         if (task && data.taskStatuses.length > 0) {
           if (task.statusId) {
@@ -154,7 +154,7 @@ export function EditTaskDialog({
         }
       }
     } catch (error) {
-      console.error("Error fetching task statuses:", error)
+      console.error("Błąd podczas pobierania statusów zadań:", error)
     }
   }
 
@@ -206,10 +206,10 @@ export function EditTaskDialog({
         handleClose()
       } else {
         const data = await response.json()
-        setError(data.error || "Failed to update task")
+        setError(data.error || "Nie udało się zaktualizować zadania")
       }
     } catch (error) {
-      setError("An error occurred. Please try again.")
+      setError("Wystąpił błąd. Spróbuj ponownie.")
     } finally {
       setLoading(false)
     }
@@ -229,44 +229,44 @@ export function EditTaskDialog({
 
   const handleImageUpload = async (file: File): Promise<void> => {
     if (!task) return
-    
+
     const formData = new FormData()
     formData.append('file', file)
-    
+
     try {
       const response = await fetch(`/api/tasks/${task.id}/images`, {
         method: 'POST',
         body: formData
       })
-      
+
       if (response.ok) {
         const newImage = await response.json()
         setImages(prev => [...prev, newImage])
       } else {
-        throw new Error('Failed to upload image')
+        throw new Error('Nie udało się przesłać obrazu')
       }
     } catch (error) {
-      console.error('Error uploading image:', error)
-      setError('Failed to upload image')
+      console.error('Błąd podczas przesyłania obrazu:', error)
+      setError('Nie udało się przesłać obrazu')
     }
   }
 
   const handleImageDelete = async (imageId: string): Promise<void> => {
     if (!task) return
-    
+
     try {
       const response = await fetch(`/api/tasks/${task.id}/images?imageId=${imageId}`, {
         method: 'DELETE'
       })
-      
+
       if (response.ok) {
         setImages(prev => prev.filter(img => img.id !== imageId))
       } else {
-        throw new Error('Failed to delete image')
+        throw new Error('Nie udało się usunąć obrazu')
       }
     } catch (error) {
-      console.error('Error deleting image:', error)
-      setError('Failed to delete image')
+      console.error('Błąd podczas usuwania obrazu:', error)
+      setError('Nie udało się usunąć obrazu')
     }
   }
 
@@ -289,18 +289,18 @@ export function EditTaskDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[625px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Task</DialogTitle>
+          <DialogTitle>Edytuj zadanie</DialogTitle>
           <DialogDescription>
-            Update task details. {task ? `You can edit this task because you ${task.createdBy?.id === task.assignee?.id ? "created and are assigned to it" : task.assignee ? "are assigned to it" : "created it"}.` : "Loading task details..."}
+            Zaktualizuj szczegóły zadania. {task ? `Możesz edytować to zadanie, ponieważ ${task.createdBy?.id === task.assignee?.id ? "utworzyłeś i jesteś do niego przypisany" : task.assignee ? "jesteś do niego przypisany" : "utworzyłeś je"}.` : "Ładowanie szczegółów zadania..."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="title">Task Title</Label>
+              <Label htmlFor="title">Tytuł zadania</Label>
               <Input
                 id="title"
-                placeholder="Enter task title"
+                placeholder="Wprowadź tytuł zadania"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
@@ -308,11 +308,11 @@ export function EditTaskDialog({
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Opis</Label>
               <RichTextEditor
                 content={description}
                 onChange={setDescription}
-                placeholder="Enter task description"
+                placeholder="Wprowadź opis zadania"
               />
             </div>
 
@@ -331,7 +331,7 @@ export function EditTaskDialog({
                   }
                 }} required>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue placeholder="Wybierz status" />
                   </SelectTrigger>
                   <SelectContent>
                     {taskStatuses.length > 0 ? (
@@ -349,9 +349,9 @@ export function EditTaskDialog({
                     ) : (
                       // Fallback to default statuses if no custom ones are configured
                       <>
-                        <SelectItem value="To Do">To Do</SelectItem>
-                        <SelectItem value="In Progress">In Progress</SelectItem>
-                        <SelectItem value="Done">Done</SelectItem>
+                        <SelectItem value="To Do">Do zrobienia</SelectItem>
+                        <SelectItem value="In Progress">W toku</SelectItem>
+                        <SelectItem value="Done">Zrobione</SelectItem>
                       </>
                     )}
                   </SelectContent>
@@ -359,28 +359,28 @@ export function EditTaskDialog({
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="priority">Priority</Label>
+                <Label htmlFor="priority">Priorytet</Label>
                 <Select value={priority} onValueChange={setPriority}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select priority" />
+                    <SelectValue placeholder="Wybierz priorytet" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Low">Low</SelectItem>
-                    <SelectItem value="Medium">Medium</SelectItem>
-                    <SelectItem value="High">High</SelectItem>
+                    <SelectItem value="Low">Niski</SelectItem>
+                    <SelectItem value="Medium">Średni</SelectItem>
+                    <SelectItem value="High">Wysoki</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="assignee">Assignee</Label>
+              <Label htmlFor="assignee">Przypisany</Label>
               <Select value={assigneeId} onValueChange={setAssigneeId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select assignee" />
+                  <SelectValue placeholder="Wybierz przypisanego" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                  <SelectItem value="unassigned">Nieprzypisany</SelectItem>
                   {teamMembers.map((member) => (
                     <SelectItem key={member.id} value={member.id}>
                       {member.name || member.email}
@@ -392,7 +392,7 @@ export function EditTaskDialog({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="dueDate">Due Date</Label>
+                <Label htmlFor="dueDate">Termin wykonania</Label>
                 <Input
                   id="dueDate"
                   type="date"
@@ -402,33 +402,33 @@ export function EditTaskDialog({
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="estimatedHours">Estimated Time</Label>
+                <Label htmlFor="estimatedHours">Szacowany czas</Label>
                 <Select value={estimatedHours} onValueChange={setEstimatedHours}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select estimated time" />
+                    <SelectValue placeholder="Wybierz szacowany czas" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">No estimate</SelectItem>
-                    <SelectItem value="0.5">30 minutes</SelectItem>
-                    <SelectItem value="1">1 hour</SelectItem>
-                    <SelectItem value="1.5">1.5 hours</SelectItem>
-                    <SelectItem value="2">2 hours</SelectItem>
-                    <SelectItem value="2.5">2.5 hours</SelectItem>
-                    <SelectItem value="3">3 hours</SelectItem>
-                    <SelectItem value="3.5">3.5 hours</SelectItem>
-                    <SelectItem value="4">4 hours</SelectItem>
-                    <SelectItem value="4.5">4.5 hours</SelectItem>
-                    <SelectItem value="5">5 hours</SelectItem>
-                    <SelectItem value="5.5">5.5 hours</SelectItem>
-                    <SelectItem value="6">6 hours</SelectItem>
-                    <SelectItem value="6.5">6.5 hours</SelectItem>
-                    <SelectItem value="7">7 hours</SelectItem>
-                    <SelectItem value="7.5">7.5 hours</SelectItem>
-                    <SelectItem value="8">8 hours</SelectItem>
-                    <SelectItem value="12">12 hours</SelectItem>
-                    <SelectItem value="16">16 hours</SelectItem>
-                    <SelectItem value="24">24 hours</SelectItem>
-                    <SelectItem value="40">40 hours</SelectItem>
+                    <SelectItem value="none">Brak szacunku</SelectItem>
+                    <SelectItem value="0.5">30 minut</SelectItem>
+                    <SelectItem value="1">1 godzina</SelectItem>
+                    <SelectItem value="1.5">1.5 godziny</SelectItem>
+                    <SelectItem value="2">2 godziny</SelectItem>
+                    <SelectItem value="2.5">2.5 godziny</SelectItem>
+                    <SelectItem value="3">3 godziny</SelectItem>
+                    <SelectItem value="3.5">3.5 godziny</SelectItem>
+                    <SelectItem value="4">4 godziny</SelectItem>
+                    <SelectItem value="4.5">4.5 godziny</SelectItem>
+                    <SelectItem value="5">5 godzin</SelectItem>
+                    <SelectItem value="5.5">5.5 godziny</SelectItem>
+                    <SelectItem value="6">6 godzin</SelectItem>
+                    <SelectItem value="6.5">6.5 godziny</SelectItem>
+                    <SelectItem value="7">7 godzin</SelectItem>
+                    <SelectItem value="7.5">7.5 godziny</SelectItem>
+                    <SelectItem value="8">8 godzin</SelectItem>
+                    <SelectItem value="12">12 godzin</SelectItem>
+                    <SelectItem value="16">16 godzin</SelectItem>
+                    <SelectItem value="24">24 godziny</SelectItem>
+                    <SelectItem value="40">40 godzin</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -447,13 +447,13 @@ export function EditTaskDialog({
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
+              Anuluj
             </Button>
             <Button
               type="submit"
               disabled={loading || !title.trim() || !hasChanges}
             >
-              {loading ? "Updating..." : "Update Task"}
+              {loading ? "Aktualizowanie..." : "Zaktualizuj zadanie"}
             </Button>
           </DialogFooter>
         </form>

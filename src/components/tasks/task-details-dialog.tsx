@@ -102,15 +102,15 @@ export function TaskDetailsDialog({
   canEdit = false
 }: TaskDetailsDialogProps) {
   const [comments, setComments] = useState(task?.comments || [])
-  
+
   useEffect(() => {
     setComments(task?.comments || [])
   }, [task?.comments])
-  
+
   const handleCommentAdded = (newComment: any) => {
     setComments(prev => [newComment, ...prev])
   }
-  
+
   if (!task) return null
 
   const getPriorityColor = (priority?: string) => {
@@ -151,9 +151,9 @@ export function TaskDetailsDialog({
     tomorrow.setDate(tomorrow.getDate() + 1)
 
     if (date.toDateString() === today.toDateString()) {
-      return "Today"
+      return "Dzisiaj"
     } else if (date.toDateString() === tomorrow.toDateString()) {
-      return "Tomorrow"
+      return "Jutro"
     } else {
       return date.toLocaleDateString()
     }
@@ -187,7 +187,7 @@ export function TaskDetailsDialog({
                   }}
                 >
                   <Edit className="h-4 w-4 mr-2" />
-                  Edit
+                  Edytuj
                 </Button>
               )}
               {onTimeTracking && (
@@ -200,7 +200,7 @@ export function TaskDetailsDialog({
                   }}
                 >
                   <Timer className="h-4 w-4 mr-2" />
-                  Log Time
+                  Zaloguj czas
                 </Button>
               )}
             </div>
@@ -215,7 +215,7 @@ export function TaskDetailsDialog({
             </Badge>
             {task.priority && (
               <Badge className={getPriorityColor(task.priority)}>
-                {task.priority} Priority
+                {task.priority} Priorytet
               </Badge>
             )}
           </div>
@@ -223,8 +223,8 @@ export function TaskDetailsDialog({
           {/* Description */}
           {task.description && (
             <div>
-              <h4 className="font-medium text-gray-900 mb-2">Description</h4>
-              <div 
+              <h4 className="font-medium text-gray-900 mb-2">Opis</h4>
+              <div
                 className="text-gray-700 text-sm leading-relaxed prose prose-sm max-w-none"
                 dangerouslySetInnerHTML={{ __html: task.description }}
               />
@@ -236,10 +236,10 @@ export function TaskDetailsDialog({
             <div>
               <h4 className="font-medium text-gray-900 mb-3 flex items-center">
                 <Image className="h-4 w-4 mr-2" />
-                Images ({task.images.length})
+                Obrazy ({task.images.length})
               </h4>
-              <ImageGallery 
-                images={task.images} 
+              <ImageGallery
+                images={task.images}
                 editable={false}
               />
             </div>
@@ -251,7 +251,7 @@ export function TaskDetailsDialog({
             <div className="flex items-center space-x-3">
               <User className="h-4 w-4 text-gray-400" />
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Assignee</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Przypisany</p>
                 {task.assignee ? (
                   <div className="flex items-center space-x-2 mt-1">
                     <Avatar className="h-6 w-6">
@@ -263,7 +263,7 @@ export function TaskDetailsDialog({
                     <span className="text-sm font-medium">{task.assignee.name}</span>
                   </div>
                 ) : (
-                  <span className="text-sm text-gray-500 mt-1">Unassigned</span>
+                  <span className="text-sm text-gray-500 mt-1">Nieprzypisany</span>
                 )}
               </div>
             </div>
@@ -272,7 +272,7 @@ export function TaskDetailsDialog({
             <div className="flex items-center space-x-3">
               <UserCheck className="h-4 w-4 text-gray-400" />
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Created By</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Utworzone przez</p>
                 {task.createdBy ? (
                   <div className="flex items-center space-x-2 mt-1">
                     <Avatar className="h-6 w-6">
@@ -284,7 +284,7 @@ export function TaskDetailsDialog({
                     <span className="text-sm font-medium">{task.createdBy.name}</span>
                   </div>
                 ) : (
-                  <span className="text-sm text-gray-500 mt-1">Unknown</span>
+                  <span className="text-sm text-gray-500 mt-1">Nieznany</span>
                 )}
               </div>
             </div>
@@ -293,7 +293,7 @@ export function TaskDetailsDialog({
             <div className="flex items-center space-x-3">
               <Calendar className="h-4 w-4 text-gray-400" />
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Due Date</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Termin wykonania</p>
                 {task.dueDate ? (
                   <div className={`flex items-center space-x-1 mt-1 ${
                     isOverdue(task.dueDate) ? "text-red-600" : "text-gray-900"
@@ -304,7 +304,7 @@ export function TaskDetailsDialog({
                     </span>
                   </div>
                 ) : (
-                  <span className="text-sm text-gray-500 mt-1">No due date</span>
+                  <span className="text-sm text-gray-500 mt-1">Brak terminu</span>
                 )}
               </div>
             </div>
@@ -314,7 +314,7 @@ export function TaskDetailsDialog({
               <div className="flex items-center space-x-3">
                 <Clock className="h-4 w-4 text-gray-400" />
                 <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">Time</p>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Czas</p>
                   <span className="text-sm font-medium mt-1">
                     {totalLoggedHours.toFixed(1)}h / {task.estimatedHours}h
                   </span>
@@ -326,7 +326,7 @@ export function TaskDetailsDialog({
             <div className="flex items-center space-x-3">
               <CheckSquare className="h-4 w-4 text-gray-400" />
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Created</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Utworzono</p>
                 <span className="text-sm font-medium mt-1">
                   {formatDate(task.createdAt)}
                 </span>
@@ -339,10 +339,10 @@ export function TaskDetailsDialog({
             <div>
               <div className="flex items-center justify-between mb-3">
                 <h4 className="font-medium text-gray-900">
-                  Subtasks ({completedSubtasks}/{task.subtasks.length})
+                  Podzadania ({completedSubtasks}/{task.subtasks.length})
                 </h4>
                 <span className="text-xs text-gray-500">
-                  {Math.round(subtaskProgress)}% complete
+                  {Math.round(subtaskProgress)}% ukończono
                 </span>
               </div>
               <Progress value={subtaskProgress} className="mb-3" />

@@ -61,7 +61,7 @@ export function EditTeamDialog({ open, onOpenChange, onTeamUpdated, team }: Edit
         setAllUsers(data.users)
       }
     } catch (error) {
-      console.error("Error fetching users:", error)
+      console.error("Błąd podczas pobierania użytkowników:", error)
     } finally {
       setLoadingUsers(false)
     }
@@ -127,10 +127,10 @@ export function EditTeamDialog({ open, onOpenChange, onTeamUpdated, team }: Edit
         handleClose()
       } else {
         const data = await response.json()
-        setError(data.error || "Failed to update team")
+        setError(data.error || "Nie udało się zaktualizować zespołu")
       }
     } catch (error) {
-      setError("An error occurred. Please try again.")
+      setError("Wystąpił błąd. Spróbuj ponownie.")
     } finally {
       setLoading(false)
     }
@@ -152,19 +152,19 @@ export function EditTeamDialog({ open, onOpenChange, onTeamUpdated, team }: Edit
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Team</DialogTitle>
+          <DialogTitle>Edytuj zespół</DialogTitle>
           <DialogDescription>
-            Update your team name and manage team members. Changes will be visible to all team members.
+            Zaktualizuj nazwę zespołu i zarządzaj członkami zespołu. Zmiany będą widoczne dla wszystkich członków zespołu.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-6 py-4">
             {/* Team Name Section */}
             <div className="grid gap-2">
-              <Label htmlFor="name">Team Name</Label>
+              <Label htmlFor="name">Nazwa zespołu</Label>
               <Input
                 id="name"
-                placeholder="Enter team name"
+                placeholder="Wprowadź nazwę zespołu"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -175,12 +175,12 @@ export function EditTeamDialog({ open, onOpenChange, onTeamUpdated, team }: Edit
             <div className="grid gap-4">
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
-                <Label>Team Members ({selectedMembers.length})</Label>
+                <Label>Członkowie zespołu ({selectedMembers.length})</Label>
               </div>
 
               {/* Current Members */}
               <div className="space-y-2">
-                <div className="text-sm font-medium text-gray-700">Current Members:</div>
+                <div className="text-sm font-medium text-gray-700">Obecni członkowie:</div>
                 <div className="flex flex-wrap gap-2 min-h-[40px] p-2 border rounded-md bg-gray-50">
                   {selectedMembers.length > 0 ? (
                     selectedMembers.map((member) => (
@@ -208,18 +208,18 @@ export function EditTeamDialog({ open, onOpenChange, onTeamUpdated, team }: Edit
                       </Badge>
                     ))
                   ) : (
-                    <div className="text-sm text-gray-500">No members selected</div>
+                    <div className="text-sm text-gray-500">Nie wybrano członków</div>
                   )}
                 </div>
               </div>
 
               {/* Add Members */}
               <div className="space-y-2">
-                <div className="text-sm font-medium text-gray-700">Add Members:</div>
+                <div className="text-sm font-medium text-gray-700">Dodaj członków:</div>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
-                    placeholder="Search users by name or email..."
+                    placeholder="Szukaj użytkowników po nazwie lub adresie e-mail..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10"
@@ -227,7 +227,7 @@ export function EditTeamDialog({ open, onOpenChange, onTeamUpdated, team }: Edit
                 </div>
 
                 {loadingUsers ? (
-                  <div className="text-sm text-gray-500 p-2">Loading users...</div>
+                  <div className="text-sm text-gray-500 p-2">Ładowanie użytkowników...</div>
                 ) : (
                   <div className="max-h-32 overflow-y-auto border rounded-md">
                     {filteredUsers.length > 0 ? (
@@ -245,7 +245,7 @@ export function EditTeamDialog({ open, onOpenChange, onTeamUpdated, team }: Edit
                               </AvatarFallback>
                             </Avatar>
                             <div>
-                              <div className="text-sm font-medium">{user.name || "No name"}</div>
+                              <div className="text-sm font-medium">{user.name || "Brak nazwy"}</div>
                               <div className="text-xs text-gray-500">{user.email}</div>
                             </div>
                           </div>
@@ -260,9 +260,9 @@ export function EditTeamDialog({ open, onOpenChange, onTeamUpdated, team }: Edit
                         </div>
                       ))
                     ) : searchQuery ? (
-                      <div className="text-sm text-gray-500 p-2">No users found matching "{searchQuery}"</div>
+                      <div className="text-sm text-gray-500 p-2">Nie znaleziono użytkowników pasujących do "{searchQuery}"</div>
                     ) : (
-                      <div className="text-sm text-gray-500 p-2">All users are already members</div>
+                      <div className="text-sm text-gray-500 p-2">Wszyscy użytkownicy są już członkami</div>
                     )}
                   </div>
                 )}
@@ -275,13 +275,13 @@ export function EditTeamDialog({ open, onOpenChange, onTeamUpdated, team }: Edit
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
+              Anuluj
             </Button>
             <Button
               type="submit"
               disabled={loading || !name.trim() || !hasChanges || selectedMembers.length === 0}
             >
-              {loading ? "Updating..." : "Update Team"}
+              {loading ? "Aktualizowanie..." : "Zaktualizuj zespół"}
             </Button>
           </DialogFooter>
         </form>

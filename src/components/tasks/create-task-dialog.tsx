@@ -71,7 +71,7 @@ export function CreateTaskDialog({
         setTeamMembers(data.members || [])
       }
     } catch (error) {
-      console.error("Error fetching team members:", error)
+      console.error("Błąd podczas pobierania członków zespołu:", error)
       setTeamMembers([])
     }
   }
@@ -112,10 +112,10 @@ export function CreateTaskDialog({
         onTaskCreated()
       } else {
         const data = await response.json()
-        setError(data.error || "Failed to create task")
+        setError(data.error || "Nie udało się utworzyć zadania")
       }
     } catch (error) {
-      setError("An error occurred. Please try again.")
+      setError("Wystąpił błąd. Spróbuj ponownie.")
     } finally {
       setLoading(false)
     }
@@ -142,18 +142,18 @@ export function CreateTaskDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>
-          <DialogTitle>Create New Task</DialogTitle>
+          <DialogTitle>Utwórz nowe zadanie</DialogTitle>
           <DialogDescription>
-            Create a new task and assign it to a team member.
+            Utwórz nowe zadanie i przypisz je członkowi zespołu.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="title">Task Title</Label>
+              <Label htmlFor="title">Tytuł zadania</Label>
               <Input
                 id="title"
-                placeholder="Enter task title"
+                placeholder="Wprowadź tytuł zadania"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
@@ -161,19 +161,19 @@ export function CreateTaskDialog({
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="description">Description (Optional)</Label>
+              <Label htmlFor="description">Opis (Opcjonalnie)</Label>
               <RichTextEditor
                 content={description}
                 onChange={setDescription}
-                placeholder="Enter task description"
+                placeholder="Wprowadź opis zadania"
               />
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="project">Project</Label>
+              <Label htmlFor="project">Projekt</Label>
               <Select value={projectId} onValueChange={setProjectId} required>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a project" />
+                  <SelectValue placeholder="Wybierz projekt" />
                 </SelectTrigger>
                 <SelectContent>
                   {projects.map((project) => (
@@ -187,10 +187,10 @@ export function CreateTaskDialog({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="assignee">Assignee (Optional)</Label>
+                <Label htmlFor="assignee">Przypisany (Opcjonalnie)</Label>
                 <Select value={assigneeId} onValueChange={setAssigneeId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select assignee" />
+                    <SelectValue placeholder="Wybierz przypisanego" />
                   </SelectTrigger>
                   <SelectContent>
                     {teamMembers.map((member) => (
@@ -203,22 +203,22 @@ export function CreateTaskDialog({
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="priority">Priority (Optional)</Label>
+                <Label htmlFor="priority">Priorytet (Opcjonalnie)</Label>
                 <Select value={priority} onValueChange={setPriority}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select priority" />
+                    <SelectValue placeholder="Wybierz priorytet" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Low">Low</SelectItem>
-                    <SelectItem value="Medium">Medium</SelectItem>
-                    <SelectItem value="High">High</SelectItem>
+                    <SelectItem value="Low">Niski</SelectItem>
+                    <SelectItem value="Medium">Średni</SelectItem>
+                    <SelectItem value="High">Wysoki</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="dueDate">Due Date (Optional)</Label>
+              <Label htmlFor="dueDate">Termin wykonania (Opcjonalnie)</Label>
               <Input
                 id="dueDate"
                 type="date"
@@ -228,32 +228,32 @@ export function CreateTaskDialog({
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="estimatedHours">Estimated Time (Optional)</Label>
+              <Label htmlFor="estimatedHours">Szacowany czas (Opcjonalnie)</Label>
               <Select value={estimatedHours} onValueChange={setEstimatedHours}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select estimated time" />
+                  <SelectValue placeholder="Wybierz szacowany czas" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="0.5">30 minutes</SelectItem>
-                  <SelectItem value="1">1 hour</SelectItem>
-                  <SelectItem value="1.5">1.5 hours</SelectItem>
-                  <SelectItem value="2">2 hours</SelectItem>
-                  <SelectItem value="2.5">2.5 hours</SelectItem>
-                  <SelectItem value="3">3 hours</SelectItem>
-                  <SelectItem value="3.5">3.5 hours</SelectItem>
-                  <SelectItem value="4">4 hours</SelectItem>
-                  <SelectItem value="4.5">4.5 hours</SelectItem>
-                  <SelectItem value="5">5 hours</SelectItem>
-                  <SelectItem value="5.5">5.5 hours</SelectItem>
-                  <SelectItem value="6">6 hours</SelectItem>
-                  <SelectItem value="6.5">6.5 hours</SelectItem>
-                  <SelectItem value="7">7 hours</SelectItem>
-                  <SelectItem value="7.5">7.5 hours</SelectItem>
-                  <SelectItem value="8">8 hours</SelectItem>
-                  <SelectItem value="12">12 hours</SelectItem>
-                  <SelectItem value="16">16 hours</SelectItem>
-                  <SelectItem value="24">24 hours</SelectItem>
-                  <SelectItem value="40">40 hours</SelectItem>
+                  <SelectItem value="0.5">30 minut</SelectItem>
+                  <SelectItem value="1">1 godzina</SelectItem>
+                  <SelectItem value="1.5">1.5 godziny</SelectItem>
+                  <SelectItem value="2">2 godziny</SelectItem>
+                  <SelectItem value="2.5">2.5 godziny</SelectItem>
+                  <SelectItem value="3">3 godziny</SelectItem>
+                  <SelectItem value="3.5">3.5 godziny</SelectItem>
+                  <SelectItem value="4">4 godziny</SelectItem>
+                  <SelectItem value="4.5">4.5 godziny</SelectItem>
+                  <SelectItem value="5">5 godzin</SelectItem>
+                  <SelectItem value="5.5">5.5 godziny</SelectItem>
+                  <SelectItem value="6">6 godzin</SelectItem>
+                  <SelectItem value="6.5">6.5 godziny</SelectItem>
+                  <SelectItem value="7">7 godzin</SelectItem>
+                  <SelectItem value="7.5">7.5 godziny</SelectItem>
+                  <SelectItem value="8">8 godzin</SelectItem>
+                  <SelectItem value="12">12 godzin</SelectItem>
+                  <SelectItem value="16">16 godzin</SelectItem>
+                  <SelectItem value="24">24 godziny</SelectItem>
+                  <SelectItem value="40">40 godzin</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -264,10 +264,10 @@ export function CreateTaskDialog({
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
+              Anuluj
             </Button>
             <Button type="submit" disabled={loading || !title.trim() || !projectId}>
-              {loading ? "Creating..." : "Create Task"}
+              {loading ? "Tworzenie..." : "Utwórz zadanie"}
             </Button>
           </DialogFooter>
         </form>

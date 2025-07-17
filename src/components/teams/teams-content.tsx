@@ -42,7 +42,7 @@ export function TeamsContent() {
         setTeams(data.teams)
       }
     } catch (error) {
-      console.error("Error fetching teams:", error)
+      console.error("Błąd podczas pobierania zespołów:", error)
     } finally {
       setLoading(false)
     }
@@ -80,12 +80,12 @@ export function TeamsContent() {
             <div id="dynamic-header" className="flex flex-1" >
       <div id="page-header"  className="flex justify-between items-center  w-full">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Teams</h1>
-          <p className="text-gray-500">Manage your teams and collaborate with others</p>
+          <h1 className="text-2xl font-bold text-gray-900">Zespoły</h1>
+          <p className="text-gray-500">Zarządzaj swoimi zespołami i współpracuj z innymi</p>
         </div>
         <Button onClick={() => setCreateDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          Create Team
+          Utwórz zespół
         </Button>
       </div>
             </div>
@@ -102,13 +102,13 @@ export function TeamsContent() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Users className="h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No teams yet</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Brak zespołów</h3>
             <p className="text-gray-500 text-center mb-4">
-              Create your first team to start collaborating with others
+              Utwórz swój pierwszy zespół, aby rozpocząć współpracę z innymi
             </p>
             <Button onClick={() => setCreateDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
-              Create Team
+              Utwórz zespół
             </Button>
           </CardContent>
         </Card>
@@ -128,14 +128,14 @@ export function TeamsContent() {
                   </Button>
                 </div>
                 <CardDescription>
-                  Created {new Date(team.createdAt).toLocaleDateString()}
+                  Utworzono {new Date(team.createdAt).toLocaleDateString()}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700">Members</span>
+                      <span className="text-sm font-medium text-gray-700">Członkowie</span>
                       <Badge variant="secondary">{team.members.length}</Badge>
                     </div>
                     <div className="flex -space-x-2">
@@ -159,7 +159,7 @@ export function TeamsContent() {
 
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700">Projects</span>
+                      <span className="text-sm font-medium text-gray-700">Projekty</span>
                       <Badge variant="secondary">{team.projects.length}</Badge>
                     </div>
                     {team.projects.length > 0 ? (
@@ -177,12 +177,12 @@ export function TeamsContent() {
                         ))}
                         {team.projects.length > 3 && (
                           <div className="text-xs text-gray-500">
-                            +{team.projects.length - 3} more projects
+                            +{team.projects.length - 3} więcej projektów
                           </div>
                         )}
                       </div>
                     ) : (
-                      <p className="text-sm text-gray-500">No projects yet</p>
+                      <p className="text-sm text-gray-500">Brak projektów</p>
                     )}
                   </div>
                 </div>

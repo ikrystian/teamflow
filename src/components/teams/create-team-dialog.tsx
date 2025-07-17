@@ -43,10 +43,10 @@ export function CreateTeamDialog({ open, onOpenChange, onTeamCreated }: CreateTe
         onTeamCreated()
       } else {
         const data = await response.json()
-        setError(data.error || "Failed to create team")
+        setError(data.error || "Nie udało się utworzyć zespołu")
       }
     } catch (error) {
-      setError("An error occurred. Please try again.")
+      setError("Wystąpił błąd. Spróbuj ponownie.")
     } finally {
       setLoading(false)
     }
@@ -62,18 +62,18 @@ export function CreateTeamDialog({ open, onOpenChange, onTeamCreated }: CreateTe
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Create New Team</DialogTitle>
+          <DialogTitle>Utwórz nowy zespół</DialogTitle>
           <DialogDescription>
-            Create a new team to collaborate with others on projects and tasks.
+            Utwórz nowy zespół, aby współpracować z innymi nad projektami i zadaniami.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Team Name</Label>
+              <Label htmlFor="name">Nazwa zespołu</Label>
               <Input
                 id="name"
-                placeholder="Enter team name"
+                placeholder="Wprowadź nazwę zespołu"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -85,10 +85,10 @@ export function CreateTeamDialog({ open, onOpenChange, onTeamCreated }: CreateTe
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
+              Anuluj
             </Button>
             <Button type="submit" disabled={loading || !name.trim()}>
-              {loading ? "Creating..." : "Create Team"}
+              {loading ? "Tworzenie..." : "Utwórz zespół"}
             </Button>
           </DialogFooter>
         </form>

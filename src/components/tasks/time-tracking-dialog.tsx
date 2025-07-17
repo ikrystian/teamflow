@@ -52,11 +52,11 @@ interface TimeTrackingDialogProps {
   task: Task | null
 }
 
-export function TimeTrackingDialog({ 
-  open, 
-  onOpenChange, 
-  onTimeLogged, 
-  task 
+export function TimeTrackingDialog({
+  open,
+  onOpenChange,
+  onTimeLogged,
+  task
 }: TimeTrackingDialogProps) {
   const [hours, setHours] = useState("")
   const [description, setDescription] = useState("")
@@ -82,7 +82,7 @@ export function TimeTrackingDialog({
 
   const fetchTimeEntries = async () => {
     if (!task) return
-    
+
     setLoadingEntries(true)
     try {
       const response = await fetch(`/api/tasks/${task.id}/time-entries`)
@@ -92,7 +92,7 @@ export function TimeTrackingDialog({
         setTotalHours(data.totalHours)
       }
     } catch (error) {
-      console.error("Error fetching time entries:", error)
+      console.error("Błąd podczas pobierania wpisów czasu:", error)
     } finally {
       setLoadingEntries(false)
     }
@@ -101,7 +101,7 @@ export function TimeTrackingDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!task) return
-    
+
     setLoading(true)
     setError("")
 
@@ -125,10 +125,10 @@ export function TimeTrackingDialog({
         onTimeLogged()
       } else {
         const data = await response.json()
-        setError(data.error || "Failed to log time")
+        setError(data.error || "Nie udało się zalogować czasu")
       }
     } catch (error) {
-      setError("An error occurred. Please try again.")
+      setError("Wystąpił błąd. Spróbuj ponownie.")
     } finally {
       setLoading(false)
     }
@@ -147,7 +147,7 @@ export function TimeTrackingDialog({
         onTimeLogged()
       }
     } catch (error) {
-      console.error("Error deleting time entry:", error)
+      console.error("Błąd podczas usuwania wpisu czasu:", error)
     }
   }
 
@@ -159,9 +159,9 @@ export function TimeTrackingDialog({
   }
 
   const formatHours = (hours: number) => {
-    if (hours === 1) return "1 hour"
-    if (hours < 1) return `${Math.round(hours * 60)} minutes`
-    return `${hours} hours`
+    if (hours === 1) return "1 godzina"
+    if (hours < 1) return `${Math.round(hours * 60)} minut`
+    return `${hours} godzin`
   }
 
   const formatDate = (dateString: string) => {
@@ -187,10 +187,10 @@ export function TimeTrackingDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
-            Time Tracking - {task?.title}
+            Śledzenie czasu - {task?.title}
           </DialogTitle>
           <DialogDescription>
-            Log time spent on this task and view your time entries.
+            Zaloguj czas spędzony na tym zadaniu i przeglądaj swoje wpisy czasu.
           </DialogDescription>
         </DialogHeader>
 
@@ -198,11 +198,11 @@ export function TimeTrackingDialog({
         {task?.estimatedHours && (
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span>Progress</span>
+              <span>Postęp</span>
               <span>{formatHours(totalHours)} / {formatHours(task.estimatedHours)}</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
+              <div
                 className={`h-2 rounded-full transition-all ${getProgressColor()}`}
                 style={{ width: `${getProgressPercentage()}%` }}
               />
@@ -214,34 +214,34 @@ export function TimeTrackingDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="hours">Time Spent</Label>
+              <Label htmlFor="hours">Spędzony czas</Label>
               <Select value={hours} onValueChange={setHours} required>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select time" />
+                  <SelectValue placeholder="Wybierz czas" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="0.25">15 minutes</SelectItem>
-                  <SelectItem value="0.5">30 minutes</SelectItem>
-                  <SelectItem value="0.75">45 minutes</SelectItem>
-                  <SelectItem value="1">1 hour</SelectItem>
-                  <SelectItem value="1.5">1.5 hours</SelectItem>
-                  <SelectItem value="2">2 hours</SelectItem>
-                  <SelectItem value="2.5">2.5 hours</SelectItem>
-                  <SelectItem value="3">3 hours</SelectItem>
-                  <SelectItem value="3.5">3.5 hours</SelectItem>
-                  <SelectItem value="4">4 hours</SelectItem>
-                  <SelectItem value="4.5">4.5 hours</SelectItem>
-                  <SelectItem value="5">5 hours</SelectItem>
-                  <SelectItem value="5.5">5.5 hours</SelectItem>
-                  <SelectItem value="6">6 hours</SelectItem>
-                  <SelectItem value="7">7 hours</SelectItem>
-                  <SelectItem value="8">8 hours</SelectItem>
+                  <SelectItem value="0.25">15 minut</SelectItem>
+                  <SelectItem value="0.5">30 minut</SelectItem>
+                  <SelectItem value="0.75">45 minut</SelectItem>
+                  <SelectItem value="1">1 godzina</SelectItem>
+                  <SelectItem value="1.5">1.5 godziny</SelectItem>
+                  <SelectItem value="2">2 godziny</SelectItem>
+                  <SelectItem value="2.5">2.5 godziny</SelectItem>
+                  <SelectItem value="3">3 godziny</SelectItem>
+                  <SelectItem value="3.5">3.5 godziny</SelectItem>
+                  <SelectItem value="4">4 godziny</SelectItem>
+                  <SelectItem value="4.5">4.5 godziny</SelectItem>
+                  <SelectItem value="5">5 godzin</SelectItem>
+                  <SelectItem value="5.5">5.5 godziny</SelectItem>
+                  <SelectItem value="6">6 godzin</SelectItem>
+                  <SelectItem value="7">7 godzin</SelectItem>
+                  <SelectItem value="8">8 godzin</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="date">Date</Label>
+              <Label htmlFor="date">Data</Label>
               <Input
                 id="date"
                 type="date"
@@ -253,10 +253,10 @@ export function TimeTrackingDialog({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="description">Description (Optional)</Label>
+            <Label htmlFor="description">Opis (Opcjonalnie)</Label>
             <Textarea
               id="description"
-              placeholder="What did you work on?"
+              placeholder="Nad czym pracowałeś?"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
@@ -269,21 +269,21 @@ export function TimeTrackingDialog({
 
           <Button type="submit" disabled={loading} className="w-full">
             <Plus className="mr-2 h-4 w-4" />
-            {loading ? "Logging..." : "Log Time"}
+            {loading ? "Logowanie..." : "Zaloguj czas"}
           </Button>
         </form>
 
         {/* Time Entries History */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Time Entries</h3>
+            <h3 className="text-lg font-semibold">Wpisy czasu</h3>
             <Badge variant="secondary">
-              Total: {formatHours(totalHours)}
+              Łącznie: {formatHours(totalHours)}
             </Badge>
           </div>
 
           {loadingEntries ? (
-            <div className="text-center py-4 text-gray-500">Loading time entries...</div>
+            <div className="text-center py-4 text-gray-500">Ładowanie wpisów czasu...</div>
           ) : timeEntries.length > 0 ? (
             <div className="space-y-2 max-h-48 overflow-y-auto">
               {timeEntries.map((entry) => (
@@ -298,7 +298,7 @@ export function TimeTrackingDialog({
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{formatHours(entry.hours)}</span>
-                        <span className="text-sm text-gray-500">on {formatDate(entry.date)}</span>
+                        <span className="text-sm text-gray-500">dnia {formatDate(entry.date)}</span>
                       </div>
                       {entry.description && (
                         <p className="text-sm text-gray-600">{entry.description}</p>
@@ -317,13 +317,13 @@ export function TimeTrackingDialog({
               ))}
             </div>
           ) : (
-            <div className="text-center py-4 text-gray-500">No time entries yet</div>
+            <div className="text-center py-4 text-gray-500">Brak wpisów czasu</div>
           )}
         </div>
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={handleClose}>
-            Close
+            Zamknij
           </Button>
         </DialogFooter>
       </DialogContent>

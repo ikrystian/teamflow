@@ -131,10 +131,10 @@ export function TimeTrackingReport({ filters, onDataLoaded }: TimeTrackingReport
         setData(reportData)
         onDataLoaded?.(reportData)
       } else {
-        setError("Failed to fetch report data")
+        setError("Nie udało się pobrać danych raportu")
       }
     } catch (error) {
-      setError("An error occurred while fetching the report")
+      setError("Wystąpił błąd podczas pobierania raportu")
       console.error("Error fetching time tracking report:", error)
     } finally {
       setLoading(false)
@@ -183,7 +183,7 @@ export function TimeTrackingReport({ filters, onDataLoaded }: TimeTrackingReport
       <Card>
         <CardContent className="p-6">
           <div className="text-center text-gray-500">
-            <p>No data available for the selected filters</p>
+            <p>Brak danych dla wybranych filtrów</p>
           </div>
         </CardContent>
       </Card>
@@ -199,7 +199,7 @@ export function TimeTrackingReport({ filters, onDataLoaded }: TimeTrackingReport
             <div className="flex items-center">
               <Clock className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Total Hours</p>
+                <p className="text-sm font-medium text-gray-500">Całkowita liczba godzin</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {formatHours(data.summary.totalHours)}
                 </p>
@@ -213,7 +213,7 @@ export function TimeTrackingReport({ filters, onDataLoaded }: TimeTrackingReport
             <div className="flex items-center">
               <Calendar className="h-8 w-8 text-green-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Time Entries</p>
+                <p className="text-sm font-medium text-gray-500">Wpisy czasu</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {data.summary.totalEntries}
                 </p>
@@ -227,7 +227,7 @@ export function TimeTrackingReport({ filters, onDataLoaded }: TimeTrackingReport
             <div className="flex items-center">
               <Users className="h-8 w-8 text-purple-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Active Users</p>
+                <p className="text-sm font-medium text-gray-500">Aktywni użytkownicy</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {data.summary.uniqueUsers}
                 </p>
@@ -241,7 +241,7 @@ export function TimeTrackingReport({ filters, onDataLoaded }: TimeTrackingReport
             <div className="flex items-center">
               <TrendingUp className="h-8 w-8 text-orange-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Projects</p>
+                <p className="text-sm font-medium text-gray-500">Projekty</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {data.summary.uniqueProjects}
                 </p>
@@ -256,8 +256,8 @@ export function TimeTrackingReport({ filters, onDataLoaded }: TimeTrackingReport
         {/* Daily Hours Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Daily Time Tracking</CardTitle>
-            <CardDescription>Hours logged per day</CardDescription>
+            <CardTitle>Dzienne śledzenie czasu</CardTitle>
+            <CardDescription>Godziny zalogowane dziennie</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -270,7 +270,7 @@ export function TimeTrackingReport({ filters, onDataLoaded }: TimeTrackingReport
                 <YAxis />
                 <Tooltip
                   labelFormatter={(value) => format(new Date(value), 'MMM dd, yyyy')}
-                  formatter={(value: number) => [formatHours(value), 'Hours']}
+                  formatter={(value: number) => [formatHours(value), 'Godziny']}
                 />
                 <Line
                   type="monotone"
@@ -286,8 +286,8 @@ export function TimeTrackingReport({ filters, onDataLoaded }: TimeTrackingReport
         {/* User Hours Distribution */}
         <Card>
           <CardHeader>
-            <CardTitle>Hours by User</CardTitle>
-            <CardDescription>Time distribution across team members</CardDescription>
+            <CardTitle>Godziny według użytkownika</CardTitle>
+            <CardDescription>Rozkład czasu między członków zespołu</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -298,7 +298,7 @@ export function TimeTrackingReport({ filters, onDataLoaded }: TimeTrackingReport
                   cy="50%"
                   labelLine={false}
                   label={({ user, totalHours, percent }) =>
-                    `${user.name || user.email} (${(percent * 100).toFixed(0)}%)`
+                    `${user.name || user.email} (${((percent || 0) * 100).toFixed(0)}%)`
                   }
                   outerRadius={80}
                   fill="#8884d8"
@@ -308,7 +308,7 @@ export function TimeTrackingReport({ filters, onDataLoaded }: TimeTrackingReport
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: number) => [formatHours(value), 'Hours']} />
+                <Tooltip formatter={(value: number) => [formatHours(value), 'Godziny']} />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
@@ -318,8 +318,8 @@ export function TimeTrackingReport({ filters, onDataLoaded }: TimeTrackingReport
       {/* User Statistics Table */}
       <Card>
         <CardHeader>
-          <CardTitle>User Statistics</CardTitle>
-          <CardDescription>Detailed breakdown by team member</CardDescription>
+          <CardTitle>Statystyki użytkowników</CardTitle>
+          <CardDescription>Szczegółowy podział według członka zespołu</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -335,14 +335,14 @@ export function TimeTrackingReport({ filters, onDataLoaded }: TimeTrackingReport
                   <div>
                     <p className="font-medium">{userStat.user.name || userStat.user.email}</p>
                     <p className="text-sm text-gray-500">
-                      {userStat.projects.length} project{userStat.projects.length !== 1 ? 's' : ''}
+                      {userStat.projects.length} {userStat.projects.length === 1 ? 'projekt' : 'projektów'}
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="font-medium">{formatHours(userStat.totalHours)}</p>
                   <p className="text-sm text-gray-500">
-                    {userStat.entriesCount} entries
+                    {userStat.entriesCount} wpisów
                   </p>
                 </div>
               </div>
@@ -354,8 +354,8 @@ export function TimeTrackingReport({ filters, onDataLoaded }: TimeTrackingReport
       {/* Project Statistics */}
       <Card>
         <CardHeader>
-          <CardTitle>Project Statistics</CardTitle>
-          <CardDescription>Time breakdown by project</CardDescription>
+          <CardTitle>Statystyki projektów</CardTitle>
+          <CardDescription>Podział czasu według projektu</CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={400}>
@@ -369,8 +369,8 @@ export function TimeTrackingReport({ filters, onDataLoaded }: TimeTrackingReport
               />
               <YAxis />
               <Tooltip
-                formatter={(value: number) => [formatHours(value), 'Hours']}
-                labelFormatter={(label) => `Project: ${label}`}
+                formatter={(value: number) => [formatHours(value), 'Godziny']}
+                labelFormatter={(label) => `Projekt: ${label}`}
               />
               <Bar dataKey="totalHours" fill="#8884d8" />
             </BarChart>

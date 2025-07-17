@@ -183,15 +183,15 @@ export function ReportsContent() {
   const reportTypes = [
     {
       id: "time-tracking",
-      name: "Time Tracking Report",
-      description: "Detailed breakdown of time spent by users on tasks and projects",
+      name: "Raport śledzenia czasu",
+      description: "Szczegółowy podział czasu spędzonego przez użytkowników na zadaniach i projektach",
       icon: Clock,
       color: "text-blue-600"
     },
     {
       id: "project-progress",
-      name: "Project Progress Report",
-      description: "Overview of project completion status and task distribution",
+      name: "Raport postępu projektu",
+      description: "Przegląd statusu ukończenia projektu i rozkładu zadań",
       icon: TrendingUp,
       color: "text-green-600"
     }
@@ -205,8 +205,8 @@ export function ReportsContent() {
             <div id="dynamic-header" className="flex flex-1" >
       <div id="page-header"  className="flex items-center justify-between w-full">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
-          <p className="text-gray-600">Generate detailed reports and analytics for your projects</p>
+          <h1 className="text-2xl font-bold text-gray-900">Raporty</h1>
+          <p className="text-gray-600">Generuj szczegółowe raporty i analizy dla swoich projektów</p>
         </div>
         <div className="flex gap-2">
           <Button
@@ -215,7 +215,7 @@ export function ReportsContent() {
             disabled={loading}
           >
             <Download className="mr-2 h-4 w-4" />
-            Export CSV
+            Eksportuj CSV
           </Button>
           <Button
             variant="outline"
@@ -223,7 +223,7 @@ export function ReportsContent() {
             disabled={loading}
           >
             <Download className="mr-2 h-4 w-4" />
-            Export Excel
+            Eksportuj Excel
           </Button>
           <Button
             variant="outline"
@@ -231,7 +231,7 @@ export function ReportsContent() {
             disabled={loading}
           >
             <FileText className="mr-2 h-4 w-4" />
-            Export PDF
+            Eksportuj PDF
           </Button>
         </div>
       </div>
@@ -283,16 +283,16 @@ export function ReportsContent() {
         <CardHeader>
           <CardTitle className="flex items-center">
             <Filter className="mr-2 h-5 w-5" />
-            Filters
+            Filtry
           </CardTitle>
           <CardDescription>
-            Customize your report by applying filters
+            Dostosuj raport, stosując filtry
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="startDate">Start Date</Label>
+              <Label htmlFor="startDate">Data początkowa</Label>
               <Input
                 id="startDate"
                 type="date"
@@ -301,7 +301,7 @@ export function ReportsContent() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="endDate">End Date</Label>
+              <Label htmlFor="endDate">Data końcowa</Label>
               <Input
                 id="endDate"
                 type="date"
@@ -310,13 +310,13 @@ export function ReportsContent() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Team</Label>
+              <Label>Zespół</Label>
               <Select value={filters.teamId || "all"} onValueChange={(value) => handleFilterChange("teamId", value === "all" ? "" : value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="All teams" />
+                  <SelectValue placeholder="Wszystkie zespoły" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All teams</SelectItem>
+                  <SelectItem value="all">Wszystkie zespoły</SelectItem>
                   {teams.map((team) => (
                     <SelectItem key={team.id} value={team.id}>
                       {team.name}
@@ -326,13 +326,13 @@ export function ReportsContent() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Project</Label>
+              <Label>Projekt</Label>
               <Select value={filters.projectId || "all"} onValueChange={(value) => handleFilterChange("projectId", value === "all" ? "" : value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="All projects" />
+                  <SelectValue placeholder="Wszystkie projekty" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All projects</SelectItem>
+                  <SelectItem value="all">Wszystkie projekty</SelectItem>
                   {projects.map((project) => (
                     <SelectItem key={project.id} value={project.id}>
                       {project.name}
@@ -342,13 +342,13 @@ export function ReportsContent() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>User</Label>
+              <Label>Użytkownik</Label>
               <Select value={filters.userId || "all"} onValueChange={(value) => handleFilterChange("userId", value === "all" ? "" : value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="All users" />
+                  <SelectValue placeholder="Wszyscy użytkownicy" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All users</SelectItem>
+                  <SelectItem value="all">Wszyscy użytkownicy</SelectItem>
                   {users.map((user) => (
                     <SelectItem key={user.id} value={user.id}>
                       {user.name || user.email}
@@ -360,7 +360,7 @@ export function ReportsContent() {
           </div>
           <div className="mt-4 flex justify-end">
             <Button variant="outline" onClick={clearFilters}>
-              Clear Filters
+              Wyczyść filtry
             </Button>
           </div>
         </CardContent>

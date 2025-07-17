@@ -98,11 +98,11 @@ function SortableTaskStatus({
             <span className="font-medium">{status.name}</span>
             {status.isDefault && (
               <Badge variant="secondary" className="text-xs">
-                Default
+                Domyślny
               </Badge>
             )}
           </div>
-          <span className="text-sm text-gray-500">Order: {status.order}</span>
+          <span className="text-sm text-gray-500">Kolejność: {status.order}</span>
         </div>
       </div>
       <div className="flex items-center space-x-2">
@@ -214,7 +214,7 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
   }
 
   const handleDeleteStatus = async (status: TaskStatus) => {
-    if (!confirm(`Are you sure you want to delete the "${status.name}" status?`)) {
+    if (!confirm(`Czy na pewno chcesz usunąć status "${status.name}"?`)) {
       return
     }
 
@@ -227,11 +227,11 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
         fetchTaskStatuses()
       } else {
         const data = await response.json()
-        alert(data.error || "Failed to delete status")
+        alert(data.error || "Nie udało się usunąć statusu")
       }
     } catch (error) {
       console.error("Error deleting task status:", error)
-      alert("An error occurred while deleting the status")
+      alert("Wystąpił błąd podczas usuwania statusu")
     }
   }
 
@@ -241,11 +241,11 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
   }
 
   if (loading) {
-    return <div>Loading...</div>
+    return <div>Ładowanie...</div>
   }
 
   if (!project) {
-    return <div>Project not found</div>
+    return <div>Projekt nie znaleziony</div>
   }
 
   return (
@@ -262,7 +262,7 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Project Settings</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Ustawienia projektu</h1>
             <p className="text-gray-500">{project.name}</p>
           </div>
         </div>
@@ -285,15 +285,15 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
             <div>
               <CardTitle className="flex items-center space-x-2">
                 <Settings className="h-5 w-5" />
-                <span>Task Statuses</span>
+                <span>Statusy zadań</span>
               </CardTitle>
               <CardDescription>
-                Configure custom task statuses for this project. Drag to reorder.
+                Skonfiguruj własne statusy zadań dla tego projektu. Przeciągnij, aby zmienić kolejność.
               </CardDescription>
             </div>
             <Button onClick={handleCreateStatus}>
               <Plus className="mr-2 h-4 w-4" />
-              Add Status
+              Dodaj status
             </Button>
           </div>
         </CardHeader>
@@ -323,7 +323,7 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
           {taskStatuses.length === 0 && (
             <div className="text-center py-8 text-gray-500">
               <Settings className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-              <p>Loading task statuses...</p>
+              <p>Ładowanie statusów zadań...</p>
             </div>
           )}
         </CardContent>

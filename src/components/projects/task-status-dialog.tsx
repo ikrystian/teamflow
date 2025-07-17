@@ -79,7 +79,7 @@ export function TaskStatusDialog({
     setError("")
 
     if (!name.trim()) {
-      setError("Status name is required")
+      setError("Nazwa statusu jest wymagana")
       setLoading(false)
       return
     }
@@ -88,7 +88,7 @@ export function TaskStatusDialog({
       const url = isEditing
         ? `/api/projects/${projectId}/task-statuses/${status.id}`
         : `/api/projects/${projectId}/task-statuses`
-      
+
       const method = isEditing ? "PATCH" : "POST"
 
       const response = await fetch(url, {
@@ -108,10 +108,10 @@ export function TaskStatusDialog({
         handleClose()
       } else {
         const data = await response.json()
-        setError(data.error || `Failed to ${isEditing ? "update" : "create"} status`)
+        setError(data.error || `Nie udało się ${isEditing ? "zaktualizować" : "utworzyć"} statusu`)
       }
     } catch (error) {
-      setError("An error occurred. Please try again.")
+      setError("Wystąpił błąd. Spróbuj ponownie.")
     } finally {
       setLoading(false)
     }
@@ -130,12 +130,12 @@ export function TaskStatusDialog({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Edit Task Status" : "Create Task Status"}
+            {isEditing ? "Edytuj status zadania" : "Utwórz status zadania"}
           </DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Update the task status configuration."
-              : "Create a new task status for this project."}
+              ? "Zaktualizuj konfigurację statusu zadania."
+              : "Utwórz nowy status zadania dla tego projektu."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -147,10 +147,10 @@ export function TaskStatusDialog({
             )}
 
             <div className="grid gap-2">
-              <Label htmlFor="name">Status Name</Label>
+              <Label htmlFor="name">Nazwa statusu</Label>
               <Input
                 id="name"
-                placeholder="e.g., In Review, Testing, Blocked"
+                placeholder="np. Weryfikacja, Testowanie, Zablokowane"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -158,7 +158,7 @@ export function TaskStatusDialog({
             </div>
 
             <div className="grid gap-2">
-              <Label>Color</Label>
+              <Label>Kolor</Label>
               <div className="grid grid-cols-6 gap-2">
                 {predefinedColors.map((colorOption) => (
                   <button
@@ -176,7 +176,7 @@ export function TaskStatusDialog({
               </div>
               <div className="flex items-center space-x-2 mt-2">
                 <Label htmlFor="custom-color" className="text-sm">
-                  Custom:
+                  Niestandardowy:
                 </Label>
                 <Input
                   id="custom-color"
@@ -196,23 +196,23 @@ export function TaskStatusDialog({
                 onCheckedChange={(checked) => setIsDefault(checked as boolean)}
               />
               <Label htmlFor="isDefault" className="text-sm">
-                Set as default status for new tasks
+                Ustaw jako domyślny status dla nowych zadań
               </Label>
             </div>
           </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
+              Anuluj
             </Button>
             <Button type="submit" disabled={loading}>
               {loading
                 ? isEditing
-                  ? "Updating..."
-                  : "Creating..."
+                  ? "Aktualizowanie..."
+                  : "Tworzenie..."
                 : isEditing
-                ? "Update Status"
-                : "Create Status"}
+                ? "Zaktualizuj status"
+                : "Utwórz status"}
             </Button>
           </DialogFooter>
         </form>

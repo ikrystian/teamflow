@@ -122,10 +122,10 @@ export function ProjectProgressReport({ filters, onDataLoaded }: ProjectProgress
         const reportData = await response.json()
         setData(reportData)
       } else {
-        setError("Failed to fetch report data")
+        setError("Nie udało się pobrać danych raportu")
       }
     } catch (error) {
-      setError("An error occurred while fetching the report")
+      setError("Wystąpił błąd podczas pobierania raportu")
       console.error("Error fetching project progress report:", error)
     } finally {
       setLoading(false)
@@ -183,7 +183,7 @@ export function ProjectProgressReport({ filters, onDataLoaded }: ProjectProgress
       <Card>
         <CardContent className="p-6">
           <div className="text-center text-gray-500">
-            <p>No data available for the selected filters</p>
+            <p>Brak danych dla wybranych filtrów</p>
           </div>
         </CardContent>
       </Card>
@@ -199,7 +199,7 @@ export function ProjectProgressReport({ filters, onDataLoaded }: ProjectProgress
             <div className="flex items-center">
               <Target className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Projects</p>
+                <p className="text-sm font-medium text-gray-500">Projekty</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {data.overallStats.totalProjects}
                 </p>
@@ -213,7 +213,7 @@ export function ProjectProgressReport({ filters, onDataLoaded }: ProjectProgress
             <div className="flex items-center">
               <CheckSquare className="h-8 w-8 text-green-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Completion Rate</p>
+                <p className="text-sm font-medium text-gray-500">Współczynnik ukończenia</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {data.overallStats.averageCompletionRate.toFixed(1)}%
                 </p>
@@ -227,7 +227,7 @@ export function ProjectProgressReport({ filters, onDataLoaded }: ProjectProgress
             <div className="flex items-center">
               <Clock className="h-8 w-8 text-purple-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Total Hours</p>
+                <p className="text-sm font-medium text-gray-500">Całkowita liczba godzin</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {formatHours(data.overallStats.totalLoggedHours)}
                 </p>
@@ -241,7 +241,7 @@ export function ProjectProgressReport({ filters, onDataLoaded }: ProjectProgress
             <div className="flex items-center">
               <TrendingUp className="h-8 w-8 text-orange-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Tasks</p>
+                <p className="text-sm font-medium text-gray-500">Zadania</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {data.overallStats.totalCompletedTasks}/{data.overallStats.totalTasks}
                 </p>
@@ -254,8 +254,8 @@ export function ProjectProgressReport({ filters, onDataLoaded }: ProjectProgress
       {/* Project Completion Chart */}
       <Card>
         <CardHeader>
-          <CardTitle>Project Completion Rates</CardTitle>
-          <CardDescription>Completion percentage by project</CardDescription>
+          <CardTitle>Współczynniki ukończenia projektów</CardTitle>
+          <CardDescription>Procent ukończenia według projektu</CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={400}>
@@ -269,8 +269,8 @@ export function ProjectProgressReport({ filters, onDataLoaded }: ProjectProgress
               />
               <YAxis domain={[0, 100]} />
               <Tooltip
-                formatter={(value: number) => [`${value.toFixed(1)}%`, 'Completion Rate']}
-                labelFormatter={(label) => `Project: ${label}`}
+                formatter={(value: number) => [`${value.toFixed(1)}%`, 'Współczynnik ukończenia']}
+                labelFormatter={(label) => `Projekt: ${label}`}
               />
               <Bar dataKey="taskStats.completionRate" fill="#10B981" />
             </BarChart>
@@ -292,14 +292,14 @@ export function ProjectProgressReport({ filters, onDataLoaded }: ProjectProgress
                     </Badge>
                   </CardTitle>
                   <CardDescription>
-                    Team: {projectReport.project.team.name}
+                    Zespół: {projectReport.project.team.name}
                   </CardDescription>
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-bold text-green-600">
                     {projectReport.taskStats.completionRate.toFixed(1)}%
                   </p>
-                  <p className="text-sm text-gray-500">Complete</p>
+                  <p className="text-sm text-gray-500">Ukończono</p>
                 </div>
               </div>
             </CardHeader>
@@ -307,7 +307,7 @@ export function ProjectProgressReport({ filters, onDataLoaded }: ProjectProgress
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Task Status Distribution */}
                 <div>
-                  <h4 className="font-medium mb-4">Task Status Distribution</h4>
+                  <h4 className="font-medium mb-4">Rozkład statusów zadań</h4>
                   <ResponsiveContainer width="100%" height={200}>
                     <PieChart>
                       <Pie
@@ -320,7 +320,7 @@ export function ProjectProgressReport({ filters, onDataLoaded }: ProjectProgress
                         cy="50%"
                         labelLine={false}
                         label={({ name, value, percent }) =>
-                          `${name}: ${value} (${(percent * 100).toFixed(0)}%)`
+                          `${name}: ${value} (${((percent || 0) * 100).toFixed(0)}%)`
                         }
                         outerRadius={80}
                         fill="#8884d8"
@@ -337,38 +337,38 @@ export function ProjectProgressReport({ filters, onDataLoaded }: ProjectProgress
 
                 {/* Key Metrics */}
                 <div>
-                  <h4 className="font-medium mb-4">Key Metrics</h4>
+                  <h4 className="font-medium mb-4">Kluczowe metryki</h4>
                   <div className="space-y-4">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Total Tasks:</span>
+                      <span className="text-gray-600">Wszystkie zadania:</span>
                       <span className="font-medium">{projectReport.taskStats.total}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Completed:</span>
+                      <span className="text-gray-600">Ukończone:</span>
                       <span className="font-medium text-green-600">{projectReport.taskStats.completed}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">In Progress:</span>
+                      <span className="text-gray-600">W toku:</span>
                       <span className="font-medium text-blue-600">{projectReport.taskStats.inProgress}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Overdue:</span>
+                      <span className="text-gray-600">Zaległe:</span>
                       <span className="font-medium text-red-600">{projectReport.taskStats.overdue}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Due Soon:</span>
+                      <span className="text-gray-600">Termin wkrótce:</span>
                       <span className="font-medium text-yellow-600">{projectReport.taskStats.dueSoon}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Time Logged:</span>
+                      <span className="text-gray-600">Zalogowany czas:</span>
                       <span className="font-medium">{formatHours(projectReport.timeStats.totalLoggedHours)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Time Estimated:</span>
+                      <span className="text-gray-600">Szacowany czas:</span>
                       <span className="font-medium">{formatHours(projectReport.timeStats.totalEstimatedHours)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Efficiency:</span>
+                      <span className="text-gray-600">Wydajność:</span>
                       <span className={`font-medium ${
                         projectReport.timeStats.efficiency > 100 ? 'text-red-600' :
                         projectReport.timeStats.efficiency > 80 ? 'text-yellow-600' : 'text-green-600'
@@ -383,7 +383,7 @@ export function ProjectProgressReport({ filters, onDataLoaded }: ProjectProgress
               {/* User Contributions */}
               {projectReport.userContributions.length > 0 && (
                 <div className="mt-6">
-                  <h4 className="font-medium mb-4">Team Contributions</h4>
+                  <h4 className="font-medium mb-4">Wkład zespołu</h4>
                   <div className="space-y-2">
                     {projectReport.userContributions.map((contribution) => (
                       <div key={contribution.user.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -398,7 +398,7 @@ export function ProjectProgressReport({ filters, onDataLoaded }: ProjectProgress
                         <div className="text-right">
                           <p className="font-medium">{formatHours(contribution.hours)}</p>
                           <p className="text-sm text-gray-500">
-                            {contribution.tasksWorkedOn} tasks ({contribution.percentage.toFixed(1)}%)
+                            {contribution.tasksWorkedOn} zadań ({contribution.percentage.toFixed(1)}%)
                           </p>
                         </div>
                       </div>

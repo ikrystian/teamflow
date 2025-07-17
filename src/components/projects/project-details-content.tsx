@@ -237,7 +237,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   // Transform single task for TaskDetailsDialog
   const transformTaskForDialog = (task: any) => {
     if (!task || !project) return null
-    
+
     return {
       ...task,
       project: {
@@ -268,12 +268,12 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   if (!project) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Project not found</h3>
-        <p className="text-gray-500 mb-4">The project you're looking for doesn't exist or you don't have access to it.</p>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Projekt nie znaleziony</h3>
+        <p className="text-gray-500 mb-4">Projekt, którego szukasz, nie istnieje lub nie masz do niego dostępu.</p>
         <Link href="/dashboard/projects">
           <Button>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Projects
+            Wróć do projektów
           </Button>
         </Link>
       </div>
@@ -297,7 +297,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
           </Link>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
-            <p className="text-gray-500">{project.description || "No description"}</p>
+            <p className="text-gray-500">{project.description || "Brak opisu"}</p>
           </div>
         </div>
         <div className="flex items-center space-x-2">
@@ -328,7 +328,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
           <Link href={`/dashboard/projects/${projectId}/settings`}>
             <Button variant="outline" size="sm">
               <Settings className="mr-2 h-4 w-4" />
-              Settings
+              Ustawienia
             </Button>
           </Link>
 
@@ -341,7 +341,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
 
           <Button onClick={() => setCreateTaskDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
-            Add Task
+            Dodaj zadanie
           </Button>
         </div>
       </div>
@@ -364,11 +364,11 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Tasks</CardTitle>
+                <CardTitle>Zadania</CardTitle>
                 <CardDescription>
-                  {taskFilter === "all" ? "All tasks in this project" :
-                   taskFilter === "mine" ? "Your tasks in this project" :
-                   `Tasks assigned to ${project.team.members.find(m => m.id === taskFilter)?.name || "Unknown User"}`}
+                  {taskFilter === "all" ? "Wszystkie zadania w tym projekcie" :
+                   taskFilter === "mine" ? "Twoje zadania w tym projekcie" :
+                   `Zadania przypisane do ${project.team.members.find(m => m.id === taskFilter)?.name || "Nieznany użytkownik"}`}
                 </CardDescription>
               </div>
               <div className="flex items-center space-x-2">
@@ -381,7 +381,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                 />
                 <Button onClick={() => setCreateTaskDialogOpen(true)} size="sm">
                   <Plus className="mr-2 h-4 w-4" />
-                  Add Task
+                  Dodaj zadanie
                 </Button>
               </div>
             </div>
@@ -391,25 +391,25 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
               <div className="text-center py-8">
                 <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  {taskFilter === "all" ? "No tasks yet" :
-                   taskFilter === "mine" ? "No tasks assigned to you" :
-                   "No tasks assigned to this person"}
+                  {taskFilter === "all" ? "Brak zadań" :
+                   taskFilter === "mine" ? "Brak zadań przypisanych do Ciebie" :
+                   "Brak zadań przypisanych tej osobie"}
                 </h3>
                 <p className="text-gray-500 mb-4">
-                  {taskFilter === "all" ? "Create your first task to get started" :
-                   taskFilter === "mine" ? "No tasks are currently assigned to you in this project" :
-                   "This team member has no assigned tasks in this project"}
+                  {taskFilter === "all" ? "Utwórz swoje pierwsze zadanie, aby rozpocząć" :
+                   taskFilter === "mine" ? "Brak zadań przypisanych Tobie w tym projekcie" :
+                   "Ten członek zespołu nie ma przypisanych zadań w tym projekcie"}
                 </p>
                 <Button onClick={() => setCreateTaskDialogOpen(true)}>
                   <Plus className="mr-2 h-4 w-4" />
-                  Create Task
+                  Utwórz zadanie
                 </Button>
               </div>
             ) : (
               <div className="space-y-4">
                 {getFilteredTasks(project.tasks).map((task) => (
-                  <div 
-                    key={task.id} 
+                  <div
+                    key={task.id}
                     className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors"
                     onClick={() => handleTaskDetails(task)}
                   >
@@ -418,11 +418,11 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                         <div className="flex items-center space-x-2 mb-2">
                           <h4 className="font-medium">{task.title}</h4>
                           <Badge className={getStatusColor(task.status)} variant="secondary">
-                            {task.status}
+                            {task.status === "completed" ? "Ukończono" : task.status === "in progress" ? "W toku" : task.status === "on hold" ? "Wstrzymano" : task.status}
                           </Badge>
                           {task.priority && (
                             <Badge className={getPriorityColor(task.priority)} variant="outline">
-                              {task.priority}
+                              {task.priority === "high" ? "Wysoki" : task.priority === "medium" ? "Średni" : task.priority === "low" ? "Niski" : task.priority}
                             </Badge>
                           )}
                         </div>
@@ -444,12 +444,12 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                           {task.dueDate && (
                             <div className="flex items-center space-x-1">
                               <Calendar className="h-3 w-3" />
-                              <span>Due {new Date(task.dueDate).toLocaleDateString()}</span>
+                              <span>Termin {new Date(task.dueDate).toLocaleDateString()}</span>
                             </div>
                           )}
                           <div className="flex items-center space-x-1">
                             <CheckCircle className="h-3 w-3" />
-                            <span>{task.subtasks.filter(st => st.isCompleted).length}/{task.subtasks.length} subtasks</span>
+                            <span>{task.subtasks.filter(st => st.isCompleted).length}/{task.subtasks.length} podzadań</span>
                           </div>
                         </div>
                       </div>
@@ -464,8 +464,8 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         <div>
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-lg font-semibold">Task Board</h2>
-              <p className="text-sm text-gray-500">Drag tasks between columns to update their status</p>
+              <h2 className="text-lg font-semibold">Tablica zadań</h2>
+              <p className="text-sm text-gray-500">Przeciągnij zadania między kolumnami, aby zaktualizować ich status</p>
             </div>
             <TaskBoardFilters
               teamMembers={project.team.members}
@@ -481,18 +481,18 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                 <div className="text-center">
                   <LayoutGrid className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    {taskFilter === "all" ? "No tasks yet" :
-                     taskFilter === "mine" ? "No tasks assigned to you" :
-                     "No tasks assigned to this person"}
+                    {taskFilter === "all" ? "Brak zadań" :
+                     taskFilter === "mine" ? "Brak zadań przypisanych do Ciebie" :
+                     "Brak zadań przypisanych tej osobie"}
                   </h3>
                   <p className="text-gray-500 mb-4">
-                    {taskFilter === "all" ? "Create your first task to see the board" :
-                     taskFilter === "mine" ? "No tasks are currently assigned to you in this project" :
-                     "This team member has no assigned tasks in this project"}
+                    {taskFilter === "all" ? "Utwórz swoje pierwsze zadanie, aby zobaczyć tablicę" :
+                     taskFilter === "mine" ? "Brak zadań przypisanych Tobie w tym projekcie" :
+                     "Ten członek zespołu nie ma przypisanych zadań w tym projekcie"}
                   </p>
                   <Button onClick={() => setCreateTaskDialogOpen(true)}>
                     <Plus className="mr-2 h-4 w-4" />
-                    Create Task
+                    Utwórz zadanie
                   </Button>
                 </div>
               </CardContent>

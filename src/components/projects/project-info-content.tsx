@@ -124,12 +124,12 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
   if (!project) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Project not found</h3>
-        <p className="text-gray-500 mb-4">The project you're looking for doesn't exist or you don't have access to it.</p>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Projekt nie znaleziony</h3>
+        <p className="text-gray-500 mb-4">Projekt, którego szukasz, nie istnieje lub nie masz do niego dostępu.</p>
         <Link href="/dashboard/projects">
           <Button>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Projects
+            Wróć do projektów
           </Button>
         </Link>
       </div>
@@ -152,7 +152,7 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Project Information</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Informacje o projekcie</h1>
             <p className="text-gray-500">{project.name}</p>
           </div>
         </div>
@@ -179,18 +179,18 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Info className="h-5 w-5" />
-            <span>Project Overview</span>
+            <span>Przegląd projektu</span>
           </CardTitle>
-          <CardDescription>Basic information about this project</CardDescription>
+          <CardDescription>Podstawowe informacje o tym projekcie</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <h4 className="text-sm font-medium text-gray-700 mb-1">Name</h4>
+            <h4 className="text-sm font-medium text-gray-700 mb-1">Nazwa</h4>
             <p className="text-sm text-gray-900">{project.name}</p>
           </div>
           {project.description && (
             <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-1">Description</h4>
+              <h4 className="text-sm font-medium text-gray-700 mb-1">Opis</h4>
               <p className="text-sm text-gray-900">{project.description}</p>
             </div>
           )}
@@ -201,11 +201,11 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
             </Badge>
           </div>
           <div>
-            <h4 className="text-sm font-medium text-gray-700 mb-1">Created</h4>
+            <h4 className="text-sm font-medium text-gray-700 mb-1">Utworzono</h4>
             <p className="text-sm text-gray-900">{new Date(project.createdAt).toLocaleDateString()}</p>
           </div>
           <div>
-            <h4 className="text-sm font-medium text-gray-700 mb-1">Last Updated</h4>
+            <h4 className="text-sm font-medium text-gray-700 mb-1">Ostatnia aktualizacja</h4>
             <p className="text-sm text-gray-900">{new Date(project.updatedAt).toLocaleDateString()}</p>
           </div>
         </CardContent>
@@ -215,39 +215,39 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Team</CardTitle>
+            <CardTitle className="text-sm font-medium">Zespół</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{project.team.name}</div>
             <p className="text-xs text-muted-foreground">
-              {project.team.members.length} member{project.team.members.length !== 1 ? 's' : ''}
+              {project.team.members.length} {project.team.members.length === 1 ? 'członek' : 'członków'}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tasks Progress</CardTitle>
+            <CardTitle className="text-sm font-medium">Postęp zadań</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.completed}/{stats.total}</div>
             <p className="text-xs text-muted-foreground">
-              {stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}% completed
+              {stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}% ukończono
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Overdue Tasks</CardTitle>
+            <CardTitle className="text-sm font-medium">Zadania zaległe</CardTitle>
             <AlertCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">{stats.overdue}</div>
             <p className="text-xs text-muted-foreground">
-              Need attention
+              Wymaga uwagi
             </p>
           </CardContent>
         </Card>
@@ -256,8 +256,8 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
       {/* Team Members */}
       <Card>
         <CardHeader>
-          <CardTitle>Team Members</CardTitle>
-          <CardDescription>People working on this project</CardDescription>
+          <CardTitle>Członkowie zespołu</CardTitle>
+          <CardDescription>Osoby pracujące nad tym projektem</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-4">
@@ -282,26 +282,26 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
       {/* Task Summary */}
       <Card>
         <CardHeader>
-          <CardTitle>Task Summary</CardTitle>
-          <CardDescription>Detailed breakdown of project tasks</CardDescription>
+          <CardTitle>Podsumowanie zadań</CardTitle>
+          <CardDescription>Szczegółowy podział zadań projektu</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
-              <p className="text-sm text-gray-500">Total Tasks</p>
+              <p className="text-sm text-gray-500">Wszystkie zadania</p>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
-              <p className="text-sm text-gray-500">Completed</p>
+              <p className="text-sm text-gray-500">Ukończone</p>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">{stats.inProgress}</div>
-              <p className="text-sm text-gray-500">In Progress</p>
+              <p className="text-sm text-gray-500">W toku</p>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-red-600">{stats.overdue}</div>
-              <p className="text-sm text-gray-500">Overdue</p>
+              <p className="text-sm text-gray-500">Zaległe</p>
             </div>
           </div>
         </CardContent>

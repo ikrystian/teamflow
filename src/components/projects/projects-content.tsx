@@ -113,12 +113,12 @@ export function ProjectsContent() {
             <div id="dynamic-header" className="flex flex-1" >
       <div id="page-header"className="flex justify-between items-center w-full">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Projects</h1>
-          <p className="text-gray-500">Manage your projects and track progress</p>
+          <h1 className="text-2xl font-bold text-gray-900">Projekty</h1>
+          <p className="text-gray-500">Zarządzaj swoimi projektami i śledź postępy</p>
         </div>
         <Button onClick={() => setCreateDialogOpen(true)} disabled={teams.length === 0}>
           <Plus className="mr-2 h-4 w-4" />
-          Create Project
+          Utwórz projekt
         </Button>
       </div>
             </div>
@@ -136,14 +136,14 @@ export function ProjectsContent() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Users className="h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No teams available</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Brak dostępnych zespołów</h3>
             <p className="text-gray-500 text-center mb-4">
-              You need to create or join a team before you can create projects
+              Musisz utworzyć lub dołączyć do zespołu, zanim będziesz mógł tworzyć projekty
             </p>
             <Link href="/dashboard/teams">
               <Button>
                 <Users className="mr-2 h-4 w-4" />
-                Go to Teams
+                Przejdź do zespołów
               </Button>
             </Link>
           </CardContent>
@@ -152,13 +152,13 @@ export function ProjectsContent() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <FolderOpen className="h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No projects yet</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Brak projektów</h3>
             <p className="text-gray-500 text-center mb-4">
-              Create your first project to start organizing tasks and collaborating
+              Utwórz swój pierwszy projekt, aby rozpocząć organizowanie zadań i współpracę
             </p>
             <Button onClick={() => setCreateDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
-              Create Project
+              Utwórz projekt
             </Button>
           </CardContent>
         </Card>
@@ -177,7 +177,7 @@ export function ProjectsContent() {
                       </Badge>
                     </div>
                     <CardDescription className="line-clamp-2">
-                      {project.description || "No description"}
+                      {project.description || "Brak opisu"}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -189,7 +189,7 @@ export function ProjectsContent() {
 
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Tasks Progress</span>
+                          <span className="text-gray-600">Postęp zadań</span>
                           <span className="font-medium">
                             {stats.completed}/{stats.total}
                           </span>
@@ -203,14 +203,14 @@ export function ProjectsContent() {
                           />
                         </div>
                         <div className="flex justify-between text-xs text-gray-500">
-                          <span>{stats.completed} completed</span>
-                          <span>{stats.inProgress} in progress</span>
+                          <span>{stats.completed} ukończono</span>
+                          <span>{stats.inProgress} w toku</span>
                         </div>
                       </div>
 
                       <div className="flex items-center text-sm text-gray-500">
                         <Calendar className="h-4 w-4 mr-2" />
-                        Created {new Date(project.createdAt).toLocaleDateString()}
+                        Utworzono {new Date(project.createdAt).toLocaleDateString()}
                       </div>
                     </div>
                   </CardContent>

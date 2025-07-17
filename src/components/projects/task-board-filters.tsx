@@ -40,11 +40,11 @@ export function TaskBoardFilters({
   taskCounts
 }: TaskBoardFiltersProps) {
   const getFilterLabel = () => {
-    if (selectedFilter === "all") return "All Tasks"
-    if (selectedFilter === "mine") return "My Tasks"
+    if (selectedFilter === "all") return "Wszystkie zadania"
+    if (selectedFilter === "mine") return "Moje zadania"
 
     const user = teamMembers.find(member => member.id === selectedFilter)
-    return user ? user.name : "Unknown User"
+    return user ? user.name : "Nieznany użytkownik"
   }
 
   const getFilterIcon = () => {
@@ -75,7 +75,7 @@ export function TaskBoardFilters({
     <div className="flex items-center space-x-3">
       <div className="flex items-center space-x-2">
         <Filter className="h-4 w-4 text-gray-500" />
-        <span className="text-sm font-medium text-gray-700">Filter:</span>
+        <span className="text-sm font-medium text-gray-700">Filtruj:</span>
       </div>
 
       <DropdownMenu>
@@ -89,7 +89,7 @@ export function TaskBoardFilters({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-56">
-          <DropdownMenuLabel>Filter Tasks</DropdownMenuLabel>
+          <DropdownMenuLabel>Filtruj zadania</DropdownMenuLabel>
           <DropdownMenuSeparator />
 
           {/* All Tasks */}
@@ -99,7 +99,7 @@ export function TaskBoardFilters({
           >
             <div className="flex items-center space-x-2">
               <Users className="h-4 w-4" />
-              <span>All Tasks</span>
+              <span>Wszystkie zadania</span>
             </div>
             <div className="flex items-center space-x-2">
               <Badge variant="secondary" className="text-xs">
@@ -117,7 +117,7 @@ export function TaskBoardFilters({
             >
               <div className="flex items-center space-x-2">
                 <User className="h-4 w-4" />
-                <span>My Tasks</span>
+                <span>Moje zadania</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Badge variant="secondary" className="text-xs">
@@ -131,7 +131,7 @@ export function TaskBoardFilters({
           {teamMembers.length > 0 && (
             <>
               <DropdownMenuSeparator />
-              <DropdownMenuLabel>Team Members</DropdownMenuLabel>
+              <DropdownMenuLabel>Członkowie zespołu</DropdownMenuLabel>
 
               {teamMembers.map((member) => (
                 <DropdownMenuItem
@@ -149,7 +149,7 @@ export function TaskBoardFilters({
                     <span>{member.name}</span>
                     {member.id === currentUserId && (
                       <Badge variant="outline" className="text-xs">
-                        You
+                        Ty
                       </Badge>
                     )}
                   </div>
