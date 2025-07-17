@@ -21,6 +21,7 @@ import {
   Image
 } from "lucide-react"
 import { ImageGallery } from "@/components/ui/image-gallery"
+import { TaskComments } from "@/components/tasks/task-comments"
 
 interface User {
   id: string
@@ -100,6 +101,16 @@ export function TaskDetailsDialog({
   onTimeTracking,
   canEdit = false
 }: TaskDetailsDialogProps) {
+  const [comments, setComments] = useState(task?.comments || [])
+  
+  useEffect(() => {
+    setComments(task?.comments || [])
+  }, [task?.comments])
+  
+  const handleCommentAdded = (newComment: any) => {
+    setComments(prev => [newComment, ...prev])
+  }
+  
   if (!task) return null
 
   const getPriorityColor = (priority?: string) => {
@@ -355,40 +366,11 @@ export function TaskDetailsDialog({
           )}
 
           {/* Comments */}
-          {task.comments && task.comments.length > 0 && (
-            <div>
-              <h4 className="font-medium text-gray-900 mb-3 flex items-center">
-                <MessageSquare className="h-4 w-4 mr-2" />
-                Comments ({task.comments.length})
-              </h4>
-              <div className="space-y-3">
-                {task.comments.slice(0, 3).map((comment) => (
-                  <div key={comment.id} className="flex space-x-3">
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={comment.author.avatarUrl} />
-                      <AvatarFallback className="text-xs">
-                        {comment.author.name?.charAt(0) || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm font-medium">{comment.author.name}</span>
-                        <span className="text-xs text-gray-500">
-                          {formatDate(comment.createdAt)}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-700 mt-1">{comment.content}</p>
-                    </div>
-                  </div>
-                ))}
-                {task.comments.length > 3 && (
-                  <p className="text-xs text-gray-500 text-center">
-                    and {task.comments.length - 3} more comments...
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
+          <TaskComments
+            taskId={task.id}
+            comments={comments}
+            onCommentAdded={handleCommentAdded}
+          />
         </div>
       </DialogContent>
     </Dialog>
