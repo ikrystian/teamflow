@@ -720,6 +720,21 @@ Projekt jest otwarty na współpracę. Aby dodać nowe funkcjonalności:
 - **Layout**: Sidebar, top bar i wszystkie główne komponenty obsługują dark mode
 - **Funkcje kolorów**: Priority i status badges używają CSS variables z fallback dla dark mode
 
+## 📋 Ostatnie aktualizacje
+
+### Naprawa liczby zadań z todolist (2025-01-17)
+- **Problem**: Nieprawidłowa liczba zadań w szczegółach projektu - nie uwzględniała todos
+- **Rozwiązanie**:
+  - Naprawiono API endpoint `/api/projects/[projectId]` - dodano `todos: true` do include
+  - Poprawiono komponent `project-details-content.tsx` - naprawiono przypisanie stats
+  - Dodano wyświetlanie statystyk zadań w formie kart (wszystkie, ukończone, w toku, zaległe)
+  - Utworzono test weryfikacyjny `test-todos-count.js`
+- **Pliki zmienione**:
+  - `src/app/api/projects/[projectId]/route.ts`
+  - `src/components/projects/project-details-content.tsx`
+  - `test-todos-count.js` (nowy)
+  - `TODOS_COUNT_FIX.txt` (dokumentacja)
+
 ## 📄 Licencja
 
 Ten projekt jest dostępny na licencji MIT.

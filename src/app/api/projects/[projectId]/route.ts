@@ -53,6 +53,7 @@ export async function GET(
               }
             },
             subtasks: true,
+            todos: true,
             comments: {
               include: {
                 author: {
