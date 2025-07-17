@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { RichTextEditor } from "@/components/ui/rich-text-editor"
+import { ImageGallery } from "@/components/ui/image-gallery"
 import {
   Select,
   SelectContent,
@@ -34,6 +35,14 @@ interface TaskStatus {
   color: string
   order: number
   isDefault: boolean
+}
+
+interface TaskImage {
+  id: string
+  filename: string
+  url: string
+  mimeType: string
+  size: number
 }
 
 interface Task {
@@ -78,6 +87,7 @@ interface Task {
     date: string
     user: User
   }[]
+  images: TaskImage[]
 }
 
 interface EditTaskDialogProps {
@@ -104,6 +114,7 @@ export function EditTaskDialog({
   const [dueDate, setDueDate] = useState("")
   const [estimatedHours, setEstimatedHours] = useState("")
   const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
+  const [images, setImages] = useState<TaskImage[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
@@ -152,6 +163,7 @@ export function EditTaskDialog({
     if (task) {
       setTitle(task.title)
       setDescription(task.description || "")
+      setImages(task.images || [])
       // Don't set status values here - they will be set properly after task statuses are loaded
       setAssigneeId(task.assignee?.id || "unassigned")
       setPriority(task.priority || "")
@@ -206,13 +218,56 @@ export function EditTaskDialog({
   const resetForm = () => {
     setTitle("")
     setDescription("")
+    setImages([])
     setStatus("")
     setStatusId("")
     setAssigneeId("unassigned")
     setPriority("")
     setDueDate("")
     setEstimatedHours("none")
-    setError("")
+  }
+
+  const handleImageUpload = async (file: File): Promise<void> => {
+    if (!task) return
+    
+    const formData = new FormData()
+    formData.append('file', file)
+    
+    try {
+      const response = await fetch(`/api/tasks/${task.id}/images`, {
+        method: 'POST',
+        body: formData
+      })
+      
+      if (response.ok) {
+        const newImage = await response.json()
+        setImages(prev => [...prev, newImage])
+      } else {
+        throw new Error('Failed to upload image')
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error)
+      setError('Failed to upload image')
+    }
+  }
+
+  const handleImageDelete = async (imageId: string): Promise<void> => {
+    if (!task) return
+    
+    try {
+      const response = await fetch(`/api/tasks/${task.id}/images?imageId=${imageId}`, {
+        method: 'DELETE'
+      })
+      
+      if (response.ok) {
+        setImages(prev => prev.filter(img => img.id !== imageId))
+      } else {
+        throw new Error('Failed to delete image')
+      }
+    } catch (error) {
+      console.error('Error deleting image:', error)
+      setError('Failed to delete image')
+    }
   }
 
   const handleClose = () => {
@@ -254,12 +309,10 @@ export function EditTaskDialog({
 
             <div className="grid gap-2">
               <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
+              <RichTextEditor
+                content={description}
+                onChange={setDescription}
                 placeholder="Enter task description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={3}
               />
             </div>
 
@@ -380,6 +433,13 @@ export function EditTaskDialog({
                 </Select>
               </div>
             </div>
+
+            <ImageGallery
+              images={images}
+              onImageUpload={handleImageUpload}
+              onImageDelete={handleImageDelete}
+              editable={true}
+            />
 
             {error && (
               <div className="text-red-500 text-sm">{error}</div>

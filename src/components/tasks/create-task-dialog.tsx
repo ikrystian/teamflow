@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import {
   Select,
   SelectContent,
@@ -162,12 +162,10 @@ export function CreateTaskDialog({
 
             <div className="grid gap-2">
               <Label htmlFor="description">Description (Optional)</Label>
-              <Textarea
-                id="description"
+              <RichTextEditor
+                content={description}
+                onChange={setDescription}
                 placeholder="Enter task description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={3}
               />
             </div>
 

@@ -26,6 +26,15 @@ interface User {
   avatarUrl?: string
 }
 
+interface TaskImage {
+  id: string
+  filename: string
+  url: string
+  mimeType: string
+  size: number
+  createdAt: string
+}
+
 interface Task {
   id: string
   title: string
@@ -67,6 +76,7 @@ interface Task {
     date: string
     user: User
   }[]
+  images?: TaskImage[]
 }
 
 interface Project {

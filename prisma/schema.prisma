@@ -50,7 +50,7 @@ model Project {
 model Task {
   id            String      @id @default(cuid())
   title         String
-  description   String?
+  description   String?     // Rich text content stored as HTML
   status        String      @default("To Do") // e.g., "To Do", "In Progress", "Done" - will be deprecated in favor of statusId
   statusId      String?     // Reference to TaskStatus
   taskStatus    TaskStatus? @relation(fields: [statusId], references: [id])
@@ -68,6 +68,7 @@ model Task {
   subtasks      Subtask[]
   comments      Comment[]
   timeEntries   TimeEntry[]
+  images        TaskImage[]
 }
 
 model TaskStatus {
@@ -94,6 +95,17 @@ model Subtask {
   updatedAt DateTime @updatedAt
   taskId    String
   task      Task     @relation(fields: [taskId], references: [id])
+}
+
+model TaskImage {
+  id        String   @id @default(cuid())
+  filename  String   // Original filename
+  url       String   // Path to the stored image
+  mimeType  String   // Image MIME type
+  size      Int      // File size in bytes
+  createdAt DateTime @default(now())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
 }
 
 model Comment {

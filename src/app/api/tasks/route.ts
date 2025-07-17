@@ -89,6 +89,11 @@ export async function GET(request: NextRequest) {
           orderBy: {
             date: "desc"
           }
+        },
+        images: {
+          orderBy: {
+            createdAt: "asc"
+          }
         }
       },
       orderBy: {
