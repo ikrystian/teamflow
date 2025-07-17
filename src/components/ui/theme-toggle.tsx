@@ -26,12 +26,15 @@ export function ThemeToggle() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={() => setTheme("light")}>
+          <Sun className="h-4 w-4 mr-2" />
           Jasny
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setTheme("dark")}>
+          <Moon className="h-4 w-4 mr-2" />
           Ciemny
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setTheme("system")}>
+          <div className="h-4 w-4 mr-2 rounded-sm bg-gradient-to-br from-foreground/20 to-foreground/40" />
           Systemowy
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -255,269 +255,267 @@ export function TasksContent() {
   }
 
   return (
-    <div>
-      {/* Top bar */}
-      <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
-        <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-          <div id="page-header" className="flex justify-between items-center w-full">
-            <div  >
-              <h1 className="text-2xl font-bold text-gray-900">
-                {filter === "assigned" ? "My Tasks" : "All Tasks"}
-              </h1>
-              <p className="text-gray-500">
-                {filter === "assigned"
-                  ? "Tasks assigned to you across all projects"
-                  : "All tasks you have access to"
-                }
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant={filter === "assigned" ? "default" : "outline"}
-                onClick={() => setFilter("assigned")}
-                size="sm"
-              >
-                <UserIcon className="mr-2 h-4 w-4" />
-                My Tasks
-              </Button>
-              <Button
-                variant={filter === "all" ? "default" : "outline"}
-                onClick={() => setFilter("all")}
-                size="sm"
-              >
-                <Filter className="mr-2 h-4 w-4" />
-                All Tasks
-              </Button>
-              <Button onClick={() => setCreateDialogOpen(true)} disabled={projects.length === 0}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Task
-              </Button>
-            </div>
-          </div>
+    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+      {/* Header */}
+      <div className="flex items-center justify-between space-y-2">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">
+            {filter === "assigned" ? "Moje zadania" : "Wszystkie zadania"}
+          </h2>
+          <p className="text-muted-foreground">
+            {filter === "assigned"
+              ? "Zadania przypisane do Ciebie we wszystkich projektach"
+              : "Wszystkie zadania do których masz dostęp"
+            }
+          </p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant={filter === "assigned" ? "default" : "outline"}
+            onClick={() => setFilter("assigned")}
+            size="sm"
+          >
+            <UserIcon className="mr-2 h-4 w-4" />
+            Moje zadania
+          </Button>
+          <Button
+            variant={filter === "all" ? "default" : "outline"}
+            onClick={() => setFilter("all")}
+            size="sm"
+          >
+            <Filter className="mr-2 h-4 w-4" />
+            Wszystkie
+          </Button>
+          <Button onClick={() => setCreateDialogOpen(true)} disabled={projects.length === 0}>
+            <Plus className="mr-2 h-4 w-4" />
+            Utwórz zadanie
+          </Button>
         </div>
       </div>
 
-      {/* Page content */}
-      <main className="py-10">
-        <div className="px-4 sm:px-6 lg:px-8">
-          <div className="space-y-6">
+      {/* Content */}
+      <div className="space-y-4">
+        {loading ? (
+          <PageLoadingLayout variant="list" />
+        ) : projects.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center text-center py-16">
+              <CheckSquare className="h-16 w-16 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Brak dostępnych projektów</h3>
+              <p className="text-muted-foreground mb-6 max-w-sm">
+                Musisz mieć projekty, aby móc tworzyć zadania
+              </p>
+            </CardContent>
+          </Card>
+        ) : tasks.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center text-center py-16">
+              <CheckSquare className="h-16 w-16 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">
+                {filter === "assigned" ? "Brak przypisanych zadań" : "Brak zadań"}
+              </h3>
+              <p className="text-muted-foreground mb-4 max-w-sm">
+                {filter === "assigned"
+                  ? "Nie masz jeszcze przypisanych żadnych zadań."
+                  : "Nie utworzono jeszcze żadnych zadań."
+                }
+              </p>
+              <Button onClick={() => setCreateDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Utwórz zadanie
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-4">
+            {tasks.map((task) => (
+              <Card
+                key={task.id}
+                className="transition-all hover:shadow-md cursor-pointer border-l-4 border-l-transparent hover:border-l-primary"
+                onClick={() => handleTaskDetails(task)}
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-lg font-semibold truncate">{task.title}</CardTitle>
+                      <CardDescription className="flex items-center gap-2 mt-1">
+                        <span>{task.project.name}</span>
+                        <span>•</span>
+                        <span>{task.project.team.name}</span>
+                      </CardDescription>
+                    </div>
+                    <div className="flex items-center gap-2 ml-4">
+                      {task.priority && (
+                        <Badge variant="outline" className={getPriorityColor(task.priority)}>
+                          {task.priority === "Low" ? "Niski" : task.priority === "Medium" ? "Średni" : "Wysoki"}
+                        </Badge>
+                      )}
+                      <Badge variant="secondary" className={getStatusColor(task.status)}>
+                        {task.status === "completed" ? "Ukończono" :
+                         task.status === "in progress" ? "W toku" :
+                         task.status === "on hold" ? "Wstrzymano" : task.status}
+                      </Badge>
 
-
-            {projects.length === 0 ? (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <CheckSquare className="h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No projects available</h3>
-                  <p className="text-gray-500 text-center mb-4">
-                    You need to have projects before you can create tasks
-                  </p>
-                </CardContent>
-              </Card>
-            ) : tasks.length === 0 ? (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <CheckSquare className="h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    {filter === "assigned" ? "No tasks assigned to you" : "No tasks found"}
-                  </h3>
-                  <p className="text-gray-500 text-center mb-4">
-                    {filter === "assigned"
-                      ? "You don't have any tasks assigned to you yet"
-                      : "No tasks have been created yet"
-                    }
-                  </p>
-                  <Button onClick={() => setCreateDialogOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create Task
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {tasks.map((task) => (
-                  <Card
-                    key={task.id}
-                    className="hover:shadow-md transition-shadow cursor-pointer"
-                    onClick={() => handleTaskDetails(task)}
-                  >
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <CardTitle className="text-lg">{task.title}</CardTitle>
-                          <CardDescription className="mt-1">
-                            {task.project.name} • {task.project.team.name}
-                          </CardDescription>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          {task.priority && (
-                            <Badge className={getPriorityColor(task.priority)}>
-                              {task.priority}
-                            </Badge>
+                      {/* Action Menu */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={(e) => handleTimeTracking(task, e)}>
+                            <Clock className="mr-2 h-4 w-4" />
+                            Loguj czas
+                          </DropdownMenuItem>
+                          {canEditTask(task) && (
+                            <DropdownMenuItem onClick={(e) => handleEditTask(task, e)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edytuj zadanie
+                            </DropdownMenuItem>
                           )}
-                          <Badge className={getStatusColor(task.status)}>
-                            {task.status}
-                          </Badge>
-
-                          {/* Action Menu */}
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                                onClick={(e) => e.stopPropagation()}
+                          {canEditTask(task) && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={(e) => handleDeleteTask(task, e)}
+                                className="text-destructive focus:text-destructive"
                               >
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={(e) => handleTimeTracking(task, e)}>
-                                <Clock className="mr-2 h-4 w-4" />
-                                Log Time
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Usuń zadanie
                               </DropdownMenuItem>
-                              {canEditTask(task) && (
-                                <DropdownMenuItem onClick={(e) => handleEditTask(task, e)}>
-                                  <Edit className="mr-2 h-4 w-4" />
-                                  Edit Task
-                                </DropdownMenuItem>
-                              )}
-                              {canEditTask(task) && (
-                                <>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    onClick={(e) => handleDeleteTask(task, e)}
-                                    className="text-red-600 focus:text-red-600"
-                                  >
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Delete Task
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {task.description && (
-                          <p className="text-gray-600 text-sm line-clamp-2">
-                            {task.description}
-                          </p>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-3">
+                    {task.description && (
+                      <p className="text-muted-foreground text-sm line-clamp-2">
+                        {task.description}
+                      </p>
+                    )}
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        {task.assignee && (
+                          <div className="flex items-center space-x-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage src={task.assignee.avatarUrl} alt={task.assignee.name} />
+                              <AvatarFallback className="text-xs">
+                                {task.assignee.name?.charAt(0) || "U"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm text-muted-foreground">{task.assignee.name}</span>
+                          </div>
                         )}
 
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            {task.assignee && (
-                              <div className="flex items-center space-x-2">
-                                <Avatar className="h-6 w-6">
-                                  <AvatarImage src={task.assignee.avatarUrl} alt={task.assignee.name} />
-                                  <AvatarFallback className="text-xs">
-                                    {task.assignee.name?.charAt(0) || "U"}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span className="text-sm text-gray-600">{task.assignee.name}</span>
-                              </div>
-                            )}
-
-                            {task.subtasks.length > 0 && (
-                              <div className="text-sm text-gray-600">
-                                {task.subtasks.filter(st => st.isCompleted).length}/{task.subtasks.length} subtasks
-                              </div>
-                            )}
-
-                            {getTodoProgress(task) && (
-                              <div className="text-sm text-gray-600">
-                                {getTodoProgress(task)!.completed}/{getTodoProgress(task)!.total} todos
-                              </div>
-                            )}
-
-                            {/* Time tracking info */}
-                            <div className="flex items-center space-x-1 text-sm text-gray-600">
-                              <Clock className="h-4 w-4" />
-                              <span>{formatHours(getTotalTimeSpent(task))}</span>
-                              {task.estimatedHours && (
-                                <span className="text-gray-400">
-                                  / {formatHours(task.estimatedHours)} planowane
-                                </span>
-                              )}
-                            </div>
+                        {task.subtasks.length > 0 && (
+                          <div className="text-sm text-muted-foreground">
+                            {task.subtasks.filter(st => st.isCompleted).length}/{task.subtasks.length} podzadania
                           </div>
+                        )}
 
-                          <div className="flex items-center space-x-4">
-                            {task.dueDate && (
-                              <div className={`flex items-center space-x-1 text-sm ${isOverdue(task.dueDate) ? "text-red-600" : "text-gray-600"
-                                }`}>
-                                <Calendar className="h-4 w-4" />
-                                <span>{formatDueDate(task.dueDate)}</span>
-                              </div>
-                            )}
+                        {getTodoProgress(task) && (
+                          <div className="text-sm text-muted-foreground">
+                            {getTodoProgress(task)!.completed}/{getTodoProgress(task)!.total} zadania do wykonania
                           </div>
+                        )}
+
+                        {/* Time tracking info */}
+                        <div className="flex items-center space-x-1 text-sm text-muted-foreground">
+                          <Clock className="h-4 w-4" />
+                          <span>{formatHours(getTotalTimeSpent(task))}</span>
+                          {task.estimatedHours && (
+                            <span className="text-muted-foreground/70">
+                              / {formatHours(task.estimatedHours)} planowane
+                            </span>
+                          )}
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
 
-            <CreateTaskDialog
-              open={createDialogOpen}
-              onOpenChange={setCreateDialogOpen}
-              onTaskCreated={handleTaskCreated}
-              projects={projects}
-            />
-
-            <EditTaskDialog
-              open={editDialogOpen}
-              onOpenChange={setEditDialogOpen}
-              onTaskUpdated={handleTaskUpdated}
-              task={selectedTask}
-              teamMembers={teamMembers}
-            />
-
-            <TimeTrackingDialog
-              open={timeTrackingDialogOpen}
-              onOpenChange={setTimeTrackingDialogOpen}
-              onTimeLogged={handleTimeLogged}
-              task={selectedTask}
-            />
-
-            <TaskDetailsDialog
-              open={detailsDialogOpen}
-              onOpenChange={setDetailsDialogOpen}
-              task={selectedTask as Task | null}
-              onEdit={handleEditTask}
-              onTimeTracking={handleTimeTracking}
-              onDelete={handleDeleteTask}
-              onTaskUpdated={fetchTasks}
-              canEdit={selectedTask ? canEditTask(selectedTask) : false}
-            />
-
-            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Usuń zadanie</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Czy na pewno chcesz usunąć zadanie &quot;{selectedTask?.title}&quot;?
-                    Ta operacja jest nieodwracalna i usunie również wszystkie podzadania, komentarze i wpisy czasu.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Anuluj</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={confirmDeleteTask}
-                    disabled={deletingTask}
-                    className="bg-red-600 hover:bg-red-700"
-                  >
-                    {deletingTask ? "Usuwanie..." : "Usuń"}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                      <div className="flex items-center space-x-4">
+                        {task.dueDate && (
+                          <div className={`flex items-center space-x-1 text-sm ${
+                            isOverdue(task.dueDate) ? "text-destructive" : "text-muted-foreground"
+                          }`}>
+                            <Calendar className="h-4 w-4" />
+                            <span>{formatDueDate(task.dueDate)}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-        </div>
-      </main>
+        )}
+      </div>
+
+      {/* Dialogs */}
+      <CreateTaskDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onTaskCreated={handleTaskCreated}
+        projects={projects}
+      />
+
+      <EditTaskDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onTaskUpdated={handleTaskUpdated}
+        task={selectedTask}
+        teamMembers={teamMembers}
+      />
+
+      <TimeTrackingDialog
+        open={timeTrackingDialogOpen}
+        onOpenChange={setTimeTrackingDialogOpen}
+        onTimeLogged={handleTimeLogged}
+        task={selectedTask}
+      />
+
+      <TaskDetailsDialog
+        open={detailsDialogOpen}
+        onOpenChange={setDetailsDialogOpen}
+        task={selectedTask as Task | null}
+        onEdit={handleEditTask}
+        onTimeTracking={handleTimeTracking}
+        onDelete={handleDeleteTask}
+        onTaskUpdated={fetchTasks}
+        canEdit={selectedTask ? canEditTask(selectedTask) : false}
+      />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Usuń zadanie</AlertDialogTitle>
+            <AlertDialogDescription>
+              Czy na pewno chcesz usunąć zadanie &quot;{selectedTask?.title}&quot;?
+              Ta operacja jest nieodwracalna i usunie również wszystkie podzadania, komentarze i wpisy czasu.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Anuluj</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteTask}
+              disabled={deletingTask}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {deletingTask ? "Usuwanie..." : "Usuń"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

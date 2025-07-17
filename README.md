@@ -18,6 +18,7 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 - **Dashboard** - Przegląd statystyk i ostatnich aktywności
 - **Widok kalendarza** - Wyświetlanie zadań według terminów wykonania
 - **Dark mode** - Tryb ciemny jako domyślny z możliwością przełączania (jasny/ciemny/systemowy)
+- **Mono theme** - Monochromatyczny motyw z wykorzystaniem najnowszej wersji shadcn/ui
 - **Responsywny interfejs** - Zbudowany z shadcn/ui i Tailwind CSS
 
 ### 🔄 Planowane funkcjonalności
@@ -581,6 +582,45 @@ Projekt jest otwarty na współpracę. Aby dodać nowe funkcjonalności:
 - **Komponenty**: TaskTodos, TaskDetailsDialog, TasksContent
 - **API**: Pełna obsługa CRUD dla todos z odpowiednimi endpoint'ami
 - **Dokumentacja**: Utworzono `RELACJE_TODOS.txt` z szczegółowym opisem relacji i rozwiązania
+
+### Implementacja Mono Theme i ulepszenia UI
+- **Mono Theme**: Zaimplementowano monochromatyczny motyw wykorzystujący najnowszą wersję shadcn/ui
+- **Kolory**: Zaktualizowano CSS variables dla spójnego, minimalistycznego wyglądu w trybach jasnym i ciemnym
+- **Dialog dodawania zadania**: Znaczące ulepszenia UI:
+  - Zwiększona szerokość i lepsze przewijanie (max-w-[700px], max-h-[90vh])
+  - Ulepszone etykiety z oznaczeniami wymaganych pól (*)
+  - Większe pola wyboru (h-10) dla lepszej dostępności
+  - Dodano ikony priorytetów (kolorowe kropki) i awatary członków zespołu
+  - Ulepszona sekcja załączników z efektami hover i lepszym układem
+  - Responsywne przyciski z animowanym spinnerem ładowania
+  - Lepsze wyświetlanie błędów z tłem i obramowaniem
+- **Theme Toggle**: Dodano ikony dla każdej opcji motywu
+- **Dokumentacja**: Utworzono `MONO_THEME_IMPLEMENTATION.txt` z szczegółowym opisem zmian
+
+### Stylowanie strony "Moje zadania" według standardów shadcn/ui
+- **Refaktoryzacja layoutu**: Zastąpiono sticky top bar prostszym flex layout z `flex-1 space-y-4`
+- **Semantic color system**: Użycie `text-muted-foreground`, `text-destructive` zamiast hardcoded colors
+- **Ulepszone typography**: `text-3xl font-bold tracking-tight` dla nagłówków, lepsze hierarchie
+- **Task cards**: Dodano border-left accent na hover, lepsze visual feedback
+- **Empty states**: Większe ikony (h-16), lepsze centrum layout, semantic colors
+- **Badges**: Użycie `variant="outline"` i `variant="secondary"`, polskie tłumaczenia
+- **Responsive design**: Mobile-first approach z lepszymi breakpoints
+- **Component structure**: Proper shadcn/ui patterns z CardHeader, CardContent
+- **Spacing system**: Consistent spacing z `space-y-*`, `gap-*`, `py-*`
+- **Dokumentacja**: Utworzono `TASKS_PAGE_SHADCN_STYLING.txt` z szczegółowym opisem wzorców
+
+### Redesign podglądu zadania według najnowszych wzorców shadcn/ui
+- **Struktura z Tabs**: Podział na 4 sekcje - Przegląd, Zadania, Komentarze, Aktywność
+- **Card-based Layout**: Każda sekcja w osobnej karcie dla lepszej organizacji
+- **Semantic Color System**: `text-muted-foreground`, `text-destructive` zamiast hardcoded colors
+- **Enhanced Typography**: `text-2xl font-bold` dla tytułów, lepsze hierarchie
+- **Improved Dialog**: `max-w-5xl` szerokość, `overflow-hidden` dla lepszego UX
+- **Better Task Details**: Grid layout, większe avatary, progress bar dla czasu pracy
+- **Enhanced Subtasks**: Card wrapper, lepsze styling z borders, większe ikony
+- **Activity Tab**: Nowa sekcja z historią zadania i wpisami czasu
+- **Responsive Design**: Mobile-first approach z proper overflow handling
+- **Polish Translations**: Wszystkie teksty przetłumaczone na język polski
+- **Dokumentacja**: Utworzono `TASK_DETAILS_SHADCN_REDESIGN.txt` z szczegółowym opisem
 
 ### Implementacja Dark Mode
 - **Biblioteka**: Zainstalowano i skonfigurowano `next-themes` dla zarządzania motywami

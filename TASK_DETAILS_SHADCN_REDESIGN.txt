@@ -1,0 +1,200 @@
+# Redesign podglądu zadania według najnowszych wzorców shadcn/ui
+
+## Przegląd
+Kompletny redesign komponentu TaskDetailsDialog z wykorzystaniem najnowszych wzorców shadcn/ui dla znacznie lepszej czytelności i organizacji treści.
+
+## Główne zmiany
+
+### 1. Struktura z Tabs
+**Przed:**
+- Jedna długa strona z wszystkimi informacjami
+- Trudna nawigacja po treści
+- Brak logicznego podziału
+
+**Po:**
+- Tabs z 4 sekcjami: Przegląd, Zadania, Komentarze, Aktywność
+- Logiczny podział treści
+- Łatwa nawigacja między sekcjami
+
+### 2. Card-based Layout
+**Przed:**
+```tsx
+<div>
+  <h4 className="font-medium text-gray-900 mb-2">Opis</h4>
+  <div className="text-gray-700">...</div>
+</div>
+```
+
+**Po:**
+```tsx
+<Card>
+  <CardHeader>
+    <CardTitle className="text-lg">Opis zadania</CardTitle>
+  </CardHeader>
+  <CardContent>
+    <div className="prose prose-sm max-w-none text-muted-foreground">...</div>
+  </CardContent>
+</Card>
+```
+
+### 3. Semantic Color System
+**Przed:**
+- `text-gray-400`, `text-gray-500`, `text-red-600`
+- Hardcoded colors
+
+**Po:**
+- `text-muted-foreground`, `text-destructive`, `text-foreground`
+- Semantic color tokens
+
+### 4. Improved Typography
+**Przed:**
+- `text-xl font-semibold`
+- Podstawowe hierarchie
+
+**Po:**
+- `text-2xl font-bold`
+- Lepsze hierarchie z `text-lg` dla card titles
+- `line-clamp-2` dla długich tytułów
+
+### 5. Enhanced Layout Structure
+
+#### Header Section
+- Większy dialog: `max-w-5xl` zamiast `sm:max-w-[700px]`
+- Lepsze badge styling z `variant="outline"` i `variant="secondary"`
+- Polskie tłumaczenia statusów i priorytetów
+- `flex-wrap` dla responsywności
+
+#### Task Details Card
+- Grid layout: `grid-cols-1 md:grid-cols-2`
+- Lepsze spacing: `space-y-2`, `gap-6`
+- Większe avatary: `h-8 w-8` zamiast `h-6 w-6`
+- Progress bar dla czasu pracy
+
+#### Subtasks Section
+- Card wrapper dla lepszej organizacji
+- Lepsze styling podzadań z `border` i `rounded-lg`
+- Progress bar z `h-2` dla lepszej widoczności
+- Większe ikony: `h-5 w-5`
+
+#### Images Section
+- Card wrapper z proper header
+- Lepszy tytuł: "Załączniki" zamiast "Obrazy"
+
+### 6. Tabs Implementation
+
+#### Tab Structure
+```tsx
+<TabsList className="grid w-full grid-cols-4">
+  <TabsTrigger value="overview">
+    <FileText className="h-4 w-4" />
+    Przegląd
+  </TabsTrigger>
+  // ... inne tabs
+</TabsList>
+```
+
+#### Tab Content
+- **Przegląd**: Opis, załączniki, szczegóły, podzadania
+- **Zadania**: TaskTodos component
+- **Komentarze**: TaskComments component  
+- **Aktywność**: Historia zmian i wpisy czasu
+
+### 7. Activity Tab (Nowa funkcjonalność)
+- Historia utworzenia zadania
+- Wpisy czasu pracy z opisami
+- Timeline-style layout z kolorowymi kropkami
+- Semantic dates formatting
+
+### 8. Responsive Design
+- `overflow-hidden` na głównym kontenerze
+- `overflow-y-auto` na content area
+- `flex-1` dla proper flex behavior
+- `min-w-0` dla truncation
+
+### 9. Accessibility Improvements
+- Lepsze focus states
+- Semantic HTML structure
+- Proper heading hierarchy
+- Better color contrast
+
+## Wzorce shadcn/ui zastosowane
+
+### 1. Dialog Pattern
+```tsx
+<Dialog>
+  <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden">
+    <DialogHeader className="space-y-3">
+      // Enhanced header with badges
+    </DialogHeader>
+    // Tabs content
+  </DialogContent>
+</Dialog>
+```
+
+### 2. Tabs Pattern
+```tsx
+<Tabs defaultValue="overview" className="flex-1 overflow-hidden">
+  <TabsList className="grid w-full grid-cols-4">
+    // Tab triggers with icons
+  </TabsList>
+  <div className="flex-1 overflow-y-auto mt-4">
+    // Tab content areas
+  </div>
+</Tabs>
+```
+
+### 3. Card Pattern
+```tsx
+<Card>
+  <CardHeader>
+    <CardTitle className="text-lg">Title</CardTitle>
+  </CardHeader>
+  <CardContent>
+    // Content with proper spacing
+  </CardContent>
+</Card>
+```
+
+### 4. Progress Pattern
+```tsx
+<Progress 
+  value={(totalLoggedHours / task.estimatedHours) * 100} 
+  className="h-2"
+/>
+```
+
+## Korzyści implementacji
+
+### 1. Czytelność
+- Logiczny podział treści na tabs
+- Card-based organization
+- Lepsze hierarchie wizualne
+
+### 2. Nawigacja
+- Łatwe przełączanie między sekcjami
+- Ikony w tab triggers
+- Intuitive layout
+
+### 3. Responsywność
+- Lepsze działanie na mobile
+- Flexible grid layouts
+- Proper overflow handling
+
+### 4. Maintainability
+- Semantic color system
+- Reusable card patterns
+- Clean component structure
+
+### 5. User Experience
+- Szybszy dostęp do informacji
+- Lepsze visual feedback
+- Polish translations
+
+## Pliki zmodyfikowane
+- `src/components/tasks/task-details-dialog.tsx` - kompletny redesign
+
+## Następne kroki
+1. Dodanie animacji transitions między tabs
+2. Implementacja lazy loading dla dużych zadań
+3. Dodanie więcej informacji w Activity tab
+4. Optymalizacja performance dla dużych list podzadań

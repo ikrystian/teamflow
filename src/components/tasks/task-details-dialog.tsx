@@ -5,7 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
 import {
   Calendar,
@@ -14,12 +15,14 @@ import {
   Clock,
   Edit,
   CheckSquare,
-
   Timer,
   AlertCircle,
   CheckCircle2,
   Image,
-  Trash2
+  Trash2,
+  FileText,
+  MessageSquare,
+  ListTodo
 } from "lucide-react"
 import { ImageGallery } from "@/components/ui/image-gallery"
 import { TaskComments } from "@/components/tasks/task-comments"
@@ -144,18 +147,46 @@ export function TaskDetailsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden">
+        <DialogHeader className="space-y-3">
           <div className="flex items-start justify-between">
-            <div className="flex-1 pr-4">
-              <DialogTitle className="text-xl font-semibold leading-tight">
+            <div className="flex-1 min-w-0">
+              <DialogTitle className="text-2xl font-bold pr-8 line-clamp-2">
                 {task.title}
               </DialogTitle>
-              <p className="text-sm text-gray-500 mt-1">
-                in {task.project.name}
-              </p>
+              <div className="flex items-center gap-2 mt-3 flex-wrap">
+                <Badge variant="outline" className="text-xs font-medium">
+                  {task.project.name}
+                </Badge>
+                <Badge variant="outline" className="text-xs font-medium">
+                  {task.project.team.name}
+                </Badge>
+                {task.priority && (
+                  <Badge variant="secondary" className={getPriorityColor(task.priority)}>
+                    {task.priority === "Low" ? "Niski" : task.priority === "Medium" ? "Średni" : "Wysoki"}
+                  </Badge>
+                )}
+                <Badge variant="default" className={getStatusColor(task.status)}>
+                  {task.status === "completed" ? "Ukończono" :
+                   task.status === "in progress" ? "W toku" :
+                   task.status === "on hold" ? "Wstrzymano" : task.status}
+                </Badge>
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2 ml-4">
+              {onTimeTracking && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    onOpenChange(false)
+                    onTimeTracking?.(task, e)
+                  }}
+                >
+                  <Timer className="h-4 w-4 mr-2" />
+                  Loguj czas
+                </Button>
+              )}
               {canEdit && onEdit && (
                 <Button
                   variant="outline"
@@ -169,28 +200,14 @@ export function TaskDetailsDialog({
                   Edytuj
                 </Button>
               )}
-              {onTimeTracking && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={(e) => {
-                    onOpenChange(false)
-                    onTimeTracking?.(task, e)
-                  }}
-                >
-                  <Timer className="h-4 w-4 mr-2" />
-                  Zaloguj czas
-                </Button>
-              )}
               {canEdit && onDelete && (
                 <Button
-                  variant="outline"
+                  variant="destructive"
                   size="sm"
                   onClick={(e) => {
                     onOpenChange(false)
                     onDelete?.(task, e)
                   }}
-                  className="text-red-600 hover:text-red-700 hover:border-red-300"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
                   Usuń
@@ -200,182 +217,249 @@ export function TaskDetailsDialog({
           </div>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Status and Priority */}
-          <div className="flex flex-wrap gap-2">
-            <Badge className={getStatusColor(task.status)}>
-              {task.status}
-            </Badge>
-            {task.priority && (
-              <Badge className={getPriorityColor(task.priority)}>
-                {task.priority} Priorytet
-              </Badge>
-            )}
-          </div>
+        <Tabs defaultValue="overview" className="flex-1 overflow-hidden">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="overview" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Przegląd
+            </TabsTrigger>
+            <TabsTrigger value="todos" className="flex items-center gap-2">
+              <ListTodo className="h-4 w-4" />
+              Zadania
+            </TabsTrigger>
+            <TabsTrigger value="comments" className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Komentarze
+            </TabsTrigger>
+            <TabsTrigger value="activity" className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              Aktywność
+            </TabsTrigger>
+          </TabsList>
 
-          {/* Description */}
-          {task.description && (
-            <div>
-              <h4 className="font-medium text-gray-900 mb-2">Opis</h4>
-              <div
-                className="text-gray-700 text-sm leading-relaxed prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: task.description }}
-              />
-            </div>
-          )}
+          <div className="flex-1 overflow-y-auto mt-4">
+            <TabsContent value="overview" className="space-y-6 mt-0">
+              {/* Description */}
+              {task.description && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Opis zadania</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div
+                      className="prose prose-sm max-w-none text-muted-foreground"
+                      dangerouslySetInnerHTML={{ __html: task.description }}
+                    />
+                  </CardContent>
+                </Card>
+              )}
 
-          {/* Images */}
-          {task.images && task.images.length > 0 && (
-            <div>
-              <h4 className="font-medium text-gray-900 mb-3 flex items-center">
-                {/* eslint-disable-next-line jsx-a11y/alt-text */}
-                <Image className="h-4 w-4 mr-2" />
-                Obrazy ({task.images.length})
-              </h4>
-              <ImageGallery
-                images={task.images}
-                editable={false}
-              />
-            </div>
-          )}
+              {/* Images */}
+              {task.images && task.images.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Image className="h-5 w-5" />
+                      Załączniki ({task.images.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ImageGallery
+                      images={task.images}
+                      editable={false}
+                    />
+                  </CardContent>
+                </Card>
+              )}
 
-          {/* Task Details Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Assignee */}
-            <div className="flex items-center space-x-3">
-              <UserIcon className="h-4 w-4 text-gray-400" />
-              <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Przypisany</p>
-                {task.assignee ? (
-                  <div className="flex items-center space-x-2 mt-1">
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={task.assignee.avatarUrl} />
-                      <AvatarFallback className="text-xs">
-                        {task.assignee.name?.charAt(0) || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm font-medium">{task.assignee.name}</span>
-                  </div>
-                ) : (
-                  <span className="text-sm text-gray-500 mt-1">Nieprzypisany</span>
-                )}
-              </div>
-            </div>
+              {/* Task Details */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Szczegóły zadania</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Assignee */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                        <UserIcon className="h-4 w-4" />
+                        Przypisany
+                      </div>
+                      {task.assignee ? (
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={task.assignee.avatarUrl} />
+                            <AvatarFallback className="text-sm">
+                              {task.assignee.name?.charAt(0) || "U"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium">{task.assignee.name}</span>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">Nieprzypisany</span>
+                      )}
+                    </div>
 
-            {/* Author */}
-            <div className="flex items-center space-x-3">
-              <UserCheck className="h-4 w-4 text-gray-400" />
-              <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Utworzone przez</p>
-                {task.createdBy ? (
-                  <div className="flex items-center space-x-2 mt-1">
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={task.createdBy.avatarUrl} />
-                      <AvatarFallback className="text-xs">
-                        {task.createdBy.name?.charAt(0) || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm font-medium">{task.createdBy.name}</span>
-                  </div>
-                ) : (
-                  <span className="text-sm text-gray-500 mt-1">Nieznany</span>
-                )}
-              </div>
-            </div>
+                    {/* Author */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                        <UserCheck className="h-4 w-4" />
+                        Utworzone przez
+                      </div>
+                      {task.createdBy ? (
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={task.createdBy.avatarUrl} />
+                            <AvatarFallback className="text-sm">
+                              {task.createdBy.name?.charAt(0) || "U"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium">{task.createdBy.name}</span>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">Nieznany</span>
+                      )}
+                    </div>
 
-            {/* Due Date */}
-            <div className="flex items-center space-x-3">
-              <Calendar className="h-4 w-4 text-gray-400" />
-              <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Termin wykonania</p>
-                {task.dueDate ? (
-                  <div className={`flex items-center space-x-1 mt-1 ${
-                    isOverdue(task.dueDate) ? "text-red-600" : "text-gray-900"
-                  }`}>
-                    {isOverdue(task.dueDate) && <AlertCircle className="h-3 w-3" />}
-                    <span className="text-sm font-medium">
-                      {formatDate(task.dueDate)}
-                    </span>
-                  </div>
-                ) : (
-                  <span className="text-sm text-gray-500 mt-1">Brak terminu</span>
-                )}
-              </div>
-            </div>
+                    {/* Due Date */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                        <Calendar className="h-4 w-4" />
+                        Termin wykonania
+                      </div>
+                      {task.dueDate ? (
+                        <div className={`flex items-center gap-2 ${
+                          isOverdue(task.dueDate) ? "text-destructive" : "text-foreground"
+                        }`}>
+                          {isOverdue(task.dueDate) && <AlertCircle className="h-4 w-4" />}
+                          <span className="font-medium">
+                            {formatDate(task.dueDate)}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">Brak terminu</span>
+                      )}
+                    </div>
 
-            {/* Time Tracking */}
-            {task.estimatedHours && (
-              <div className="flex items-center space-x-3">
-                <Clock className="h-4 w-4 text-gray-400" />
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">Czas</p>
-                  <span className="text-sm font-medium mt-1">
-                    {totalLoggedHours.toFixed(1)}h / {task.estimatedHours}h
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {/* Created */}
-            <div className="flex items-center space-x-3">
-              <CheckSquare className="h-4 w-4 text-gray-400" />
-              <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Utworzono</p>
-                <span className="text-sm font-medium mt-1">
-                  {formatDate(task.createdAt)}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Subtasks */}
-          {task.subtasks.length > 0 && (
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="font-medium text-gray-900">
-                  Podzadania ({completedSubtasks}/{task.subtasks.length})
-                </h4>
-                <span className="text-xs text-gray-500">
-                  {Math.round(subtaskProgress)}% ukończono
-                </span>
-              </div>
-              <Progress value={subtaskProgress} className="mb-3" />
-              <div className="space-y-2">
-                {task.subtasks.map((subtask) => (
-                  <div key={subtask.id} className="flex items-center space-x-2">
-                    {subtask.isCompleted ? (
-                      <CheckCircle2 className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <div className="h-4 w-4 border border-gray-300 rounded" />
+                    {/* Time Tracking */}
+                    {task.estimatedHours && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                          <Clock className="h-4 w-4" />
+                          Czas pracy
+                        </div>
+                        <div className="space-y-1">
+                          <div className="text-sm">
+                            <span className="font-medium">{totalLoggedHours.toFixed(1)}h</span>
+                            <span className="text-muted-foreground"> / {task.estimatedHours}h</span>
+                          </div>
+                          <Progress
+                            value={(totalLoggedHours / task.estimatedHours) * 100}
+                            className="h-2"
+                          />
+                        </div>
+                      </div>
                     )}
-                    <span className={`text-sm ${
-                      subtask.isCompleted ? "line-through text-gray-500" : "text-gray-900"
-                    }`}>
-                      {subtask.title}
-                    </span>
+
+                    {/* Created */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                        <CheckSquare className="h-4 w-4" />
+                        Data utworzenia
+                      </div>
+                      <span className="font-medium">
+                        {formatDate(task.createdAt)}
+                      </span>
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
+                </CardContent>
+              </Card>
 
-          {/* Todos */}
-          <div>
-            <TaskTodos
-              taskId={task.id}
-              todos={todos}
-              onTodosChange={handleTodosChange}
-            />
+              {/* Subtasks */}
+              {task.subtasks.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg">
+                        Podzadania ({completedSubtasks}/{task.subtasks.length})
+                      </CardTitle>
+                      <span className="text-sm text-muted-foreground">
+                        {Math.round(subtaskProgress)}% ukończono
+                      </span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <Progress value={subtaskProgress} className="h-2" />
+                    <div className="space-y-3">
+                      {task.subtasks.map((subtask) => (
+                        <div key={subtask.id} className="flex items-center gap-3 p-2 rounded-lg border">
+                          {subtask.isCompleted ? (
+                            <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
+                          ) : (
+                            <div className="h-5 w-5 border-2 border-muted-foreground rounded flex-shrink-0" />
+                          )}
+                          <span className={`text-sm ${
+                            subtask.isCompleted ? "line-through text-muted-foreground" : "text-foreground"
+                          }`}>
+                            {subtask.title}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+
+            <TabsContent value="todos" className="mt-0">
+              <TaskTodos
+                taskId={task.id}
+                todos={todos}
+                onTodosChange={handleTodosChange}
+              />
+            </TabsContent>
+
+            <TabsContent value="comments" className="mt-0">
+              <TaskComments
+                taskId={task.id}
+                comments={comments}
+                onCommentAdded={handleCommentAdded}
+                onCommentDeleted={handleCommentDeleted}
+              />
+            </TabsContent>
+
+            <TabsContent value="activity" className="mt-0">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Historia aktywności</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 text-sm">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-muted-foreground">
+                        Zadanie utworzone {formatDate(task.createdAt)}
+                      </span>
+                    </div>
+                    {task.timeEntries && task.timeEntries.length > 0 && (
+                      <div className="space-y-2">
+                        <h4 className="font-medium">Wpisy czasu pracy:</h4>
+                        {task.timeEntries.map((entry, index) => (
+                          <div key={index} className="flex items-center gap-3 text-sm pl-4">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            <span className="text-muted-foreground">
+                              {entry.hours}h - {entry.description || 'Brak opisu'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
           </div>
-
-          {/* Comments */}
-          <TaskComments
-            taskId={task.id}
-            comments={comments}
-            onCommentAdded={handleCommentAdded}
-            onCommentDeleted={handleCommentDeleted}
-          />
-        </div>
+        </Tabs>
       </DialogContent>
     </Dialog>
   )

@@ -282,7 +282,7 @@ export function EditTeamDialog({ open, onOpenChange, onTeamUpdated, team }: Edit
               disabled={loading || !name.trim() || !hasChanges || selectedMembers.length === 0}
             >
               { }
-              {loading ? 'Aktualizowanie&hellip;' : 'Zaktualizuj zesp&oacute;&#322;'}
+              {loading ? 'Aktualizowanie&hellip;' : 'Zaktualizuj zespół'}
             </Button>
           </DialogFooter>
         </form>

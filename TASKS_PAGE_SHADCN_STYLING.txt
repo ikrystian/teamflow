@@ -1,0 +1,176 @@
+# Stylowanie strony "Moje zadania" według standardów shadcn/ui
+
+## Przegląd
+Refaktoryzacja strony "Moje zadania" (TasksContent) z wykorzystaniem domyślnych wzorców stylowania shadcn/ui dla lepszej spójności i nowoczesnego wyglądu.
+
+## Główne zmiany
+
+### 1. Struktura layoutu
+**Przed:**
+- Sticky top bar z fixed height
+- Główny content w `<main>` z padding
+- Skomplikowana struktura div'ów
+
+**Po:**
+- Prosty flex layout z `flex-1 space-y-4 p-4 md:p-8 pt-6`
+- Usunięto niepotrzebne wrapper'y
+- Czytelniejsza hierarchia komponentów
+
+### 2. Header sekcja
+**Przed:**
+```tsx
+<h1 className="text-2xl font-bold text-gray-900">
+<p className="text-gray-500">
+```
+
+**Po:**
+```tsx
+<h2 className="text-3xl font-bold tracking-tight">
+<p className="text-muted-foreground">
+```
+
+**Korzyści:**
+- Użycie semantic color tokens (`text-muted-foreground`)
+- Lepsze typografia z `tracking-tight`
+- Większy rozmiar nagłówka dla lepszej hierarchii
+
+### 3. Empty states
+**Przed:**
+- Podstawowe centrum z `text-center`
+- Kolory hardcoded (`text-gray-400`, `text-gray-900`)
+
+**Po:**
+- Semantic layout z `flex flex-col items-center justify-center`
+- Semantic colors (`text-muted-foreground`)
+- Większe ikony (h-16 w-16) dla lepszego visual impact
+- Lepsze spacing z `py-16`
+
+### 4. Task cards
+**Przed:**
+```tsx
+<Card className="hover:shadow-md transition-shadow cursor-pointer">
+```
+
+**Po:**
+```tsx
+<Card className="transition-all hover:shadow-md cursor-pointer border-l-4 border-l-transparent hover:border-l-primary">
+```
+
+**Ulepszenia:**
+- Dodano border-left accent na hover
+- Lepsze visual feedback
+- Semantic color system
+
+### 5. Card content
+**Przed:**
+- Podstawowe spacing
+- Hardcoded colors (`text-gray-600`)
+- Standardowe badge styling
+
+**Po:**
+- Semantic spacing (`space-y-3`, `pt-0`)
+- Semantic colors (`text-muted-foreground`)
+- Lepsze badge variants (`variant="outline"`, `variant="secondary"`)
+- Truncate dla długich tytułów
+
+### 6. Badges i statusy
+**Przed:**
+```tsx
+<Badge className={getPriorityColor(task.priority)}>
+  {task.priority}
+</Badge>
+```
+
+**Po:**
+```tsx
+<Badge variant="outline" className={getPriorityColor(task.priority)}>
+  {task.priority === "Low" ? "Niski" : task.priority === "Medium" ? "Średni" : "Wysoki"}
+</Badge>
+```
+
+**Ulepszenia:**
+- Użycie variant="outline" dla lepszego kontrastu
+- Tłumaczenie na język polski
+- Semantic color usage
+
+### 7. Dropdown menu
+**Przed:**
+- Podstawowe styling
+- Hardcoded red color dla delete
+
+**Po:**
+- Semantic colors (`text-destructive`)
+- Polskie tłumaczenia
+- Lepsze focus states
+
+### 8. Responsive design
+**Przed:**
+- Podstawowe responsive classes
+
+**Po:**
+- Lepsze breakpoints (`md:p-8`)
+- Responsive spacing
+- Mobile-first approach
+
+## Wzorce shadcn/ui zastosowane
+
+### 1. Semantic Color System
+- `text-muted-foreground` zamiast `text-gray-500`
+- `text-destructive` zamiast `text-red-600`
+- `bg-destructive` zamiast `bg-red-600`
+
+### 2. Spacing System
+- `space-y-4` dla consistent vertical spacing
+- `gap-4` dla grid layouts
+- `py-16` dla empty states
+
+### 3. Typography
+- `text-3xl font-bold tracking-tight` dla głównych nagłówków
+- `text-lg font-semibold` dla card titles
+- `text-sm` dla secondary content
+
+### 4. Component Variants
+- `Badge variant="outline"` i `variant="secondary"`
+- `Button variant="ghost"` dla action buttons
+- Proper card structure z `CardHeader`, `CardContent`
+
+### 5. Layout Patterns
+- `flex-1` dla main content areas
+- `min-w-0` dla truncation
+- `items-center justify-between` dla headers
+
+## Korzyści implementacji
+
+### 1. Spójność
+- Jednolite wzorce w całej aplikacji
+- Semantic color system
+- Consistent spacing
+
+### 2. Dostępność
+- Lepsze kontrasty
+- Semantic HTML structure
+- Focus states
+
+### 3. Responsywność
+- Mobile-first design
+- Flexible layouts
+- Proper breakpoints
+
+### 4. Maintainability
+- Semantic tokens zamiast hardcoded values
+- Reusable patterns
+- Clear component structure
+
+### 5. User Experience
+- Lepsze visual feedback
+- Intuitive interactions
+- Polish translations
+
+## Pliki zmodyfikowane
+- `src/components/tasks/tasks-content.tsx` - główny komponent strony zadań
+
+## Następne kroki
+1. Zastosowanie podobnych wzorców w innych komponentach
+2. Utworzenie reusable patterns dla task cards
+3. Dodanie więcej semantic tokens
+4. Optymalizacja performance dla dużych list zadań
