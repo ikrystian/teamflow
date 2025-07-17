@@ -61,6 +61,7 @@ export async function GET(
           }
         },
         subtasks: true,
+        todos: true,
         comments: {
           include: {
             author: {
@@ -222,6 +223,7 @@ export async function PATCH(
           }
         },
         subtasks: true,
+        todos: true,
         comments: {
           include: {
             author: {

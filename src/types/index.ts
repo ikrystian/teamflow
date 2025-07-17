@@ -14,6 +14,12 @@ export interface TaskImage {
   createdAt: string;
 }
 
+export interface Todo {
+  id: string;
+  title: string;
+  isCompleted: boolean;
+}
+
 export interface TaskStatus {
   id: string;
   name: string;
@@ -65,4 +71,5 @@ export interface Task {
     user: User;
   }[];
   images?: TaskImage[];
+  todos?: Todo[];
 }

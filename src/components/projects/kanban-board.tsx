@@ -99,6 +99,7 @@ function SortableTaskCard({
   }
 
   const completedSubtasks = task.subtasks.filter(subtask => subtask.isCompleted).length
+  const completedTodos = task.todos?.filter(todo => todo.isCompleted).length || 0
 
   // Handle click on card (not on dropdown menu)
   const handleCardClick = (e: React.MouseEvent) => {
@@ -192,6 +193,15 @@ function SortableTaskCard({
                   className="bg-gray-50 text-gray-700 text-xs px-2 py-0.5 h-5 border-gray-300"
                 >
                   {completedSubtasks}/{task.subtasks.length}
+                </Badge>
+              )}
+
+              {task.todos && task.todos.length > 0 && (
+                <Badge
+                  variant="outline"
+                  className="bg-gray-50 text-gray-700 text-xs px-2 py-0.5 h-5 border-gray-300"
+                >
+                  {completedTodos}/{task.todos.length} Todos
                 </Badge>
               )}
             </div>

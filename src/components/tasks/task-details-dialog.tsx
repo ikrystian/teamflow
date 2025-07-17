@@ -23,7 +23,8 @@ import {
 } from "lucide-react"
 import { ImageGallery } from "@/components/ui/image-gallery"
 import { TaskComments } from "@/components/tasks/task-comments"
-import type { Task, User, TaskImage } from "@/types"
+import { TaskTodos } from "@/components/tasks/task-todos"
+import type { Task, User, TaskImage, Todo } from "@/types"
 
 interface TaskDetailsDialogProps {
   open: boolean
@@ -45,10 +46,12 @@ export function TaskDetailsDialog({
   canEdit = false
 }: TaskDetailsDialogProps) {
   const [comments, setComments] = useState(task?.comments || [])
+  const [todos, setTodos] = useState(task?.todos || [])
 
   useEffect(() => {
     setComments(task?.comments || [])
-  }, [task?.comments])
+    setTodos(task?.todos || [])
+  }, [task?.comments, task?.todos])
 
   const handleCommentAdded = (newComment: any) => {
     setComments(prev => [newComment, ...prev])
@@ -56,6 +59,10 @@ export function TaskDetailsDialog({
 
   const handleCommentDeleted = (commentId: string) => {
     setComments(prev => prev.filter(comment => comment.id !== commentId))
+  }
+
+  const handleTodosChange = (updatedTodos: Todo[]) => {
+    setTodos(updatedTodos)
   }
 
   if (!task) return null
@@ -325,6 +332,15 @@ export function TaskDetailsDialog({
               </div>
             </div>
           )}
+
+          {/* Todos */}
+          <div>
+            <TaskTodos
+              taskId={task.id}
+              todos={todos}
+              onTodosChange={handleTodosChange}
+            />
+          </div>
 
           {/* Comments */}
           <TaskComments
