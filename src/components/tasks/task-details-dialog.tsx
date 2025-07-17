@@ -10,20 +10,32 @@ import { Progress } from "@/components/ui/progress"
 import {
   Calendar,
   User,
+  UserCheck,
   Clock,
   Edit,
   CheckSquare,
   MessageSquare,
   Timer,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  Image
 } from "lucide-react"
+import { ImageGallery } from "@/components/ui/image-gallery"
 
 interface User {
   id: string
   name: string
   email: string
   avatarUrl?: string
+}
+
+interface TaskImage {
+  id: string
+  filename: string
+  url: string
+  mimeType: string
+  size: number
+  createdAt: string
 }
 
 interface Task {
@@ -39,6 +51,10 @@ interface Task {
   project: {
     id: string
     name: string
+    team: {
+      id: string
+      name: string
+    }
   }
   assignee?: User
   createdBy?: User
@@ -47,7 +63,7 @@ interface Task {
     title: string
     isCompleted: boolean
   }[]
-  comments?: {
+  comments: {
     id: string
     content: string
     createdAt: string
@@ -64,6 +80,7 @@ interface Task {
     date: string
     user: User
   }[]
+  images?: TaskImage[]
 }
 
 interface TaskDetailsDialogProps {
@@ -153,7 +170,10 @@ export function TaskDetailsDialog({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => onEdit(task)}
+                  onClick={() => {
+                    onOpenChange(false)
+                    onEdit?.(task)
+                  }}
                 >
                   <Edit className="h-4 w-4 mr-2" />
                   Edit
@@ -163,7 +183,10 @@ export function TaskDetailsDialog({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => onTimeTracking(task)}
+                  onClick={() => {
+                    onOpenChange(false)
+                    onTimeTracking?.(task)
+                  }}
                 >
                   <Timer className="h-4 w-4 mr-2" />
                   Log Time
@@ -190,9 +213,24 @@ export function TaskDetailsDialog({
           {task.description && (
             <div>
               <h4 className="font-medium text-gray-900 mb-2">Description</h4>
-              <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
-                {task.description}
-              </p>
+              <div 
+                className="text-gray-700 text-sm leading-relaxed prose prose-sm max-w-none"
+                dangerouslySetInnerHTML={{ __html: task.description }}
+              />
+            </div>
+          )}
+
+          {/* Images */}
+          {task.images && task.images.length > 0 && (
+            <div>
+              <h4 className="font-medium text-gray-900 mb-3 flex items-center">
+                <Image className="h-4 w-4 mr-2" />
+                Images ({task.images.length})
+              </h4>
+              <ImageGallery 
+                images={task.images} 
+                editable={false}
+              />
             </div>
           )}
 
@@ -215,6 +253,27 @@ export function TaskDetailsDialog({
                   </div>
                 ) : (
                   <span className="text-sm text-gray-500 mt-1">Unassigned</span>
+                )}
+              </div>
+            </div>
+
+            {/* Author */}
+            <div className="flex items-center space-x-3">
+              <UserCheck className="h-4 w-4 text-gray-400" />
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Created By</p>
+                {task.createdBy ? (
+                  <div className="flex items-center space-x-2 mt-1">
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage src={task.createdBy.avatarUrl} />
+                      <AvatarFallback className="text-xs">
+                        {task.createdBy.name?.charAt(0) || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm font-medium">{task.createdBy.name}</span>
+                  </div>
+                ) : (
+                  <span className="text-sm text-gray-500 mt-1">Unknown</span>
                 )}
               </div>
             </div>

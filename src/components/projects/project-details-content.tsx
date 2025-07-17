@@ -28,6 +28,7 @@ import {
 import Link from "next/link"
 import { CreateTaskDialog } from "./create-task-dialog"
 import { KanbanBoard } from "./kanban-board"
+import { TaskDetailsDialog } from "../tasks/task-details-dialog"
 import { EditTaskDialog } from "../tasks/edit-task-dialog"
 import { TimeTrackingDialog } from "../tasks/time-tracking-dialog"
 import { TaskBoardFilters } from "./task-board-filters"
@@ -89,6 +90,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   const [project, setProject] = useState<ProjectDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [createTaskDialogOpen, setCreateTaskDialogOpen] = useState(false)
+  const [taskDetailsDialogOpen, setTaskDetailsDialogOpen] = useState(false)
   const [editTaskDialogOpen, setEditTaskDialogOpen] = useState(false)
   const [timeTrackingDialogOpen, setTimeTrackingDialogOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<any>(null)
@@ -125,13 +127,20 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     fetchProject()
   }
 
+  const handleTaskDetails = (task: any) => {
+    setSelectedTask(task)
+    setTaskDetailsDialogOpen(true)
+  }
+
   const handleEditTask = (task: any) => {
     setSelectedTask(task)
+    setTaskDetailsDialogOpen(false)
     setEditTaskDialogOpen(true)
   }
 
   const handleTimeTracking = (task: any) => {
     setSelectedTask(task)
+    setTaskDetailsDialogOpen(false)
     setTimeTrackingDialogOpen(true)
   }
 
@@ -223,6 +232,33 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
       } : undefined,
       timeEntries: [] // Add empty array for compatibility
     }))
+  }
+
+  // Transform single task for TaskDetailsDialog
+  const transformTaskForDialog = (task: any) => {
+    if (!task || !project) return null
+    
+    return {
+      ...task,
+      project: {
+        id: project.id,
+        name: project.name,
+        team: {
+          id: project.team.id,
+          name: project.team.name
+        }
+      },
+      assignee: task.assignee ? {
+        ...task.assignee,
+        email: project.team.members.find(m => m.id === task.assignee?.id)?.email || ''
+      } : undefined,
+      createdBy: task.assignee ? {
+        ...task.assignee,
+        email: project.team.members.find(m => m.id === task.assignee?.id)?.email || ''
+      } : undefined,
+      timeEntries: task.timeEntries || [],
+      images: task.images || []
+    }
   }
 
   if (loading) {
@@ -372,7 +408,11 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
             ) : (
               <div className="space-y-4">
                 {getFilteredTasks(project.tasks).map((task) => (
-                  <div key={task.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                  <div 
+                    key={task.id} 
+                    className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                    onClick={() => handleTaskDetails(task)}
+                  >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-2">
@@ -476,6 +516,15 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         onTaskCreated={handleTaskCreated}
         projectId={projectId}
         teamMembers={project.team.members}
+      />
+
+      <TaskDetailsDialog
+        open={taskDetailsDialogOpen}
+        onOpenChange={setTaskDetailsDialogOpen}
+        task={transformTaskForDialog(selectedTask)}
+        onEdit={handleEditTask}
+        onTimeTracking={handleTimeTracking}
+        canEdit={selectedTask ? canEditTask(selectedTask) : false}
       />
 
       <EditTaskDialog

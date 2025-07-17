@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { X, Upload, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 
@@ -102,6 +102,9 @@ export function ImageGallery({
                   </div>
                 </DialogTrigger>
                 <DialogContent className="max-w-4xl">
+                  <DialogHeader>
+                    <DialogTitle>{image.filename}</DialogTitle>
+                  </DialogHeader>
                   <div className="relative">
                     <Image
                       src={image.url}

@@ -12,6 +12,7 @@ import { Plus, CheckSquare, Calendar, User, Filter, Edit, Clock, MoreHorizontal 
 import { CreateTaskDialog } from "./create-task-dialog"
 import { EditTaskDialog } from "./edit-task-dialog"
 import { TimeTrackingDialog } from "./time-tracking-dialog"
+import { TaskDetailsDialog } from "./task-details-dialog"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -96,6 +97,7 @@ export function TasksContent() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [timeTrackingDialogOpen, setTimeTrackingDialogOpen] = useState(false)
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [teamMembers, setTeamMembers] = useState<User[]>([])
   const [filter, setFilter] = useState<"all" | "assigned">("assigned")
@@ -170,6 +172,11 @@ export function TasksContent() {
 
   const handleTimeLogged = () => {
     fetchTasks() // Refresh to get updated time data
+  }
+
+  const handleTaskDetails = (task: Task) => {
+    setSelectedTask(task)
+    setDetailsDialogOpen(true)
   }
 
   const canEditTask = (task: Task) => {
@@ -321,7 +328,11 @@ export function TasksContent() {
       ) : (
         <div className="space-y-4">
           {tasks.map((task) => (
-            <Card key={task.id} className="hover:shadow-md transition-shadow">
+            <Card 
+              key={task.id} 
+              className="hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => handleTaskDetails(task)}
+            >
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -343,7 +354,12 @@ export function TasksContent() {
                     {/* Action Menu */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 w-8 p-0"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -441,6 +457,15 @@ export function TasksContent() {
         onOpenChange={setTimeTrackingDialogOpen}
         onTimeLogged={handleTimeLogged}
         task={selectedTask}
+      />
+
+      <TaskDetailsDialog
+        open={detailsDialogOpen}
+        onOpenChange={setDetailsDialogOpen}
+        task={selectedTask}
+        onEdit={handleEditTask}
+        onTimeTracking={handleTimeTracking}
+        canEdit={selectedTask ? canEditTask(selectedTask) : false}
       />
     </div>
     </div>

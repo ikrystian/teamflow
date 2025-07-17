@@ -9,6 +9,9 @@ import { Badge } from "@/components/ui/badge"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { Plus, Users, FolderOpen, CheckSquare, Calendar } from "lucide-react"
 import Link from "next/link"
+import { TaskDetailsDialog } from "@/components/tasks/task-details-dialog"
+import { EditTaskDialog } from "@/components/tasks/edit-task-dialog"
+import { TimeTrackingDialog } from "@/components/tasks/time-tracking-dialog"
 
 interface DashboardStats {
   myTasks: number
@@ -17,15 +20,65 @@ interface DashboardStats {
   dueToday: number
 }
 
-interface RecentTask {
+interface User {
+  id: string
+  name: string
+  email: string
+  avatarUrl?: string
+}
+
+interface TaskImage {
+  id: string
+  filename: string
+  url: string
+  mimeType: string
+  size: number
+  createdAt: string
+}
+
+interface Task {
   id: string
   title: string
-  project: {
-    name: string
-  }
+  description?: string
   status: string
+  statusId?: string
   priority?: string
   dueDate?: string
+  estimatedHours?: number
+  createdAt: string
+  project: {
+    id: string
+    name: string
+    team: {
+      id: string
+      name: string
+    }
+  }
+  assignee?: User
+  createdBy?: User
+  subtasks: {
+    id: string
+    title: string
+    isCompleted: boolean
+  }[]
+  comments: {
+    id: string
+    content: string
+    createdAt: string
+    author: {
+      id: string
+      name: string
+      avatarUrl?: string
+    }
+  }[]
+  timeEntries?: {
+    id: string
+    hours: number
+    description?: string
+    date: string
+    user: User
+  }[]
+  images?: TaskImage[]
 }
 
 export function DashboardContent() {
@@ -36,8 +89,15 @@ export function DashboardContent() {
     projects: 0,
     dueToday: 0
   })
-  const [recentTasks, setRecentTasks] = useState<RecentTask[]>([])
+  const [recentTasks, setRecentTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
+  
+  // Task dialog states
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [taskDetailsDialogOpen, setTaskDetailsDialogOpen] = useState(false)
+  const [editTaskDialogOpen, setEditTaskDialogOpen] = useState(false)
+  const [timeTrackingDialogOpen, setTimeTrackingDialogOpen] = useState(false)
+  const [teamMembers, setTeamMembers] = useState<User[]>([])
 
   const fetchDashboardData = async () => {
     try {
@@ -54,7 +114,7 @@ export function DashboardContent() {
       ])
 
       const today = new Date().toISOString().split('T')[0]
-      const dueToday = tasksData.tasks.filter((task: RecentTask) =>
+      const dueToday = tasksData.tasks.filter((task: Task) =>
         task.dueDate && task.dueDate.split('T')[0] === today
       ).length
 
@@ -66,6 +126,10 @@ export function DashboardContent() {
       })
 
       setRecentTasks(tasksData.tasks.slice(0, 5))
+      
+      // For dashboard view, we'll use an empty array for team members
+      // In a real app, you might want to fetch team members from the user's teams
+      setTeamMembers([])
     } catch (error) {
       console.error("Error fetching dashboard data:", error)
     } finally {
@@ -78,6 +142,26 @@ export function DashboardContent() {
       fetchDashboardData()
     }
   }, [session?.user?.id])
+
+  // Task dialog handlers
+  const handleTaskDetails = (task: Task) => {
+    setSelectedTask(task)
+    setTaskDetailsDialogOpen(true)
+  }
+
+  const handleEditTask = (task: Task) => {
+    setSelectedTask(task)
+    setEditTaskDialogOpen(true)
+  }
+
+  const handleTimeTracking = (task: Task) => {
+    setSelectedTask(task)
+    setTimeTrackingDialogOpen(true)
+  }
+
+  const canEditTask = (task: Task) => {
+    return session?.user?.id === task.createdBy?.id || session?.user?.id === task.assignee?.id
+  }
 
   const statsConfig = [
     {
@@ -161,6 +245,7 @@ export function DashboardContent() {
   }
 
   return (
+    <>
     <div>
               {/* Top bar */}
         <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8 bg-white">
@@ -283,7 +368,8 @@ export function DashboardContent() {
               {recentTasks.map((task) => (
                 <div
                   key={task.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                  onClick={() => handleTaskDetails(task)}
                 >
                   <div className="flex-1">
                     <h4 className="text-sm font-medium text-gray-900">
@@ -314,5 +400,33 @@ export function DashboardContent() {
     </div>
     </main>
     </div>
+
+    {/* Task Details Dialog */}
+    <TaskDetailsDialog
+      open={taskDetailsDialogOpen}
+      onOpenChange={setTaskDetailsDialogOpen}
+      task={selectedTask as any}
+      onEdit={handleEditTask}
+      onTimeTracking={handleTimeTracking}
+      canEdit={selectedTask ? canEditTask(selectedTask) : false}
+    />
+
+    {/* Edit Task Dialog */}
+    <EditTaskDialog
+      open={editTaskDialogOpen}
+      onOpenChange={setEditTaskDialogOpen}
+      task={selectedTask as any}
+      onTaskUpdated={fetchDashboardData}
+      teamMembers={teamMembers}
+    />
+
+    {/* Time Tracking Dialog */}
+    <TimeTrackingDialog
+      open={timeTrackingDialogOpen}
+      onOpenChange={setTimeTrackingDialogOpen}
+      task={selectedTask as any}
+      onTimeLogged={fetchDashboardData}
+    />
+    </>
   )
 }
