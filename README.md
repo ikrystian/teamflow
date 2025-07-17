@@ -6,9 +6,10 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 
 ### ✅ Zaimplementowane (MVP)
 - **Uwierzytelnianie użytkowników** - Rejestracja i logowanie z NextAuth.js
-- **Zarządzanie zespołami** - Tworzenie zespołów, edycja nazw zespołów i zarządzanie członkami
+- **Zarządzanie zespołami** - Tworzenie zespołów, edycja nazw zespołów i pełne zarządzanie członkami
 - **Zarządzanie projektami** - Tworzenie projektów w ramach zespołów
-- **Zarządzanie zadaniami** - Pełna funkcjonalność CRUD dla zadań
+- **Zarządzanie zadaniami** - Pełna funkcjonalność CRUD dla zadań z szacowanym czasem i edycją
+- **Time tracking** - Logowanie czasu pracy nad zadaniami, śledzenie postępu względem szacowanego czasu
 - **Dashboard** - Przegląd statystyk i ostatnich aktywności
 - **Widok kalendarza** - Wyświetlanie zadań według terminów wykonania
 - **Responsywny interfejs** - Zbudowany z shadcn/ui i Tailwind CSS
@@ -83,14 +84,17 @@ Aplikacja będzie dostępna pod adresem [http://localhost:3000](http://localhost
 1. **Rejestracja** - Utwórz konto na stronie `/auth/signup`
 2. **Logowanie** - Zaloguj się na stronie `/auth/signin`
 3. **Utwórz zespół** - Przejdź do sekcji "Teams" i utwórz swój pierwszy zespół
-4. **Edytuj zespół** - Kliknij przycisk Settings (⚙️) w karcie zespołu, aby zmienić nazwę
-5. **Utwórz projekt** - W sekcji "Projects" utwórz projekt przypisany do zespołu
-6. **Dodaj zadania** - W sekcji "Tasks" lub w projekcie dodaj zadania
+4. **Edytuj zespół** - Kliknij przycisk Settings (⚙️) w karcie zespołu, aby zmienić nazwę i zarządzać członkami
+5. **Zarządzaj członkami** - W dialogu edycji zespołu dodawaj i usuwaj członków zespołu
+6. **Utwórz projekt** - W sekcji "Projects" utwórz projekt przypisany do zespołu
+7. **Dodaj zadania** - W sekcji "Tasks" lub w projekcie dodaj zadania z szacowanym czasem
+8. **Edytuj zadania** - Kliknij menu (⋯) na karcie zadania i wybierz "Edit Task" (tylko autor lub przypisana osoba)
+9. **Loguj czas** - Kliknij menu (⋯) na karcie zadania i wybierz "Log Time" aby zalogować czas pracy
 
 ### Nawigacja
 - **Dashboard** - Przegląd statystyk i ostatnich aktywności
-- **My Tasks** - Zadania przypisane do Ciebie
-- **Teams** - Zarządzanie zespołami (tworzenie, edycja nazw)
+- **My Tasks** - Zadania przypisane do Ciebie z możliwością edycji i logowania czasu
+- **Teams** - Zarządzanie zespołami (tworzenie, edycja nazw, zarządzanie członkami)
 - **Projects** - Zarządzanie projektami
 - **Calendar** - Widok kalendarza z zadaniami
 
@@ -126,18 +130,33 @@ model Project {
 }
 
 model Task {
-  id          String    @id @default(cuid())
-  title       String
-  description String?
-  status      String    @default("To Do")
-  priority    String?
-  dueDate     DateTime?
-  projectId   String
-  project     Project   @relation(fields: [projectId], references: [id])
-  assigneeId  String?
-  assignee    User?     @relation(fields: [assigneeId], references: [id])
-  subtasks    Subtask[]
-  comments    Comment[]
+  id            String      @id @default(cuid())
+  title         String
+  description   String?
+  status        String      @default("To Do")
+  priority      String?
+  dueDate       DateTime?
+  estimatedHours Float?     // Szacowany czas w godzinach
+  projectId     String
+  project       Project     @relation(fields: [projectId], references: [id])
+  assigneeId    String?
+  assignee      User?       @relation(fields: [assigneeId], references: [id])
+  createdById   String      // Autor zadania
+  createdBy     User        @relation("TaskCreator", fields: [createdById], references: [id])
+  subtasks      Subtask[]
+  comments      Comment[]
+  timeEntries   TimeEntry[] // Wpisy czasu pracy
+}
+
+model TimeEntry {
+  id          String   @id @default(cuid())
+  hours       Float    // Czas w godzinach
+  description String?  // Opis pracy
+  date        DateTime @default(now())
+  taskId      String
+  task        Task     @relation(fields: [taskId], references: [id])
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
 }
 ```
 

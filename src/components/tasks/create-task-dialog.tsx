@@ -44,11 +44,11 @@ interface CreateTaskDialogProps {
   projects: Project[]
 }
 
-export function CreateTaskDialog({ 
-  open, 
-  onOpenChange, 
-  onTaskCreated, 
-  projects 
+export function CreateTaskDialog({
+  open,
+  onOpenChange,
+  onTaskCreated,
+  projects
 }: CreateTaskDialogProps) {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
@@ -56,6 +56,7 @@ export function CreateTaskDialog({
   const [assigneeId, setAssigneeId] = useState("")
   const [priority, setPriority] = useState("")
   const [dueDate, setDueDate] = useState("")
+  const [estimatedHours, setEstimatedHours] = useState("")
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -95,13 +96,14 @@ export function CreateTaskDialog({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           title,
           description: description || undefined,
           projectId,
           assigneeId: assigneeId || undefined,
           priority: priority || undefined,
-          dueDate: dueDate || undefined
+          dueDate: dueDate || undefined,
+          estimatedHours: estimatedHours ? parseFloat(estimatedHours) : undefined
         }),
       })
 
@@ -126,6 +128,7 @@ export function CreateTaskDialog({
     setAssigneeId("")
     setPriority("")
     setDueDate("")
+    setEstimatedHours("")
     setTeamMembers([])
     setError("")
   }
@@ -156,7 +159,7 @@ export function CreateTaskDialog({
                 required
               />
             </div>
-            
+
             <div className="grid gap-2">
               <Label htmlFor="description">Description (Optional)</Label>
               <Textarea
@@ -224,6 +227,37 @@ export function CreateTaskDialog({
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
               />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="estimatedHours">Estimated Time (Optional)</Label>
+              <Select value={estimatedHours} onValueChange={setEstimatedHours}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select estimated time" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0.5">30 minutes</SelectItem>
+                  <SelectItem value="1">1 hour</SelectItem>
+                  <SelectItem value="1.5">1.5 hours</SelectItem>
+                  <SelectItem value="2">2 hours</SelectItem>
+                  <SelectItem value="2.5">2.5 hours</SelectItem>
+                  <SelectItem value="3">3 hours</SelectItem>
+                  <SelectItem value="3.5">3.5 hours</SelectItem>
+                  <SelectItem value="4">4 hours</SelectItem>
+                  <SelectItem value="4.5">4.5 hours</SelectItem>
+                  <SelectItem value="5">5 hours</SelectItem>
+                  <SelectItem value="5.5">5.5 hours</SelectItem>
+                  <SelectItem value="6">6 hours</SelectItem>
+                  <SelectItem value="6.5">6.5 hours</SelectItem>
+                  <SelectItem value="7">7 hours</SelectItem>
+                  <SelectItem value="7.5">7.5 hours</SelectItem>
+                  <SelectItem value="8">8 hours</SelectItem>
+                  <SelectItem value="12">12 hours</SelectItem>
+                  <SelectItem value="16">16 hours</SelectItem>
+                  <SelectItem value="24">24 hours</SelectItem>
+                  <SelectItem value="40">40 hours</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {error && (

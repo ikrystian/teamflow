@@ -36,10 +36,10 @@ interface CreateTaskDialogProps {
   teamMembers: TeamMember[]
 }
 
-export function CreateTaskDialog({ 
-  open, 
-  onOpenChange, 
-  onTaskCreated, 
+export function CreateTaskDialog({
+  open,
+  onOpenChange,
+  onTaskCreated,
   projectId,
   teamMembers
 }: CreateTaskDialogProps) {
@@ -48,12 +48,13 @@ export function CreateTaskDialog({
   const [assigneeId, setAssigneeId] = useState("")
   const [priority, setPriority] = useState("")
   const [dueDate, setDueDate] = useState("")
+  const [estimatedHours, setEstimatedHours] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!title.trim()) {
       setError("Title is required")
       return
@@ -72,9 +73,10 @@ export function CreateTaskDialog({
           title: title.trim(),
           description: description.trim() || undefined,
           projectId,
-          assigneeId: assigneeId || undefined,
-          priority: priority || undefined,
+          assigneeId: assigneeId === "none" ? undefined : assigneeId,
+          priority: priority === "none" ? undefined : priority,
           dueDate: dueDate || undefined,
+          estimatedHours: estimatedHours ? parseFloat(estimatedHours) : undefined,
         }),
       })
 
@@ -96,9 +98,10 @@ export function CreateTaskDialog({
   const handleClose = () => {
     setTitle("")
     setDescription("")
-    setAssigneeId("")
-    setPriority("")
+    setAssigneeId("none")
+    setPriority("none")
     setDueDate("")
+    setEstimatedHours("")
     setError("")
     onOpenChange(false)
   }
@@ -124,7 +127,7 @@ export function CreateTaskDialog({
                 required
               />
             </div>
-            
+
             <div className="grid gap-2">
               <Label htmlFor="description">Description</Label>
               <Textarea
@@ -143,7 +146,7 @@ export function CreateTaskDialog({
                   <SelectValue placeholder="Select assignee (optional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No assignee</SelectItem>
+                  <SelectItem value="none">No assignee</SelectItem>
                   {teamMembers.map((member) => (
                     <SelectItem key={member.id} value={member.id}>
                       {member.name}
@@ -160,7 +163,7 @@ export function CreateTaskDialog({
                   <SelectValue placeholder="Select priority (optional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No priority</SelectItem>
+                  <SelectItem value="none">No priority</SelectItem>
                   <SelectItem value="Low">Low</SelectItem>
                   <SelectItem value="Medium">Medium</SelectItem>
                   <SelectItem value="High">High</SelectItem>
@@ -176,6 +179,37 @@ export function CreateTaskDialog({
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
               />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="estimatedHours">Estimated Time</Label>
+              <Select value={estimatedHours} onValueChange={setEstimatedHours}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select estimated time" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0.5">30 minutes</SelectItem>
+                  <SelectItem value="1">1 hour</SelectItem>
+                  <SelectItem value="1.5">1.5 hours</SelectItem>
+                  <SelectItem value="2">2 hours</SelectItem>
+                  <SelectItem value="2.5">2.5 hours</SelectItem>
+                  <SelectItem value="3">3 hours</SelectItem>
+                  <SelectItem value="3.5">3.5 hours</SelectItem>
+                  <SelectItem value="4">4 hours</SelectItem>
+                  <SelectItem value="4.5">4.5 hours</SelectItem>
+                  <SelectItem value="5">5 hours</SelectItem>
+                  <SelectItem value="5.5">5.5 hours</SelectItem>
+                  <SelectItem value="6">6 hours</SelectItem>
+                  <SelectItem value="6.5">6.5 hours</SelectItem>
+                  <SelectItem value="7">7 hours</SelectItem>
+                  <SelectItem value="7.5">7.5 hours</SelectItem>
+                  <SelectItem value="8">8 hours</SelectItem>
+                  <SelectItem value="12">12 hours</SelectItem>
+                  <SelectItem value="16">16 hours</SelectItem>
+                  <SelectItem value="24">24 hours</SelectItem>
+                  <SelectItem value="40">40 hours</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {error && (

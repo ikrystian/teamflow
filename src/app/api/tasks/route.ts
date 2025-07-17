@@ -51,6 +51,15 @@ export async function GET(request: NextRequest) {
             avatarUrl: true
           }
         },
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatarUrl: true
+          }
+        },
+
         subtasks: true,
         comments: {
           include: {
@@ -90,7 +99,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { title, description, projectId, assigneeId, priority, dueDate } = await request.json()
+    const { title, description, projectId, assigneeId, priority, dueDate, estimatedHours } = await request.json()
 
     if (!title || !projectId) {
       return NextResponse.json(
@@ -127,7 +136,9 @@ export async function POST(request: NextRequest) {
         projectId,
         assigneeId,
         priority,
-        dueDate: dueDate ? new Date(dueDate) : null
+        dueDate: dueDate ? new Date(dueDate) : null,
+        estimatedHours,
+        createdById: session.user.id || null
       },
       include: {
         project: {

@@ -6,7 +6,7 @@ import type { Session } from "next-auth"
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { teamId: string } }
+  { params }: { params: Promise<{ teamId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions) as Session | null
@@ -15,7 +15,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { teamId } = params
+    const { teamId } = await params
 
     // Verify user is member of the team
     const team = await prisma.team.findFirst({
@@ -65,7 +65,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { teamId: string } }
+  { params }: { params: Promise<{ teamId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions) as Session | null
@@ -74,7 +74,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { teamId } = params
+    const { teamId } = await params
     const { name, memberIds } = await request.json()
 
     if (!name || !name.trim()) {

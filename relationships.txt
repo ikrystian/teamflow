@@ -13,8 +13,10 @@ TeamFlow - Relacje między elementami systemu
 
 Relacje:
 - teams: Team[] (many-to-many przez "TeamMembers")
-- assignedTasks: Task[] (one-to-many)
+- assignedTasks: Task[] (one-to-many) - zadania przypisane do użytkownika
+- createdTasks: Task[] (one-to-many) - zadania utworzone przez użytkownika
 - comments: Comment[] (one-to-many)
+- timeEntries: TimeEntry[] (one-to-many) - wpisy czasu pracy
 
 ### Team (Zespół)
 - id: String (PK)
@@ -46,16 +48,20 @@ Relacje:
 - status: String (default: "To Do")
 - priority: String?
 - dueDate: DateTime?
+- estimatedHours: Float? (szacowany czas w godzinach)
 - createdAt: DateTime
 - updatedAt: DateTime
 - projectId: String (FK)
 - assigneeId: String? (FK)
+- createdById: String (FK) - autor zadania
 
 Relacje:
 - project: Project (many-to-one)
 - assignee: User? (many-to-one)
+- createdBy: User (many-to-one) - autor zadania
 - subtasks: Subtask[] (one-to-many)
 - comments: Comment[] (one-to-many)
+- timeEntries: TimeEntry[] (one-to-many) - wpisy czasu pracy
 
 ### Subtask (Podzadanie)
 - id: String (PK)
@@ -79,6 +85,20 @@ Relacje:
 Relacje:
 - task: Task (many-to-one)
 - author: User (many-to-one)
+
+### TimeEntry (Wpis czasu pracy)
+- id: String (PK)
+- hours: Float (czas w godzinach, np. 0.5 = 30 minut)
+- description: String? (opcjonalny opis pracy)
+- date: DateTime (data wykonania pracy)
+- createdAt: DateTime
+- updatedAt: DateTime
+- taskId: String (FK)
+- userId: String (FK)
+
+Relacje:
+- task: Task (many-to-one)
+- user: User (many-to-one)
 
 ## API Endpoints
 
@@ -106,7 +126,14 @@ Relacje:
 
 ### Tasks
 - GET /api/tasks - Lista zadań (z filtrowaniem po projectId, assigneeId)
-- POST /api/tasks - Tworzenie nowego zadania
+- POST /api/tasks - Tworzenie nowego zadania (z szacowanym czasem)
+- GET /api/tasks/[taskId] - Szczegóły pojedynczego zadania
+- PATCH /api/tasks/[taskId] - Edycja zadania (tylko autor lub przypisana osoba)
+
+### Time Tracking
+- GET /api/tasks/[taskId]/time-entries - Lista wpisów czasu dla zadania
+- POST /api/tasks/[taskId]/time-entries - Dodawanie wpisu czasu
+- DELETE /api/tasks/[taskId]/time-entries?entryId=X - Usuwanie wpisu czasu
 
 ## Komponenty React
 
@@ -132,10 +159,12 @@ Relacje:
 
 ### Dialog Components
 - CreateProjectDialog - Dialog tworzenia projektu
-- CreateTaskDialog - Dialog tworzenia zadania (ogólny)
-- CreateTaskDialog (projects) - Dialog tworzenia zadania dla konkretnego projektu
+- CreateTaskDialog - Dialog tworzenia zadania (ogólny) z szacowanym czasem
+- CreateTaskDialog (projects) - Dialog tworzenia zadania dla konkretnego projektu z szacowanym czasem
 - CreateTeamDialog - Dialog tworzenia zespołu
-- EditTeamDialog - Dialog edycji zespołu (nazwa)
+- EditTeamDialog - Dialog edycji zespołu (nazwa i członkowie)
+- EditTaskDialog - Dialog edycji zadania (tylko autor lub przypisana osoba)
+- TimeTrackingDialog - Dialog logowania czasu pracy nad zadaniem
 - ProjectMembersDialog - Dialog zarządzania członkami projektu
 
 ### UI Components (shadcn/ui)
@@ -227,3 +256,127 @@ Relacje:
 - Dialog podobny do CreateTeamDialog dla spójności
 - Automatyczne odświeżanie listy po edycji
 - Obsługa stanów ładowania i błędów
+
+## Nowe funkcjonalności - Zarządzanie członkami zespołów
+
+### Implementacja zarządzania członkami ✅
+**Data implementacji**: 2025-01-17
+
+**Dodane pliki**:
+- `src/app/api/users/route.ts` - API endpoint do pobierania wszystkich użytkowników
+
+**Zmodyfikowane pliki**:
+- `src/app/api/teams/[teamId]/members/route.ts` - Dodano POST i DELETE dla zarządzania członkami
+- `src/app/api/teams/[teamId]/route.ts` - Rozszerzono PATCH o aktualizację członków
+- `src/components/teams/edit-team-dialog.tsx` - Rozszerzono o interfejs zarządzania członkami
+
+**Funkcjonalności**:
+
+1. **GET /api/users** - Pobieranie wszystkich użytkowników
+   - Opcjonalne wyszukiwanie przez parametr ?search=query
+   - Wyszukiwanie po nazwie i emailu (case-insensitive)
+   - Zwraca użytkowników bez haseł
+   - Sortowanie alfabetyczne po nazwie
+
+2. **POST /api/teams/[teamId]/members** - Dodawanie członka do zespołu
+   - Walidacja członkostwa w zespole (tylko członkowie mogą dodawać)
+   - Sprawdzanie czy użytkownik do dodania istnieje
+   - Sprawdzanie czy użytkownik nie jest już członkiem
+   - Zwraca zaktualizowaną listę członków
+
+3. **DELETE /api/teams/[teamId]/members?userId=X** - Usuwanie członka z zespołu
+   - Walidacja członkostwa w zespole
+   - Sprawdzanie czy użytkownik jest członkiem zespołu
+   - Zabezpieczenie przed usunięciem ostatniego członka
+   - Zwraca zaktualizowaną listę członków
+
+4. **PATCH /api/teams/[teamId]** - Rozszerzona edycja zespołu
+   - Aktualizacja nazwy zespołu (jak wcześniej)
+   - Opcjonalna aktualizacja członków przez memberIds[]
+   - Walidacja wszystkich ID użytkowników
+   - Zabezpieczenie przed pustym zespołem
+   - Atomowa operacja (wszystko lub nic)
+
+5. **EditTeamDialog** - Rozszerzony interfejs
+   - Sekcja edycji nazwy zespołu
+   - Sekcja zarządzania członkami z wizualizacją
+   - Wyszukiwarka użytkowników z podglądem na żywo
+   - Dodawanie członków przez kliknięcie
+   - Usuwanie członków przez przycisk X na badge
+   - Walidacja: zespół musi mieć przynajmniej jednego członka
+   - Responsywny design z przewijaniem
+
+**Bezpieczeństwo**:
+- Wszystkie operacje wymagają autoryzacji
+- Tylko członkowie zespołu mogą zarządzać członkami
+- Walidacja wszystkich danych wejściowych
+- Zabezpieczenie przed pustymi zespołami
+- Sprawdzanie istnienia użytkowników przed dodaniemq
+
+**UX/UI**:
+- Intuicyjny interfejs z sekcjami
+- Wyszukiwarka użytkowników z podglądem na żywo
+- Wizualne reprezentacje członków (avatary + badge)
+- Łatwe dodawanie/usuwanie członków
+- Informacje o liczbie członków
+- Walidacja formularza z komunikatami błędów
+- Większy dialog (600px) z przewijaniem dla długich list
+
+## Nowe funkcjonalności - Time Tracking i Edycja Zadań
+
+### Implementacja time tracking i edycji zadań ✅
+**Data implementacji**: 2025-01-17
+
+**Rozszerzenia schematu bazy danych**:
+- Dodano pole `estimatedHours` do modelu Task (szacowany czas w godzinach)
+- Dodano pole `createdById` do modelu Task (autor zadania)
+- Dodano model `TimeEntry` dla logowania czasu pracy
+- Rozszerzono relacje User o `createdTasks` i `timeEntries`
+
+**Nowe API endpoints**:
+- `GET /api/tasks/[taskId]` - Szczegóły pojedynczego zadania z time entries
+- `PATCH /api/tasks/[taskId]` - Edycja zadania (tylko autor lub przypisana osoba)
+- `GET /api/tasks/[taskId]/time-entries` - Lista wpisów czasu dla zadania
+- `POST /api/tasks/[taskId]/time-entries` - Dodawanie wpisu czasu
+- `DELETE /api/tasks/[taskId]/time-entries?entryId=X` - Usuwanie wpisu czasu
+
+**Nowe komponenty**:
+- `EditTaskDialog` - Dialog edycji zadania z pełną walidacją uprawnień
+- `TimeTrackingDialog` - Dialog logowania czasu z historią i progress bar
+
+**Rozszerzone komponenty**:
+- `CreateTaskDialog` - Dodano pole szacowanego czasu (interwały co 30 min)
+- `TasksContent` - Dodano menu akcji z opcjami edycji i logowania czasu
+- Karty zadań pokazują teraz informacje o czasie (spędzony/szacowany)
+
+**Funkcjonalności time tracking**:
+1. **Szacowany czas** - przy tworzeniu zadania można ustawić szacowany czas (0.5-40h)
+2. **Logowanie czasu** - użytkownicy mogą logować czas spędzony nad zadaniem
+3. **Historia czasu** - pełna historia wpisów czasu z opisami i datami
+4. **Progress tracking** - wizualny progress bar porównujący spędzony vs szacowany czas
+5. **Usuwanie wpisów** - użytkownicy mogą usuwać swoje wpisy czasu
+
+**Funkcjonalności edycji zadań**:
+1. **Autoryzacja** - tylko autor zadania lub przypisana osoba może edytować
+2. **Pełna edycja** - tytuł, opis, status, priorytet, termin, szacowany czas, przypisanie
+3. **Walidacja zmian** - przycisk aktywny tylko gdy są zmiany
+4. **Team members** - dynamiczne ładowanie członków zespołu dla przypisania
+
+**Bezpieczeństwo**:
+- Walidacja uprawnień na poziomie API (autor lub assignee)
+- Sprawdzanie członkostwa w zespole przed dostępem do zadań
+- Walidacja wszystkich danych wejściowych
+- Tylko właściciele mogą usuwać swoje wpisy czasu
+
+**UX/UI**:
+- Menu akcji (⋯) na kartach zadań z opcjami "Log Time" i "Edit Task"
+- Informacje o czasie na kartach zadań (spędzony/szacowany)
+- Progress bar w time tracking dialog
+- Intuicyjne formularze z walidacją
+- Responsywne dialogi z przewijaniem
+- Wizualne reprezentacje czasu (godziny/minuty)
+
+**Interwały czasowe**:
+- Szacowany czas: 30 min - 40h (interwały co 30 min)
+- Logowanie czasu: 15 min - 8h (elastyczne interwały)
+- Wyświetlanie: automatyczne formatowanie (minuty/godziny)

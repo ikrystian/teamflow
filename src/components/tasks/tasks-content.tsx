@@ -7,8 +7,23 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Plus, CheckSquare, Calendar, User, Filter } from "lucide-react"
+import { Plus, CheckSquare, Calendar, User, Filter, Edit, Clock, MoreHorizontal } from "lucide-react"
 import { CreateTaskDialog } from "./create-task-dialog"
+import { EditTaskDialog } from "./edit-task-dialog"
+import { TimeTrackingDialog } from "./time-tracking-dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+
+interface User {
+  id: string
+  name: string
+  email: string
+  avatarUrl?: string
+}
 
 interface Task {
   id: string
@@ -17,6 +32,7 @@ interface Task {
   status: string
   priority?: string
   dueDate?: string
+  estimatedHours?: number
   createdAt: string
   project: {
     id: string
@@ -26,12 +42,8 @@ interface Task {
       name: string
     }
   }
-  assignee?: {
-    id: string
-    name: string
-    email: string
-    avatarUrl?: string
-  }
+  assignee?: User
+  createdBy?: User
   subtasks: {
     id: string
     title: string
@@ -46,6 +58,13 @@ interface Task {
       name: string
       avatarUrl?: string
     }
+  }[]
+  timeEntries?: {
+    id: string
+    hours: number
+    description?: string
+    date: string
+    user: User
   }[]
 }
 
@@ -64,6 +83,10 @@ export function TasksContent() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [timeTrackingDialogOpen, setTimeTrackingDialogOpen] = useState(false)
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [teamMembers, setTeamMembers] = useState<User[]>([])
   const [filter, setFilter] = useState<"all" | "assigned">("assigned")
 
   const fetchTasks = async () => {
@@ -105,6 +128,54 @@ export function TasksContent() {
   const handleTaskCreated = () => {
     fetchTasks()
     setCreateDialogOpen(false)
+  }
+
+  const handleEditTask = async (task: Task) => {
+    // Fetch team members for the task's project
+    try {
+      const response = await fetch(`/api/teams/${task.project.team.id}/members`)
+      if (response.ok) {
+        const data = await response.json()
+        setTeamMembers(data.members)
+      }
+    } catch (error) {
+      console.error("Error fetching team members:", error)
+    }
+
+    setSelectedTask(task)
+    setEditDialogOpen(true)
+  }
+
+  const handleTaskUpdated = () => {
+    fetchTasks()
+    setEditDialogOpen(false)
+    setSelectedTask(null)
+  }
+
+  const handleTimeTracking = (task: Task) => {
+    setSelectedTask(task)
+    setTimeTrackingDialogOpen(true)
+  }
+
+  const handleTimeLogged = () => {
+    fetchTasks() // Refresh to get updated time data
+  }
+
+  const canEditTask = (task: Task) => {
+    if (!session?.user?.id) return false
+    return task.createdBy?.id === session.user.id || task.assignee?.id === session.user.id
+  }
+
+  const getTotalTimeSpent = (task: Task) => {
+    if (!task.timeEntries) return 0
+    return task.timeEntries.reduce((total, entry) => total + entry.hours, 0)
+  }
+
+  const formatHours = (hours: number) => {
+    if (hours === 0) return "No time logged"
+    if (hours === 1) return "1 hour"
+    if (hours < 1) return `${Math.round(hours * 60)} minutes`
+    return `${hours} hours`
   }
 
   const getPriorityColor = (priority?: string) => {
@@ -268,6 +339,27 @@ export function TasksContent() {
                     <Badge className={getStatusColor(task.status)}>
                       {task.status}
                     </Badge>
+
+                    {/* Action Menu */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleTimeTracking(task)}>
+                          <Clock className="mr-2 h-4 w-4" />
+                          Log Time
+                        </DropdownMenuItem>
+                        {canEditTask(task) && (
+                          <DropdownMenuItem onClick={() => handleEditTask(task)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit Task
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               </CardHeader>
@@ -298,16 +390,29 @@ export function TasksContent() {
                           {task.subtasks.filter(st => st.isCompleted).length}/{task.subtasks.length} subtasks
                         </div>
                       )}
+
+                      {/* Time tracking info */}
+                      <div className="flex items-center space-x-1 text-sm text-gray-600">
+                        <Clock className="h-4 w-4" />
+                        <span>{formatHours(getTotalTimeSpent(task))}</span>
+                        {task.estimatedHours && (
+                          <span className="text-gray-400">
+                            / {formatHours(task.estimatedHours)} estimated
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    {task.dueDate && (
-                      <div className={`flex items-center space-x-1 text-sm ${
-                        isOverdue(task.dueDate) ? "text-red-600" : "text-gray-600"
-                      }`}>
-                        <Calendar className="h-4 w-4" />
-                        <span>{formatDueDate(task.dueDate)}</span>
-                      </div>
-                    )}
+                    <div className="flex items-center space-x-4">
+                      {task.dueDate && (
+                        <div className={`flex items-center space-x-1 text-sm ${
+                          isOverdue(task.dueDate) ? "text-red-600" : "text-gray-600"
+                        }`}>
+                          <Calendar className="h-4 w-4" />
+                          <span>{formatDueDate(task.dueDate)}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -321,6 +426,21 @@ export function TasksContent() {
         onOpenChange={setCreateDialogOpen}
         onTaskCreated={handleTaskCreated}
         projects={projects}
+      />
+
+      <EditTaskDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onTaskUpdated={handleTaskUpdated}
+        task={selectedTask}
+        teamMembers={teamMembers}
+      />
+
+      <TimeTrackingDialog
+        open={timeTrackingDialogOpen}
+        onOpenChange={setTimeTrackingDialogOpen}
+        onTimeLogged={handleTimeLogged}
+        task={selectedTask}
       />
     </div>
   )
