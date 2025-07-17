@@ -99,6 +99,11 @@ Aplikacja będzie dostępna pod adresem [http://localhost:3000](http://localhost
 
 ### Nowy wygląd tablicy Kanban
 - **Widok tablicy** - Przełączanie między widokiem listy a tablicą Kanban w szczegółach projektu
+- **Filtrowanie zadań** - Możliwość filtrowania zadań według przypisania:
+  - Wszystkie zadania w projekcie
+  - Moje zadania (przypisane do zalogowanego użytkownika)
+  - Zadania konkretnej osoby z zespołu
+  - Liczniki zadań dla każdej opcji filtrowania
 - **Karty w stylu Trello** - Uproszczone karty pokazujące tylko najważniejsze informacje:
   - Tytuł zadania
   - Avatar przypisanej osoby
@@ -119,8 +124,11 @@ Aplikacja będzie dostępna pod adresem [http://localhost:3000](http://localhost
 - **Zarządzanie statusami** - Edycja i usuwanie statusów (z ochroną przed usunięciem używanych)
 
 ### Szczegóły implementacji tablicy Trello
-- **TaskDetailsDialog** - Nowy komponent do wyświetlania pełnych szczegółów zadania
+- **TaskBoardFilters** - Nowy komponent do filtrowania zadań z dropdown menu
+- **TaskDetailsDialog** - Komponent do wyświetlania pełnych szczegółów zadania
 - **Uproszczone karty** - Karty pokazują tylko kluczowe informacje, reszta dostępna po kliknięciu
+- **Filtrowanie w czasie rzeczywistym** - Natychmiastowe filtrowanie zadań bez przeładowania strony
+- **Liczniki zadań** - Wyświetlanie liczby zadań dla każdej opcji filtrowania
 - **Optimistic updates** - Natychmiastowe aktualizacje UI podczas przeciągania z rollback w przypadku błędu
 - **Responsywny design** - Kolumny przewijane poziomo, karty dostosowują się do szerokości
 - **Accessibility** - Obsługa klawiatury, tooltips, odpowiednie kontrasty kolorów

@@ -2,16 +2,31 @@ RELACJE MIĘDZY ELEMENTAMI - KANBAN BOARD W STYLU TRELLO
 
 === STRUKTURA KOMPONENTÓW ===
 
-1. KanbanBoard (główny komponent)
-   ├── TaskDetailsDialog (nowy komponent)
-   ├── KanbanColumn (komponent kolumny)
-   │   └── SortableTaskCard (komponent karty zadania)
-   └── DragOverlay (overlay podczas przeciągania)
+1. ProjectDetailsContent (główny komponent projektu)
+   ├── TaskBoardFilters (nowy komponent filtrowania)
+   └── KanbanBoard (główny komponent tablicy)
+       ├── TaskDetailsDialog (komponent szczegółów zadania)
+       ├── KanbanColumn (komponent kolumny)
+       │   └── SortableTaskCard (komponent karty zadania)
+       └── DragOverlay (overlay podczas przeciągania)
 
 === PRZEPŁYW DANYCH ===
 
+ProjectDetailsContent:
+- Otrzymuje: projectId
+- Zarządza: project, session, taskFilter, selectedTask
+- Filtruje zadania: getFilteredTasks(), getTaskCounts()
+- Przekazuje do TaskBoardFilters: teamMembers, currentUserId, taskCounts
+- Przekazuje do KanbanBoard: przefiltrowane i przekształcone zadania
+
+TaskBoardFilters:
+- Otrzymuje: teamMembers[], currentUserId, selectedFilter, taskCounts
+- Renderuje: dropdown z opcjami filtrowania
+- Obsługuje: zmianę filtra (onFilterChange)
+- Wyświetla: liczniki zadań dla każdej opcji
+
 KanbanBoard:
-- Otrzymuje: tasks[], projectId, onTaskEdit, onTimeTracking, canEditTask
+- Otrzymuje: tasks[] (już przefiltrowane), projectId, handlery
 - Zarządza: taskStatuses[], activeTask, optimisticTasks, selectedTask
 - Przekazuje do KanbanColumn: tasks dla danego statusu, handlery
 - Przekazuje do TaskDetailsDialog: selectedTask, handlery
@@ -58,6 +73,14 @@ Uproszczone informacje na kartach:
 - Dropdown menu (widoczny na hover)
 
 === FUNKCJONALNOŚCI ===
+
+Filtrowanie zadań:
+- "All Tasks" - wszystkie zadania w projekcie
+- "My Tasks" - zadania przypisane do zalogowanego użytkownika
+- Zadania konkretnej osoby - wybór z listy członków zespołu
+- Liczniki zadań dla każdej opcji filtrowania
+- Dynamiczne komunikaty o braku zadań
+- Filtrowanie działa w obu widokach (lista i tablica)
 
 Drag & Drop:
 - Używa @dnd-kit/core

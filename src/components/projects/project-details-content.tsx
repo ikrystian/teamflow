@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
+import type { Session } from "next-auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -28,6 +30,7 @@ import { CreateTaskDialog } from "./create-task-dialog"
 import { KanbanBoard } from "./kanban-board"
 import { EditTaskDialog } from "../tasks/edit-task-dialog"
 import { TimeTrackingDialog } from "../tasks/time-tracking-dialog"
+import { TaskBoardFilters } from "./task-board-filters"
 
 interface ProjectDetails {
   id: string
@@ -82,6 +85,7 @@ interface ProjectDetailsContentProps {
 }
 
 export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps) {
+  const { data: session } = useSession() as { data: Session | null }
   const [project, setProject] = useState<ProjectDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [createTaskDialogOpen, setCreateTaskDialogOpen] = useState(false)
@@ -89,6 +93,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   const [timeTrackingDialogOpen, setTimeTrackingDialogOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<any>(null)
   const [viewMode, setViewMode] = useState<"list" | "board">("list")
+  const [taskFilter, setTaskFilter] = useState<"all" | "mine" | string>("all")
   const router = useRouter()
 
   const fetchProject = async () => {
@@ -170,6 +175,54 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     ).length
 
     return { total, completed, inProgress, overdue }
+  }
+
+  const getFilteredTasks = (tasks: ProjectDetails['tasks']) => {
+    if (taskFilter === "all") return tasks
+    if (taskFilter === "mine") {
+      return tasks.filter(task => task.assignee?.id === session?.user?.id)
+    }
+    // Filter by specific user ID
+    return tasks.filter(task => task.assignee?.id === taskFilter)
+  }
+
+  const getTaskCounts = (tasks: ProjectDetails['tasks']) => {
+    const all = tasks.length
+    const mine = tasks.filter(task => task.assignee?.id === session?.user?.id).length
+    const byUser: Record<string, number> = {}
+
+    // Count tasks for each team member
+    if (project?.team.members) {
+      project.team.members.forEach(member => {
+        byUser[member.id] = tasks.filter(task => task.assignee?.id === member.id).length
+      })
+    }
+
+    return { all, mine, byUser }
+  }
+
+  const handleFilterChange = (filter: "all" | "mine" | string) => {
+    setTaskFilter(filter)
+  }
+
+  // Transform tasks to include project info for KanbanBoard
+  const transformTasksForKanban = (tasks: ProjectDetails['tasks']) => {
+    return tasks.map(task => ({
+      ...task,
+      project: {
+        id: project?.id || '',
+        name: project?.name || ''
+      },
+      assignee: task.assignee ? {
+        ...task.assignee,
+        email: project?.team.members.find(m => m.id === task.assignee?.id)?.email || ''
+      } : undefined,
+      createdBy: task.assignee ? {
+        ...task.assignee,
+        email: project?.team.members.find(m => m.id === task.assignee?.id)?.email || ''
+      } : undefined,
+      timeEntries: [] // Add empty array for compatibility
+    }))
   }
 
   if (loading) {
@@ -276,20 +329,41 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>Tasks</CardTitle>
-                <CardDescription>All tasks in this project</CardDescription>
+                <CardDescription>
+                  {taskFilter === "all" ? "All tasks in this project" :
+                   taskFilter === "mine" ? "Your tasks in this project" :
+                   `Tasks assigned to ${project.team.members.find(m => m.id === taskFilter)?.name || "Unknown User"}`}
+                </CardDescription>
               </div>
-              <Button onClick={() => setCreateTaskDialogOpen(true)} size="sm">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Task
-              </Button>
+              <div className="flex items-center space-x-2">
+                <TaskBoardFilters
+                  teamMembers={project.team.members}
+                  currentUserId={session?.user?.id}
+                  selectedFilter={taskFilter}
+                  onFilterChange={handleFilterChange}
+                  taskCounts={getTaskCounts(project.tasks)}
+                />
+                <Button onClick={() => setCreateTaskDialogOpen(true)} size="sm">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Task
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
-            {project.tasks.length === 0 ? (
+            {getFilteredTasks(project.tasks).length === 0 ? (
               <div className="text-center py-8">
                 <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No tasks yet</h3>
-                <p className="text-gray-500 mb-4">Create your first task to get started</p>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  {taskFilter === "all" ? "No tasks yet" :
+                   taskFilter === "mine" ? "No tasks assigned to you" :
+                   "No tasks assigned to this person"}
+                </h3>
+                <p className="text-gray-500 mb-4">
+                  {taskFilter === "all" ? "Create your first task to get started" :
+                   taskFilter === "mine" ? "No tasks are currently assigned to you in this project" :
+                   "This team member has no assigned tasks in this project"}
+                </p>
                 <Button onClick={() => setCreateTaskDialogOpen(true)}>
                   <Plus className="mr-2 h-4 w-4" />
                   Create Task
@@ -297,7 +371,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
               </div>
             ) : (
               <div className="space-y-4">
-                {project.tasks.map((task) => (
+                {getFilteredTasks(project.tasks).map((task) => (
                   <div key={task.id} className="border rounded-lg p-4 hover:bg-gray-50">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -353,14 +427,29 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
               <h2 className="text-lg font-semibold">Task Board</h2>
               <p className="text-sm text-gray-500">Drag tasks between columns to update their status</p>
             </div>
+            <TaskBoardFilters
+              teamMembers={project.team.members}
+              currentUserId={session?.user?.id}
+              selectedFilter={taskFilter}
+              onFilterChange={handleFilterChange}
+              taskCounts={getTaskCounts(project.tasks)}
+            />
           </div>
-          {project.tasks.length === 0 ? (
+          {getFilteredTasks(project.tasks).length === 0 ? (
             <Card>
               <CardContent className="py-12">
                 <div className="text-center">
                   <LayoutGrid className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No tasks yet</h3>
-                  <p className="text-gray-500 mb-4">Create your first task to see the board</p>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    {taskFilter === "all" ? "No tasks yet" :
+                     taskFilter === "mine" ? "No tasks assigned to you" :
+                     "No tasks assigned to this person"}
+                  </h3>
+                  <p className="text-gray-500 mb-4">
+                    {taskFilter === "all" ? "Create your first task to see the board" :
+                     taskFilter === "mine" ? "No tasks are currently assigned to you in this project" :
+                     "This team member has no assigned tasks in this project"}
+                  </p>
                   <Button onClick={() => setCreateTaskDialogOpen(true)}>
                     <Plus className="mr-2 h-4 w-4" />
                     Create Task
@@ -371,7 +460,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
           ) : (
             <KanbanBoard
               projectId={projectId}
-              tasks={project.tasks}
+              tasks={transformTasksForKanban(getFilteredTasks(project.tasks))}
               onTaskUpdated={handleTaskUpdated}
               onTaskEdit={handleEditTask}
               onTimeTracking={handleTimeTracking}
