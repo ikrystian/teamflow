@@ -75,6 +75,8 @@ npm run dev
 
 Aplikacja będzie dostępna pod adresem [http://localhost:3000](http://localhost:3000)
 
+**Status**: ✅ Aplikacja została naprawiona i działa poprawnie z Next.js 15
+
 ## 📱 Jak korzystać z aplikacji
 
 ### Pierwsze kroki
@@ -204,6 +206,26 @@ Projekt jest otwarty na współpracę. Aby dodać nowe funkcjonalności:
 3. Zaimplementuj zmiany
 4. Dodaj testy (jeśli dotyczy)
 5. Utwórz Pull Request
+
+## 🔧 Rozwiązane problemy
+
+### Kompatybilność z Next.js 15
+- Zaktualizowano parametry API routes do obsługi Promise-based params
+- Poprawiono importy NextAuth dla Next.js 15
+- Dodano właściwe typy TypeScript dla sesji użytkownika
+
+### Konfiguracja NextAuth.js
+- Poprawiono importy `getServerSession` z `next-auth/next`
+- Dodano deklaracje typów dla rozszerzenia Session i User
+- Usunięto nieprawidłową opcję `signUp` z konfiguracji
+
+### Prisma
+- Wygenerowano aktualnego klienta Prisma
+- Poprawiono typy w komponentach React
+
+### Pliki konfiguracyjne
+- `relationships.txt` - Dokumentacja relacji między elementami systemu
+- Zaktualizowano typy TypeScript dla lepszej kompatybilności
 
 ## 📄 Licencja
 

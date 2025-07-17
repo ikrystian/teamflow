@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
+import type { Session } from "next-auth"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -27,7 +28,7 @@ interface RecentTask {
 }
 
 export function DashboardContent() {
-  const { data: session } = useSession()
+  const { data: session } = useSession() as { data: Session | null }
   const [stats, setStats] = useState<DashboardStats>({
     myTasks: 0,
     teams: 0,
@@ -52,7 +53,7 @@ export function DashboardContent() {
       ])
 
       const today = new Date().toISOString().split('T')[0]
-      const dueToday = tasksData.tasks.filter((task: any) =>
+      const dueToday = tasksData.tasks.filter((task: RecentTask) =>
         task.dueDate && task.dueDate.split('T')[0] === today
       ).length
 

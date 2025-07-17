@@ -1,0 +1,155 @@
+TeamFlow - Relacje między elementami systemu
+
+## Struktura bazy danych (Prisma Schema)
+
+### User (Użytkownik)
+- id: String (PK)
+- name: String?
+- email: String (unique)
+- password: String
+- avatarUrl: String?
+- createdAt: DateTime
+- updatedAt: DateTime
+
+Relacje:
+- teams: Team[] (many-to-many przez "TeamMembers")
+- assignedTasks: Task[] (one-to-many)
+- comments: Comment[] (one-to-many)
+
+### Team (Zespół)
+- id: String (PK)
+- name: String
+- createdAt: DateTime
+- updatedAt: DateTime
+
+Relacje:
+- members: User[] (many-to-many przez "TeamMembers")
+- projects: Project[] (one-to-many)
+
+### Project (Projekt)
+- id: String (PK)
+- name: String
+- description: String?
+- status: String (default: "In Progress")
+- createdAt: DateTime
+- updatedAt: DateTime
+- teamId: String (FK)
+
+Relacje:
+- team: Team (many-to-one)
+- tasks: Task[] (one-to-many)
+
+### Task (Zadanie)
+- id: String (PK)
+- title: String
+- description: String?
+- status: String (default: "To Do")
+- priority: String?
+- dueDate: DateTime?
+- createdAt: DateTime
+- updatedAt: DateTime
+- projectId: String (FK)
+- assigneeId: String? (FK)
+
+Relacje:
+- project: Project (many-to-one)
+- assignee: User? (many-to-one)
+- subtasks: Subtask[] (one-to-many)
+- comments: Comment[] (one-to-many)
+
+### Subtask (Podzadanie)
+- id: String (PK)
+- title: String
+- isCompleted: Boolean (default: false)
+- createdAt: DateTime
+- updatedAt: DateTime
+- taskId: String (FK)
+
+Relacje:
+- task: Task (many-to-one)
+
+### Comment (Komentarz)
+- id: String (PK)
+- content: String
+- createdAt: DateTime
+- updatedAt: DateTime
+- taskId: String (FK)
+- authorId: String (FK)
+
+Relacje:
+- task: Task (many-to-one)
+- author: User (many-to-one)
+
+## API Endpoints
+
+### Authentication
+- POST /api/auth/register - Rejestracja użytkownika
+- GET/POST /api/auth/[...nextauth] - NextAuth.js handler
+
+### Teams
+- GET /api/teams - Lista zespołów użytkownika
+- POST /api/teams - Tworzenie nowego zespołu
+- GET /api/teams/[teamId]/members - Lista członków zespołu
+
+### Projects
+- GET /api/projects - Lista projektów (z filtrowaniem po teamId)
+- POST /api/projects - Tworzenie nowego projektu
+
+### Tasks
+- GET /api/tasks - Lista zadań (z filtrowaniem po projectId, assigneeId)
+- POST /api/tasks - Tworzenie nowego zadania
+
+## Komponenty React
+
+### Layout Components
+- DashboardLayout - Główny layout z nawigacją
+- Providers - SessionProvider dla NextAuth
+
+### Page Components
+- Dashboard - Strona główna z statystykami
+- ProjectsPage - Lista projektów
+- TasksPage - Lista zadań
+- TeamsPage - Lista zespołów
+- CalendarPage - Widok kalendarza
+
+### Content Components
+- DashboardContent - Zawartość dashboardu ze statystykami
+- ProjectsContent - Lista i zarządzanie projektami
+- TasksContent - Lista i zarządzanie zadaniami
+- TeamsContent - Lista i zarządzanie zespołami
+- CalendarContent - Widok kalendarza z zadaniami
+
+### Dialog Components
+- CreateProjectDialog - Dialog tworzenia projektu
+- CreateTaskDialog - Dialog tworzenia zadania
+- CreateTeamDialog - Dialog tworzenia zespołu
+- ProjectMembersDialog - Dialog zarządzania członkami projektu
+
+### UI Components (shadcn/ui)
+- Button, Card, Badge, Avatar, Input, Label, Select, Dialog, etc.
+
+## Przepływ danych
+
+1. Użytkownik loguje się przez NextAuth.js
+2. Session zawiera user.id używane w API calls
+3. API routes sprawdzają autoryzację przez getServerSession
+4. Prisma ORM wykonuje zapytania do SQLite
+5. Komponenty React pobierają dane przez fetch() do API endpoints
+6. Stan aplikacji zarządzany przez useState/useEffect
+
+## Bezpieczeństwo
+
+- Wszystkie API routes wymagają autoryzacji
+- Użytkownicy widzą tylko swoje zespoły/projekty/zadania
+- Hasła hashowane przez bcryptjs
+- Session zarządzane przez NextAuth.js JWT
+
+## Technologie
+
+- Next.js 15 (App Router)
+- NextAuth.js 4 (autoryzacja)
+- Prisma 6 (ORM)
+- SQLite (baza danych)
+- TypeScript (typy)
+- Tailwind CSS + shadcn/ui (UI)
+- React 19 (frontend)

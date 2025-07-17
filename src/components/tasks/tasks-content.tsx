@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
+import type { Session } from "next-auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -58,7 +59,7 @@ interface Project {
 }
 
 export function TasksContent() {
-  const { data: session } = useSession()
+  const { data: session } = useSession() as { data: Session | null }
   const [tasks, setTasks] = useState<Task[]>([])
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
@@ -67,10 +68,10 @@ export function TasksContent() {
 
   const fetchTasks = async () => {
     try {
-      const url = filter === "assigned" 
+      const url = filter === "assigned"
         ? `/api/tasks?assigneeId=${session?.user?.id}`
         : "/api/tasks"
-      
+
       const response = await fetch(url)
       if (response.ok) {
         const data = await response.json()
@@ -187,7 +188,7 @@ export function TasksContent() {
             {filter === "assigned" ? "My Tasks" : "All Tasks"}
           </h1>
           <p className="text-gray-500">
-            {filter === "assigned" 
+            {filter === "assigned"
               ? "Tasks assigned to you across all projects"
               : "All tasks you have access to"
             }
@@ -235,7 +236,7 @@ export function TasksContent() {
               {filter === "assigned" ? "No tasks assigned to you" : "No tasks found"}
             </h3>
             <p className="text-gray-500 text-center mb-4">
-              {filter === "assigned" 
+              {filter === "assigned"
                 ? "You don't have any tasks assigned to you yet"
                 : "No tasks have been created yet"
               }
@@ -277,7 +278,7 @@ export function TasksContent() {
                       {task.description}
                     </p>
                   )}
-                  
+
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       {task.assignee && (
@@ -291,14 +292,14 @@ export function TasksContent() {
                           <span className="text-sm text-gray-600">{task.assignee.name}</span>
                         </div>
                       )}
-                      
+
                       {task.subtasks.length > 0 && (
                         <div className="text-sm text-gray-600">
                           {task.subtasks.filter(st => st.isCompleted).length}/{task.subtasks.length} subtasks
                         </div>
                       )}
                     </div>
-                    
+
                     {task.dueDate && (
                       <div className={`flex items-center space-x-1 text-sm ${
                         isOverdue(task.dueDate) ? "text-red-600" : "text-gray-600"
@@ -315,7 +316,7 @@ export function TasksContent() {
         </div>
       )}
 
-      <CreateTaskDialog 
+      <CreateTaskDialog
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onTaskCreated={handleTaskCreated}
