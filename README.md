@@ -206,6 +206,8 @@ if (loading) {
 - **Teams** - Zarządzanie zespołami (tworzenie, edycja nazw, zarządzanie członkami)
 - **Projects** - Zarządzanie projektami
 - **Reports** - Szczegółowe raporty i analizy czasu pracy oraz postępu projektów
+- **Calendar** - Widok kalendarza z zadaniami według terminów wykonania
+- **Ustawienia** - Dostępne przez menu użytkownika (kliknij avatar w prawym górnym rogu)
 - **Calendar** - Widok kalendarza z zadaniami
 
 ## 📊 System raportów
@@ -514,6 +516,14 @@ Projekt jest otwarty na współpracę. Aby dodać nowe funkcjonalności:
 - **UX**: Dialog potwierdzenia z ostrzeżeniem o nieodwracalności operacji
 - **Komponenty**: Nowy komponent AlertDialog do potwierdzania operacji usuwania
 - **Dokumentacja**: Zaktualizowano `relations.txt` z opisem uprawnień i relacji
+
+### Przeniesienie linku ustawień do menu użytkownika
+- **Zmiana**: Link do ustawień przeniesiony z bocznego menu nawigacyjnego do menu użytkownika
+- **Lokalizacja**: Ustawienia dostępne przez kliknięcie avatara użytkownika w prawym górnym rogu
+- **UI**: Dodano funkcjonalny link "Ustawienia" w dropdown menu użytkownika
+- **Nawigacja**: Usunięto "Ustawienia" z głównego menu bocznego dla lepszej organizacji
+- **Spójność**: Zachowano polskie nazwy i ikony dla lepszego UX
+- **Komponenty**: Zaktualizowano TopBarUser i DashboardLayout
 
 ### Poprawka funkcjonalności todos
 - **Problem**: Dane z listy todo nie dodawały się do bazy danych i nie były wyświetlane

@@ -65,6 +65,15 @@ MOBILE SIDEBAR IMPROVEMENTS:
 - Removed hamburger menu button and mobile overlay functionality
 - Main content padding adjusted: 64px on mobile, 256px on desktop
 
+SETTINGS LINK RELOCATION:
+- Moved settings link from sidebar navigation to user dropdown menu
+- Removed "Ustawienia" from navigation array in DashboardLayout
+- Added functional link to settings in TopBarUser dropdown menu
+- Updated TopBarUser component to include Link import and href="/dashboard/settings"
+- Changed text from "Settings" to "Ustawienia" for consistency
+- Used asChild prop on DropdownMenuItem to properly wrap Link component
+- Removed unused Settings icon import from layout.tsx
+
 ---
 
 Component Relationships - Loading Layout System

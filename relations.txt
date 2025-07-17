@@ -23,6 +23,7 @@
 - **comments**: Comment[] (One-to-Many) - zadanie może mieć komentarze
 - **timeEntries**: TimeEntry[] (One-to-Many) - zadanie może mieć wpisy czasu
 - **images**: TaskImage[] (One-to-Many) - zadanie może mieć załączone obrazy
+- **todos**: Todo[] (One-to-Many) - zadanie może mieć listę do zrobienia
 
 ## Komponenty UI
 
@@ -115,3 +116,52 @@
 - Ostrzeżenie o nieodwracalności operacji
 - Informacja o kaskadowym usuwaniu powiązanych danych
 - Przycisk usuwania w kolorze czerwonym dla wyróżnienia
+
+## Poprawki i rozwiązane problemy
+
+### Problem z niewidocznymi todos przy pierwszym otwarciu okna szczegółów zadania
+
+**Data**: 2025-01-17
+**Problem**: Przy pierwszym otworzeniu okienka ze szczegółami taska nie były widoczne zapisane todos.
+
+**Przyczyna**:
+- Komponent TaskTodos używał useState(initialTodos) do inicjalizacji stanu
+- Nie było synchronizacji między props a stanem lokalnym
+- Gdy TaskDetailsDialog pobierał aktualne dane z API i aktualizował props todos, komponent TaskTodos nie aktualizował swojego stanu
+
+**Rozwiązanie**:
+- Dodano useEffect w TaskTodos do synchronizacji stanu z props
+- useEffect reaguje na zmiany w props initialTodos i aktualizuje lokalny stan todos
+
+**Zmienione pliki**:
+- `src/components/tasks/task-todos.tsx` - dodano useEffect do synchronizacji stanu
+
+**Kod rozwiązania**:
+```typescript
+// Sync internal state when todos prop changes
+useEffect(() => {
+  setTodos(initialTodos)
+}, [initialTodos])
+```
+
+**Relacja komponentów**:
+TaskDetailsDialog → (pobiera dane z API) → TaskTodos (synchronizuje stan z props)
+
+### Dodanie wyświetlania postępu todos na liście zadań
+
+**Data**: 2025-01-17
+**Funkcjonalność**: Na liście zadań w sekcji "My Tasks" i dashboard pokazywany jest postęp todos w formacie "X/Y todos"
+
+**Implementacja**:
+- Dodano funkcję `getTodoProgress(task)` w TasksContent i DashboardContent
+- Funkcja zwraca `{completed, total}` lub `null` jeśli brak todos
+- Wyświetlanie obok informacji o subtasks w formacie "X/Y todos"
+- Informacja pokazuje się tylko gdy zadanie ma todos
+
+**Zmienione pliki**:
+- `src/components/tasks/tasks-content.tsx` - dodano getTodoProgress i wyświetlanie todos
+- `src/components/dashboard/content.tsx` - dodano getTodoProgress, zaktualizowano typ Task i wyświetlanie todos
+
+**Lokalizacja wyświetlania**:
+- Lista zadań w My Tasks: obok subtasks i informacji o czasie
+- Dashboard w sekcji "Ostatnie zadania": pod nazwą projektu obok subtasks

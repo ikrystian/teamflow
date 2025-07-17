@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -17,6 +17,11 @@ interface TaskTodosProps {
 export function TaskTodos({ taskId, todos: initialTodos, onTodosChange }: TaskTodosProps) {
   const [todos, setTodos] = useState(initialTodos)
   const [newTodoTitle, setNewTodoTitle] = useState("")
+
+  // Sync internal state when todos prop changes
+  useEffect(() => {
+    setTodos(initialTodos)
+  }, [initialTodos])
 
   const completedTodos = todos.filter(todo => todo.isCompleted).length
   const todoProgress = todos.length > 0 ? (completedTodos / todos.length) * 100 : 0
@@ -85,9 +90,8 @@ export function TaskTodos({ taskId, todos: initialTodos, onTodosChange }: TaskTo
             />
             <label
               htmlFor={`todo-${todo.id}`}
-              className={`flex-1 text-sm ${
-                todo.isCompleted ? "line-through text-gray-500" : "text-gray-900"
-              }`}
+              className={`flex-1 text-sm ${todo.isCompleted ? "line-through text-gray-500" : "text-gray-900"
+                }`}
             >
               {todo.title}
             </label>

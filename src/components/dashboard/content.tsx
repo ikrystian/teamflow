@@ -79,6 +79,11 @@ interface Task {
     user: User
   }[]
   images?: TaskImage[]
+  todos?: {
+    id: string
+    title: string
+    isCompleted: boolean
+  }[]
 }
 
 export function DashboardContent() {
@@ -161,6 +166,15 @@ export function DashboardContent() {
 
   const canEditTask = (task: Task) => {
     return session?.user?.id === task.createdBy?.id || session?.user?.id === task.assignee?.id
+  }
+
+  const getTodoProgress = (task: Task) => {
+    if (!task.todos || task.todos.length === 0) return null
+    const completedTodos = task.todos.filter(todo => todo.isCompleted).length
+    return {
+      completed: completedTodos,
+      total: task.todos.length
+    }
   }
 
   const statsConfig = [
@@ -375,7 +389,19 @@ export function DashboardContent() {
                     <h4 className="text-sm font-medium text-gray-900">
                       {task.title}
                     </h4>
-                    <p className="text-sm text-gray-500">{task.project.name}</p>
+                    <div className="flex items-center space-x-3 text-sm text-gray-500">
+                      <span>{task.project.name}</span>
+                      {task.subtasks.length > 0 && (
+                        <span>
+                          {task.subtasks.filter(st => st.isCompleted).length}/{task.subtasks.length} subtasks
+                        </span>
+                      )}
+                      {getTodoProgress(task) && (
+                        <span>
+                          {getTodoProgress(task)!.completed}/{getTodoProgress(task)!.total} todos
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center space-x-2">
                     {task.priority && (

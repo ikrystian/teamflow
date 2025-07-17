@@ -9,7 +9,6 @@ import {
   CheckSquare,
   Calendar,
   BarChart3,
-  Settings,
 } from "lucide-react"
 
 interface DashboardLayoutProps {
@@ -24,7 +23,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { name: "Projekty", href: "/dashboard/projects", icon: FolderOpen },
     { name: "Raporty", href: "/dashboard/reports", icon: BarChart3 },
     { name: "Kalendarz", href: "/dashboard/calendar", icon: Calendar },
-    { name: "Ustawienia", href: "/dashboard/settings", icon: Settings },
   ]
 
   return (

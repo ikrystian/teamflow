@@ -11,8 +11,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import { Separator } from "@/components/ui/separator"
-import { 
-  User, 
+import {
+  User,
   Settings,
   Bell,
   Shield,
@@ -44,7 +44,7 @@ export function SettingsContent() {
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
-  
+
   // Form state for profile data
   const [formData, setFormData] = useState({
     name: "",
@@ -55,7 +55,7 @@ export function SettingsContent() {
     company: "",
     website: ""
   })
-  
+
   // Other settings (mock data for now)
   const [otherSettings, setOtherSettings] = useState({
     notifications: {
@@ -118,7 +118,7 @@ export function SettingsContent() {
     try {
       setIsLoading(true)
       setSaveMessage(null)
-      
+
       const response = await fetch('/api/user/profile', {
         method: 'PUT',
         headers: {
@@ -131,7 +131,7 @@ export function SettingsContent() {
         const updatedProfile = await response.json()
         setUserProfile(updatedProfile)
         setSaveMessage('Profil został pomyślnie zaktualizowany!')
-        
+
         // Clear success message after 3 seconds
         setTimeout(() => setSaveMessage(null), 3000)
       } else {
@@ -187,483 +187,497 @@ export function SettingsContent() {
   }
 
   return (
-    <div className="container mx-auto py-6 px-4">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Ustawienia</h1>
-        <p className="text-gray-600">Zarządzaj swoim profilem i preferencjami aplikacji</p>
+    <div>
+      {/* Top bar */}
+      <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8 bg-white">
+        <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
+          <div id="dynamic-header" className="flex flex-1" >
+            {/* Welcome section */}
+            <div id="page-header">
+              <h1 className="text-2xl font-bold text-gray-900">
+                Ustawienia
+              </h1>
+              <p className="text-sm text-gray-500">
+                Zarządzaj swoim profilem i preferencjami aplikacji
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="profile" className="flex items-center gap-2">
-            <User className="h-4 w-4" />
-            Profil
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center gap-2">
-            <Bell className="h-4 w-4" />
-            Powiadomienia
-          </TabsTrigger>
-          <TabsTrigger value="privacy" className="flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            Prywatność
-          </TabsTrigger>
-          <TabsTrigger value="appearance" className="flex items-center gap-2">
-            <Palette className="h-4 w-4" />
-            Wygląd
-          </TabsTrigger>
-        </TabsList>
+      <div className="container mx-auto py-6 px-4">
 
-        <TabsContent value="profile" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Informacje osobiste
-              </CardTitle>
-              <CardDescription>
-                Zaktualizuj swoje dane osobowe i informacje kontaktowe
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Avatar Section */}
-              <div className="flex items-center gap-4">
-                <Avatar className="h-20 w-20">
-                  <AvatarImage src={session?.user?.image || ""} />
-                  <AvatarFallback className="text-lg">
-                    {session?.user?.name?.charAt(0) || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <Button variant="outline" size="sm" className="flex items-center gap-2">
-                    <Camera className="h-4 w-4" />
-                    Zmień zdjęcie
-                  </Button>
-                  <p className="text-sm text-gray-500 mt-1">
-                    JPG, PNG lub GIF. Maksymalnie 2MB.
-                  </p>
-                </div>
-              </div>
+        <Tabs defaultValue="profile" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="profile" className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Profil
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="flex items-center gap-2">
+              <Bell className="h-4 w-4" />
+              Powiadomienia
+            </TabsTrigger>
+            <TabsTrigger value="privacy" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Prywatność
+            </TabsTrigger>
+            <TabsTrigger value="appearance" className="flex items-center gap-2">
+              <Palette className="h-4 w-4" />
+              Wygląd
+            </TabsTrigger>
+          </TabsList>
 
-              <Separator />
-
-              {/* Basic Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Imię i nazwisko</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => handleFormChange("name", e.target.value)}
-                    placeholder="Wprowadź imię i nazwisko"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={userProfile?.email || ""}
-                    disabled
-                    placeholder="Adres email nie może być zmieniony"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Telefon</Label>
-                  <Input
-                    id="phone"
-                    value={formData.phone}
-                    onChange={(e) => handleFormChange("phone", e.target.value)}
-                    placeholder="Wprowadź numer telefonu"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="location">Lokalizacja</Label>
-                  <Input
-                    id="location"
-                    value={formData.location}
-                    onChange={(e) => handleFormChange("location", e.target.value)}
-                    placeholder="Miasto, Kraj"
-                  />
-                </div>
-              </div>
-
-              {/* Professional Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="jobTitle">Stanowisko</Label>
-                  <Input
-                    id="jobTitle"
-                    value={formData.jobTitle}
-                    onChange={(e) => handleFormChange("jobTitle", e.target.value)}
-                    placeholder="Twoje stanowisko"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="company">Firma</Label>
-                  <Input
-                    id="company"
-                    value={formData.company}
-                    onChange={(e) => handleFormChange("company", e.target.value)}
-                    placeholder="Nazwa firmy"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="website">Strona internetowa</Label>
-                <Input
-                  id="website"
-                  value={formData.website}
-                  onChange={(e) => handleFormChange("website", e.target.value)}
-                  placeholder="https://twoja-strona.pl"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="bio">O mnie</Label>
-                <Textarea
-                  id="bio"
-                  value={formData.bio}
-                  onChange={(e) => handleFormChange("bio", e.target.value)}
-                  placeholder="Opowiedz coś o sobie..."
-                  rows={4}
-                />
-              </div>
-              
-              {/* Save Button and Status Message */}
-              <div className="flex items-center justify-between pt-4 border-t">
-                <div className="flex-1">
-                  {saveMessage && (
-                    <p className={`text-sm ${
-                      saveMessage.includes('Błąd') || saveMessage.includes('błąd') 
-                        ? 'text-red-600' 
-                        : 'text-green-600'
-                    }`}>
-                      {saveMessage}
+          <TabsContent value="profile" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Informacje osobiste
+                </CardTitle>
+                <CardDescription>
+                  Zaktualizuj swoje dane osobowe i informacje kontaktowe
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Avatar Section */}
+                <div className="flex items-center gap-4">
+                  <Avatar className="h-20 w-20">
+                    <AvatarImage src={session?.user?.image || ""} />
+                    <AvatarFallback className="text-lg">
+                      {session?.user?.name?.charAt(0) || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <Button variant="outline" size="sm" className="flex items-center gap-2">
+                      <Camera className="h-4 w-4" />
+                      Zmień zdjęcie
+                    </Button>
+                    <p className="text-sm text-gray-500 mt-1">
+                      JPG, PNG lub GIF. Maksymalnie 2MB.
                     </p>
-                  )}
-                </div>
-                <Button 
-                  onClick={handleSaveProfile} 
-                  disabled={isLoading}
-                  className="min-w-[120px]"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Zapisywanie...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="mr-2 h-4 w-4" />
-                      Zapisz zmiany
-                    </>
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="notifications" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bell className="h-5 w-5" />
-                Powiadomienia
-              </CardTitle>
-              <CardDescription>
-                Wybierz, o czym chcesz być powiadamiany
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Powiadomienia email</Label>
-                    <p className="text-sm text-gray-500">Otrzymuj powiadomienia na email</p>
                   </div>
-                  <Switch
-                    checked={otherSettings.notifications.email}
-                    onCheckedChange={(checked) => handleNotificationChange("email", checked)}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Powiadomienia push</Label>
-                    <p className="text-sm text-gray-500">Otrzymuj powiadomienia w przeglądarce</p>
-                  </div>
-                  <Switch
-                    checked={otherSettings.notifications.push}
-                    onCheckedChange={(checked) => handleNotificationChange("push", checked)}
-                  />
                 </div>
 
                 <Separator />
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Przypisanie zadania</Label>
-                    <p className="text-sm text-gray-500">Gdy zostaniesz przypisany do zadania</p>
+                {/* Basic Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Imię i nazwisko</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => handleFormChange("name", e.target.value)}
+                      placeholder="Wprowadź imię i nazwisko"
+                    />
                   </div>
-                  <Switch
-                    checked={otherSettings.notifications.taskAssigned}
-                    onCheckedChange={(checked) => handleNotificationChange("taskAssigned", checked)}
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={userProfile?.email || ""}
+                      disabled
+                      placeholder="Adres email nie może być zmieniony"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Telefon</Label>
+                    <Input
+                      id="phone"
+                      value={formData.phone}
+                      onChange={(e) => handleFormChange("phone", e.target.value)}
+                      placeholder="Wprowadź numer telefonu"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="location">Lokalizacja</Label>
+                    <Input
+                      id="location"
+                      value={formData.location}
+                      onChange={(e) => handleFormChange("location", e.target.value)}
+                      placeholder="Miasto, Kraj"
+                    />
+                  </div>
+                </div>
+
+                {/* Professional Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="jobTitle">Stanowisko</Label>
+                    <Input
+                      id="jobTitle"
+                      value={formData.jobTitle}
+                      onChange={(e) => handleFormChange("jobTitle", e.target.value)}
+                      placeholder="Twoje stanowisko"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="company">Firma</Label>
+                    <Input
+                      id="company"
+                      value={formData.company}
+                      onChange={(e) => handleFormChange("company", e.target.value)}
+                      placeholder="Nazwa firmy"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="website">Strona internetowa</Label>
+                  <Input
+                    id="website"
+                    value={formData.website}
+                    onChange={(e) => handleFormChange("website", e.target.value)}
+                    placeholder="https://twoja-strona.pl"
                   />
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Ukończenie zadania</Label>
-                    <p className="text-sm text-gray-500">Gdy zadanie zostanie ukończone</p>
-                  </div>
-                  <Switch
-                    checked={otherSettings.notifications.taskCompleted}
-                    onCheckedChange={(checked) => handleNotificationChange("taskCompleted", checked)}
+                <div className="space-y-2">
+                  <Label htmlFor="bio">O mnie</Label>
+                  <Textarea
+                    id="bio"
+                    value={formData.bio}
+                    onChange={(e) => handleFormChange("bio", e.target.value)}
+                    placeholder="Opowiedz coś o sobie..."
+                    rows={4}
                   />
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Aktualizacje projektów</Label>
-                    <p className="text-sm text-gray-500">Zmiany w projektach, w których uczestniczysz</p>
+                {/* Save Button and Status Message */}
+                <div className="flex items-center justify-between pt-4 border-t">
+                  <div className="flex-1">
+                    {saveMessage && (
+                      <p className={`text-sm ${saveMessage.includes('Błąd') || saveMessage.includes('błąd')
+                          ? 'text-red-600'
+                          : 'text-green-600'
+                        }`}>
+                        {saveMessage}
+                      </p>
+                    )}
                   </div>
-                  <Switch
-                    checked={otherSettings.notifications.projectUpdates}
-                    onCheckedChange={(checked) => handleNotificationChange("projectUpdates", checked)}
-                  />
+                  <Button
+                    onClick={handleSaveProfile}
+                    disabled={isLoading}
+                    className="min-w-[120px]"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Zapisywanie...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        Zapisz zmiany
+                      </>
+                    )}
+                  </Button>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Zaproszenia do zespołu</Label>
-                    <p className="text-sm text-gray-500">Gdy zostaniesz zaproszony do zespołu</p>
+          <TabsContent value="notifications" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="h-5 w-5" />
+                  Powiadomienia
+                </CardTitle>
+                <CardDescription>
+                  Wybierz, o czym chcesz być powiadamiany
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Powiadomienia email</Label>
+                      <p className="text-sm text-gray-500">Otrzymuj powiadomienia na email</p>
+                    </div>
+                    <Switch
+                      checked={otherSettings.notifications.email}
+                      onCheckedChange={(checked) => handleNotificationChange("email", checked)}
+                    />
                   </div>
-                  <Switch
-                    checked={otherSettings.notifications.teamInvites}
-                    onCheckedChange={(checked) => handleNotificationChange("teamInvites", checked)}
-                  />
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Powiadomienia push</Label>
+                      <p className="text-sm text-gray-500">Otrzymuj powiadomienia w przeglądarce</p>
+                    </div>
+                    <Switch
+                      checked={otherSettings.notifications.push}
+                      onCheckedChange={(checked) => handleNotificationChange("push", checked)}
+                    />
+                  </div>
+
+                  <Separator />
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Przypisanie zadania</Label>
+                      <p className="text-sm text-gray-500">Gdy zostaniesz przypisany do zadania</p>
+                    </div>
+                    <Switch
+                      checked={otherSettings.notifications.taskAssigned}
+                      onCheckedChange={(checked) => handleNotificationChange("taskAssigned", checked)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Ukończenie zadania</Label>
+                      <p className="text-sm text-gray-500">Gdy zadanie zostanie ukończone</p>
+                    </div>
+                    <Switch
+                      checked={otherSettings.notifications.taskCompleted}
+                      onCheckedChange={(checked) => handleNotificationChange("taskCompleted", checked)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Aktualizacje projektów</Label>
+                      <p className="text-sm text-gray-500">Zmiany w projektach, w których uczestniczysz</p>
+                    </div>
+                    <Switch
+                      checked={otherSettings.notifications.projectUpdates}
+                      onCheckedChange={(checked) => handleNotificationChange("projectUpdates", checked)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Zaproszenia do zespołu</Label>
+                      <p className="text-sm text-gray-500">Gdy zostaniesz zaproszony do zespołu</p>
+                    </div>
+                    <Switch
+                      checked={otherSettings.notifications.teamInvites}
+                      onCheckedChange={(checked) => handleNotificationChange("teamInvites", checked)}
+                    />
+                  </div>
+
+                  <Separator />
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Raport tygodniowy</Label>
+                      <p className="text-sm text-gray-500">Podsumowanie aktywności z tygodnia</p>
+                    </div>
+                    <Switch
+                      checked={otherSettings.notifications.weeklyReport}
+                      onCheckedChange={(checked) => handleNotificationChange("weeklyReport", checked)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Wiadomości marketingowe</Label>
+                      <p className="text-sm text-gray-500">Informacje o nowych funkcjach i aktualizacjach</p>
+                    </div>
+                    <Switch
+                      checked={otherSettings.notifications.marketing}
+                      onCheckedChange={(checked) => handleNotificationChange("marketing", checked)}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="privacy" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  Prywatność i bezpieczeństwo
+                </CardTitle>
+                <CardDescription>
+                  Kontroluj widoczność swoich danych i aktywności
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Widoczny profil</Label>
+                      <p className="text-sm text-gray-500">Czy inni mogą zobaczyć Twój profil</p>
+                    </div>
+                    <Switch
+                      checked={otherSettings.privacy.profileVisible}
+                      onCheckedChange={(checked) => handlePrivacyChange("profileVisible", checked)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Pokaż email</Label>
+                      <p className="text-sm text-gray-500">Czy inni mogą zobaczyć Twój adres email</p>
+                    </div>
+                    <Switch
+                      checked={otherSettings.privacy.showEmail}
+                      onCheckedChange={(checked) => handlePrivacyChange("showEmail", checked)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Pokaż telefon</Label>
+                      <p className="text-sm text-gray-500">Czy inni mogą zobaczyć Twój numer telefonu</p>
+                    </div>
+                    <Switch
+                      checked={otherSettings.privacy.showPhone}
+                      onCheckedChange={(checked) => handlePrivacyChange("showPhone", checked)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Widoczna aktywność</Label>
+                      <p className="text-sm text-gray-500">Czy inni mogą zobaczyć Twoją aktywność</p>
+                    </div>
+                    <Switch
+                      checked={otherSettings.privacy.activityVisible}
+                      onCheckedChange={(checked) => handlePrivacyChange("activityVisible", checked)}
+                    />
+                  </div>
                 </div>
 
                 <Separator />
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Raport tygodniowy</Label>
-                    <p className="text-sm text-gray-500">Podsumowanie aktywności z tygodnia</p>
-                  </div>
-                  <Switch
-                    checked={otherSettings.notifications.weeklyReport}
-                    onCheckedChange={(checked) => handleNotificationChange("weeklyReport", checked)}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Wiadomości marketingowe</Label>
-                    <p className="text-sm text-gray-500">Informacje o nowych funkcjach i aktualizacjach</p>
-                  </div>
-                  <Switch
-                    checked={otherSettings.notifications.marketing}
-                    onCheckedChange={(checked) => handleNotificationChange("marketing", checked)}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="privacy" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                Prywatność i bezpieczeństwo
-              </CardTitle>
-              <CardDescription>
-                Kontroluj widoczność swoich danych i aktywności
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Widoczny profil</Label>
-                    <p className="text-sm text-gray-500">Czy inni mogą zobaczyć Twój profil</p>
-                  </div>
-                  <Switch
-                    checked={otherSettings.privacy.profileVisible}
-                    onCheckedChange={(checked) => handlePrivacyChange("profileVisible", checked)}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Pokaż email</Label>
-                    <p className="text-sm text-gray-500">Czy inni mogą zobaczyć Twój adres email</p>
-                  </div>
-                  <Switch
-                    checked={otherSettings.privacy.showEmail}
-                    onCheckedChange={(checked) => handlePrivacyChange("showEmail", checked)}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Pokaż telefon</Label>
-                    <p className="text-sm text-gray-500">Czy inni mogą zobaczyć Twój numer telefonu</p>
-                  </div>
-                  <Switch
-                    checked={otherSettings.privacy.showPhone}
-                    onCheckedChange={(checked) => handlePrivacyChange("showPhone", checked)}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Widoczna aktywność</Label>
-                    <p className="text-sm text-gray-500">Czy inni mogą zobaczyć Twoją aktywność</p>
-                  </div>
-                  <Switch
-                    checked={otherSettings.privacy.activityVisible}
-                    onCheckedChange={(checked) => handlePrivacyChange("activityVisible", checked)}
-                  />
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Bezpieczeństwo konta</h3>
-                <div className="space-y-3">
-                  <Button variant="outline" className="w-full justify-start">
-                    Zmień hasło
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start">
-                    Uwierzytelnianie dwuskładnikowe
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start">
-                    Aktywne sesje
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="appearance" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Palette className="h-5 w-5" />
-                Wygląd i personalizacja
-              </CardTitle>
-              <CardDescription>
-                Dostosuj wygląd aplikacji do swoich preferencji
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Motyw</Label>
-                  <div className="flex gap-2">
-                    <Button
-                      variant={otherSettings.appearance.theme === "light" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setOtherSettings(prev => ({
-                        ...prev,
-                        appearance: { ...prev.appearance, theme: "light" }
-                      }))}
-                    >
-                      Jasny
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Bezpieczeństwo konta</h3>
+                  <div className="space-y-3">
+                    <Button variant="outline" className="w-full justify-start">
+                      Zmień hasło
                     </Button>
-                    <Button
-                      variant={otherSettings.appearance.theme === "dark" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setOtherSettings(prev => ({
-                        ...prev,
-                        appearance: { ...prev.appearance, theme: "dark" }
-                      }))}
-                    >
-                      Ciemny
+                    <Button variant="outline" className="w-full justify-start">
+                      Uwierzytelnianie dwuskładnikowe
                     </Button>
-                    <Button
-                      variant={otherSettings.appearance.theme === "system" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setOtherSettings(prev => ({
-                        ...prev,
-                        appearance: { ...prev.appearance, theme: "system" }
-                      }))}
-                    >
-                      Systemowy
+                    <Button variant="outline" className="w-full justify-start">
+                      Aktywne sesje
                     </Button>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-                <div className="space-y-2">
-                  <Label>Język</Label>
-                  <div className="flex gap-2">
-                    <Button
-                      variant={otherSettings.appearance.language === "pl" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setOtherSettings(prev => ({
-                        ...prev,
-                        appearance: { ...prev.appearance, language: "pl" }
-                      }))}
-                    >
-                      Polski
-                    </Button>
-                    <Button
-                      variant={otherSettings.appearance.language === "en" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setOtherSettings(prev => ({
-                        ...prev,
-                        appearance: { ...prev.appearance, language: "en" }
-                      }))}
-                    >
-                      English
-                    </Button>
+          <TabsContent value="appearance" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Palette className="h-5 w-5" />
+                  Wygląd i personalizacja
+                </CardTitle>
+                <CardDescription>
+                  Dostosuj wygląd aplikacji do swoich preferencji
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Motyw</Label>
+                    <div className="flex gap-2">
+                      <Button
+                        variant={otherSettings.appearance.theme === "light" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setOtherSettings(prev => ({
+                          ...prev,
+                          appearance: { ...prev.appearance, theme: "light" }
+                        }))}
+                      >
+                        Jasny
+                      </Button>
+                      <Button
+                        variant={otherSettings.appearance.theme === "dark" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setOtherSettings(prev => ({
+                          ...prev,
+                          appearance: { ...prev.appearance, theme: "dark" }
+                        }))}
+                      >
+                        Ciemny
+                      </Button>
+                      <Button
+                        variant={otherSettings.appearance.theme === "system" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setOtherSettings(prev => ({
+                          ...prev,
+                          appearance: { ...prev.appearance, theme: "system" }
+                        }))}
+                      >
+                        Systemowy
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Język</Label>
+                    <div className="flex gap-2">
+                      <Button
+                        variant={otherSettings.appearance.language === "pl" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setOtherSettings(prev => ({
+                          ...prev,
+                          appearance: { ...prev.appearance, language: "pl" }
+                        }))}
+                      >
+                        Polski
+                      </Button>
+                      <Button
+                        variant={otherSettings.appearance.language === "en" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setOtherSettings(prev => ({
+                          ...prev,
+                          appearance: { ...prev.appearance, language: "en" }
+                        }))}
+                      >
+                        English
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Strefa czasowa</Label>
+                    <div className="flex gap-2">
+                      <Button
+                        variant={otherSettings.appearance.timezone === "Europe/Warsaw" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setOtherSettings(prev => ({
+                          ...prev,
+                          appearance: { ...prev.appearance, timezone: "Europe/Warsaw" }
+                        }))}
+                      >
+                        Europa/Warszawa
+                      </Button>
+                      <Button
+                        variant={otherSettings.appearance.timezone === "UTC" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setOtherSettings(prev => ({
+                          ...prev,
+                          appearance: { ...prev.appearance, timezone: "UTC" }
+                        }))}
+                      >
+                        UTC
+                      </Button>
+                    </div>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
 
-                <div className="space-y-2">
-                  <Label>Strefa czasowa</Label>
-                  <div className="flex gap-2">
-                    <Button
-                      variant={otherSettings.appearance.timezone === "Europe/Warsaw" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setOtherSettings(prev => ({
-                        ...prev,
-                        appearance: { ...prev.appearance, timezone: "Europe/Warsaw" }
-                      }))}
-                    >
-                      Europa/Warszawa
-                    </Button>
-                    <Button
-                      variant={otherSettings.appearance.timezone === "UTC" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setOtherSettings(prev => ({
-                        ...prev,
-                        appearance: { ...prev.appearance, timezone: "UTC" }
-                      }))}
-                    >
-                      UTC
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      {/* Save Button */}
-      <div className="flex justify-end">
-        <Button onClick={handleSaveProfile} disabled={isLoading} className="flex items-center gap-2">
-          <Save className="h-4 w-4" />
-          {isLoading ? "Zapisywanie..." : "Zapisz zmiany"}
-        </Button>
+        {/* Save Button */}
+        <div className="flex justify-end">
+          <Button onClick={handleSaveProfile} disabled={isLoading} className="flex items-center gap-2">
+            <Save className="h-4 w-4" />
+            {isLoading ? "Zapisywanie..." : "Zapisz zmiany"}
+          </Button>
+        </div>
       </div>
     </div>
   )
