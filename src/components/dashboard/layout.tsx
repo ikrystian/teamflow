@@ -13,12 +13,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { 
-  Home, 
-  Users, 
-  FolderOpen, 
-  CheckSquare, 
+import {
+  Home,
+  Users,
+  FolderOpen,
+  CheckSquare,
   Calendar,
+  BarChart3,
   Settings,
   LogOut,
   Menu,
@@ -38,6 +39,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { name: "My Tasks", href: "/dashboard/tasks", icon: CheckSquare },
     { name: "Teams", href: "/dashboard/teams", icon: Users },
     { name: "Projects", href: "/dashboard/projects", icon: FolderOpen },
+    { name: "Reports", href: "/dashboard/reports", icon: BarChart3 },
     { name: "Calendar", href: "/dashboard/calendar", icon: Calendar },
   ]
 

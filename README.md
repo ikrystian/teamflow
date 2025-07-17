@@ -115,12 +115,49 @@ Aplikacja będzie dostępna pod adresem [http://localhost:3000](http://localhost
 8. **Edytuj zadania** - Kliknij menu (⋯) na karcie zadania i wybierz "Edit Task" (tylko autor lub przypisana osoba)
 9. **Loguj czas** - Kliknij menu (⋯) na karcie zadania i wybierz "Log Time" aby zalogować czas pracy
 
+10. **Generuj raporty** - Przejdź do sekcji "Reports" aby wygenerować szczegółowe raporty:
+    - **Time Tracking Report** - Raport czasu pracy z podziałem na użytkowników i projekty
+    - **Project Progress Report** - Raport postępu projektów z analizą zadań i efektywności
+    - Eksport do PDF, Excel lub CSV
+
 ### Nawigacja
 - **Dashboard** - Przegląd statystyk i ostatnich aktywności
 - **My Tasks** - Zadania przypisane do Ciebie z możliwością edycji i logowania czasu
 - **Teams** - Zarządzanie zespołami (tworzenie, edycja nazw, zarządzanie członkami)
 - **Projects** - Zarządzanie projektami
+- **Reports** - Szczegółowe raporty i analizy czasu pracy oraz postępu projektów
 - **Calendar** - Widok kalendarza z zadaniami
+
+## 📊 System raportów
+
+TeamFlow oferuje zaawansowany system raportów umożliwiający szczegółową analizę pracy zespołu:
+
+### Rodzaje raportów
+
+#### 1. Time Tracking Report (Raport czasu pracy)
+- **Podsumowanie** - Łączny czas pracy, liczba wpisów, aktywni użytkownicy
+- **Statystyki użytkowników** - Czas pracy każdego członka zespołu z podziałem na projekty
+- **Statystyki projektów** - Czas poświęcony na każdy projekt z listą współtwórców
+- **Analiza dzienna** - Wykres czasu pracy w poszczególnych dniach
+- **Wykresy** - Wizualizacja rozkładu czasu między użytkownikami i projektami
+
+#### 2. Project Progress Report (Raport postępu projektów)
+- **Wskaźniki ukończenia** - Procent ukończonych zadań w każdym projekcie
+- **Analiza zadań** - Podział zadań według statusu (To Do, In Progress, Done)
+- **Analiza terminów** - Zadania przeterminowane i zbliżające się terminy
+- **Efektywność** - Porównanie szacowanego vs rzeczywistego czasu pracy
+- **Wkład zespołu** - Udział poszczególnych członków w projektach
+
+### Filtry i opcje
+- **Zakres czasowy** - Filtrowanie według daty (dzień, tydzień, miesiąc, niestandardowy)
+- **Projekt** - Ograniczenie do wybranych projektów
+- **Zespół** - Filtrowanie według zespołu
+- **Użytkownik** - Analiza pracy konkretnej osoby
+
+### Eksport danych
+- **PDF** - Sformatowane raporty z wykresami i tabelami
+- **Excel** - Szczegółowe dane w arkuszu kalkulacyjnym
+- **CSV** - Dane w formacie CSV do dalszej analizy
 
 ## 🗄 Struktura bazy danych
 
@@ -204,6 +241,9 @@ npx prisma db push --force-reset
 
 # Przeglądanie bazy danych
 npx prisma studio
+
+# Dodawanie danych testowych
+npm run db:seed
 ```
 
 ## 📁 Struktura projektu
@@ -213,17 +253,36 @@ teamflow/
 ├── src/
 │   ├── app/                 # App Router (Next.js 13+)
 │   │   ├── api/            # API endpoints
+│   │   │   ├── auth/       # Autentykacja NextAuth
+│   │   │   ├── reports/    # API raportów
+│   │   │   ├── tasks/      # API zadań
+│   │   │   ├── teams/      # API zespołów
+│   │   │   └── projects/   # API projektów
 │   │   ├── auth/           # Strony uwierzytelniania
 │   │   ├── dashboard/      # Główne strony aplikacji
+│   │   │   ├── reports/    # Strona raportów
+│   │   │   ├── tasks/      # Strona zadań
+│   │   │   ├── teams/      # Strona zespołów
+│   │   │   ├── projects/   # Strona projektów
+│   │   │   └── calendar/   # Strona kalendarza
 │   │   └── layout.tsx      # Root layout
 │   ├── components/         # Komponenty React
 │   │   ├── ui/            # Komponenty shadcn/ui
 │   │   ├── dashboard/     # Komponenty dashboardu
+│   │   ├── reports/       # Komponenty raportów
 │   │   ├── teams/         # Komponenty zespołów
 │   │   ├── projects/      # Komponenty projektów
-│   │   └── tasks/         # Komponenty zadań
+│   │   ├── tasks/         # Komponenty zadań
+│   │   └── calendar/      # Komponenty kalendarza
 │   └── lib/               # Utilities i konfiguracja
+│       ├── auth.ts        # Konfiguracja NextAuth
+│       ├── prisma.ts      # Klient Prisma
+│       ├── pdf-export.ts  # Eksport do PDF
+│       └── utils.ts       # Pomocnicze funkcje
 ├── prisma/                # Schema bazy danych
+│   ├── schema.prisma      # Definicja modeli
+│   ├── seed.ts           # Dane testowe
+│   └── migrations/       # Migracje bazy danych
 ├── public/                # Pliki statyczne
 └── package.json
 ```

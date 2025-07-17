@@ -156,6 +156,30 @@ Relacje:
 - POST /api/tasks/[taskId]/time-entries - Dodawanie wpisu czasu
 - DELETE /api/tasks/[taskId]/time-entries?entryId=X - Usuwanie wpisu czasu
 
+### Reports (Raporty)
+- GET /api/reports/time-tracking - Raport czasu pracy z filtrami (startDate, endDate, projectId, userId, teamId)
+- GET /api/reports/project-progress - Raport postępu projektów z filtrami (startDate, endDate, projectId, teamId)
+- POST /api/reports/export - Eksport raportów do PDF/Excel/CSV (reportType, format, filtry)
+
+## Biblioteki i narzędzia
+
+### Frontend
+- **Next.js 15** - Framework React z App Router
+- **TypeScript** - Typowanie statyczne
+- **Tailwind CSS** - Framework CSS
+- **shadcn/ui** - Komponenty UI
+- **NextAuth.js** - Autentykacja
+- **Recharts** - Biblioteka do wykresów i wizualizacji danych
+- **jsPDF** - Generowanie plików PDF
+- **jsPDF-AutoTable** - Automatyczne tabele w PDF
+- **XLSX** - Obsługa plików Excel/CSV
+- **date-fns** - Manipulacja datami
+
+### Backend
+- **Prisma** - ORM do bazy danych
+- **SQLite** - Baza danych (development)
+- **bcryptjs** - Hashowanie haseł
+
 ## Komponenty React
 
 ### Layout Components
@@ -168,6 +192,7 @@ Relacje:
 - ProjectDetailsPage - Szczegóły pojedynczego projektu (BRAKUJE - powoduje 404)
 - TasksPage - Lista zadań
 - TeamsPage - Lista zespołów
+- ReportsPage - Strona raportów i analiz (z DashboardLayout i sprawdzaniem sesji)
 - CalendarPage - Widok kalendarza
 
 ### Content Components
@@ -177,6 +202,14 @@ Relacje:
 - TasksContent - Lista i zarządzanie zadaniami
 - TeamsContent - Lista i zarządzanie zespołami
 - CalendarContent - Widok kalendarza z zadaniami
+- ReportsContent - Główny komponent raportów z filtrami i eksportem
+
+### Reports Components
+- TimeTrackingReport - Komponent raportu czasu pracy z wykresami i statystykami
+- ProjectProgressReport - Komponent raportu postępu projektów z analizą zadań
+
+### Utilities
+- pdf-export.ts - Funkcje eksportu raportów do PDF (exportTimeTrackingToPDF, exportProjectProgressToPDF)
 
 ### Dialog Components
 - CreateProjectDialog - Dialog tworzenia projektu
