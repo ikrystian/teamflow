@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Calendar, User, Clock, Edit, MoreHorizontal, Plus, AlertCircle, Trash2 } from "lucide-react"
+import { Calendar, User as UserIcon, Clock, Edit, MoreHorizontal, Plus, AlertCircle, Trash2 } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,51 +35,7 @@ import {
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { TaskDetailsDialog } from "../tasks/task-details-dialog"
-
-interface User {
-  id: string
-  name: string
-  email: string
-  avatarUrl?: string
-}
-
-interface Task {
-  id: string
-  title: string
-  description?: string
-  status: string
-  statusId?: string
-  priority?: string
-  dueDate?: string
-  estimatedHours?: number
-  createdAt: string
-  project: {
-    id: string
-    name: string
-  }
-  assignee?: User
-  createdBy?: User
-  subtasks: {
-    id: string
-    title: string
-    isCompleted: boolean
-  }[]
-  timeEntries?: {
-    id: string
-    hours: number
-    description?: string
-    date: string
-    user: User
-  }[]
-}
-
-interface TaskStatus {
-  id: string
-  name: string
-  color: string
-  order: number
-  isDefault: boolean
-}
+import type { Task, User, TaskStatus } from "@/types"
 
 interface KanbanBoardProps {
   projectId: string
@@ -191,7 +147,7 @@ function SortableTaskCard({
                     <MoreHorizontal className="h-3 w-3" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                   <DropdownMenuItem onClick={() => onTimeTracking(task)}>
                     <Clock className="mr-2 h-4 w-4" />
                     Log Time
@@ -280,6 +236,7 @@ function KanbanColumn({
   onEdit,
   onTimeTracking,
   onViewDetails,
+  onDelete,
   canEdit,
   onCreateTask,
   updatingTasks
@@ -289,6 +246,7 @@ function KanbanColumn({
   onEdit: (task: Task) => void
   onTimeTracking: (task: Task) => void
   onViewDetails: (task: Task) => void
+  onDelete: (task: Task) => void
   canEdit: (task: Task) => boolean
   onCreateTask: () => void
   updatingTasks: Set<string>
@@ -342,7 +300,7 @@ function KanbanColumn({
                 onEdit={onEdit}
                 onTimeTracking={onTimeTracking}
                 onViewDetails={onViewDetails}
-                onDelete={onTaskDelete}
+                onDelete={onDelete}
                 canEdit={canEdit(task)}
                 isUpdating={updatingTasks.has(task.id)}
               />
@@ -557,6 +515,7 @@ export function KanbanBoard({
               onEdit={onTaskEdit}
               onTimeTracking={onTimeTracking}
               onViewDetails={handleViewDetails}
+              onDelete={onTaskDelete}
               canEdit={canEditTask}
               onCreateTask={handleCreateTask}
               updatingTasks={updatingTasks}

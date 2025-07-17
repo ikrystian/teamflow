@@ -213,7 +213,7 @@ export function exportProjectProgressToPDF(data: ProjectProgressData, filters: a
   })
   
   // Project Details
-  let currentY = (doc as any).lastAutoTable.finalY + 20
+  const currentY = (doc as any).lastAutoTable.finalY + 20
   
   doc.setFontSize(16)
   doc.text('Project Details', 20, currentY)

@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator"
 import { Progress } from "@/components/ui/progress"
 import {
   Calendar,
-  User,
+  User as UserIcon,
   UserCheck,
   Clock,
   Edit,
@@ -23,67 +23,7 @@ import {
 } from "lucide-react"
 import { ImageGallery } from "@/components/ui/image-gallery"
 import { TaskComments } from "@/components/tasks/task-comments"
-
-interface User {
-  id: string
-  name: string
-  email: string
-  avatarUrl?: string
-}
-
-interface TaskImage {
-  id: string
-  filename: string
-  url: string
-  mimeType: string
-  size: number
-  createdAt: string
-}
-
-interface Task {
-  id: string
-  title: string
-  description?: string
-  status: string
-  statusId?: string
-  priority?: string
-  dueDate?: string
-  estimatedHours?: number
-  createdAt: string
-  project: {
-    id: string
-    name: string
-    team: {
-      id: string
-      name: string
-    }
-  }
-  assignee?: User
-  createdBy?: User
-  subtasks: {
-    id: string
-    title: string
-    isCompleted: boolean
-  }[]
-  comments: {
-    id: string
-    content: string
-    createdAt: string
-    author: {
-      id: string
-      name: string
-      avatarUrl?: string
-    }
-  }[]
-  timeEntries?: {
-    id: string
-    hours: number
-    description?: string
-    date: string
-    user: User
-  }[]
-  images?: TaskImage[]
-}
+import type { Task, User, TaskImage } from "@/types"
 
 interface TaskDetailsDialogProps {
   open: boolean
@@ -266,7 +206,7 @@ export function TaskDetailsDialog({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Assignee */}
             <div className="flex items-center space-x-3">
-              <User className="h-4 w-4 text-gray-400" />
+              <UserIcon className="h-4 w-4 text-gray-400" />
               <div>
                 <p className="text-xs text-gray-500 uppercase tracking-wide">Przypisany</p>
                 {task.assignee ? (

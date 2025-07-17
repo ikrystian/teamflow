@@ -156,7 +156,8 @@ export function TasksContent() {
     setCreateDialogOpen(false)
   }
 
-  const handleEditTask = async (task: Task) => {
+  const handleEditTask = async (task: Task, e: React.MouseEvent) => {
+    e.stopPropagation();
     // Fetch team members for the task's project
     try {
       const response = await fetch(`/api/teams/${task.project.team.id}/members`)
@@ -178,7 +179,8 @@ export function TasksContent() {
     setSelectedTask(null)
   }
 
-  const handleTimeTracking = (task: Task) => {
+  const handleTimeTracking = (task: Task, e: React.MouseEvent) => {
+    e.stopPropagation()
     setSelectedTask(task)
     setTimeTrackingDialogOpen(true)
   }
@@ -187,7 +189,8 @@ export function TasksContent() {
     fetchTasks() // Refresh to get updated time data
   }
 
-  const handleDeleteTask = (task: Task) => {
+  const handleDeleteTask = (task: Task, e: React.MouseEvent) => {
+    e.stopPropagation();
     setSelectedTask(task)
     setDeleteDialogOpen(true)
   }
@@ -407,12 +410,12 @@ export function TasksContent() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleTimeTracking(task)}>
+                        <DropdownMenuItem onClick={(e) => handleTimeTracking(task, e)}>
                           <Clock className="mr-2 h-4 w-4" />
                           Log Time
                         </DropdownMenuItem>
                         {canEditTask(task) && (
-                          <DropdownMenuItem onClick={() => handleEditTask(task)}>
+                          <DropdownMenuItem onClick={(e) => handleEditTask(task, e)}>
                             <Edit className="mr-2 h-4 w-4" />
                             Edit Task
                           </DropdownMenuItem>
@@ -421,7 +424,7 @@ export function TasksContent() {
                           <>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              onClick={() => handleDeleteTask(task)}
+                              onClick={(e) => handleDeleteTask(task, e)}
                               className="text-red-600 focus:text-red-600"
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
