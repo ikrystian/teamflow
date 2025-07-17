@@ -84,6 +84,11 @@ Ograniczenia:
 - Unikalna nazwa statusu per projekt
 - Unikalna kolejność per projekt
 
+Uwagi:
+- Przy tworzeniu nowego projektu automatycznie tworzone są domyślne statusy: "To Do" (domyślny), "In Progress", "Done"
+- Domyślne statusy są zapisywane w bazie danych, nie są już zwracane jako tymczasowe dane
+- Dla istniejących projektów bez statusów, domyślne statusy są tworzone przy pierwszym pobraniu
+
 ### Subtask (Podzadanie)
 - id: String (PK)
 - title: String

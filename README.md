@@ -439,6 +439,14 @@ Projekt jest otwarty na współpracę. Aby dodać nowe funkcjonalności:
 - Usunięto menu hamburger i funkcjonalność overlay na mobile
 - Dostosowano padding głównej zawartości: 64px na mobile, 256px na desktop
 
+### Poprawka domyślnych statusów zadań
+- **Problem**: Przy dodawaniu nowego statusu lub edycji istniejącego znikały domyślne statusy ("To Do", "In Progress", "Done")
+- **Rozwiązanie**: Automatyczne tworzenie domyślnych statusów w bazie danych przy tworzeniu nowego projektu
+- Domyślne statusy są teraz trwale zapisywane w bazie danych zamiast być zwracane jako tymczasowe dane
+- Dodano migrację dla istniejących projektów - domyślne statusy są tworzone przy pierwszym pobraniu jeśli nie istnieją
+- Domyślne statusy: "To Do" (domyślny, #6B7280), "In Progress" (#3B82F6), "Done" (#10B981)
+- Zaktualizowano dokumentację w `relationships.txt` i utworzono plik testowy `test-default-statuses.md`
+
 ## 📄 Licencja
 
 Ten projekt jest dostępny na licencji MIT.

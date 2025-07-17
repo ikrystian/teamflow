@@ -49,14 +49,32 @@ export async function GET(
       }
     })
 
-    // If no custom statuses exist, return default ones
+    // If no statuses exist (for existing projects), create default ones
     if (taskStatuses.length === 0) {
       const defaultStatuses = [
-        { id: "default-todo", name: "To Do", color: "#6B7280", order: 0, isDefault: true },
-        { id: "default-progress", name: "In Progress", color: "#3B82F6", order: 1, isDefault: false },
-        { id: "default-done", name: "Done", color: "#10B981", order: 2, isDefault: false }
+        { name: "To Do", color: "#6B7280", order: 0, isDefault: true },
+        { name: "In Progress", color: "#3B82F6", order: 1, isDefault: false },
+        { name: "Done", color: "#10B981", order: 2, isDefault: false }
       ]
-      return NextResponse.json({ taskStatuses: defaultStatuses })
+
+      await prisma.taskStatus.createMany({
+        data: defaultStatuses.map(status => ({
+          ...status,
+          projectId
+        }))
+      })
+
+      // Fetch the newly created statuses
+      const newTaskStatuses = await prisma.taskStatus.findMany({
+        where: {
+          projectId
+        },
+        orderBy: {
+          order: "asc"
+        }
+      })
+
+      return NextResponse.json({ taskStatuses: newTaskStatuses })
     }
 
     return NextResponse.json({ taskStatuses })

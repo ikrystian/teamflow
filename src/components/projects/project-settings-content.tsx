@@ -323,8 +323,7 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
           {taskStatuses.length === 0 && (
             <div className="text-center py-8 text-gray-500">
               <Settings className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-              <p>No custom task statuses configured.</p>
-              <p className="text-sm">Using default statuses: To Do, In Progress, Done</p>
+              <p>Loading task statuses...</p>
             </div>
           )}
         </CardContent>
