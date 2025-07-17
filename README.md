@@ -396,6 +396,24 @@ Przed wdrożeniem pamiętaj o:
 2. Migracji na bazę danych produkcyjną (np. PostgreSQL)
 3. Wygenerowaniu bezpiecznego `NEXTAUTH_SECRET`
 
+## 🔧 Rozwiązywanie problemów
+
+### PDF Export - "doc.autoTable is not a function"
+Jeśli napotkasz błąd związany z eksportem PDF, upewnij się że:
+- jsPDF i jsPDF-AutoTable są poprawnie zainstalowane
+- Import autoTable jest wykonany jako: `import autoTable from 'jspdf-autotable'`
+- Funkcja autoTable jest wywoływana jako: `autoTable(doc, options)`
+
+### Problemy z bazą danych
+```bash
+# Resetowanie bazy danych
+npx prisma db push --force-reset
+npx prisma db seed
+```
+
+### Problemy z uwierzytelnianiem
+Sprawdź czy zmienne środowiskowe są poprawnie ustawione w pliku `.env.local`
+
 ## 🔌 API Endpoints
 
 ### Zadania (Tasks)

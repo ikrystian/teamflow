@@ -198,7 +198,7 @@ Ograniczenia:
 - **NextAuth.js** - Autentykacja
 - **Recharts** - Biblioteka do wykresów i wizualizacji danych
 - **jsPDF** - Generowanie plików PDF
-- **jsPDF-AutoTable** - Automatyczne tabele w PDF
+- **jsPDF-AutoTable** - Automatyczne tabele w PDF (poprawiona integracja z jsPDF)
 - **XLSX** - Obsługa plików Excel/CSV
 - **date-fns** - Manipulacja datami
 
@@ -206,6 +206,17 @@ Ograniczenia:
 - **Prisma** - ORM do bazy danych
 - **SQLite** - Baza danych (development)
 - **bcryptjs** - Hashowanie haseł
+
+## Poprawki i rozwiązania problemów
+
+### PDF Export Fix (2025-07-17)
+- **Problem**: TypeError: doc.autoTable is not a function
+- **Przyczyna**: Nieprawidłowa integracja jsPDF z pluginem autoTable
+- **Rozwiązanie**:
+  - Zmiana importu z `import 'jspdf-autotable'` na `import autoTable from 'jspdf-autotable'`
+  - Wywołanie autoTable jako funkcji: `autoTable(doc, options)` zamiast `doc.autoTable(options)`
+  - Poprawione typowanie TypeScript dla jsPDF z autoTable
+- **Pliki**: src/lib/pdf-export.ts
 
 ## Komponenty React
 

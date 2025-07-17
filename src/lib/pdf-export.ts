@@ -1,10 +1,21 @@
 import jsPDF from 'jspdf'
-import 'jspdf-autotable'
+import autoTable from 'jspdf-autotable'
 
 // Extend jsPDF type to include autoTable
 declare module 'jspdf' {
   interface jsPDF {
-    autoTable: (options: { head?: string[][]; body?: string[][]; startY?: number; margin?: { top: number }; styles?: object; headStyles?: object; bodyStyles?: object; columnStyles?: object; theme?: string }) => jsPDF
+    autoTable: (options: {
+      head?: string[][]
+      body?: string[][]
+      startY?: number
+      margin?: { top: number }
+      styles?: object
+      headStyles?: object
+      bodyStyles?: object
+      columnStyles?: object
+      theme?: string
+    }) => jsPDF
+    lastAutoTable: { finalY: number }
   }
 }
 
@@ -73,24 +84,24 @@ interface ProjectProgressData {
   }>
 }
 
-export function exportTimeTrackingToPDF(data: TimeTrackingData, filters: { startDate: string; endDate: string; projectId: string; userId: string; teamId: string }) {
+export function exportTimeTrackingToPDF(data: TimeTrackingData, filters: { startDate: string; endDate: string; projectId: string; userId: string; teamId: string }): jsPDF {
   const doc = new jsPDF()
-  
+
   // Title
   doc.setFontSize(20)
   doc.text('Time Tracking Report', 20, 20)
-  
+
   // Date range
   doc.setFontSize(12)
-  const dateRange = filters.startDate && filters.endDate 
+  const dateRange = filters.startDate && filters.endDate
     ? `${filters.startDate} to ${filters.endDate}`
     : 'All time'
   doc.text(`Period: ${dateRange}`, 20, 35)
-  
+
   // Summary section
   doc.setFontSize(16)
   doc.text('Summary', 20, 55)
-  
+
   doc.setFontSize(12)
   const summaryData = [
     ['Total Hours', formatHours(data.summary.totalHours)],
@@ -98,29 +109,29 @@ export function exportTimeTrackingToPDF(data: TimeTrackingData, filters: { start
     ['Active Users', data.summary.uniqueUsers.toString()],
     ['Projects Involved', data.summary.uniqueProjects.toString()]
   ]
-  
-  doc.autoTable({
+
+  autoTable(doc, {
     startY: 65,
     head: [['Metric', 'Value']],
     body: summaryData,
     theme: 'grid',
     headStyles: { fillColor: [66, 139, 202] }
   })
-  
+
   // User Statistics
-  let currentY = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 20
-  
+  let currentY = doc.lastAutoTable.finalY + 20
+
   doc.setFontSize(16)
   doc.text('User Statistics', 20, currentY)
-  
+
   const userTableData = data.userStats.map(user => [
     user.user.name || user.user.email,
     formatHours(user.totalHours),
     user.entriesCount.toString(),
     user.projects.join(', ')
   ])
-  
-  doc.autoTable({
+
+  autoTable(doc, {
     startY: currentY + 10,
     head: [['User', 'Total Hours', 'Entries', 'Projects']],
     body: userTableData,
@@ -130,19 +141,19 @@ export function exportTimeTrackingToPDF(data: TimeTrackingData, filters: { start
       3: { cellWidth: 60 }
     }
   })
-  
+
   // Project Statistics
-  currentY = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 20
-  
+  currentY = doc.lastAutoTable.finalY + 20
+
   // Check if we need a new page
   if (currentY > 250) {
     doc.addPage()
     currentY = 20
   }
-  
+
   doc.setFontSize(16)
   doc.text('Project Statistics', 20, currentY)
-  
+
   const projectTableData = data.projectStats.map(project => [
     project.project.name,
     project.project.team.name,
@@ -150,8 +161,8 @@ export function exportTimeTrackingToPDF(data: TimeTrackingData, filters: { start
     project.entriesCount.toString(),
     project.users.join(', ')
   ])
-  
-  doc.autoTable({
+
+  autoTable(doc, {
     startY: currentY + 10,
     head: [['Project', 'Team', 'Total Hours', 'Entries', 'Contributors']],
     body: projectTableData,
@@ -161,7 +172,7 @@ export function exportTimeTrackingToPDF(data: TimeTrackingData, filters: { start
       4: { cellWidth: 50 }
     }
   })
-  
+
   // Footer
   const pageCount = doc.getNumberOfPages()
   for (let i = 1; i <= pageCount; i++) {
@@ -173,28 +184,28 @@ export function exportTimeTrackingToPDF(data: TimeTrackingData, filters: { start
       doc.internal.pageSize.height - 10
     )
   }
-  
+
   return doc
 }
 
-export function exportProjectProgressToPDF(data: ProjectProgressData, filters: { startDate: string; endDate: string; projectId: string; teamId: string }) {
+export function exportProjectProgressToPDF(data: ProjectProgressData, filters: { startDate: string; endDate: string; projectId: string; teamId: string }): jsPDF {
   const doc = new jsPDF()
-  
+
   // Title
   doc.setFontSize(20)
   doc.text('Project Progress Report', 20, 20)
-  
+
   // Date range
   doc.setFontSize(12)
-  const dateRange = filters.startDate && filters.endDate 
+  const dateRange = filters.startDate && filters.endDate
     ? `${filters.startDate} to ${filters.endDate}`
     : 'All time'
   doc.text(`Period: ${dateRange}`, 20, 35)
-  
+
   // Overall Summary
   doc.setFontSize(16)
   doc.text('Overall Summary', 20, 55)
-  
+
   doc.setFontSize(12)
   const overallData = [
     ['Total Projects', data.overallStats.totalProjects.toString()],
@@ -203,21 +214,21 @@ export function exportProjectProgressToPDF(data: ProjectProgressData, filters: {
     ['Total Hours Logged', formatHours(data.overallStats.totalLoggedHours)],
     ['Average Completion Rate', `${data.overallStats.averageCompletionRate.toFixed(1)}%`]
   ]
-  
-  doc.autoTable({
+
+  autoTable(doc, {
     startY: 65,
     head: [['Metric', 'Value']],
     body: overallData,
     theme: 'grid',
     headStyles: { fillColor: [66, 139, 202] }
   })
-  
+
   // Project Details
-  const currentY = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 20
-  
+  const currentY = doc.lastAutoTable.finalY + 20
+
   doc.setFontSize(16)
   doc.text('Project Details', 20, currentY)
-  
+
   const projectTableData = data.projectReports.map(project => [
     project.project.name,
     project.project.team.name,
@@ -228,8 +239,8 @@ export function exportProjectProgressToPDF(data: ProjectProgressData, filters: {
     formatHours(project.timeStats.totalLoggedHours),
     `${project.timeStats.efficiency.toFixed(1)}%`
   ])
-  
-  doc.autoTable({
+
+  autoTable(doc, {
     startY: currentY + 10,
     head: [['Project', 'Team', 'Status', 'Total Tasks', 'Completed', 'Completion %', 'Hours Logged', 'Efficiency %']],
     body: projectTableData,
@@ -247,7 +258,7 @@ export function exportProjectProgressToPDF(data: ProjectProgressData, filters: {
       7: { cellWidth: 15 }
     }
   })
-  
+
   // Footer
   const pageCount = doc.getNumberOfPages()
   for (let i = 1; i <= pageCount; i++) {
@@ -259,7 +270,7 @@ export function exportProjectProgressToPDF(data: ProjectProgressData, filters: {
       doc.internal.pageSize.height - 10
     )
   }
-  
+
   return doc
 }
 
