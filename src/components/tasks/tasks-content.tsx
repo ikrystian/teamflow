@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
-import { Plus, CheckSquare, Calendar, User, Filter, Edit, Clock, MoreHorizontal } from "lucide-react"
+import { Plus, CheckSquare, Calendar, User, Filter, Edit, Clock, MoreHorizontal, Trash2 } from "lucide-react"
 import { CreateTaskDialog } from "./create-task-dialog"
 import { EditTaskDialog } from "./edit-task-dialog"
 import { TimeTrackingDialog } from "./time-tracking-dialog"
@@ -18,7 +18,18 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface User {
   id: string
@@ -98,9 +109,11 @@ export function TasksContent() {
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [timeTrackingDialogOpen, setTimeTrackingDialogOpen] = useState(false)
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [teamMembers, setTeamMembers] = useState<User[]>([])
   const [filter, setFilter] = useState<"all" | "assigned">("assigned")
+  const [deletingTask, setDeletingTask] = useState(false)
 
   const fetchTasks = async () => {
     try {
@@ -172,6 +185,36 @@ export function TasksContent() {
 
   const handleTimeLogged = () => {
     fetchTasks() // Refresh to get updated time data
+  }
+
+  const handleDeleteTask = (task: Task) => {
+    setSelectedTask(task)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDeleteTask = async () => {
+    if (!selectedTask) return
+
+    setDeletingTask(true)
+    try {
+      const response = await fetch(`/api/tasks/${selectedTask.id}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        fetchTasks() // Refresh the task list
+        setDeleteDialogOpen(false)
+        setSelectedTask(null)
+      } else {
+        const data = await response.json()
+        alert(data.error || "Nie udało się usunąć zadania")
+      }
+    } catch (error) {
+      console.error("Error deleting task:", error)
+      alert("Wystąpił błąd podczas usuwania zadania")
+    } finally {
+      setDeletingTask(false)
+    }
   }
 
   const handleTaskDetails = (task: Task) => {
@@ -328,8 +371,8 @@ export function TasksContent() {
       ) : (
         <div className="space-y-4">
           {tasks.map((task) => (
-            <Card 
-              key={task.id} 
+            <Card
+              key={task.id}
               className="hover:shadow-md transition-shadow cursor-pointer"
               onClick={() => handleTaskDetails(task)}
             >
@@ -354,9 +397,9 @@ export function TasksContent() {
                     {/* Action Menu */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           className="h-8 w-8 p-0"
                           onClick={(e) => e.stopPropagation()}
                         >
@@ -373,6 +416,18 @@ export function TasksContent() {
                             <Edit className="mr-2 h-4 w-4" />
                             Edit Task
                           </DropdownMenuItem>
+                        )}
+                        {canEditTask(task) && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => handleDeleteTask(task)}
+                              className="text-red-600 focus:text-red-600"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete Task
+                            </DropdownMenuItem>
+                          </>
                         )}
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -465,8 +520,31 @@ export function TasksContent() {
         task={selectedTask}
         onEdit={handleEditTask}
         onTimeTracking={handleTimeTracking}
+        onDelete={handleDeleteTask}
         canEdit={selectedTask ? canEditTask(selectedTask) : false}
       />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Usuń zadanie</AlertDialogTitle>
+            <AlertDialogDescription>
+              Czy na pewno chcesz usunąć zadanie &quot;{selectedTask?.title}&quot;?
+              Ta operacja jest nieodwracalna i usunie również wszystkie podzadania, komentarze i wpisy czasu.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Anuluj</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteTask}
+              disabled={deletingTask}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deletingTask ? "Usuwanie..." : "Usuń"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
     </div>
     </main>

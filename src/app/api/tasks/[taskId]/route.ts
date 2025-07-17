@@ -262,3 +262,80 @@ export async function PATCH(
     )
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ taskId: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions) as Session | null
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { taskId } = await params
+
+    // Fetch task to check permissions
+    const existingTask = await prisma.task.findFirst({
+      where: {
+        id: taskId,
+        project: {
+          team: {
+            members: {
+              some: {
+                id: session.user.id
+              }
+            }
+          }
+        }
+      },
+      include: {
+        createdBy: true,
+        assignee: true,
+        project: {
+          include: {
+            team: {
+              include: {
+                members: true
+              }
+            }
+          }
+        }
+      }
+    })
+
+    if (!existingTask) {
+      return NextResponse.json(
+        { error: "Task not found or access denied" },
+        { status: 404 }
+      )
+    }
+
+    // Check if user has permission to delete the task
+    const canDelete =
+      existingTask.createdById === session.user.id || // Task creator
+      existingTask.assigneeId === session.user.id || // Assigned user
+      existingTask.project.team.members.some(member => member.id === session.user.id) // Team member
+
+    if (!canDelete) {
+      return NextResponse.json(
+        { error: "You don't have permission to delete this task" },
+        { status: 403 }
+      )
+    }
+
+    // Delete the task (cascade delete will handle related records)
+    await prisma.task.delete({
+      where: { id: taskId }
+    })
+
+    return NextResponse.json({ success: true }, { status: 200 })
+  } catch (error) {
+    console.error("Error deleting task:", error)
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
+  }
+}

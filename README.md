@@ -8,7 +8,7 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 - **Uwierzytelnianie użytkowników** - Rejestracja i logowanie z NextAuth.js
 - **Zarządzanie zespołami** - Tworzenie zespołów, edycja nazw zespołów i pełne zarządzanie członkami
 - **Zarządzanie projektami** - Tworzenie projektów w ramach zespołów
-- **Zarządzanie zadaniami** - Pełna funkcjonalność CRUD dla zadań z szacowanym czasem i edycją
+- **Zarządzanie zadaniami** - Pełna funkcjonalność CRUD dla zadań z szacowanym czasem, edycją i usuwaniem
 - **Widok tablicy Kanban w stylu Trello** - Nowoczesna tablica z uproszczonymi kartami, drag & drop i szczegółami po kliknięciu
 - **Konfigurowalne statusy zadań** - Możliwość definiowania własnych statusów dla każdego projektu
 - **Ustawienia projektu** - Zarządzanie statusami zadań z kolorami i kolejnością
@@ -375,6 +375,39 @@ Przed wdrożeniem pamiętaj o:
 2. Migracji na bazę danych produkcyjną (np. PostgreSQL)
 3. Wygenerowaniu bezpiecznego `NEXTAUTH_SECRET`
 
+## 🔌 API Endpoints
+
+### Zadania (Tasks)
+
+#### Usuwanie zadania
+```
+DELETE /api/tasks/[taskId]
+```
+
+**Uprawnienia**: Użytkownik może usunąć zadanie jeśli:
+- Jest autorem zadania (createdBy)
+- Jest przypisany do zadania (assignee)
+- Jest członkiem zespołu projektu
+
+**Odpowiedź**:
+- `200` - Zadanie zostało usunięte
+- `401` - Brak autoryzacji
+- `403` - Brak uprawnień do usunięcia
+- `404` - Zadanie nie zostało znalezione
+- `500` - Błąd serwera
+
+**Kaskadowe usuwanie**: Automatycznie usuwa powiązane:
+- Podzadania (subtasks)
+- Komentarze (comments)
+- Wpisy czasu (timeEntries)
+- Załączone obrazy (taskImages)
+
+### Inne endpoints
+- `GET /api/tasks` - Lista zadań
+- `POST /api/tasks` - Tworzenie zadania
+- `GET /api/tasks/[taskId]` - Szczegóły zadania
+- `PATCH /api/tasks/[taskId]` - Aktualizacja zadania
+
 ## 🤝 Rozwój
 
 Projekt jest otwarty na współpracę. Aby dodać nowe funkcjonalności:
@@ -447,6 +480,15 @@ Projekt jest otwarty na współpracę. Aby dodać nowe funkcjonalności:
 - Dodano migrację dla istniejących projektów - domyślne statusy są tworzone przy pierwszym pobraniu jeśli nie istnieją
 - Domyślne statusy: "To Do" (domyślny, #6B7280), "In Progress" (#3B82F6), "Done" (#10B981)
 - Zaktualizowano dokumentację w `relationships.txt` i utworzono plik testowy `test-default-statuses.md`
+
+### Funkcjonalność usuwania zadań
+- **Dodano**: Kompletna funkcjonalność usuwania zadań z odpowiednimi sprawdzeniami uprawnień
+- **Endpoint API**: `DELETE /api/tasks/[taskId]` z kaskadowym usuwaniem powiązanych danych
+- **UI**: Opcja usuwania w dropdown menu zadań, przycisk w oknie szczegółów zadania
+- **Bezpieczeństwo**: Sprawdzenie uprawnień - tylko autor, przypisana osoba lub członek zespołu może usunąć zadanie
+- **UX**: Dialog potwierdzenia z ostrzeżeniem o nieodwracalności operacji
+- **Komponenty**: Nowy komponent AlertDialog do potwierdzania operacji usuwania
+- **Dokumentacja**: Zaktualizowano `relations.txt` z opisem uprawnień i relacji
 
 ## 📄 Licencja
 

@@ -18,7 +18,8 @@ import {
   Timer,
   AlertCircle,
   CheckCircle2,
-  Image
+  Image,
+  Trash2
 } from "lucide-react"
 import { ImageGallery } from "@/components/ui/image-gallery"
 import { TaskComments } from "@/components/tasks/task-comments"
@@ -90,6 +91,7 @@ interface TaskDetailsDialogProps {
   task: Task | null
   onEdit?: (task: Task) => void
   onTimeTracking?: (task: Task) => void
+  onDelete?: (task: Task) => void
   canEdit?: boolean
 }
 
@@ -99,6 +101,7 @@ export function TaskDetailsDialog({
   task,
   onEdit,
   onTimeTracking,
+  onDelete,
   canEdit = false
 }: TaskDetailsDialogProps) {
   const [comments, setComments] = useState(task?.comments || [])
@@ -201,6 +204,20 @@ export function TaskDetailsDialog({
                 >
                   <Timer className="h-4 w-4 mr-2" />
                   Zaloguj czas
+                </Button>
+              )}
+              {canEdit && onDelete && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    onOpenChange(false)
+                    onDelete?.(task)
+                  }}
+                  className="text-red-600 hover:text-red-700 hover:border-red-300"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Usuń
                 </Button>
               )}
             </div>

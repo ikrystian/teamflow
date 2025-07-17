@@ -1,16 +1,17 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Calendar, User, Clock, Edit, MoreHorizontal, Plus, AlertCircle } from "lucide-react"
+import { Calendar, User, Clock, Edit, MoreHorizontal, Plus, AlertCircle, Trash2 } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import {
   DndContext,
@@ -22,7 +23,6 @@ import {
   DragEndEvent,
   DragOverlay,
   DragStartEvent,
-  DragOverEvent,
   useDroppable,
 } from "@dnd-kit/core"
 import {
@@ -87,6 +87,7 @@ interface KanbanBoardProps {
   onTaskUpdated: () => void
   onTaskEdit: (task: Task) => void
   onTimeTracking: (task: Task) => void
+  onTaskDelete: (task: Task) => void
   canEditTask: (task: Task) => boolean
 }
 
@@ -95,6 +96,7 @@ function SortableTaskCard({
   onEdit,
   onTimeTracking,
   onViewDetails,
+  onDelete,
   canEdit,
   isUpdating = false
 }: {
@@ -102,6 +104,7 @@ function SortableTaskCard({
   onEdit: (task: Task) => void
   onTimeTracking: (task: Task) => void
   onViewDetails: (task: Task) => void
+  onDelete: (task: Task) => void
   canEdit: boolean
   isUpdating?: boolean
 }) {
@@ -198,6 +201,18 @@ function SortableTaskCard({
                       <Edit className="mr-2 h-4 w-4" />
                       Edit Task
                     </DropdownMenuItem>
+                  )}
+                  {canEdit && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => onDelete(task)}
+                        className="text-red-600 focus:text-red-600"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete Task
+                      </DropdownMenuItem>
+                    </>
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -327,6 +342,7 @@ function KanbanColumn({
                 onEdit={onEdit}
                 onTimeTracking={onTimeTracking}
                 onViewDetails={onViewDetails}
+                onDelete={onTaskDelete}
                 canEdit={canEdit(task)}
                 isUpdating={updatingTasks.has(task.id)}
               />
@@ -344,6 +360,7 @@ export function KanbanBoard({
   onTaskUpdated,
   onTaskEdit,
   onTimeTracking,
+  onTaskDelete,
   canEditTask
 }: KanbanBoardProps) {
   const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
@@ -584,6 +601,7 @@ export function KanbanBoard({
         task={selectedTask}
         onEdit={onTaskEdit}
         onTimeTracking={onTimeTracking}
+        onDelete={onTaskDelete}
         canEdit={selectedTask ? canEditTask(selectedTask) : false}
       />
     </>
