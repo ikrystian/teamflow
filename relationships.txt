@@ -65,6 +65,7 @@ Relacje:
 - subtasks: Subtask[] (one-to-many)
 - comments: Comment[] (one-to-many)
 - timeEntries: TimeEntry[] (one-to-many) - wpisy czasu pracy
+- images: TaskImage[] (one-to-many) - obrazki załączone do zadania
 
 ### TaskStatus (Status Zadania)
 - id: String (PK)
@@ -126,6 +127,23 @@ Relacje:
 - task: Task (many-to-one)
 - user: User (many-to-one)
 
+### TaskImage (Obrazek zadania)
+- id: String (PK)
+- filename: String (oryginalna nazwa pliku)
+- url: String (ścieżka do zapisanego obrazka)
+- mimeType: String (typ MIME obrazka)
+- size: Int (rozmiar pliku w bajtach)
+- createdAt: DateTime
+- taskId: String (FK)
+
+Relacje:
+- task: Task (many-to-one) - z kaskadowym usuwaniem
+
+Ograniczenia:
+- Maksymalny rozmiar pliku: 5MB
+- Obsługiwane formaty: wszystkie typy image/*
+- Pliki są zapisywane w public/uploads/tasks/{taskId}/
+
 ## API Endpoints
 
 ### Authentication
@@ -155,6 +173,10 @@ Relacje:
 - POST /api/tasks - Tworzenie nowego zadania (z szacowanym czasem)
 - GET /api/tasks/[taskId] - Szczegóły pojedynczego zadania
 - PATCH /api/tasks/[taskId] - Edycja zadania (tylko autor lub przypisana osoba)
+
+### Task Images (Obrazki zadań)
+- POST /api/tasks/[taskId]/images - Przesyłanie obrazka do zadania
+- DELETE /api/tasks/[taskId]/images?imageId=X - Usuwanie obrazka z zadania
 
 ### Time Tracking
 - GET /api/tasks/[taskId]/time-entries - Lista wpisów czasu dla zadania

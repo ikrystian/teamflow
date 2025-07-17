@@ -20,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Upload, X } from "lucide-react"
 
 interface TeamMember {
   id: string
@@ -34,6 +35,12 @@ interface TaskStatus {
   color: string
   order: number
   isDefault: boolean
+}
+
+interface PendingImage {
+  file: File
+  preview: string
+  id: string
 }
 
 interface CreateTaskDialogProps {
@@ -59,6 +66,7 @@ export function CreateTaskDialog({
   const [estimatedHours, setEstimatedHours] = useState("")
   const [statusId, setStatusId] = useState("")
   const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
+  const [pendingImages, setPendingImages] = useState<PendingImage[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
@@ -87,6 +95,63 @@ export function CreateTaskDialog({
       fetchTaskStatuses()
     }
   }, [open, projectId])
+
+  const uploadPendingImages = async (taskId: string) => {
+    for (const pendingImage of pendingImages) {
+      const formData = new FormData()
+      formData.append('file', pendingImage.file)
+
+      try {
+        const response = await fetch(`/api/tasks/${taskId}/images`, {
+          method: 'POST',
+          body: formData
+        })
+
+        if (!response.ok) {
+          console.error('Failed to upload image:', pendingImage.file.name)
+        }
+      } catch (error) {
+        console.error('Error uploading image:', error)
+      }
+    }
+  }
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+
+    files.forEach(file => {
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        setError("Wszystkie pliki muszą być obrazkami")
+        return
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setError("Rozmiar pliku nie może przekraczać 5MB")
+        return
+      }
+
+      // Create preview URL
+      const preview = URL.createObjectURL(file)
+      const id = Math.random().toString(36).substring(2, 11)
+
+      setPendingImages(prev => [...prev, { file, preview, id }])
+    })
+
+    // Reset input
+    e.target.value = ""
+  }
+
+  const removePendingImage = (id: string) => {
+    setPendingImages(prev => {
+      const imageToRemove = prev.find(img => img.id === id)
+      if (imageToRemove) {
+        URL.revokeObjectURL(imageToRemove.preview)
+      }
+      return prev.filter(img => img.id !== id)
+    })
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -118,6 +183,13 @@ export function CreateTaskDialog({
       })
 
       if (response.ok) {
+        const { task } = await response.json()
+
+        // If there are pending images, upload them
+        if (pendingImages.length > 0) {
+          await uploadPendingImages(task.id)
+        }
+
         onTaskCreated()
         handleClose()
       } else {
@@ -140,13 +212,18 @@ export function CreateTaskDialog({
     setDueDate("")
     setEstimatedHours("")
     setStatusId("")
+
+    // Clean up pending images
+    pendingImages.forEach(img => URL.revokeObjectURL(img.preview))
+    setPendingImages([])
+
     setError("")
     onOpenChange(false)
   }
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>
           <DialogTitle>Utwórz nowe zadanie</DialogTitle>
           <DialogDescription>
@@ -273,6 +350,60 @@ export function CreateTaskDialog({
                   <SelectItem value="40">40 godzin</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Images Section */}
+            <div className="grid gap-2">
+              <div className="flex items-center justify-between">
+                <Label>Obrazki (Opcjonalnie)</Label>
+                <div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageSelect}
+                    className="hidden"
+                    id="image-upload-create-project"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => document.getElementById('image-upload-create-project')?.click()}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Dodaj obrazki
+                  </Button>
+                </div>
+              </div>
+
+              {pendingImages.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {pendingImages.map((image) => (
+                    <div key={image.id} className="relative group">
+                      <div className="relative aspect-square overflow-hidden rounded-lg border bg-muted">
+                        <img
+                          src={image.preview}
+                          alt={image.file.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => removePendingImage(image.id)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                      <div className="mt-1 text-xs text-muted-foreground truncate">
+                        {image.file.name}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {error && (
