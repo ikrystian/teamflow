@@ -102,7 +102,7 @@ export function ProjectsContent() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div id="page-header" className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">Projects</h1>
         </div>
@@ -127,8 +127,8 @@ export function ProjectsContent() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div  className="space-y-6">
+      <div id="page-header"className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Projects</h1>
           <p className="text-gray-500">Manage your projects and track progress</p>
@@ -193,7 +193,7 @@ export function ProjectsContent() {
                         <Users className="h-4 w-4 mr-2" />
                         {project.team.name}
                       </div>
-                      
+
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-600">Tasks Progress</span>
@@ -202,10 +202,10 @@ export function ProjectsContent() {
                           </span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div 
+                          <div
                             className="bg-blue-600 h-2 rounded-full transition-all"
-                            style={{ 
-                              width: stats.total > 0 ? `${(stats.completed / stats.total) * 100}%` : '0%' 
+                            style={{
+                              width: stats.total > 0 ? `${(stats.completed / stats.total) * 100}%` : '0%'
                             }}
                           />
                         </div>
@@ -228,7 +228,7 @@ export function ProjectsContent() {
         </div>
       )}
 
-      <CreateProjectDialog 
+      <CreateProjectDialog
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onProjectCreated={handleProjectCreated}

@@ -149,7 +149,7 @@ export function TimeTrackingReport({ filters, onDataLoaded }: TimeTrackingReport
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div id="page-header" className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
             <Card key={i}>
@@ -191,7 +191,7 @@ export function TimeTrackingReport({ filters, onDataLoaded }: TimeTrackingReport
   }
 
   return (
-    <div className="space-y-6">
+    <div id="page-header" className="space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>

@@ -121,7 +121,6 @@ export function ProjectProgressReport({ filters, onDataLoaded }: ProjectProgress
       if (response.ok) {
         const reportData = await response.json()
         setData(reportData)
-        onDataLoaded?.(reportData)
       } else {
         setError("Failed to fetch report data")
       }

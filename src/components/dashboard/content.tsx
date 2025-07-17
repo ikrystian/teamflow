@@ -178,7 +178,7 @@ export function DashboardContent() {
   return (
     <div className="space-y-8">
       {/* Welcome section */}
-      <div>
+      <div id="page-header">
         <h1 className="text-2xl font-bold text-gray-900">
           Welcome back, {session?.user?.name?.split(" ")[0] || "User"}!
         </h1>

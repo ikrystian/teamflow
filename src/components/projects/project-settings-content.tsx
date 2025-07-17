@@ -51,11 +51,11 @@ interface ProjectSettingsContentProps {
   projectId: string
 }
 
-function SortableTaskStatus({ 
-  status, 
-  onEdit, 
-  onDelete 
-}: { 
+function SortableTaskStatus({
+  status,
+  onEdit,
+  onDelete
+}: {
   status: TaskStatus
   onEdit: (status: TaskStatus) => void
   onDelete: (status: TaskStatus) => void
@@ -249,7 +249,7 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
   }
 
   return (
-    <div className="space-y-6">
+    <div id="page-header" className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">

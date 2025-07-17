@@ -105,7 +105,7 @@ export function CalendarContent() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div  id="page-header" className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">Calendar</h1>
         </div>
         <Card className="animate-pulse">
@@ -126,7 +126,7 @@ export function CalendarContent() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div id="page-header"  className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Calendar</h1>
           <p className="text-gray-500">View tasks by their due dates</p>
@@ -157,20 +157,20 @@ export function CalendarContent() {
               </div>
             ))}
           </div>
-          
+
           <div className="grid grid-cols-7 gap-1">
             {/* Empty cells for days before the first day of the month */}
             {Array.from({ length: firstDay }).map((_, index) => (
               <div key={`empty-${index}`} className="h-24 p-1"></div>
             ))}
-            
+
             {/* Days of the month */}
             {Array.from({ length: daysInMonth }).map((_, index) => {
               const day = index + 1
               const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
               const tasksForDay = getTasksForDate(date)
               const isToday = date.toDateString() === today.toDateString()
-              
+
               return (
                 <div
                   key={day}

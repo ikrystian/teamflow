@@ -200,7 +200,7 @@ export function ReportsContent() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div id="page-header"  className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
           <p className="text-gray-600">Generate detailed reports and analytics for your projects</p>

@@ -69,7 +69,7 @@ export function TeamsContent() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div id="page-header" className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">Teams</h1>
         </div>
@@ -95,7 +95,7 @@ export function TeamsContent() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div id="page-header"  className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Teams</h1>
           <p className="text-gray-500">Manage your teams and collaborate with others</p>

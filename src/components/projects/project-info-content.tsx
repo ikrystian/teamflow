@@ -119,7 +119,7 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center space-x-4">
+        <div id="page-header"  className="flex items-center space-x-4">
           <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
           <div className="h-8 bg-gray-200 rounded w-64 animate-pulse"></div>
         </div>
@@ -160,7 +160,7 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div id="page-header"  className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <Link href={`/dashboard/projects/${projectId}`}>
             <Button variant="ghost" size="sm">
