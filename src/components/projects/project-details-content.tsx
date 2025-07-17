@@ -1,0 +1,365 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+
+import {
+  ArrowLeft,
+  Users,
+  Calendar,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  Plus,
+  Edit,
+  Trash2
+} from "lucide-react"
+import Link from "next/link"
+import { CreateTaskDialog } from "./create-task-dialog"
+
+interface ProjectDetails {
+  id: string
+  name: string
+  description?: string
+  status: string
+  createdAt: string
+  updatedAt: string
+  team: {
+    id: string
+    name: string
+    members: {
+      id: string
+      name: string
+      email: string
+      avatarUrl?: string
+    }[]
+  }
+  tasks: {
+    id: string
+    title: string
+    description?: string
+    status: string
+    priority?: string
+    dueDate?: string
+    createdAt: string
+    assignee?: {
+      id: string
+      name: string
+      avatarUrl?: string
+    }
+    subtasks: {
+      id: string
+      title: string
+      isCompleted: boolean
+    }[]
+    comments: {
+      id: string
+      content: string
+      createdAt: string
+      author: {
+        id: string
+        name: string
+        avatarUrl?: string
+      }
+    }[]
+  }[]
+}
+
+interface ProjectDetailsContentProps {
+  projectId: string
+}
+
+export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps) {
+  const [project, setProject] = useState<ProjectDetails | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [createTaskDialogOpen, setCreateTaskDialogOpen] = useState(false)
+  const router = useRouter()
+
+  const fetchProject = async () => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}`)
+      if (response.ok) {
+        const data = await response.json()
+        setProject(data.project)
+      } else if (response.status === 404) {
+        router.push("/dashboard/projects")
+      }
+    } catch (error) {
+      console.error("Error fetching project:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchProject()
+  }, [projectId])
+
+  const handleTaskCreated = () => {
+    fetchProject()
+    setCreateTaskDialogOpen(false)
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "completed":
+        return "bg-green-100 text-green-800"
+      case "in progress":
+        return "bg-blue-100 text-blue-800"
+      case "on hold":
+        return "bg-yellow-100 text-yellow-800"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
+  }
+
+  const getPriorityColor = (priority?: string) => {
+    switch (priority?.toLowerCase()) {
+      case "high":
+        return "bg-red-100 text-red-800"
+      case "medium":
+        return "bg-yellow-100 text-yellow-800"
+      case "low":
+        return "bg-green-100 text-green-800"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
+  }
+
+  const getTaskStats = (tasks: ProjectDetails['tasks']) => {
+    const total = tasks.length
+    const completed = tasks.filter(task => task.status.toLowerCase() === "done").length
+    const inProgress = tasks.filter(task => task.status.toLowerCase() === "in progress").length
+    const overdue = tasks.filter(task =>
+      task.dueDate && new Date(task.dueDate) < new Date() && task.status.toLowerCase() !== "done"
+    ).length
+
+    return { total, completed, inProgress, overdue }
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center space-x-4">
+          <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-8 bg-gray-200 rounded w-64 animate-pulse"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader>
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-8 bg-gray-200 rounded"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (!project) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Project not found</h3>
+        <p className="text-gray-500 mb-4">The project you're looking for doesn't exist or you don't have access to it.</p>
+        <Link href="/dashboard/projects">
+          <Button>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Projects
+          </Button>
+        </Link>
+      </div>
+    )
+  }
+
+  const stats = getTaskStats(project.tasks)
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <Link href="/dashboard/projects">
+            <Button variant="ghost" size="sm">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
+            <p className="text-gray-500">{project.description || "No description"}</p>
+          </div>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Badge className={getStatusColor(project.status)}>
+            {project.status}
+          </Badge>
+          <Button onClick={() => setCreateTaskDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Task
+          </Button>
+        </div>
+      </div>
+
+      {/* Project Info */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Team</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{project.team.name}</div>
+            <p className="text-xs text-muted-foreground">
+              {project.team.members.length} member{project.team.members.length !== 1 ? 's' : ''}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Tasks Progress</CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.completed}/{stats.total}</div>
+            <p className="text-xs text-muted-foreground">
+              {stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}% completed
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Overdue Tasks</CardTitle>
+            <AlertCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">{stats.overdue}</div>
+            <p className="text-xs text-muted-foreground">
+              Need attention
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Team Members */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Team Members</CardTitle>
+          <CardDescription>People working on this project</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-4">
+            {project.team.members.map((member) => (
+              <div key={member.id} className="flex items-center space-x-3">
+                <Avatar>
+                  <AvatarImage src={member.avatarUrl} />
+                  <AvatarFallback>
+                    {member.name?.split(' ').map(n => n[0]).join('') || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-sm font-medium">{member.name}</p>
+                  <p className="text-xs text-gray-500">{member.email}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Tasks */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Tasks</CardTitle>
+              <CardDescription>All tasks in this project</CardDescription>
+            </div>
+            <Button onClick={() => setCreateTaskDialogOpen(true)} size="sm">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Task
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {project.tasks.length === 0 ? (
+            <div className="text-center py-8">
+              <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No tasks yet</h3>
+              <p className="text-gray-500 mb-4">Create your first task to get started</p>
+              <Button onClick={() => setCreateTaskDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Task
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {project.tasks.map((task) => (
+                <div key={task.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <h4 className="font-medium">{task.title}</h4>
+                        <Badge className={getStatusColor(task.status)} variant="secondary">
+                          {task.status}
+                        </Badge>
+                        {task.priority && (
+                          <Badge className={getPriorityColor(task.priority)} variant="outline">
+                            {task.priority}
+                          </Badge>
+                        )}
+                      </div>
+                      {task.description && (
+                        <p className="text-sm text-gray-600 mb-2">{task.description}</p>
+                      )}
+                      <div className="flex items-center space-x-4 text-xs text-gray-500">
+                        {task.assignee && (
+                          <div className="flex items-center space-x-1">
+                            <Avatar className="h-4 w-4">
+                              <AvatarImage src={task.assignee.avatarUrl} />
+                              <AvatarFallback className="text-xs">
+                                {task.assignee.name?.split(' ').map(n => n[0]).join('') || 'U'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span>{task.assignee.name}</span>
+                          </div>
+                        )}
+                        {task.dueDate && (
+                          <div className="flex items-center space-x-1">
+                            <Calendar className="h-3 w-3" />
+                            <span>Due {new Date(task.dueDate).toLocaleDateString()}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center space-x-1">
+                          <CheckCircle className="h-3 w-3" />
+                          <span>{task.subtasks.filter(st => st.isCompleted).length}/{task.subtasks.length} subtasks</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <CreateTaskDialog
+        open={createTaskDialogOpen}
+        onOpenChange={setCreateTaskDialogOpen}
+        onTaskCreated={handleTaskCreated}
+        projectId={projectId}
+        teamMembers={project.team.members}
+      />
+    </div>
+  )
+}
