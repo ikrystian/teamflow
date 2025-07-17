@@ -87,6 +87,25 @@ Aplikacja będzie dostępna pod adresem [http://localhost:3000](http://localhost
 
 ## 🎯 Nowe funkcjonalności
 
+### Dane dostępowe i dokumentacja projektów ✅
+- **Zarządzanie danymi dostępowymi** - Możliwość zapisywania linków do:
+  - Repozytorium kodu (GitHub, GitLab, itp.)
+  - Serwera aplikacji
+  - API endpoints
+  - Panelu administracyjnego
+  - Środowiska testowego i produkcyjnego
+  - Bazy danych
+- **System dokumentacji** - Załączanie plików do projektów:
+  - Obsługa różnych formatów (PDF, DOC, TXT, obrazy, itp.)
+  - Kategoryzacja dokumentów (specyfikacja, projekt, instrukcja, inne)
+  - Dodawanie opisów do plików
+  - Drag & drop interface
+  - Walidacja rozmiaru plików (max 10MB)
+- **Rozszerzona strona informacji o projekcie** - Nowe sekcje:
+  - Przegląd danych dostępowych z linkami
+  - Galeria dokumentów z możliwością pobierania
+  - Edycja danych dostępowych w ustawieniach projektu
+
 ### Ujednolicony system ładowania stron
 - **Spójne stany ładowania** - Jednolity wygląd ładowania na wszystkich stronach dashboardu
 - **Komponenty szkieletowe** - Zaawansowane animowane szkielety ładowania dopasowane do zawartości
@@ -270,9 +289,21 @@ model Project {
   name        String
   description String?
   status      String @default("In Progress")
+
+  // Access credentials fields
+  repositoryUrl     String?  // URL do repozytorium kodu
+  databaseUrl       String?  // URL do bazy danych
+  serverUrl         String?  // URL do serwera
+  apiUrl            String?  // URL do API
+  adminPanelUrl     String?  // URL do panelu administracyjnego
+  stagingUrl        String?  // URL do środowiska testowego
+  productionUrl     String?  // URL do środowiska produkcyjnego
+  credentials       String?  // JSON z zaszyfrowanymi danymi dostępowymi
+
   teamId      String
   team        Team   @relation(fields: [teamId], references: [id])
   tasks       Task[]
+  documents   ProjectDocument[]
 }
 
 model Task {
@@ -314,6 +345,22 @@ model TimeEntry {
   task        Task     @relation(fields: [taskId], references: [id])
   userId      String
   user        User     @relation(fields: [userId], references: [id])
+}
+
+model ProjectDocument {
+  id          String   @id @default(cuid())
+  filename    String   // Oryginalna nazwa pliku
+  url         String   // Ścieżka do zapisanego dokumentu
+  mimeType    String   // Typ MIME dokumentu
+  size        Int      // Rozmiar pliku w bajtach
+  description String?  // Opcjonalny opis dokumentu
+  category    String?  // Kategoria (specification, design, manual, other)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  uploadedById String  // Kto przesłał dokument
+  uploadedBy  User     @relation(fields: [uploadedById], references: [id])
 }
 ```
 
@@ -418,6 +465,39 @@ npx prisma db seed
 Sprawdź czy zmienne środowiskowe są poprawnie ustawione w pliku `.env.local`
 
 ## 🔌 API Endpoints
+
+### Projekty (Projects)
+
+#### Zarządzanie danymi dostępowymi
+```
+PATCH /api/projects/[projectId]
+```
+
+**Parametry**:
+- `repositoryUrl` - URL do repozytorium kodu
+- `databaseUrl` - URL do bazy danych
+- `serverUrl` - URL do serwera
+- `apiUrl` - URL do API
+- `adminPanelUrl` - URL do panelu administracyjnego
+- `stagingUrl` - URL do środowiska testowego
+- `productionUrl` - URL do środowiska produkcyjnego
+
+#### Dokumenty projektu
+```
+GET /api/projects/[projectId]/documents
+POST /api/projects/[projectId]/documents
+DELETE /api/projects/[projectId]/documents?documentId=[id]
+```
+
+**POST parametry**:
+- `file` - Plik do przesłania (FormData)
+- `description` - Opcjonalny opis dokumentu
+- `category` - Kategoria (specification, design, manual, other)
+
+**Ograniczenia**:
+- Maksymalny rozmiar pliku: 10MB
+- Obsługiwane formaty: wszystkie typy plików
+- Pliki są zapisywane w `public/uploads/projects/{projectId}/documents/`
 
 ### Zadania (Tasks)
 

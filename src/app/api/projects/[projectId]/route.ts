@@ -104,7 +104,18 @@ export async function PATCH(
     }
 
     const { projectId } = await params
-    const { name, description, status } = await request.json()
+    const {
+      name,
+      description,
+      status,
+      repositoryUrl,
+      databaseUrl,
+      serverUrl,
+      apiUrl,
+      adminPanelUrl,
+      stagingUrl,
+      productionUrl
+    } = await request.json()
 
     // Verify user has access to the project
     const existingProject = await prisma.project.findFirst({
@@ -134,7 +145,14 @@ export async function PATCH(
       data: {
         ...(name && { name }),
         ...(description !== undefined && { description }),
-        ...(status && { status })
+        ...(status && { status }),
+        ...(repositoryUrl !== undefined && { repositoryUrl }),
+        ...(databaseUrl !== undefined && { databaseUrl }),
+        ...(serverUrl !== undefined && { serverUrl }),
+        ...(apiUrl !== undefined && { apiUrl }),
+        ...(adminPanelUrl !== undefined && { adminPanelUrl }),
+        ...(stagingUrl !== undefined && { stagingUrl }),
+        ...(productionUrl !== undefined && { productionUrl })
       },
       include: {
         team: {

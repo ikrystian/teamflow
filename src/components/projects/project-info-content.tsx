@@ -12,9 +12,14 @@ import {
   Users,
   CheckCircle,
   AlertCircle,
-  Info
+  Info,
+  Key,
+  FileText,
+  ExternalLink,
+  Edit
 } from "lucide-react"
 import Link from "next/link"
+import { FileUpload } from "@/components/ui/file-upload"
 
 interface ProjectDetails {
   id: string
@@ -23,6 +28,17 @@ interface ProjectDetails {
   status: string
   createdAt: string
   updatedAt: string
+
+  // Access credentials fields
+  repositoryUrl?: string
+  databaseUrl?: string
+  serverUrl?: string
+  apiUrl?: string
+  adminPanelUrl?: string
+  stagingUrl?: string
+  productionUrl?: string
+  credentials?: string
+
   team: {
     id: string
     name: string
@@ -62,6 +78,22 @@ interface ProjectDetails {
       }
     }[]
   }[]
+  documents?: {
+    id: string
+    filename: string
+    url: string
+    mimeType: string
+    size: number
+    description?: string
+    category?: string
+    createdAt: string
+    uploadedBy: {
+      id: string
+      name: string
+      email: string
+      avatarUrl?: string
+    }
+  }[]
 }
 
 interface ProjectInfoContentProps {
@@ -71,6 +103,7 @@ interface ProjectInfoContentProps {
 export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
   const [project, setProject] = useState<ProjectDetails | null>(null)
   const [loading, setLoading] = useState(true)
+  const [documents, setDocuments] = useState<ProjectDetails['documents']>([])
   const router = useRouter()
 
   useEffect(() => {
@@ -90,8 +123,69 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
       }
     }
 
+    const fetchDocuments = async () => {
+      try {
+        const response = await fetch(`/api/projects/${projectId}/documents`)
+        if (response.ok) {
+          const data = await response.json()
+          setDocuments(data.documents || [])
+        }
+      } catch (error) {
+        console.error("Error fetching documents:", error)
+      }
+    }
+
     fetchProject()
+    fetchDocuments()
   }, [projectId, router])
+
+  const handleFileUpload = async (file: File, description?: string, category?: string) => {
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      if (description) formData.append('description', description)
+      if (category) formData.append('category', category)
+
+      const response = await fetch(`/api/projects/${projectId}/documents`, {
+        method: 'POST',
+        body: formData
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setDocuments(prev => [data.document, ...(prev || [])])
+      } else {
+        console.error('Failed to upload document')
+      }
+    } catch (error) {
+      console.error('Error uploading document:', error)
+    }
+  }
+
+  const handleFileDelete = async (fileId: string) => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}/documents?documentId=${fileId}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        setDocuments(prev => prev?.filter(doc => doc.id !== fileId) || [])
+      } else {
+        console.error('Failed to delete document')
+      }
+    } catch (error) {
+      console.error('Error deleting document:', error)
+    }
+  }
+
+  const handleFileDownload = (file: { url: string, filename: string }) => {
+    const link = document.createElement('a')
+    link.href = file.url
+    link.download = file.filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
 
   const getTaskStats = (tasks: ProjectDetails['tasks']) => {
     const total = tasks.length
@@ -183,31 +277,109 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
           </CardTitle>
           <CardDescription>Podstawowe informacje o tym projekcie</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h4 className="text-sm font-medium text-gray-700 mb-1">Nazwa</h4>
-            <p className="text-sm text-gray-900">{project.name}</p>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Project Name */}
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <h4 className="text-sm font-medium text-muted-foreground">Nazwa projektu</h4>
+              </div>
+              <p className="text-lg font-semibold text-foreground">{project.name}</p>
+            </div>
+
+            {/* Project Status */}
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <h4 className="text-sm font-medium text-muted-foreground">Status</h4>
+              </div>
+              <Badge className={getStatusColor(project.status)} variant="secondary">
+                {project.status}
+              </Badge>
+            </div>
+
+            {/* Team */}
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                <h4 className="text-sm font-medium text-muted-foreground">Zespół</h4>
+              </div>
+              <p className="text-lg font-semibold text-foreground">{project.team.name}</p>
+              <p className="text-xs text-muted-foreground">
+                {project.team.members.length} {project.team.members.length === 1 ? 'członek' : 'członków'}
+              </p>
+            </div>
+
+            {/* Created Date */}
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                <h4 className="text-sm font-medium text-muted-foreground">Data utworzenia</h4>
+              </div>
+              <p className="text-sm font-medium text-foreground">
+                {new Date(project.createdAt).toLocaleDateString('pl-PL', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </p>
+            </div>
+
+            {/* Last Updated */}
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                <h4 className="text-sm font-medium text-muted-foreground">Ostatnia aktualizacja</h4>
+              </div>
+              <p className="text-sm font-medium text-foreground">
+                {new Date(project.updatedAt).toLocaleDateString('pl-PL', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </p>
+            </div>
+
+            {/* Task Progress */}
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+                <h4 className="text-sm font-medium text-muted-foreground">Postęp zadań</h4>
+              </div>
+              <div className="space-y-1">
+                <p className="text-lg font-semibold text-foreground">
+                  {stats.completed}/{stats.total}
+                </p>
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div
+                    className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                    style={{
+                      width: `${stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}%`
+                    }}
+                  ></div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}% ukończono
+                </p>
+              </div>
+            </div>
           </div>
+
+          {/* Project Description */}
           {project.description && (
-            <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-1">Opis</h4>
-              <p className="text-sm text-gray-900">{project.description}</p>
+            <div className="mt-6 pt-6 border-t">
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+                  <h4 className="text-sm font-medium text-muted-foreground">Opis projektu</h4>
+                </div>
+                <p className="text-sm text-foreground leading-relaxed bg-muted/30 p-4 rounded-lg">
+                  {project.description}
+                </p>
+              </div>
             </div>
           )}
-          <div>
-            <h4 className="text-sm font-medium text-gray-700 mb-1">Status</h4>
-            <Badge className={getStatusColor(project.status)}>
-              {project.status}
-            </Badge>
-          </div>
-          <div>
-            <h4 className="text-sm font-medium text-gray-700 mb-1">Utworzono</h4>
-            <p className="text-sm text-gray-900">{new Date(project.createdAt).toLocaleDateString()}</p>
-          </div>
-          <div>
-            <h4 className="text-sm font-medium text-gray-700 mb-1">Ostatnia aktualizacja</h4>
-            <p className="text-sm text-gray-900">{new Date(project.updatedAt).toLocaleDateString()}</p>
-          </div>
         </CardContent>
       </Card>
 
@@ -304,6 +476,154 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
               <p className="text-sm text-gray-500">Zaległe</p>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Access Credentials */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Key className="h-5 w-5" />
+            <span>Dane dostępowe</span>
+          </CardTitle>
+          <CardDescription>Linki i adresy związane z projektem</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {project.repositoryUrl && (
+            <div>
+              <h4 className="text-sm font-medium text-gray-700 mb-1">Repozytorium kodu</h4>
+              <a
+                href={project.repositoryUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-blue-600 hover:text-blue-800 flex items-center space-x-1"
+              >
+                <span>{project.repositoryUrl}</span>
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+          )}
+          {project.serverUrl && (
+            <div>
+              <h4 className="text-sm font-medium text-gray-700 mb-1">Serwer</h4>
+              <a
+                href={project.serverUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-blue-600 hover:text-blue-800 flex items-center space-x-1"
+              >
+                <span>{project.serverUrl}</span>
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+          )}
+          {project.apiUrl && (
+            <div>
+              <h4 className="text-sm font-medium text-gray-700 mb-1">API</h4>
+              <a
+                href={project.apiUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-blue-600 hover:text-blue-800 flex items-center space-x-1"
+              >
+                <span>{project.apiUrl}</span>
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+          )}
+          {project.adminPanelUrl && (
+            <div>
+              <h4 className="text-sm font-medium text-gray-700 mb-1">Panel administracyjny</h4>
+              <a
+                href={project.adminPanelUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-blue-600 hover:text-blue-800 flex items-center space-x-1"
+              >
+                <span>{project.adminPanelUrl}</span>
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+          )}
+          {project.stagingUrl && (
+            <div>
+              <h4 className="text-sm font-medium text-gray-700 mb-1">Środowisko testowe</h4>
+              <a
+                href={project.stagingUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-blue-600 hover:text-blue-800 flex items-center space-x-1"
+              >
+                <span>{project.stagingUrl}</span>
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+          )}
+          {project.productionUrl && (
+            <div>
+              <h4 className="text-sm font-medium text-gray-700 mb-1">Środowisko produkcyjne</h4>
+              <a
+                href={project.productionUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-blue-600 hover:text-blue-800 flex items-center space-x-1"
+              >
+                <span>{project.productionUrl}</span>
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+          )}
+          {!project.repositoryUrl && !project.serverUrl && !project.apiUrl &&
+           !project.adminPanelUrl && !project.stagingUrl && !project.productionUrl && (
+            <div className="text-center py-4 text-gray-500">
+              <p className="text-sm">Brak skonfigurowanych danych dostępowych</p>
+              <p className="text-xs mt-1">Skonfiguruj je w ustawieniach projektu</p>
+            </div>
+          )}
+          <div className="pt-2 border-t">
+            <Link href={`/dashboard/projects/${projectId}/settings`}>
+              <Button variant="outline" size="sm">
+                <Edit className="h-4 w-4 mr-2" />
+                Edytuj dane dostępowe
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Project Documentation */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <FileText className="h-5 w-5" />
+            <span>Dokumentacja projektu</span>
+          </CardTitle>
+          <CardDescription>Załączone dokumenty i pliki projektu</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <FileUpload
+            files={documents?.map(doc => ({
+              id: doc.id,
+              filename: doc.filename,
+              url: doc.url,
+              mimeType: doc.mimeType,
+              size: doc.size,
+              description: doc.description,
+              category: doc.category,
+              createdAt: doc.createdAt
+            })) || []}
+            onFileUpload={handleFileUpload}
+            onFileDelete={handleFileDelete}
+            onFileDownload={handleFileDownload}
+            editable={true}
+            accept="*/*"
+            maxSize={10 * 1024 * 1024} // 10MB
+            title="Dokumenty"
+            description="Załączone pliki dokumentacji"
+            categories={["specification", "design", "manual", "other"]}
+            showCategories={true}
+            showDescriptions={true}
+          />
         </CardContent>
       </Card>
     </div>

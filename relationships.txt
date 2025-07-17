@@ -308,6 +308,49 @@ Ograniczenia:
 - Tailwind CSS + shadcn/ui (UI)
 - React 19 (frontend)
 
+## Nowe funkcjonalności - Dane dostępowe i dokumentacja projektów
+
+### Implementacja danych dostępowych i dokumentacji ✅
+**Data implementacji**: 2025-01-17
+
+**Opis**: Rozszerzenie strony informacji o projekcie o możliwość zapisywania danych dostępowych oraz załączania dokumentacji.
+
+**Zmiany w bazie danych**:
+- Dodano pola do modelu Project:
+  * repositoryUrl - URL do repozytorium kodu
+  * databaseUrl - URL do bazy danych
+  * serverUrl - URL do serwera
+  * apiUrl - URL do API
+  * adminPanelUrl - URL do panelu administracyjnego
+  * stagingUrl - URL do środowiska testowego
+  * productionUrl - URL do środowiska produkcyjnego
+  * credentials - JSON z zaszyfrowanymi danymi dostępowymi
+- Utworzono model ProjectDocument dla załączników:
+  * id, filename, url, mimeType, size
+  * description, category (specification, design, manual, other)
+  * projectId (relacja do Project)
+  * uploadedById (relacja do User)
+
+**Nowe komponenty**:
+- FileUpload - uniwersalny komponent do obsługi uploadowania plików
+- Rozszerzono ProjectInfoContent o sekcje danych dostępowych i dokumentacji
+- Rozszerzono ProjectSettingsContent o formularz edycji danych dostępowych
+
+**Nowe API endpoints**:
+- GET /api/projects/[projectId]/documents - pobieranie dokumentów projektu
+- POST /api/projects/[projectId]/documents - uploadowanie dokumentu
+- DELETE /api/projects/[projectId]/documents?documentId=X - usuwanie dokumentu
+- Rozszerzono PATCH /api/projects/[projectId] o obsługę danych dostępowych
+
+**Funkcjonalności**:
+- Zapisywanie i edycja danych dostępowych projektu (linki do repozytoriów, serwerów, API itp.)
+- Uploadowanie dokumentów projektu (PDF, DOC, TXT, obrazy itp.)
+- Kategoryzacja dokumentów (specyfikacja, projekt, instrukcja, inne)
+- Dodawanie opisów do dokumentów
+- Pobieranie i usuwanie dokumentów
+- Walidacja plików (rozmiar do 10MB)
+- Drag & drop interface dla uploadowania plików
+
 ## Nowe funkcjonalności - Edycja zespołów
 
 ### Implementacja edycji zespołów ✅

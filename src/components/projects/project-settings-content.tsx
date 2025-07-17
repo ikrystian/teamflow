@@ -6,7 +6,9 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Plus, Settings, GripVertical, Edit, Trash2 } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { ArrowLeft, Plus, Settings, GripVertical, Edit, Trash2, Key, Save } from "lucide-react"
 import { TaskStatusDialog } from "./task-status-dialog"
 import {
   DndContext,
@@ -41,6 +43,14 @@ interface Project {
   name: string
   description?: string
   status: string
+  repositoryUrl?: string
+  databaseUrl?: string
+  serverUrl?: string
+  apiUrl?: string
+  adminPanelUrl?: string
+  stagingUrl?: string
+  productionUrl?: string
+  credentials?: string
   team: {
     id: string
     name: string
@@ -132,6 +142,16 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
   const [loading, setLoading] = useState(true)
   const [statusDialogOpen, setStatusDialogOpen] = useState(false)
   const [editingStatus, setEditingStatus] = useState<TaskStatus | null>(null)
+  const [credentialsForm, setCredentialsForm] = useState({
+    repositoryUrl: '',
+    databaseUrl: '',
+    serverUrl: '',
+    apiUrl: '',
+    adminPanelUrl: '',
+    stagingUrl: '',
+    productionUrl: ''
+  })
+  const [savingCredentials, setSavingCredentials] = useState(false)
   const router = useRouter()
 
   const sensors = useSensors(
@@ -173,6 +193,54 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
     fetchProject()
     fetchTaskStatuses()
   }, [projectId, fetchProject, fetchTaskStatuses])
+
+  useEffect(() => {
+    if (project) {
+      setCredentialsForm({
+        repositoryUrl: project.repositoryUrl || '',
+        databaseUrl: project.databaseUrl || '',
+        serverUrl: project.serverUrl || '',
+        apiUrl: project.apiUrl || '',
+        adminPanelUrl: project.adminPanelUrl || '',
+        stagingUrl: project.stagingUrl || '',
+        productionUrl: project.productionUrl || ''
+      })
+    }
+  }, [project])
+
+  const handleCredentialsSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSavingCredentials(true)
+
+    try {
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentialsForm),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setProject(data.project)
+        // Show success message or toast here
+      } else {
+        console.error('Failed to update credentials')
+      }
+    } catch (error) {
+      console.error('Error updating credentials:', error)
+    } finally {
+      setSavingCredentials(false)
+    }
+  }
+
+  const handleCredentialsChange = (field: string, value: string) => {
+    setCredentialsForm(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
@@ -277,6 +345,100 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
     <div id="page-header" className="space-y-6">
       {/* Header */}
 
+      {/* Access Credentials Configuration */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Key className="h-5 w-5" />
+            <span>Dane dostępowe</span>
+          </CardTitle>
+          <CardDescription>
+            Skonfiguruj linki i adresy związane z projektem
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleCredentialsSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="repositoryUrl">Repozytorium kodu</Label>
+                <Input
+                  id="repositoryUrl"
+                  type="url"
+                  placeholder="https://github.com/user/repo"
+                  value={credentialsForm.repositoryUrl}
+                  onChange={(e) => handleCredentialsChange('repositoryUrl', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="serverUrl">Serwer</Label>
+                <Input
+                  id="serverUrl"
+                  type="url"
+                  placeholder="https://server.example.com"
+                  value={credentialsForm.serverUrl}
+                  onChange={(e) => handleCredentialsChange('serverUrl', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="apiUrl">API</Label>
+                <Input
+                  id="apiUrl"
+                  type="url"
+                  placeholder="https://api.example.com"
+                  value={credentialsForm.apiUrl}
+                  onChange={(e) => handleCredentialsChange('apiUrl', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="databaseUrl">Baza danych</Label>
+                <Input
+                  id="databaseUrl"
+                  type="url"
+                  placeholder="https://db.example.com"
+                  value={credentialsForm.databaseUrl}
+                  onChange={(e) => handleCredentialsChange('databaseUrl', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="adminPanelUrl">Panel administracyjny</Label>
+                <Input
+                  id="adminPanelUrl"
+                  type="url"
+                  placeholder="https://admin.example.com"
+                  value={credentialsForm.adminPanelUrl}
+                  onChange={(e) => handleCredentialsChange('adminPanelUrl', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="stagingUrl">Środowisko testowe</Label>
+                <Input
+                  id="stagingUrl"
+                  type="url"
+                  placeholder="https://staging.example.com"
+                  value={credentialsForm.stagingUrl}
+                  onChange={(e) => handleCredentialsChange('stagingUrl', e.target.value)}
+                />
+              </div>
+              <div className="md:col-span-2">
+                <Label htmlFor="productionUrl">Środowisko produkcyjne</Label>
+                <Input
+                  id="productionUrl"
+                  type="url"
+                  placeholder="https://production.example.com"
+                  value={credentialsForm.productionUrl}
+                  onChange={(e) => handleCredentialsChange('productionUrl', e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <Button type="submit" disabled={savingCredentials}>
+                <Save className="mr-2 h-4 w-4" />
+                {savingCredentials ? 'Zapisywanie...' : 'Zapisz dane dostępowe'}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
 
       {/* Task Status Configuration */}
       <Card>

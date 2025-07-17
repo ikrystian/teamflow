@@ -29,6 +29,7 @@ model User {
   createdTasks  Task[]      @relation("TaskCreator")
   comments      Comment[]
   timeEntries   TimeEntry[]
+  uploadedDocuments ProjectDocument[]
 }
 
 model Team {
@@ -45,12 +46,26 @@ model Project {
   name        String
   description String?
   status      String       @default("In Progress") // e.g., "In Progress", "Completed"
+
+  // Access credentials fields
+  repositoryUrl     String?  // URL do repozytorium kodu
+  databaseUrl       String?  // URL do bazy danych
+  serverUrl         String?  // URL do serwera
+  apiUrl            String?  // URL do API
+  adminPanelUrl     String?  // URL do panelu administracyjnego
+  stagingUrl        String?  // URL do środowiska testowego
+  productionUrl     String?  // URL do środowiska produkcyjnego
+
+  // Credentials (encrypted)
+  credentials       String?  // JSON z zaszyfrowanymi danymi dostępowymi
+
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   teamId      String
   team        Team         @relation(fields: [teamId], references: [id])
   tasks       Task[]
   taskStatuses TaskStatus[]
+  documents   ProjectDocument[]
 }
 
 model Task {
@@ -147,4 +162,20 @@ model TimeEntry {
   task        Task     @relation(fields: [taskId], references: [id])
   userId      String   // Who logged the time
   user        User     @relation(fields: [userId], references: [id])
+}
+
+model ProjectDocument {
+  id          String   @id @default(cuid())
+  filename    String   // Original filename
+  url         String   // Path to the stored document
+  mimeType    String   // Document MIME type
+  size        Int      // File size in bytes
+  description String?  // Optional description of the document
+  category    String?  // Category like "specification", "design", "manual", etc.
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  uploadedById String  // Who uploaded the document
+  uploadedBy  User     @relation(fields: [uploadedById], references: [id])
 }
