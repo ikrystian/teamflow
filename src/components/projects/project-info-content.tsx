@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import {
   ArrowLeft,
   Users,
@@ -117,27 +118,7 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
   }
 
   if (loading) {
-    return (
-      <div className="space-y-6">
-        <div id="page-header"  className="flex items-center space-x-4">
-          <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
-          <div className="h-8 bg-gray-200 rounded w-64 animate-pulse"></div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader>
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-              </CardHeader>
-              <CardContent>
-                <div className="h-8 bg-gray-200 rounded"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    )
+    return <PageLoadingLayout variant="details" />
   }
 
   if (!project) {
@@ -158,9 +139,12 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
   const stats = getTaskStats(project.tasks)
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div id="page-header"  className="flex items-center justify-between">
+        <div>
+              {/* Top bar */}
+        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8 bg-white">
+          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
+            <div id="dynamic-header" className="flex flex-1" >
+      <div id="page-header"  className="flex items-center justify-between w-full">
         <div className="flex items-center space-x-4">
           <Link href={`/dashboard/projects/${projectId}`}>
             <Button variant="ghost" size="sm">
@@ -178,6 +162,17 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
           </Badge>
         </div>
       </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Page content */}
+        <main className="py-10">
+          <div className="px-4 sm:px-6 lg:px-8">
+
+    <div className="space-y-6">
+      {/* Header */}
+
 
       {/* Project Overview */}
       <Card>
@@ -311,6 +306,9 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
           </div>
         </CardContent>
       </Card>
+    </div>
+    </div>
+    </main>
     </div>
   )
 }

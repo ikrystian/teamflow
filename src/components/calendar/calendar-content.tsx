@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react"
 
 interface Task {
@@ -103,25 +104,7 @@ export function CalendarContent() {
   const today = new Date()
 
   if (loading) {
-    return (
-      <div className="space-y-6">
-        <div  id="page-header" className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Calendar</h1>
-        </div>
-        <Card className="animate-pulse">
-          <CardHeader>
-            <div className="h-6 bg-gray-200 rounded w-1/4"></div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-7 gap-2">
-              {Array.from({ length: 35 }).map((_, i) => (
-                <div key={i} className="h-24 bg-gray-200 rounded"></div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
+    return <PageLoadingLayout variant="calendar" />
   }
 
   return (

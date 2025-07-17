@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { Plus, CheckSquare, Calendar, User, Filter, Edit, Clock, MoreHorizontal } from "lucide-react"
 import { CreateTaskDialog } from "./create-task-dialog"
 import { EditTaskDialog } from "./edit-task-dialog"
@@ -226,8 +227,7 @@ export function TasksContent() {
   }
 
   if (loading) {
-
-
+    return <PageLoadingLayout variant="list" />
   }
 
   return (

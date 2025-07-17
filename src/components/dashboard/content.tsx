@@ -6,6 +6,7 @@ import type { Session } from "next-auth"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { Plus, Users, FolderOpen, CheckSquare, Calendar } from "lucide-react"
 import Link from "next/link"
 
@@ -156,23 +157,7 @@ export function DashboardContent() {
   }
 
   if (loading) {
-    return (
-      <div className="space-y-8">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-6">
-                <div className="h-16 bg-gray-200 rounded"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    )
+    return <PageLoadingLayout variant="dashboard" />
   }
 
   return (
@@ -186,7 +171,7 @@ export function DashboardContent() {
         <h1 className="text-2xl font-bold text-gray-900">
           Welcome back, {session?.user?.name?.split(" ")[0] || "User"}!
         </h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="text-sm text-gray-500">
           Here&apos;s what&apos;s happening with your projects today.
         </p>
       </div>

@@ -64,3 +64,54 @@ MOBILE SIDEBAR IMPROVEMENTS:
 - Added tooltips to navigation items on mobile for accessibility
 - Removed hamburger menu button and mobile overlay functionality
 - Main content padding adjusted: 64px on mobile, 256px on desktop
+
+---
+
+Component Relationships - Loading Layout System
+
+BEFORE:
+- Each page component had its own custom loading state implementation
+- Inconsistent loading UI patterns across different pages
+- Duplicated skeleton loading code in multiple components
+- No reusable loading components
+
+AFTER:
+- Created unified loading layout system with reusable components
+- Standardized loading states across all dashboard pages
+- Centralized loading UI patterns for consistency
+
+NEW LOADING COMPONENTS:
+src/components/ui/
+├── loading-skeleton.tsx
+│   ├── LoadingSkeleton - basic animated skeleton element
+│   ├── LoadingCard - skeleton for card components
+│   ├── LoadingGrid - skeleton grid layout
+│   └── LoadingStatsGrid - skeleton for dashboard stats
+├── loading-spinner.tsx
+│   ├── LoadingSpinner - animated spinner with optional text
+│   ├── LoadingOverlay - full overlay with spinner
+│   └── LoadingPage - full page loading state
+└── page-loading-layout.tsx
+    └── PageLoadingLayout - main loading layout component
+        ├── variant="dashboard" - dashboard-specific loading
+        ├── variant="list" - list page loading
+        ├── variant="details" - detail page loading
+        ├── variant="calendar" - calendar page loading
+        └── variant="minimal" - minimal loading state
+
+UPDATED COMPONENTS:
+src/components/
+├── dashboard/content.tsx - uses PageLoadingLayout variant="dashboard"
+├── teams/teams-content.tsx - uses PageLoadingLayout variant="list"
+├── projects/projects-content.tsx - uses PageLoadingLayout variant="list"
+├── projects/project-details-content.tsx - uses PageLoadingLayout variant="details"
+├── projects/project-info-content.tsx - uses PageLoadingLayout variant="details"
+├── calendar/calendar-content.tsx - uses PageLoadingLayout variant="calendar"
+└── tasks/tasks-content.tsx - uses PageLoadingLayout variant="list"
+
+BENEFITS:
+- Consistent loading experience across all pages
+- Reusable loading components reduce code duplication
+- Easy to maintain and update loading states
+- Flexible variant system for different page types
+- Better user experience with appropriate loading skeletons

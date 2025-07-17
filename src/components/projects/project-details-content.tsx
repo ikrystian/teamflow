@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 
 import {
   ArrowLeft,
@@ -172,27 +173,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   }
 
   if (loading) {
-    return (
-      <div  className="space-y-6">
-        <div id="page-header" className="flex items-center space-x-4">
-          <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
-          <div className="h-8 bg-gray-200 rounded w-64 animate-pulse"></div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader>
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-              </CardHeader>
-              <CardContent>
-                <div className="h-8 bg-gray-200 rounded"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    )
+    return <PageLoadingLayout variant="details" />
   }
 
   if (!project) {

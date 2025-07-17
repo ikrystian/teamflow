@@ -81,7 +81,21 @@ Aplikacja będzie dostępna pod adresem [http://localhost:3000](http://localhost
 
 **Status**: ✅ Aplikacja została naprawiona i działa poprawnie z Next.js 15
 
-## 🎯 Nowe funkcjonalności - Tablica Kanban i konfigurowalne statusy
+## 🎯 Nowe funkcjonalności
+
+### Ujednolicony system ładowania stron
+- **Spójne stany ładowania** - Jednolity wygląd ładowania na wszystkich stronach dashboardu
+- **Komponenty szkieletowe** - Zaawansowane animowane szkielety ładowania dopasowane do zawartości
+- **Warianty układów** - Dedykowane układy dla różnych typów stron:
+  - `dashboard` - dla strony głównej z statystykami i kartami
+  - `list` - dla stron z listami (zespoły, projekty, zadania)
+  - `details` - dla stron szczegółów z kartami informacyjnymi
+  - `calendar` - dla widoku kalendarza z siatką dni
+  - `minimal` - dla prostych stanów ładowania
+- **Elastyczna konfiguracja** - Możliwość dostosowania liczby elementów, kolumn i wyglądu
+- **Lepsza UX** - Płynne przejścia między stanami ładowania a zawartością
+
+### Tablica Kanban i konfigurowalne statusy
 
 ### Tablica Kanban
 - **Widok tablicy** - Przełączanie między widokiem listy a tablicą Kanban w szczegółach projektu
@@ -101,6 +115,41 @@ Aplikacja będzie dostępna pod adresem [http://localhost:3000](http://localhost
 - Istniejące zadania zachowują swoje statusy
 - Domyślne statusy (To Do, In Progress, Done) są dostępne gdy nie skonfigurowano własnych
 - Płynne przejście między starym a nowym systemem statusów
+
+### Jak używać komponentów ładowania
+```tsx
+// Importowanie komponentów
+import { PageLoadingLayout } from "@/components/ui/page-loading-layout";
+import { LoadingSkeleton, LoadingCard, LoadingGrid } from "@/components/ui/loading-skeleton";
+import { LoadingSpinner, LoadingOverlay } from "@/components/ui/loading-spinner";
+
+// Podstawowy układ ładowania strony
+if (loading) {
+  return <PageLoadingLayout variant="list" />;
+}
+
+// Dostosowany układ ładowania
+if (loading) {
+  return (
+    <PageLoadingLayout
+      variant="dashboard"
+      showTopBar={true}
+      showStats={true}
+      gridColumns={3}
+      gridItems={6}
+    />
+  );
+}
+
+// Pojedyncze komponenty szkieletowe
+<LoadingSkeleton className="h-8 w-32" />
+<LoadingCard headerLines={2} contentLines={3} />
+<LoadingGrid columns={3} items={6} />
+
+// Spinnery ładowania
+<LoadingSpinner size="md" text="Ładowanie..." />
+<LoadingOverlay text="Przetwarzanie danych..." />
+```
 
 ## 📱 Jak korzystać z aplikacji
 
@@ -267,7 +316,10 @@ teamflow/
 │   │   │   └── calendar/   # Strona kalendarza
 │   │   └── layout.tsx      # Root layout
 │   ├── components/         # Komponenty React
-│   │   ├── ui/            # Komponenty shadcn/ui
+│   │   ├── ui/            # Komponenty shadcn/ui + loading components
+│   │   │   ├── loading-skeleton.tsx    # Komponenty szkieletów ładowania
+│   │   │   ├── loading-spinner.tsx     # Komponenty spinnerów ładowania
+│   │   │   └── page-loading-layout.tsx # Główny komponent układu ładowania
 │   │   ├── dashboard/     # Komponenty dashboardu
 │   │   ├── reports/       # Komponenty raportów
 │   │   ├── teams/         # Komponenty zespołów
