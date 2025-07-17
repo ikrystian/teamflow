@@ -8,7 +8,7 @@ import { existsSync } from "fs"
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { taskId: string } }
+  { params }: { params: Promise<{ taskId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -16,7 +16,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { taskId } = params
+    const { taskId } = await params
 
     // Verify task exists and user has access
     const task = await prisma.task.findFirst({
@@ -95,7 +95,7 @@ export async function POST(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { taskId: string } }
+  { params }: { params: Promise<{ taskId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -103,7 +103,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { taskId } = params
+    const { taskId } = await params
     const { searchParams } = new URL(request.url)
     const imageId = searchParams.get("imageId")
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -141,7 +141,7 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
     })
   )
 
-  const fetchProject = async () => {
+  const fetchProject = useCallback(async () => {
     try {
       const response = await fetch(`/api/projects/${projectId}`)
       if (response.ok) {
@@ -153,9 +153,9 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
     } catch (error) {
       console.error("Error fetching project:", error)
     }
-  }
+  }, [projectId, router])
 
-  const fetchTaskStatuses = async () => {
+  const fetchTaskStatuses = useCallback(async () => {
     try {
       const response = await fetch(`/api/projects/${projectId}/task-statuses`)
       if (response.ok) {
@@ -167,7 +167,7 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
     } finally {
       setLoading(false)
     }
-  }
+  }, [projectId])
 
   useEffect(() => {
     fetchProject()

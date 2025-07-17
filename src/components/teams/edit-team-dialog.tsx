@@ -129,7 +129,7 @@ export function EditTeamDialog({ open, onOpenChange, onTeamUpdated, team }: Edit
         const data = await response.json()
         setError(data.error || "Nie udało się zaktualizować zespołu")
       }
-    } catch (error) {
+    } catch {
       setError("Wystąpił błąd. Spróbuj ponownie.")
     } finally {
       setLoading(false)

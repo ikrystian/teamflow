@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import type { Session } from "next-auth"
 import { Button } from "@/components/ui/button"
@@ -56,7 +56,7 @@ export function TasksContent() {
   const [filter, setFilter] = useState<"all" | "assigned">("assigned")
   const [deletingTask, setDeletingTask] = useState(false)
 
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     try {
       const url = filter === "assigned"
         ? `/api/tasks?assigneeId=${session?.user?.id}`
@@ -70,7 +70,7 @@ export function TasksContent() {
     } catch (error) {
       console.error("Error fetching tasks:", error)
     }
-  }
+  }, [filter, session?.user?.id])
 
   const fetchProjects = async () => {
     try {
@@ -90,7 +90,7 @@ export function TasksContent() {
       setLoading(false)
     }
     fetchData()
-  }, [filter, session?.user?.id])
+  }, [filter, session?.user?.id, fetchTasks])
 
   const handleTaskCreated = () => {
     fetchTasks()

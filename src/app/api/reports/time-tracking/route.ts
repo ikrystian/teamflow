@@ -20,19 +20,36 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get("userId")
     const teamId = searchParams.get("teamId")
 
-    // Build where clause for filtering
-    const whereClause: Prisma.TimeEntryWhereInput = {
-      task: {
-        project: {
-          team: {
-            members: {
-              some: {
-                id: session.user.id
-              }
+    // Build task filter with conditional logic
+    const taskFilter: Prisma.TaskWhereInput = {
+      project: teamId ? {
+        teamId: teamId,
+        team: {
+          members: {
+            some: {
+              id: session.user.id
+            }
+          }
+        }
+      } : {
+        team: {
+          members: {
+            some: {
+              id: session.user.id
             }
           }
         }
       }
+    }
+
+    // Add project filter to task filter
+    if (projectId) {
+      taskFilter.projectId = projectId
+    }
+
+    // Build where clause for filtering
+    const whereClause: Prisma.TimeEntryWhereInput = {
+      task: taskFilter
     }
 
     // Add date filters
@@ -46,19 +63,9 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Add project filter
-    if (projectId) {
-      whereClause.task.projectId = projectId
-    }
-
     // Add user filter
     if (userId) {
       whereClause.userId = userId
-    }
-
-    // Add team filter
-    if (teamId) {
-      whereClause.task.project.teamId = teamId
     }
 
     // Fetch time entries with related data

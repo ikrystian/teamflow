@@ -6,7 +6,7 @@ import type { Session } from "next-auth"
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { taskId: string } }
+  { params }: { params: Promise<{ taskId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions) as Session | null
@@ -15,7 +15,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { taskId } = params
+    const { taskId } = await params
     const { content } = await request.json()
 
     if (!content || content.trim() === "") {
@@ -69,7 +69,7 @@ export async function POST(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { taskId: string } }
+  { params }: { params: Promise<{ taskId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions) as Session | null
@@ -78,7 +78,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { taskId } = params
+    const { taskId } = await params
 
     // Verify that the task exists and the user has access to it
     const task = await prisma.task.findFirst({

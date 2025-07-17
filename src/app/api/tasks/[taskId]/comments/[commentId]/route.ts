@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth"
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { taskId: string; commentId: string } }
+  { params }: { params: Promise<{ taskId: string; commentId: string }> }
 ) {
   const session = await getServerSession(authOptions)
 
@@ -13,7 +13,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const { commentId } = params
+  const { commentId } = await params
 
   try {
     const comment = await prisma.comment.findUnique({

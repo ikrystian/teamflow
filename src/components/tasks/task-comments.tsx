@@ -199,7 +199,7 @@ export function TaskComments({
                       {formatDate(comment.createdAt)}
                     </span>
                   </div>
-                  {session?.user?.id === comment.author.id && (
+                  {(session?.user as { id: string })?.id === comment.author.id && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button

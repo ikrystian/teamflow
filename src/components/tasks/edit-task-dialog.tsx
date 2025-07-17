@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -52,7 +52,7 @@ export function EditTaskDialog({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
-  const fetchTaskStatuses = async () => {
+  const fetchTaskStatuses = useCallback(async () => {
     if (!task?.project?.id) return
 
     try {
@@ -90,7 +90,7 @@ export function EditTaskDialog({
     } catch (error) {
       console.error("Błąd podczas pobierania statusów zadań:", error)
     }
-  }
+  }, [task])
 
   // Update form when task changes
   useEffect(() => {
@@ -108,7 +108,7 @@ export function EditTaskDialog({
       resetForm()
     }
     setError("")
-  }, [task])
+  }, [task, fetchTaskStatuses])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -142,7 +142,7 @@ export function EditTaskDialog({
         const data = await response.json()
         setError(data.error || "Nie udało się zaktualizować zadania")
       }
-    } catch (error) {
+    } catch {
       setError("Wystąpił błąd. Spróbuj ponownie.")
     } finally {
       setLoading(false)

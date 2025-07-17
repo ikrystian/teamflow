@@ -11,20 +11,75 @@ import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-reac
 interface Task {
   id: string
   title: string
+  description?: string
   status: string
   priority?: string
   dueDate: string
+  estimatedHours?: number
+  createdAt: string
+  updatedAt: string
   project: {
     id: string
     name: string
     team: {
+      id: string
       name: string
+      members: Array<{
+        id: string
+        name: string
+        email: string
+        avatarUrl?: string
+      }>
     }
   }
   assignee?: {
     id: string
     name: string
+    email: string
+    avatarUrl?: string
   }
+  createdBy?: {
+    id: string
+    name: string
+    email: string
+    avatarUrl?: string
+  }
+  subtasks: Array<{
+    id: string
+    title: string
+    isCompleted: boolean
+  }>
+  comments: Array<{
+    id: string
+    content: string
+    createdAt: string
+    author: {
+      id: string
+      name: string
+      email: string
+      avatarUrl?: string
+    }
+  }>
+  timeEntries: Array<{
+    id: string
+    hours: number
+    description?: string
+    date: string
+    user: {
+      id: string
+      name: string
+      email: string
+      avatarUrl?: string
+    }
+  }>
+  images: Array<{
+    id: string
+    filename: string
+    url: string
+    mimeType: string
+    size: number
+    createdAt: string
+  }>
 }
 
 export function CalendarContent() {

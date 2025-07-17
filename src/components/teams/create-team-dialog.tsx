@@ -45,7 +45,7 @@ export function CreateTeamDialog({ open, onOpenChange, onTeamCreated }: CreateTe
         const data = await response.json()
         setError(data.error || "Nie udało się utworzyć zespołu")
       }
-    } catch (error) {
+    } catch {
       setError("Wystąpił błąd. Spróbuj ponownie.")
     } finally {
       setLoading(false)

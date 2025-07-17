@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -110,11 +110,7 @@ export function TimeTrackingReport({ filters, onDataLoaded }: TimeTrackingReport
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
-  useEffect(() => {
-    fetchReportData()
-  }, [filters])
-
-  const fetchReportData = async () => {
+  const fetchReportData = useCallback(async () => {
     setLoading(true)
     setError("")
 
@@ -139,7 +135,11 @@ export function TimeTrackingReport({ filters, onDataLoaded }: TimeTrackingReport
     } finally {
       setLoading(false)
     }
-  }
+  }, [filters, onDataLoaded])
+
+  useEffect(() => {
+    fetchReportData()
+  }, [fetchReportData])
 
   const formatHours = (hours: number) => {
     const h = Math.floor(hours)

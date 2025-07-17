@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -353,7 +353,7 @@ export function KanbanBoard({
         setSelectedTask(updatedSelectedTask);
       }
     }
-  }, [displayTasks]);
+  }, [displayTasks, selectedTask]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -362,7 +362,7 @@ export function KanbanBoard({
     })
   )
 
-  const fetchTaskStatuses = async () => {
+  const fetchTaskStatuses = useCallback(async () => {
     try {
       const response = await fetch(`/api/projects/${projectId}/task-statuses`)
       if (response.ok) {
@@ -372,11 +372,11 @@ export function KanbanBoard({
     } catch (error) {
       console.error("Error fetching task statuses:", error)
     }
-  }
+  }, [projectId])
 
   useEffect(() => {
     fetchTaskStatuses()
-  }, [projectId])
+  }, [projectId, fetchTaskStatuses])
 
   const handleDragStart = (event: DragStartEvent) => {
     const task = displayTasks.find(t => t.id === event.active.id)

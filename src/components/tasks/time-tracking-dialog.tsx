@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -73,14 +73,7 @@ export function TimeTrackingDialog({
     setDate(today)
   }, [])
 
-  // Fetch time entries when dialog opens
-  useEffect(() => {
-    if (open && task) {
-      fetchTimeEntries()
-    }
-  }, [open, task])
-
-  const fetchTimeEntries = async () => {
+  const fetchTimeEntries = useCallback(async () => {
     if (!task) return
 
     setLoadingEntries(true)
@@ -96,7 +89,14 @@ export function TimeTrackingDialog({
     } finally {
       setLoadingEntries(false)
     }
-  }
+  }, [task])
+
+  // Fetch time entries when dialog opens
+  useEffect(() => {
+    if (open && task) {
+      fetchTimeEntries()
+    }
+  }, [open, task, fetchTimeEntries])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -127,7 +127,7 @@ export function TimeTrackingDialog({
         const data = await response.json()
         setError(data.error || "Nie udało się zalogować czasu")
       }
-    } catch (error) {
+    } catch {
       setError("Wystąpił błąd. Spróbuj ponownie.")
     } finally {
       setLoading(false)

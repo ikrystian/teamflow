@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import type { Session } from "next-auth"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -99,7 +99,7 @@ export function DashboardContent() {
   const [timeTrackingDialogOpen, setTimeTrackingDialogOpen] = useState(false)
   const [teamMembers, setTeamMembers] = useState<User[]>([])
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       const [teamsRes, projectsRes, tasksRes] = await Promise.all([
         fetch("/api/teams"),
@@ -135,13 +135,13 @@ export function DashboardContent() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [session?.user?.id])
 
   useEffect(() => {
     if (session?.user?.id) {
       fetchDashboardData()
     }
-  }, [session?.user?.id])
+  }, [session?.user?.id, fetchDashboardData])
 
   // Task dialog handlers
   const handleTaskDetails = (task: Task) => {

@@ -208,6 +208,7 @@ export function TaskDetailsDialog({
           {task.images && task.images.length > 0 && (
             <div>
               <h4 className="font-medium text-gray-900 mb-3 flex items-center">
+                {/* eslint-disable-next-line jsx-a11y/alt-text */}
                 <Image className="h-4 w-4 mr-2" />
                 Obrazy ({task.images.length})
               </h4>
