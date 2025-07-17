@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
-import { Plus, CheckSquare, Calendar, User, Filter, Edit, Clock, MoreHorizontal, Trash2 } from "lucide-react"
+import { Plus, CheckSquare, Calendar, User as UserIcon, Filter, Edit, Clock, MoreHorizontal, Trash2 } from "lucide-react"
 import { CreateTaskDialog } from "./create-task-dialog"
 import { EditTaskDialog } from "./edit-task-dialog"
 import { TimeTrackingDialog } from "./time-tracking-dialog"
@@ -30,66 +30,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-
-interface User {
-  id: string
-  name: string
-  email: string
-  avatarUrl?: string
-}
-
-interface TaskImage {
-  id: string
-  filename: string
-  url: string
-  mimeType: string
-  size: number
-  createdAt: string
-}
-
-interface Task {
-  id: string
-  title: string
-  description?: string
-  status: string
-  priority?: string
-  dueDate?: string
-  estimatedHours?: number
-  createdAt: string
-  project: {
-    id: string
-    name: string
-    team: {
-      id: string
-      name: string
-    }
-  }
-  assignee?: User
-  createdBy?: User
-  subtasks: {
-    id: string
-    title: string
-    isCompleted: boolean
-  }[]
-  comments: {
-    id: string
-    content: string
-    createdAt: string
-    author: {
-      id: string
-      name: string
-      avatarUrl?: string
-    }
-  }[]
-  timeEntries?: {
-    id: string
-    hours: number
-    description?: string
-    date: string
-    user: User
-  }[]
-  images?: TaskImage[]
-}
+import type { Task, User } from "@/types"
 
 interface Project {
   id: string
@@ -236,10 +177,21 @@ export function TasksContent() {
   }
 
   const formatHours = (hours: number) => {
-    if (hours === 0) return "No time logged"
-    if (hours === 1) return "1 hour"
-    if (hours < 1) return `${Math.round(hours * 60)} minutes`
-    return `${hours} hours`
+    if (!hours || hours === 0) return "0m"
+    const h = Math.floor(hours);
+    const m = Math.round((hours - h) * 60);
+
+    if (h === 0 && m === 0) return "0m";
+
+    let result = '';
+    if (h > 0) {
+      result += `${h}h`;
+    }
+    if (m > 0) {
+      if (result) result += ' ';
+      result += `${m}m`;
+    }
+    return result;
   }
 
   const getPriorityColor = (priority?: string) => {
@@ -316,7 +268,7 @@ export function TasksContent() {
             onClick={() => setFilter("assigned")}
             size="sm"
           >
-            <User className="mr-2 h-4 w-4" />
+            <UserIcon className="mr-2 h-4 w-4" />
             My Tasks
           </Button>
           <Button
@@ -471,7 +423,7 @@ export function TasksContent() {
                         <span>{formatHours(getTotalTimeSpent(task))}</span>
                         {task.estimatedHours && (
                           <span className="text-gray-400">
-                            / {formatHours(task.estimatedHours)} estimated
+                            / {formatHours(task.estimatedHours)} planowane
                           </span>
                         )}
                       </div>
@@ -520,7 +472,7 @@ export function TasksContent() {
       <TaskDetailsDialog
         open={detailsDialogOpen}
         onOpenChange={setDetailsDialogOpen}
-        task={selectedTask}
+        task={selectedTask as Task | null}
         onEdit={handleEditTask}
         onTimeTracking={handleTimeTracking}
         onDelete={handleDeleteTask}

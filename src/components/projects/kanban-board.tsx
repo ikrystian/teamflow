@@ -336,6 +336,15 @@ export function KanbanBoard({
     setOptimisticTasks(tasks)
   }, [tasks])
 
+  useEffect(() => {
+    if (selectedTask) {
+      const updatedSelectedTask = displayTasks.find(t => t.id === selectedTask.id);
+      if (updatedSelectedTask) {
+        setSelectedTask(updatedSelectedTask);
+      }
+    }
+  }, [displayTasks]);
+
   const getPriorityColor = (priority?: string) => {
     switch (priority) {
       case "High":

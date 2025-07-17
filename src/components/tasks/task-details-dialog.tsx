@@ -29,9 +29,9 @@ interface TaskDetailsDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   task: Task | null
-  onEdit?: (task: Task) => void
-  onTimeTracking?: (task: Task) => void
-  onDelete?: (task: Task) => void
+  onEdit?: (task: Task, e: React.MouseEvent) => void
+  onTimeTracking?: (task: Task, e: React.MouseEvent) => void
+  onDelete?: (task: Task, e: React.MouseEvent) => void
   canEdit?: boolean
 }
 
@@ -128,9 +128,9 @@ export function TaskDetailsDialog({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
+                  onClick={(e) => {
                     onOpenChange(false)
-                    onEdit?.(task)
+                    onEdit?.(task, e)
                   }}
                 >
                   <Edit className="h-4 w-4 mr-2" />
@@ -141,9 +141,9 @@ export function TaskDetailsDialog({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
+                  onClick={(e) => {
                     onOpenChange(false)
-                    onTimeTracking?.(task)
+                    onTimeTracking?.(task, e)
                   }}
                 >
                   <Timer className="h-4 w-4 mr-2" />
@@ -154,9 +154,9 @@ export function TaskDetailsDialog({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
+                  onClick={(e) => {
                     onOpenChange(false)
-                    onDelete?.(task)
+                    onDelete?.(task, e)
                   }}
                   className="text-red-600 hover:text-red-700 hover:border-red-300"
                 >

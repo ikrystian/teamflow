@@ -21,6 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Upload, X } from "lucide-react"
+import { DatePicker } from "@/components/ui/date-picker"
 
 interface Project {
   id: string
@@ -297,11 +298,9 @@ export function CreateTaskDialog({
 
             <div className="grid gap-2">
               <Label htmlFor="dueDate">Termin wykonania (Opcjonalnie)</Label>
-              <Input
-                id="dueDate"
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
+              <DatePicker
+                value={dueDate ? new Date(dueDate) : undefined}
+                onChange={(date) => setDueDate(date ? date.toISOString().split('T')[0] : '')}
               />
             </div>
 

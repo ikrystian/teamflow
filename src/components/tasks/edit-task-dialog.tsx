@@ -21,74 +21,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-
-interface User {
-  id: string
-  name: string
-  email: string
-  avatarUrl?: string
-}
-
-interface TaskStatus {
-  id: string
-  name: string
-  color: string
-  order: number
-  isDefault: boolean
-}
-
-interface TaskImage {
-  id: string
-  filename: string
-  url: string
-  mimeType: string
-  size: number
-}
-
-interface Task {
-  id: string
-  title: string
-  description?: string
-  status: string
-  statusId?: string
-  priority?: string
-  dueDate?: string
-  estimatedHours?: number
-  createdAt: string
-  project: {
-    id: string
-    name: string
-    team: {
-      id: string
-      name: string
-    }
-  }
-  assignee?: User
-  createdBy: User
-  subtasks: {
-    id: string
-    title: string
-    isCompleted: boolean
-  }[]
-  comments: {
-    id: string
-    content: string
-    createdAt: string
-    author: {
-      id: string
-      name: string
-      avatarUrl?: string
-    }
-  }[]
-  timeEntries: {
-    id: string
-    hours: number
-    description?: string
-    date: string
-    user: User
-  }[]
-  images: TaskImage[]
-}
+import { DatePicker } from "@/components/ui/date-picker"
+import type { Task, User, TaskStatus, TaskImage } from "@/types"
 
 interface EditTaskDialogProps {
   open: boolean
@@ -393,11 +327,9 @@ export function EditTaskDialog({
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="dueDate">Termin wykonania</Label>
-                <Input
-                  id="dueDate"
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
+                <DatePicker
+                  value={dueDate ? new Date(dueDate) : undefined}
+                  onChange={(date) => setDueDate(date ? date.toISOString().split('T')[0] : '')}
                 />
               </div>
 
