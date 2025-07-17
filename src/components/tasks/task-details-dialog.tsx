@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
+
 import { Progress } from "@/components/ui/progress"
 import {
   Calendar,
@@ -14,7 +14,7 @@ import {
   Clock,
   Edit,
   CheckSquare,
-  MessageSquare,
+
   Timer,
   AlertCircle,
   CheckCircle2,
@@ -24,7 +24,7 @@ import {
 import { ImageGallery } from "@/components/ui/image-gallery"
 import { TaskComments } from "@/components/tasks/task-comments"
 import { TaskTodos } from "@/components/tasks/task-todos"
-import type { Task, User, TaskImage, Todo } from "@/types"
+import type { Task, Todo } from "@/types"
 
 interface TaskDetailsDialogProps {
   open: boolean
@@ -55,7 +55,7 @@ export function TaskDetailsDialog({
     setTodos(task?.todos || [])
   }, [task?.comments, task?.todos])
 
-  const handleCommentAdded = (newComment: any) => {
+  const handleCommentAdded = (newComment: { id: string; content: string; createdAt: string; author: { id: string; name: string; avatarUrl?: string } }) => {
     setComments(prev => [newComment, ...prev])
   }
 

@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -70,7 +71,7 @@ export function CreateTaskDialog({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
-  const fetchTaskStatuses = async () => {
+  const fetchTaskStatuses = useCallback(async () => {
     try {
       const response = await fetch(`/api/projects/${projectId}/task-statuses`)
       if (response.ok) {
@@ -88,13 +89,13 @@ export function CreateTaskDialog({
     } catch (error) {
       console.error("Error fetching task statuses:", error)
     }
-  }
+  }, [projectId])
 
   useEffect(() => {
     if (open && projectId) {
       fetchTaskStatuses()
     }
-  }, [open, projectId])
+  }, [open, projectId, fetchTaskStatuses])
 
   const uploadPendingImages = async (taskId: string) => {
     for (const pendingImage of pendingImages) {

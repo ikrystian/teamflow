@@ -260,7 +260,7 @@ export function EditTeamDialog({ open, onOpenChange, onTeamUpdated, team }: Edit
                         </div>
                       ))
                     ) : searchQuery ? (
-                      <div className="text-sm text-gray-500 p-2">Nie znaleziono użytkowników pasujących do "{searchQuery}"</div>
+                      <div className="text-sm text-gray-500 p-2">Nie znaleziono użytkowników pasujących do &quot;{searchQuery}&quot;</div>
                     ) : (
                       <div className="text-sm text-gray-500 p-2">Wszyscy użytkownicy są już członkami</div>
                     )}

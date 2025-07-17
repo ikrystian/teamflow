@@ -36,7 +36,7 @@ export default function SignIn() {
           router.push("/dashboard")
         }
       }
-    } catch (e) {
+    } catch {
       setError("An error occurred. Please try again.")
     } finally {
       setIsLoading(false)

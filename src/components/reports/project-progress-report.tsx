@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   BarChart,
   Bar,
@@ -14,17 +14,12 @@ import {
   ResponsiveContainer,
   PieChart,
   Pie,
-  Cell,
-  LineChart,
-  Line
+  Cell
 } from "recharts"
 import {
   CheckSquare,
   Clock,
-  AlertTriangle,
   TrendingUp,
-  Users,
-  Calendar,
   Target
 } from "lucide-react"
 
@@ -36,10 +31,10 @@ interface ProjectProgressReportProps {
     userId: string
     teamId: string
   }
-  onDataLoaded?: (data: any) => void
+  onDataLoaded?: (data: ProjectProgressData) => void
 }
 
-interface ProjectProgressData {
+export interface ProjectProgressData {
   overallStats: {
     totalProjects: number
     totalTasks: number
@@ -97,16 +92,12 @@ const STATUS_COLORS = {
   'Done': '#10B981'
 }
 
-export function ProjectProgressReport({ filters, onDataLoaded }: ProjectProgressReportProps) {
+export function ProjectProgressReport({ filters }: ProjectProgressReportProps) {
   const [data, setData] = useState<ProjectProgressData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
-  useEffect(() => {
-    fetchReportData()
-  }, [filters, fetchReportData])
-
-  const fetchReportData = async () => {
+  const fetchReportData = useCallback(async () => {
     setLoading(true)
     setError("")
 
@@ -130,7 +121,11 @@ export function ProjectProgressReport({ filters, onDataLoaded }: ProjectProgress
     } finally {
       setLoading(false)
     }
-  }
+  }, [filters])
+
+  useEffect(() => {
+    fetchReportData()
+  }, [fetchReportData])
 
   const formatHours = (hours: number) => {
     const h = Math.floor(hours)

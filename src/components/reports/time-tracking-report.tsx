@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   BarChart,
@@ -29,10 +29,10 @@ interface TimeTrackingReportProps {
     userId: string
     teamId: string
   }
-  onDataLoaded?: (data: any) => void
+  onDataLoaded?: (data: TimeTrackingData) => void
 }
 
-interface TimeTrackingData {
+export interface TimeTrackingData {
   summary: {
     totalHours: number
     totalEntries: number
@@ -297,9 +297,11 @@ export function TimeTrackingReport({ filters, onDataLoaded }: TimeTrackingReport
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ user, totalHours, percent }: { user: { name: string, email: string }, totalHours: number, percent: number }) =>
-                    `${user.name || user.email} (${((percent || 0) * 100).toFixed(0)}%)`
-                  }
+                  label={(entry: { payload?: { user: { name: string, email: string } }, percent?: number }) => {
+                    if (!entry.payload || !entry.percent) return ''
+                    const data = entry.payload
+                    return `${data.user.name || data.user.email} (${(entry.percent * 100).toFixed(0)}%)`
+                  }}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="totalHours"

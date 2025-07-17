@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Calendar, User as UserIcon, Clock, Edit, MoreHorizontal, Plus, AlertCircle, Trash2 } from "lucide-react"
+import { Calendar, Clock, Edit, MoreHorizontal, Plus, AlertCircle, Trash2 } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,7 +35,7 @@ import {
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { TaskDetailsDialog } from "../tasks/task-details-dialog"
-import type { Task, User, TaskStatus } from "@/types"
+import type { Task, TaskStatus } from "@/types"
 
 interface KanbanBoardProps {
   projectId: string

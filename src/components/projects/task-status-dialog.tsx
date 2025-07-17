@@ -110,8 +110,8 @@ export function TaskStatusDialog({
         const data = await response.json()
         setError(data.error || `Nie udało się ${isEditing ? "zaktualizować" : "utworzyć"} statusu`)
       }
-    } catch (e) {
-      setError("Wystąpił błąd. Spróbuj ponownie.")
+    } catch {
+      setError("Failed to update status")
     } finally {
       setLoading(false)
     }

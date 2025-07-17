@@ -72,8 +72,8 @@ export function CreateProjectDialog({
         const data = await response.json()
         setError(data.error || "Nie udało się utworzyć projektu")
       }
-    } catch (e) {
-      setError("Wystąpił błąd. Spróbuj ponownie.")
+    } catch {
+      setError("Failed to create project")
     } finally {
       setLoading(false)
     }

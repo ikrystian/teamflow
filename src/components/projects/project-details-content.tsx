@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import type { Session } from "next-auth"
@@ -12,14 +12,10 @@ import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 
 import {
   ArrowLeft,
-  Users,
   Calendar,
   CheckCircle,
   Clock,
-  AlertCircle,
   Plus,
-  Edit,
-  Trash2,
   List,
   LayoutGrid,
   Settings,
@@ -42,6 +38,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { type Task } from "@/types"
 
 interface ProjectDetails {
   id: string
@@ -60,35 +57,7 @@ interface ProjectDetails {
       avatarUrl?: string
     }[]
   }
-  tasks: {
-    id: string
-    title: string
-    description?: string
-    status: string
-    priority?: string
-    dueDate?: string
-    createdAt: string
-    assignee?: {
-      id: string
-      name: string
-      avatarUrl?: string
-    }
-    subtasks: {
-      id: string
-      title: string
-      isCompleted: boolean
-    }[]
-    comments: {
-      id: string
-      content: string
-      createdAt: string
-      author: {
-        id: string
-        name: string
-        avatarUrl?: string
-      }
-    }[]
-  }[]
+  tasks: Task[]
 }
 
 interface ProjectDetailsContentProps {
@@ -104,13 +73,13 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   const [editTaskDialogOpen, setEditTaskDialogOpen] = useState(false)
   const [timeTrackingDialogOpen, setTimeTrackingDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [selectedTask, setSelectedTask] = useState<any>(null)
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [viewMode, setViewMode] = useState<"list" | "board">("list")
   const [taskFilter, setTaskFilter] = useState<"all" | "mine" | string>("all")
   const [deletingTask, setDeletingTask] = useState(false)
   const router = useRouter()
 
-  const fetchProject = async () => {
+  const fetchProject = useCallback(async () => {
     try {
       const response = await fetch(`/api/projects/${projectId}`)
       if (response.ok) {
@@ -124,11 +93,11 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     } finally {
       setLoading(false)
     }
-  }
+  }, [projectId, router])
 
   useEffect(() => {
     fetchProject()
-  }, [projectId])
+  }, [fetchProject])
 
   const handleTaskCreated = () => {
     fetchProject()
@@ -139,24 +108,24 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     fetchProject()
   }
 
-  const handleTaskDetails = (task: any) => {
+  const handleTaskDetails = (task: Task) => {
     setSelectedTask(task)
     setTaskDetailsDialogOpen(true)
   }
 
-  const handleEditTask = (task: any) => {
+  const handleEditTask = (task: Task) => {
     setSelectedTask(task)
     setTaskDetailsDialogOpen(false)
     setEditTaskDialogOpen(true)
   }
 
-  const handleTimeTracking = (task: any) => {
+  const handleTimeTracking = (task: Task) => {
     setSelectedTask(task)
     setTaskDetailsDialogOpen(false)
     setTimeTrackingDialogOpen(true)
   }
 
-  const handleDeleteTask = (task: any) => {
+  const handleDeleteTask = (task: Task) => {
     setSelectedTask(task)
     setDeleteDialogOpen(true)
   }
@@ -186,7 +155,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     }
   }
 
-  const canEditTask = (task: any) => {
+  const canEditTask = () => {
     // User can edit if they are the assignee, creator, or team member
     return true // Simplified for now
   }
@@ -217,7 +186,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     }
   }
 
-  const getTaskStats = (tasks: ProjectDetails['tasks']) => {
+  const getTaskStats = (tasks: Task[]) => {
     const total = tasks.length
     const completed = tasks.filter(task => task.status.toLowerCase() === "done").length
     const inProgress = tasks.filter(task => task.status.toLowerCase() === "in progress").length
@@ -228,7 +197,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     return { total, completed, inProgress, overdue }
   }
 
-  const getFilteredTasks = (tasks: ProjectDetails['tasks']) => {
+  const getFilteredTasks = (tasks: Task[]) => {
     if (taskFilter === "all") return tasks
     if (taskFilter === "mine") {
       return tasks.filter(task => task.assignee?.id === session?.user?.id)
@@ -237,7 +206,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     return tasks.filter(task => task.assignee?.id === taskFilter)
   }
 
-  const getTaskCounts = (tasks: ProjectDetails['tasks']) => {
+  const getTaskCounts = (tasks: Task[]) => {
     const all = tasks.length
     const mine = tasks.filter(task => task.assignee?.id === session?.user?.id).length
     const byUser: Record<string, number> = {}
@@ -257,7 +226,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   }
 
   // Transform tasks to include project info for KanbanBoard
-  const transformTasksForKanban = (tasks: ProjectDetails['tasks']) => {
+  const transformTasksForKanban = (tasks: Task[]) => {
     if (!project) return []
     return tasks.map(task => ({
       ...task,
@@ -282,7 +251,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   }
 
   // Transform single task for TaskDetailsDialog
-  const transformTaskForDialog = (task: any) => {
+  const transformTaskForDialog = (task: Task | null) => {
     if (!task || !project) return null
 
     return {
@@ -327,7 +296,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     )
   }
 
-  const stats = getTaskStats(project.tasks);
+  getTaskStats(project.tasks);
 
   return (
         <div>
@@ -482,7 +451,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                               <Avatar className="h-4 w-4">
                                 <AvatarImage src={task.assignee.avatarUrl} />
                                 <AvatarFallback className="text-xs">
-                                  {task.assignee.name?.split(' ').map(n => n[0]).join('') || 'U'}
+                                  {task.assignee.name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
                                 </AvatarFallback>
                               </Avatar>
                               <span>{task.assignee.name}</span>
@@ -496,7 +465,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                           )}
                           <div className="flex items-center space-x-1">
                             <CheckCircle className="h-3 w-3" />
-                            <span>{task.subtasks.filter(st => st.isCompleted).length}/{task.subtasks.length} podzadań</span>
+                            <span>{task.subtasks.filter((st: { isCompleted: boolean }) => st.isCompleted).length}/{task.subtasks.length} podzadań</span>
                           </div>
                         </div>
                       </div>
@@ -574,7 +543,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         onTimeTracking={handleTimeTracking}
         onDelete={handleDeleteTask}
         onTaskUpdated={handleTaskUpdated}
-        canEdit={selectedTask ? canEditTask(selectedTask) : false}
+        canEdit={selectedTask ? canEditTask() : false}
       />
 
       <EditTaskDialog

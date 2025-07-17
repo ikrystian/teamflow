@@ -5,23 +5,19 @@ import { useSession } from "next-auth/react"
 import type { Session } from "next-auth"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
-  BarChart3,
   Clock,
   TrendingUp,
-  Users,
   Download,
-  Calendar,
   Filter,
-  FileText,
-  PieChart
+  FileText
 } from "lucide-react"
-import { TimeTrackingReport } from "./time-tracking-report"
-import { ProjectProgressReport } from "./project-progress-report"
+import { TimeTrackingReport, type TimeTrackingData } from "./time-tracking-report"
+import { ProjectProgressReport, type ProjectProgressData } from "./project-progress-report"
 import { exportTimeTrackingToPDF, exportProjectProgressToPDF } from "@/lib/pdf-export"
 
 interface Team {
@@ -45,13 +41,13 @@ interface User {
 }
 
 export function ReportsContent() {
-  const { data: session } = useSession() as { data: Session | null }
+  useSession() as { data: Session | null }
   const [activeReport, setActiveReport] = useState<"time-tracking" | "project-progress">("time-tracking")
   const [loading, setLoading] = useState(false)
   const [teams, setTeams] = useState<Team[]>([])
   const [projects, setProjects] = useState<Project[]>([])
   const [users, setUsers] = useState<User[]>([])
-  const [reportData, setReportData] = useState<any>(null)
+  const [reportData, setReportData] = useState<TimeTrackingData | ProjectProgressData | null>(null)
 
   // Filters
   const [filters, setFilters] = useState({
@@ -90,8 +86,8 @@ export function ReportsContent() {
 
         // Extract all users from teams
         const allUsers = new Map()
-        teamsData.teams?.forEach((team: any) => {
-          team.members?.forEach((user: any) => {
+        teamsData.teams?.forEach((team: Team & { members: User[] }) => {
+          team.members?.forEach((user: User) => {
             allUsers.set(user.id, user)
           })
         })
@@ -136,9 +132,9 @@ export function ReportsContent() {
 
         let doc
         if (activeReport === "time-tracking") {
-          doc = exportTimeTrackingToPDF(reportData, filters)
+          doc = exportTimeTrackingToPDF(reportData as TimeTrackingData, filters)
         } else if (activeReport === "project-progress") {
-          doc = exportProjectProgressToPDF(reportData, filters)
+          doc = exportProjectProgressToPDF(reportData as ProjectProgressData, filters)
         } else {
           console.error("Unknown report type for PDF export")
           return

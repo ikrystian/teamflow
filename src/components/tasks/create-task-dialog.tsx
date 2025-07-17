@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RichTextEditor } from "@/components/ui/rich-text-editor"
+import Image from "next/image"
 import {
   Select,
   SelectContent,
@@ -188,8 +189,8 @@ export function CreateTaskDialog({
         const data = await response.json()
         setError(data.error || "Nie udało się utworzyć zadania")
       }
-    } catch (error) {
-      setError("Wystąpił błąd. Spróbuj ponownie.")
+    } catch {
+      setError("Failed to create task")
     } finally {
       setLoading(false)
     }
@@ -365,10 +366,11 @@ export function CreateTaskDialog({
                   {pendingImages.map((image) => (
                     <div key={image.id} className="relative group">
                       <div className="relative aspect-square overflow-hidden rounded-lg border bg-muted">
-                        <img
+                        <Image
                           src={image.preview}
                           alt={image.file.name}
                           className="w-full h-full object-cover"
+                          fill
                         />
                       </div>
                       <Button

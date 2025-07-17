@@ -180,7 +180,16 @@ export async function PATCH(
     }
 
     // Prepare update data
-    const updateData: { [key: string]: any } = {}
+    const updateData: {
+      title?: string;
+      description?: string;
+      status?: string;
+      statusId?: string;
+      priority?: string;
+      dueDate?: Date | null;
+      assigneeId?: string;
+      estimatedHours?: number;
+  } = {}
     if (title !== undefined) updateData.title = title
     if (description !== undefined) updateData.description = description
     if (status !== undefined) updateData.status = status

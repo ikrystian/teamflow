@@ -4,7 +4,7 @@ import 'jspdf-autotable'
 // Extend jsPDF type to include autoTable
 declare module 'jspdf' {
   interface jsPDF {
-    autoTable: (options: any) => jsPDF
+    autoTable: (options: { head?: string[][]; body?: string[][]; startY?: number; margin?: { top: number }; styles?: object; headStyles?: object; bodyStyles?: object; columnStyles?: object; theme?: string }) => jsPDF
   }
 }
 
@@ -73,7 +73,7 @@ interface ProjectProgressData {
   }>
 }
 
-export function exportTimeTrackingToPDF(data: TimeTrackingData, filters: any) {
+export function exportTimeTrackingToPDF(data: TimeTrackingData, filters: { startDate: string; endDate: string; projectId: string; userId: string; teamId: string }) {
   const doc = new jsPDF()
   
   // Title
@@ -108,7 +108,7 @@ export function exportTimeTrackingToPDF(data: TimeTrackingData, filters: any) {
   })
   
   // User Statistics
-  let currentY = (doc as any).lastAutoTable.finalY + 20
+  let currentY = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 20
   
   doc.setFontSize(16)
   doc.text('User Statistics', 20, currentY)
@@ -132,7 +132,7 @@ export function exportTimeTrackingToPDF(data: TimeTrackingData, filters: any) {
   })
   
   // Project Statistics
-  currentY = (doc as any).lastAutoTable.finalY + 20
+  currentY = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 20
   
   // Check if we need a new page
   if (currentY > 250) {
@@ -177,7 +177,7 @@ export function exportTimeTrackingToPDF(data: TimeTrackingData, filters: any) {
   return doc
 }
 
-export function exportProjectProgressToPDF(data: ProjectProgressData, filters: any) {
+export function exportProjectProgressToPDF(data: ProjectProgressData, filters: { startDate: string; endDate: string; projectId: string; teamId: string }) {
   const doc = new jsPDF()
   
   // Title
@@ -213,7 +213,7 @@ export function exportProjectProgressToPDF(data: ProjectProgressData, filters: a
   })
   
   // Project Details
-  const currentY = (doc as any).lastAutoTable.finalY + 20
+  const currentY = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 20
   
   doc.setFontSize(16)
   doc.text('Project Details', 20, currentY)

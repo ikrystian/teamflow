@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { X, Upload, Trash2 } from 'lucide-react'
+import { Upload, X } from "lucide-react"
 import Image from 'next/image'
 
 interface TaskImage {
@@ -27,7 +27,7 @@ export function ImageGallery({
   onImageDelete, 
   editable = false 
 }: ImageGalleryProps) {
-  const [selectedImage, setSelectedImage] = useState<TaskImage | null>(null)
+
   const [uploading, setUploading] = useState(false)
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Progress } from "@/components/ui/progress"
-import { Trash2, Plus, CheckCircle2 } from "lucide-react"
+import { Trash2, Plus } from "lucide-react"
 import type { Todo } from "@/types"
 
 interface TaskTodosProps {

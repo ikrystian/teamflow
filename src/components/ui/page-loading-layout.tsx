@@ -15,7 +15,7 @@ export function PageLoadingLayout({
   className,
   variant = "list",
   showTopBar = true,
-  showStats = false,
+
   showGrid = true,
   gridColumns = 3,
   gridItems = 6
