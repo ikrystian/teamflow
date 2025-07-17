@@ -226,34 +226,16 @@ export function TasksContent() {
   }
 
   if (loading) {
-    return (
-      <div id="page-header" className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">My Tasks</h1>
-        </div>
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader>
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="h-3 bg-gray-200 rounded"></div>
-                  <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    )
+
+
   }
 
   return (
-    <div className="space-y-6">
-      <div  id="page-header" className="flex justify-between items-center">
+        <div>
+              {/* Top bar */}
+        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
+          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
+<div  id="page-header" className="flex justify-between items-center w-full">
         <div  >
           <h1 className="text-2xl font-bold text-gray-900">
             {filter === "assigned" ? "My Tasks" : "All Tasks"}
@@ -288,6 +270,14 @@ export function TasksContent() {
           </Button>
         </div>
       </div>
+          </div>
+        </div>
+
+        {/* Page content */}
+        <main className="py-10">
+          <div className="px-4 sm:px-6 lg:px-8">
+    <div className="space-y-6">
+
 
       {projects.length === 0 ? (
         <Card>
@@ -442,6 +432,9 @@ export function TasksContent() {
         onTimeLogged={handleTimeLogged}
         task={selectedTask}
       />
+    </div>
+    </div>
+    </main>
     </div>
   )
 }

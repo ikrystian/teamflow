@@ -176,7 +176,11 @@ export function DashboardContent() {
   }
 
   return (
-    <div className="space-y-8">
+    <div>
+              {/* Top bar */}
+        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8 bg-white">
+          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
+            <div id="dynamic-header" className="flex flex-1" >
       {/* Welcome section */}
       <div id="page-header">
         <h1 className="text-2xl font-bold text-gray-900">
@@ -186,6 +190,15 @@ export function DashboardContent() {
           Here&apos;s what&apos;s happening with your projects today.
         </p>
       </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Page content */}
+        <main className="py-10">
+          <div className="px-4 sm:px-6 lg:px-8">
+    <div className="space-y-8">
+
 
       {/* Stats grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -312,6 +325,9 @@ export function DashboardContent() {
           )}
         </CardContent>
       </Card>
+    </div>
+    </div>
+    </main>
     </div>
   )
 }

@@ -249,8 +249,11 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
   }
 
   return (
-    <div id="page-header" className="space-y-6">
-      {/* Header */}
+            <div>
+              {/* Top bar */}
+        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
+          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
+            <div id="dynamic-header" className="flex flex-1" >
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <Link href={`/dashboard/projects/${projectId}`}>
@@ -264,6 +267,16 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
           </div>
         </div>
       </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Page content */}
+        <main className="py-10">
+          <div className="px-4 sm:px-6 lg:px-8">
+    <div id="page-header" className="space-y-6">
+      {/* Header */}
+
 
       {/* Task Status Configuration */}
       <Card>
@@ -324,6 +337,9 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
         projectId={projectId}
         status={editingStatus}
       />
+    </div>
+    </div>
+    </main>
     </div>
   )
 }

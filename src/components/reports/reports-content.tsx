@@ -198,9 +198,12 @@ export function ReportsContent() {
   ]
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div id="page-header"  className="flex items-center justify-between">
+        <div>
+              {/* Top bar */}
+        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
+          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
+            <div id="dynamic-header" className="flex flex-1" >
+      <div id="page-header"  className="flex items-center justify-between w-full">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
           <p className="text-gray-600">Generate detailed reports and analytics for your projects</p>
@@ -232,6 +235,17 @@ export function ReportsContent() {
           </Button>
         </div>
       </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Page content */}
+        <main className="py-10">
+          <div className="px-4 sm:px-6 lg:px-8">
+
+    <div className="space-y-6">
+      {/* Header */}
+
 
       {/* Report Type Selection */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -359,6 +373,9 @@ export function ReportsContent() {
       {activeReport === "project-progress" && (
         <ProjectProgressReport filters={filters} onDataLoaded={setReportData} />
       )}
+    </div>
+    </div>
+    </main>
     </div>
   )
 }

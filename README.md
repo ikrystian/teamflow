@@ -343,6 +343,28 @@ Projekt jest otwarty na współpracę. Aby dodać nowe funkcjonalności:
   - Task Summary (szczegółowe statystyki zadań)
 - Przycisk umieszczony między "Settings" a "Add Task" dla lepszej organizacji interfejsu
 
+### Refaktoryzacja komponentów - TopBarUser
+- Wydzielono komponent użytkownika z górnego paska nawigacji do osobnego komponentu
+- Utworzono `TopBarUser` component w `src/components/dashboard/top-bar-user.tsx`
+- Przeniesiono funkcjonalność zarządzania sesją użytkownika i dropdown menu z `DashboardLayout`
+- Poprawiono separację odpowiedzialności i możliwość ponownego użycia komponentu
+- Zachowano pełną funkcjonalność: avatar użytkownika, dropdown menu, wylogowanie
+
+### Poprawka układu strony - Project Settings
+- Naprawiono stronę Project Settings aby wyświetlała się z lewym menu jak inne podstrony
+- Dodano brakujący wrapper `DashboardLayout` do strony ustawień projektu
+- Dodano sprawdzanie uwierzytelniania i przekierowanie dla niezalogowanych użytkowników
+- Strona teraz jest spójna z innymi stronami dashboardu (szczegóły projektu, informacje o projekcie)
+
+### Ulepszenia interfejsu mobilnego - Lewy sidebar
+- Lewy sidebar jest teraz zawsze widoczny na urządzeniach mobilnych
+- Na mobile wyświetlane są tylko ikony (szerokość 64px) aby zaoszczędzić miejsce
+- Na desktop wyświetlane są ikony + etykiety tekstowe (szerokość 256px)
+- Komponent użytkownika przeniesiony do sidebar na mobile, pozostaje w górnym pasku na desktop
+- Dodano tooltips do elementów nawigacji na mobile dla lepszej dostępności
+- Usunięto menu hamburger i funkcjonalność overlay na mobile
+- Dostosowano padding głównej zawartości: 64px na mobile, 256px na desktop
+
 ## 📄 Licencja
 
 Ten projekt jest dostępny na licencji MIT.

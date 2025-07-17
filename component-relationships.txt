@@ -1,0 +1,66 @@
+Component Relationships - TopBarUser Extraction
+
+BEFORE:
+- DashboardLayout component contained inline #top-bar-user div with user dropdown functionality
+- All user session management, avatar display, and dropdown menu logic was embedded in layout.tsx
+
+AFTER:
+- Created new TopBarUser component (src/components/dashboard/top-bar-user.tsx)
+- Extracted all user-related functionality from DashboardLayout to TopBarUser
+- DashboardLayout now imports and uses <TopBarUser /> component
+
+COMPONENT STRUCTURE:
+src/components/dashboard/
+├── layout.tsx (DashboardLayout)
+│   ├── imports TopBarUser from "./top-bar-user"
+│   ├── renders <TopBarUser /> in top bar
+│   └── removed session management and user dropdown code
+└── top-bar-user.tsx (TopBarUser)
+    ├── manages user session with useSession hook
+    ├── renders user avatar with dropdown menu
+    ├── handles sign out functionality
+    └── contains all user-related UI components
+
+DEPENDENCIES:
+TopBarUser component uses:
+- next-auth/react (useSession, signOut)
+- @/components/ui/button
+- @/components/ui/avatar (Avatar, AvatarFallback, AvatarImage)
+- @/components/ui/dropdown-menu (all dropdown components)
+- lucide-react (Settings, LogOut icons)
+
+BENEFITS:
+- Better separation of concerns
+- Reusable user component
+- Cleaner layout component
+- Easier to maintain and test user functionality
+- Follows React component composition patterns
+
+IMPLEMENTATION DETAILS:
+- Used absolute import path: @/components/dashboard/top-bar-user
+- Maintained original styling and functionality
+- Preserved all user interactions (dropdown menu, sign out)
+- No breaking changes to existing functionality
+- Component is fully self-contained with its own session management
+
+TESTING NOTES:
+- Development server runs without compilation errors
+- TypeScript diagnostics show no issues
+- Component successfully extracted and integrated
+- All user functionality preserved (avatar, dropdown, logout)
+
+PROJECT SETTINGS PAGE FIX:
+- Fixed Project Settings page to display with left menu like other dashboard pages
+- Added missing DashboardLayout wrapper to src/app/dashboard/projects/[projectId]/settings/page.tsx
+- Added authentication check with session validation and redirect
+- Now follows same pattern as other dashboard pages (project details, project info)
+- Page structure now consistent: authentication → DashboardLayout → content component
+
+MOBILE SIDEBAR IMPROVEMENTS:
+- Made left sidebar always visible on mobile (no overlay/hamburger menu)
+- Mobile sidebar shows only icons (64px width) to save space
+- Desktop sidebar shows icons + text labels (256px width)
+- User component moved to sidebar on mobile, stays in top bar on desktop
+- Added tooltips to navigation items on mobile for accessibility
+- Removed hamburger menu button and mobile overlay functionality
+- Main content padding adjusted: 64px on mobile, 256px on desktop
