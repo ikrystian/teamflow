@@ -330,6 +330,19 @@ Projekt jest otwarty na współpracę. Aby dodać nowe funkcjonalności:
 - `relationships.txt` - Dokumentacja relacji między elementami systemu
 - Zaktualizowano typy TypeScript dla lepszej kompatybilności
 
+### Nowa funkcjonalność - Informacje o projekcie
+- Dodano przycisk "Informacje o projekcie" w szczegółach projektu
+- Utworzono nową stronę `/dashboard/projects/[projectId]/info`
+- Przeniesiono sekcje informacyjne z głównego widoku projektu:
+  - Team (nazwa zespołu i liczba członków)
+  - Tasks Progress (postęp zadań)
+  - Overdue Tasks (przeterminowane zadania)
+  - Team Members (szczegółowa lista członków zespołu)
+- Dodano dodatkowe sekcje:
+  - Project Overview (podstawowe informacje o projekcie)
+  - Task Summary (szczegółowe statystyki zadań)
+- Przycisk umieszczony między "Settings" a "Add Task" dla lepszej organizacji interfejsu
+
 ## 📄 Licencja
 
 Ten projekt jest dostępny na licencji MIT.

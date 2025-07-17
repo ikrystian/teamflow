@@ -189,7 +189,9 @@ Relacje:
 ### Page Components
 - Dashboard - Strona główna z statystykami
 - ProjectsPage - Lista projektów
-- ProjectDetailsPage - Szczegóły pojedynczego projektu (BRAKUJE - powoduje 404)
+- ProjectDetailsPage - Szczegóły pojedynczego projektu
+- ProjectInfoPage - Informacje o projekcie (/dashboard/projects/[projectId]/info)
+- ProjectSettingsPage - Ustawienia projektu (/dashboard/projects/[projectId]/settings)
 - TasksPage - Lista zadań
 - TeamsPage - Lista zespołów
 - ReportsPage - Strona raportów i analiz (z DashboardLayout i sprawdzaniem sesji)
@@ -198,7 +200,8 @@ Relacje:
 ### Content Components
 - DashboardContent - Zawartość dashboardu ze statystykami
 - ProjectsContent - Lista i zarządzanie projektami
-- ProjectDetailsContent - Szczegóły pojedynczego projektu z zadaniami
+- ProjectDetailsContent - Szczegóły pojedynczego projektu z zadaniami (bez sekcji informacyjnych)
+- ProjectInfoContent - Informacje o projekcie (Team, Tasks progress, Overdue Tasks, Team Members)
 - TasksContent - Lista i zarządzanie zadaniami
 - TeamsContent - Lista i zarządzanie zespołami
 - CalendarContent - Widok kalendarza z zadaniami
@@ -433,4 +436,21 @@ Relacje:
 **Interwały czasowe**:
 - Szacowany czas: 30 min - 40h (interwały co 30 min)
 - Logowanie czasu: 15 min - 8h (elastyczne interwały)
+
+## Nowa funkcjonalność - Informacje o projekcie
+
+**Dodano przycisk "Informacje o projekcie"**:
+- Umieszczony między przyciskami "Settings" i "Add Task" w ProjectDetailsContent
+- Prowadzi do nowej strony /dashboard/projects/[projectId]/info
+- Używa ikony Info z lucide-react
+
+**Nowy komponent ProjectInfoContent**:
+- Zawiera wszystkie informacje z kart: Team, Tasks progress, Overdue Tasks, Team Members
+- Dodatkowe sekcje: Project Overview, Task Summary
+- Przeniesione z ProjectDetailsContent dla lepszej organizacji
+
+**Struktura nawigacji projektu**:
+- /dashboard/projects/[projectId] - główny widok z zadaniami
+- /dashboard/projects/[projectId]/info - informacje o projekcie
+- /dashboard/projects/[projectId]/settings - ustawienia projektu
 - Wyświetlanie: automatyczne formatowanie (minuty/godziny)

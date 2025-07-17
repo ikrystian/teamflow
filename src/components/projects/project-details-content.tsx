@@ -19,7 +19,8 @@ import {
   Trash2,
   List,
   LayoutGrid,
-  Settings
+  Settings,
+  Info
 } from "lucide-react"
 import Link from "next/link"
 import { CreateTaskDialog } from "./create-task-dialog"
@@ -258,6 +259,13 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
             </Button>
           </Link>
 
+          <Link href={`/dashboard/projects/${projectId}/info`}>
+            <Button variant="outline" size="sm">
+              <Info className="mr-2 h-4 w-4" />
+              Informacje o projekcie
+            </Button>
+          </Link>
+
           <Button onClick={() => setCreateTaskDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Add Task
@@ -265,73 +273,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         </div>
       </div>
 
-      {/* Project Info */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Team</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{project.team.name}</div>
-            <p className="text-xs text-muted-foreground">
-              {project.team.members.length} member{project.team.members.length !== 1 ? 's' : ''}
-            </p>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tasks Progress</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.completed}/{stats.total}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}% completed
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Overdue Tasks</CardTitle>
-            <AlertCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.overdue}</div>
-            <p className="text-xs text-muted-foreground">
-              Need attention
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Team Members */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Team Members</CardTitle>
-          <CardDescription>People working on this project</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-4">
-            {project.team.members.map((member) => (
-              <div key={member.id} className="flex items-center space-x-3">
-                <Avatar>
-                  <AvatarImage src={member.avatarUrl} />
-                  <AvatarFallback>
-                    {member.name?.split(' ').map(n => n[0]).join('') || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="text-sm font-medium">{member.name}</p>
-                  <p className="text-xs text-gray-500">{member.email}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Tasks */}
       {viewMode === "list" ? (

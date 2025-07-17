@@ -2,15 +2,15 @@ import { redirect } from "next/navigation"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { DashboardLayout } from "@/components/dashboard/layout"
-import { ProjectDetailsContent } from "@/components/projects/project-details-content"
+import { ProjectInfoContent } from "@/components/projects/project-info-content"
 
-interface ProjectPageProps {
+interface ProjectInfoPageProps {
   params: Promise<{
     projectId: string
   }>
 }
 
-export default async function ProjectPage({ params }: ProjectPageProps) {
+export default async function ProjectInfoPage({ params }: ProjectInfoPageProps) {
   const session = await getServerSession(authOptions)
 
   if (!session) {
@@ -21,7 +21,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
   return (
     <DashboardLayout>
-      <ProjectDetailsContent projectId={projectId} />
+      <ProjectInfoContent projectId={projectId} />
     </DashboardLayout>
   )
 }
