@@ -33,6 +33,7 @@ interface TaskDetailsDialogProps {
   onEdit?: (task: Task, e: React.MouseEvent) => void
   onTimeTracking?: (task: Task, e: React.MouseEvent) => void
   onDelete?: (task: Task, e: React.MouseEvent) => void
+  onTaskUpdated?: () => void
   canEdit?: boolean
 }
 
@@ -43,6 +44,7 @@ export function TaskDetailsDialog({
   onEdit,
   onTimeTracking,
   onDelete,
+  onTaskUpdated,
   canEdit = false
 }: TaskDetailsDialogProps) {
   const [comments, setComments] = useState(task?.comments || [])
@@ -63,6 +65,9 @@ export function TaskDetailsDialog({
 
   const handleTodosChange = (updatedTodos: Todo[]) => {
     setTodos(updatedTodos)
+    if (onTaskUpdated) {
+      onTaskUpdated()
+    }
   }
 
   if (!task) return null

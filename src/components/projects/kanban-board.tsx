@@ -567,6 +567,7 @@ export function KanbanBoard({
         onEdit={onTaskEdit}
         onTimeTracking={onTimeTracking}
         onDelete={onTaskDelete}
+        onTaskUpdated={onTaskUpdated}
         canEdit={selectedTask ? canEditTask(selectedTask) : false}
       />
     </>

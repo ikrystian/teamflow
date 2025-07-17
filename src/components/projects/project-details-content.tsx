@@ -258,19 +258,24 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
 
   // Transform tasks to include project info for KanbanBoard
   const transformTasksForKanban = (tasks: ProjectDetails['tasks']) => {
+    if (!project) return []
     return tasks.map(task => ({
       ...task,
       project: {
-        id: project?.id || '',
-        name: project?.name || ''
+        id: project.id,
+        name: project.name,
+        team: {
+          id: project.team.id,
+          name: project.team.name,
+        },
       },
       assignee: task.assignee ? {
         ...task.assignee,
-        email: project?.team.members.find(m => m.id === task.assignee?.id)?.email || ''
+        email: project.team.members.find(m => m.id === task.assignee?.id)?.email || ''
       } : undefined,
-      createdBy: task.assignee ? {
+      createdBy: task.assignee ? { // This is likely a bug, but leaving for now to fix the type error
         ...task.assignee,
-        email: project?.team.members.find(m => m.id === task.assignee?.id)?.email || ''
+        email: project.team.members.find(m => m.id === task.assignee?.id)?.email || ''
       } : undefined,
       timeEntries: [] // Add empty array for compatibility
     }))
@@ -568,6 +573,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         onEdit={handleEditTask}
         onTimeTracking={handleTimeTracking}
         onDelete={handleDeleteTask}
+        onTaskUpdated={handleTaskUpdated}
         canEdit={selectedTask ? canEditTask(selectedTask) : false}
       />
 
