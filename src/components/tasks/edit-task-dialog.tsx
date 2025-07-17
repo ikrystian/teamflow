@@ -115,6 +115,32 @@ export function EditTaskDialog({
       if (response.ok) {
         const data = await response.json()
         setTaskStatuses(data.taskStatuses)
+        
+        // After loading task statuses, ensure the current task's status is properly set
+        if (task && data.taskStatuses.length > 0) {
+          if (task.statusId) {
+            // If task has a statusId, use it
+            setStatusId(task.statusId)
+            const matchingStatus = data.taskStatuses.find((s: TaskStatus) => s.id === task.statusId)
+            if (matchingStatus) {
+              setStatus(matchingStatus.name)
+            }
+          } else if (task.status) {
+            // If task only has old status field, try to find matching status by name
+            const matchingStatus = data.taskStatuses.find((s: TaskStatus) => s.name === task.status)
+            if (matchingStatus) {
+              setStatusId(matchingStatus.id)
+              setStatus(matchingStatus.name)
+            }
+          } else {
+            // If no status set, use the default status
+            const defaultStatus = data.taskStatuses.find((s: TaskStatus) => s.isDefault)
+            if (defaultStatus) {
+              setStatusId(defaultStatus.id)
+              setStatus(defaultStatus.name)
+            }
+          }
+        }
       }
     } catch (error) {
       console.error("Error fetching task statuses:", error)
@@ -126,8 +152,7 @@ export function EditTaskDialog({
     if (task) {
       setTitle(task.title)
       setDescription(task.description || "")
-      setStatus(task.status)
-      setStatusId(task.statusId || "")
+      // Don't set status values here - they will be set properly after task statuses are loaded
       setAssigneeId(task.assignee?.id || "unassigned")
       setPriority(task.priority || "")
       setDueDate(task.dueDate ? task.dueDate.split('T')[0] : "")

@@ -144,6 +144,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    let finalStatusId = statusId
+
     // If statusId is provided, verify it belongs to this project
     if (statusId) {
       const taskStatus = await prisma.taskStatus.findFirst({
@@ -159,6 +161,18 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         )
       }
+    } else {
+      // If no statusId provided, find the default status for this project
+      const defaultStatus = await prisma.taskStatus.findFirst({
+        where: {
+          projectId,
+          isDefault: true
+        }
+      })
+      
+      if (defaultStatus) {
+        finalStatusId = defaultStatus.id
+      }
     }
 
     const task = await prisma.task.create({
@@ -170,7 +184,7 @@ export async function POST(request: NextRequest) {
         priority,
         dueDate: dueDate ? new Date(dueDate) : null,
         estimatedHours,
-        statusId,
+        statusId: finalStatusId,
         createdById: session.user.id || null
       },
       include: {
