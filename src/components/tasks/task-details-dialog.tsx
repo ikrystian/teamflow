@@ -54,6 +54,10 @@ export function TaskDetailsDialog({
     setComments(prev => [newComment, ...prev])
   }
 
+  const handleCommentDeleted = (commentId: string) => {
+    setComments(prev => prev.filter(comment => comment.id !== commentId))
+  }
+
   if (!task) return null
 
   const getPriorityColor = (priority?: string) => {
@@ -327,6 +331,7 @@ export function TaskDetailsDialog({
             taskId={task.id}
             comments={comments}
             onCommentAdded={handleCommentAdded}
+            onCommentDeleted={handleCommentDeleted}
           />
         </div>
       </DialogContent>

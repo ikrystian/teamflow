@@ -4,8 +4,24 @@ import { useState } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { MessageSquare, Send } from "lucide-react"
+import { MessageSquare, Send, MoreHorizontal, Trash2 } from "lucide-react"
 import { useSession } from "next-auth/react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface Comment {
   id: string
@@ -22,12 +38,20 @@ interface TaskCommentsProps {
   taskId: string
   comments: Comment[]
   onCommentAdded: (comment: Comment) => void
+  onCommentDeleted: (commentId: string) => void
 }
 
-export function TaskComments({ taskId, comments, onCommentAdded }: TaskCommentsProps) {
+export function TaskComments({
+  taskId,
+  comments,
+  onCommentAdded,
+  onCommentDeleted,
+}: TaskCommentsProps) {
   const { data: session } = useSession()
   const [newComment, setNewComment] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [commentToDelete, setCommentToDelete] = useState<string | null>(null)
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -81,6 +105,36 @@ export function TaskComments({ taskId, comments, onCommentAdded }: TaskCommentsP
     }
   }
 
+  const handleDelete = async () => {
+    if (!commentToDelete) return
+
+    try {
+      const response = await fetch(
+        `/api/tasks/${taskId}/comments/${commentToDelete}`,
+        {
+          method: "DELETE",
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error("Nie udało się usunąć komentarza")
+      }
+
+      onCommentDeleted(commentToDelete)
+    } catch (error) {
+      console.error("Błąd podczas usuwania komentarza:", error)
+      // You might want to show a toast notification here
+    } finally {
+      setShowDeleteConfirm(false)
+      setCommentToDelete(null)
+    }
+  }
+
+  const openDeleteConfirm = (commentId: string) => {
+    setCommentToDelete(commentId)
+    setShowDeleteConfirm(true)
+  }
+
   return (
     <div className="space-y-4">
       <h4 className="font-medium text-gray-900 flex items-center">
@@ -130,7 +184,7 @@ export function TaskComments({ taskId, comments, onCommentAdded }: TaskCommentsP
           </p>
         ) : (
           comments.map((comment) => (
-            <div key={comment.id} className="flex space-x-3">
+            <div key={comment.id} className="flex space-x-3 group">
               <Avatar className="h-8 w-8">
                 <AvatarImage src={comment.author.avatarUrl} />
                 <AvatarFallback className="text-xs">
@@ -138,11 +192,35 @@ export function TaskComments({ taskId, comments, onCommentAdded }: TaskCommentsP
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1">
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium">{comment.author.name}</span>
-                  <span className="text-xs text-gray-500">
-                    {formatDate(comment.createdAt)}
-                  </span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-medium">{comment.author.name}</span>
+                    <span className="text-xs text-gray-500">
+                      {formatDate(comment.createdAt)}
+                    </span>
+                  </div>
+                  {session?.user?.id === comment.author.id && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          className="text-red-500"
+                          onClick={() => openDeleteConfirm(comment.id)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Usuń
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
                 <div className="mt-1 text-sm text-gray-700 whitespace-pre-wrap">
                   {comment.content}
@@ -152,6 +230,23 @@ export function TaskComments({ taskId, comments, onCommentAdded }: TaskCommentsP
           ))
         )}
       </div>
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Czy na pewno chcesz usunąć ten komentarz?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tej operacji nie można cofnąć. Komentarz zostanie trwale usunięty.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Anuluj</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600">
+              Usuń
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
