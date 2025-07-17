@@ -75,13 +75,13 @@ export function TeamsContent() {
   return (
         <div>
               {/* Top bar */}
-        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
+        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b bg-background px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
             <div id="dynamic-header" className="flex flex-1" >
       <div id="page-header"  className="flex justify-between items-center  w-full">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Zespoły</h1>
-          <p className="text-gray-500">Zarządzaj swoimi zespołami i współpracuj z innymi</p>
+          <h1 className="text-2xl font-bold text-foreground">Zespoły</h1>
+          <p className="text-muted-foreground">Zarządzaj swoimi zespołami i współpracuj z innymi</p>
         </div>
         <Button onClick={() => setCreateDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
@@ -101,9 +101,9 @@ export function TeamsContent() {
       {teams.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <Users className="h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Brak zespołów</h3>
-            <p className="text-gray-500 text-center mb-4">
+            <Users className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Brak zespołów</h3>
+            <p className="text-muted-foreground text-center mb-4">
               Utwórz swój pierwszy zespół, aby rozpocząć współpracę z innymi
             </p>
             <Button onClick={() => setCreateDialogOpen(true)}>
@@ -135,12 +135,12 @@ export function TeamsContent() {
                 <div className="space-y-4">
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700">Członkowie</span>
+                      <span className="text-sm font-medium text-foreground">Członkowie</span>
                       <Badge variant="secondary">{team.members.length}</Badge>
                     </div>
                     <div className="flex -space-x-2">
                       {team.members.slice(0, 5).map((member) => (
-                        <Avatar key={member.id} className="h-8 w-8 border-2 border-white">
+                        <Avatar key={member.id} className="h-8 w-8 border-2 border-background">
                           <AvatarImage src={member.avatarUrl} alt={member.name} />
                           <AvatarFallback className="text-xs">
                             {member.name?.charAt(0) || "U"}
@@ -148,8 +148,8 @@ export function TeamsContent() {
                         </Avatar>
                       ))}
                       {team.members.length > 5 && (
-                        <div className="h-8 w-8 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center">
-                          <span className="text-xs text-gray-600">
+                        <div className="h-8 w-8 rounded-full bg-muted border-2 border-background flex items-center justify-center">
+                          <span className="text-xs text-muted-foreground">
                             +{team.members.length - 5}
                           </span>
                         </div>
@@ -159,14 +159,14 @@ export function TeamsContent() {
 
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700">Projekty</span>
+                      <span className="text-sm font-medium text-foreground">Projekty</span>
                       <Badge variant="secondary">{team.projects.length}</Badge>
                     </div>
                     {team.projects.length > 0 ? (
                       <div className="space-y-1">
                         {team.projects.slice(0, 3).map((project) => (
                           <div key={project.id} className="flex items-center justify-between text-sm">
-                            <span className="text-gray-600 truncate">{project.name}</span>
+                            <span className="text-muted-foreground truncate">{project.name}</span>
                             <Badge
                               variant={project.status === "Completed" ? "default" : "secondary"}
                               className="text-xs"
@@ -176,13 +176,13 @@ export function TeamsContent() {
                           </div>
                         ))}
                         {team.projects.length > 3 && (
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-muted-foreground">
                             +{team.projects.length - 3} więcej projektów
                           </div>
                         )}
                       </div>
                     ) : (
-                      <p className="text-sm text-gray-500">Brak projektów</p>
+                      <p className="text-sm text-muted-foreground">Brak projektów</p>
                     )}
                   </div>
                 </div>

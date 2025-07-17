@@ -326,24 +326,24 @@ export function DashboardContent() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-4">
-            <Link href="/dashboard/tasks">
-              <Button>
+            <Button asChild>
+              <Link href="/dashboard/tasks">
                 <Plus className="mr-2 h-4 w-4" />
                 Utwórz zadanie
-              </Button>
-            </Link>
-            <Link href="/dashboard/teams">
-              <Button variant="outline">
+              </Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/dashboard/teams">
                 <Users className="mr-2 h-4 w-4" />
                 Utwórz zespół
-              </Button>
-            </Link>
-            <Link href="/dashboard/projects">
-              <Button variant="outline">
+              </Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/dashboard/projects">
                 <FolderOpen className="mr-2 h-4 w-4" />
                 Nowy projekt
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -358,11 +358,11 @@ export function DashboardContent() {
                 Twoja ostatnia aktywność w zadaniach
               </CardDescription>
             </div>
-            <Link href="/dashboard/tasks">
-              <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/dashboard/tasks">
                 Wyświetl wszystko
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -370,12 +370,12 @@ export function DashboardContent() {
             <div className="text-center py-8">
               <CheckSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500 mb-4">Nie masz jeszcze przypisanych zadań</p>
-              <Link href="/dashboard/tasks">
-                <Button>
+              <Button asChild>
+                <Link href="/dashboard/tasks">
                   <Plus className="mr-2 h-4 w-4" />
                   Utwórz swoje pierwsze zadanie
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           ) : (
             <div className="space-y-4">

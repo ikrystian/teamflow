@@ -180,8 +180,8 @@ export function EditTeamDialog({ open, onOpenChange, onTeamUpdated, team }: Edit
 
               {/* Current Members */}
               <div className="space-y-2">
-                <div className="text-sm font-medium text-gray-700">Obecni członkowie:</div>
-                <div className="flex flex-wrap gap-2 min-h-[40px] p-2 border rounded-md bg-gray-50">
+                <div className="text-sm font-medium text-foreground">Obecni członkowie:</div>
+                <div className="flex flex-wrap gap-2 min-h-[40px] p-2 border rounded-md bg-muted/50">
                   {selectedMembers.length > 0 ? (
                     selectedMembers.map((member) => (
                       <Badge
@@ -200,7 +200,7 @@ export function EditTeamDialog({ open, onOpenChange, onTeamUpdated, team }: Edit
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="h-4 w-4 p-0 hover:bg-red-100"
+                          className="h-4 w-4 p-0 hover:bg-destructive/10"
                           onClick={() => removeMember(member.id)}
                         >
                           <X className="h-3 w-3" />
@@ -208,16 +208,16 @@ export function EditTeamDialog({ open, onOpenChange, onTeamUpdated, team }: Edit
                       </Badge>
                     ))
                   ) : (
-                    <div className="text-sm text-gray-500">Nie wybrano członków</div>
+                    <div className="text-sm text-muted-foreground">Nie wybrano członków</div>
                   )}
                 </div>
               </div>
 
               {/* Add Members */}
               <div className="space-y-2">
-                <div className="text-sm font-medium text-gray-700">Dodaj członków:</div>
+                <div className="text-sm font-medium text-foreground">Dodaj członków:</div>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Szukaj użytkowników po nazwie lub adresie e-mail..."
                     value={searchQuery}
@@ -227,14 +227,14 @@ export function EditTeamDialog({ open, onOpenChange, onTeamUpdated, team }: Edit
                 </div>
 
                 {loadingUsers ? (
-                  <div className="text-sm text-gray-500 p-2">Ładowanie użytkowników...</div>
+                  <div className="text-sm text-muted-foreground p-2">Ładowanie użytkowników...</div>
                 ) : (
                   <div className="max-h-32 overflow-y-auto border rounded-md">
                     {filteredUsers.length > 0 ? (
                       filteredUsers.slice(0, 10).map((user) => (
                         <div
                           key={user.id}
-                          className="flex items-center justify-between p-2 hover:bg-gray-50 cursor-pointer"
+                          className="flex items-center justify-between p-2 hover:bg-accent cursor-pointer"
                           onClick={() => addMember(user)}
                         >
                           <div className="flex items-center gap-2">
@@ -246,7 +246,7 @@ export function EditTeamDialog({ open, onOpenChange, onTeamUpdated, team }: Edit
                             </Avatar>
                             <div>
                               <div className="text-sm font-medium">{user.name || "Brak nazwy"}</div>
-                              <div className="text-xs text-gray-500">{user.email}</div>
+                              <div className="text-xs text-muted-foreground">{user.email}</div>
                             </div>
                           </div>
                           <Button
@@ -260,9 +260,9 @@ export function EditTeamDialog({ open, onOpenChange, onTeamUpdated, team }: Edit
                         </div>
                       ))
                     ) : searchQuery ? (
-                      <div className="text-sm text-gray-500 p-2">Nie znaleziono użytkowników pasujących do &quot;{searchQuery}&quot;</div>
+                      <div className="text-sm text-muted-foreground p-2">Nie znaleziono użytkowników pasujących do &quot;{searchQuery}&quot;</div>
                     ) : (
-                      <div className="text-sm text-gray-500 p-2">Wszyscy użytkownicy są już członkami</div>
+                      <div className="text-sm text-muted-foreground p-2">Wszyscy użytkownicy są już członkami</div>
                     )}
                   </div>
                 )}
@@ -270,7 +270,7 @@ export function EditTeamDialog({ open, onOpenChange, onTeamUpdated, team }: Edit
             </div>
 
             {error && (
-              <div className="text-red-500 text-sm">{error}</div>
+              <div className="text-destructive text-sm">{error}</div>
             )}
           </div>
           <DialogFooter>

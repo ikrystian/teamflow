@@ -8,8 +8,9 @@ interface LoadingSkeletonProps {
 export function LoadingSkeleton({ className, children }: LoadingSkeletonProps) {
   return (
     <div
+      data-slot="loading-skeleton"
       className={cn(
-        "animate-pulse bg-gray-200 rounded",
+        "animate-pulse bg-muted rounded",
         className
       )}
     >
@@ -25,35 +26,38 @@ interface LoadingCardProps {
   contentLines?: number
 }
 
-export function LoadingCard({ 
-  className, 
-  showHeader = true, 
-  headerLines = 2, 
-  contentLines = 3 
+export function LoadingCard({
+  className,
+  showHeader = true,
+  headerLines = 2,
+  contentLines = 3
 }: LoadingCardProps) {
   return (
-    <div className={cn("border rounded-lg p-6 space-y-4", className)}>
+    <div
+      data-slot="loading-card"
+      className={cn("bg-card text-card-foreground border rounded-xl p-6 space-y-4 shadow-sm", className)}
+    >
       {showHeader && (
         <div className="space-y-2">
           {Array.from({ length: headerLines }).map((_, i) => (
-            <LoadingSkeleton 
-              key={i} 
+            <LoadingSkeleton
+              key={i}
               className={cn(
                 "h-4",
                 i === 0 ? "w-3/4" : "w-1/2"
-              )} 
+              )}
             />
           ))}
         </div>
       )}
       <div className="space-y-2">
         {Array.from({ length: contentLines }).map((_, i) => (
-          <LoadingSkeleton 
-            key={i} 
+          <LoadingSkeleton
+            key={i}
             className={cn(
               "h-3",
               i === contentLines - 1 ? "w-2/3" : "w-full"
-            )} 
+            )}
           />
         ))}
       </div>

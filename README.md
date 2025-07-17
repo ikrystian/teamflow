@@ -503,6 +503,32 @@ Projekt jest otwarty na współpracę. Aby dodać nowe funkcjonalności:
 - Poprawiono separację odpowiedzialności i możliwość ponownego użycia komponentu
 - Zachowano pełną funkcjonalność: avatar użytkownika, dropdown menu, wylogowanie
 
+### Aktualizacja do najnowszej wersji shadcn/ui
+- Wszystkie komponenty dashboardu używają najnowszej wersji shadcn/ui
+- Zaimplementowano nowoczesne funkcje:
+  * Atrybuty data-slot dla identyfikacji komponentów
+  * Nowoczesne stylowanie Tailwind z poprawioną dostępnością
+  * Ulepszone stany focus z ring styling
+  * Automatyczne rozmiary ikon ([&_svg]:size-4)
+  * Wsparcie dla prop asChild dla kompozycji komponentów
+- Zaktualizowano komponenty: Card, Button, DropdownMenu, Avatar, Badge, Switch, LoadingSkeleton
+- Poprawiono Button + Link kompozycję używając asChild prop w DashboardContent
+- Wszystkie komponenty następują najnowsze wzorce i najlepsze praktyki shadcn/ui
+
+### Aktualizacja strony Teams (/dashboard/teams)
+- Zaktualizowano TeamsContent do najnowszych wzorców shadcn/ui
+- Zastąpiono hardkodowane kolory tokenami semantycznymi:
+  * text-gray-900 → text-foreground (lepszy kontrast i wsparcie dla dark mode)
+  * text-gray-500 → text-muted-foreground (semantyczny kolor dla tekstu pomocniczego)
+  * bg-white → bg-background (automatyczne wsparcie dla motywów)
+  * bg-gray-100 → bg-muted (semantyczny kolor dla tła elementów)
+  * border-gray-200 → border (używa zmiennych CSS)
+- Zaktualizowano dialogi CreateTeamDialog i EditTeamDialog:
+  * Komunikaty błędów używają text-destructive zamiast text-red-500
+  * Poprawione stany hover z semantycznymi kolorami
+  * Lepsza dostępność z właściwym kontrastem kolorów
+- Wszystkie komponenty związane z zespołami używają najnowszego systemu projektowania shadcn/ui
+
 ### Poprawka układu strony - Project Settings
 - Naprawiono stronę Project Settings aby wyświetlała się z lewym menu jak inne podstrony
 - Dodano brakujący wrapper `DashboardLayout` do strony ustawień projektu
