@@ -21,11 +21,13 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 - **Dark mode** - Tryb ciemny jako domyślny z możliwością przełączania (jasny/ciemny/systemowy)
 - **Mono theme** - Monochromatyczny motyw z wykorzystaniem najnowszej wersji shadcn/ui
 - **Responsywny interfejs** - Zbudowany z shadcn/ui i Tailwind CSS
+- **Nowoczesna nawigacja** - Sidebar z aktywnym oznaczaniem stron i responsywnym designem
 
 ### 🔄 Planowane funkcjonalności
 - Zaproszenia do zespołów przez email
 - Powiadomienia w aplikacji
 - ✅ ~~Załączniki plików (dokumenty, PDF, itp.)~~ - **ZAIMPLEMENTOWANE**
+- ✅ ~~Aktywne oznaczanie stron w nawigacji~~ - **ZAIMPLEMENTOWANE**
 - Zaawansowane raporty i analityka
 - Wyszukiwarka globalna
 - Szablony projektów z predefiniowanymi statusami
@@ -89,13 +91,14 @@ Aplikacja będzie dostępna pod adresem [http://localhost:3000](http://localhost
 ## 🎯 Nowe funkcjonalności
 
 ### Dane dostępowe i dokumentacja projektów ✅
-- **Zarządzanie danymi dostępowymi** - Możliwość zapisywania linków do:
-  - Repozytorium kodu (GitHub, GitLab, itp.)
-  - Serwera aplikacji
-  - API endpoints
-  - Panelu administracyjnego
-  - Środowiska testowego i produkcyjnego
-  - Bazy danych
+- **Wielokrotne dane dostępowe** - Zaawansowany system zarządzania z:
+  - Możliwością dodawania wielu rekordów danych dostępowych na projekt
+  - Dowolną nazwą dla każdego zestawu danych (np. "Prod Server", "API Keys", "Staging")
+  - Rich text editorem do wprowadzania szczegółów (hasła, klucze API, linki, instrukcje)
+  - Niezależnym pokazywaniem/ukrywaniem każdego rekordu
+  - Edycją i usuwaniem poszczególnych rekordów
+  - Formatowaniem tekstu (pogrubienie, kursywa, listy, linki)
+  - Bezpiecznym przechowywaniem w bazie danych jako JSON
 - **System dokumentacji** - Załączanie plików do projektów:
   - Obsługa różnych formatów (PDF, DOC, TXT, obrazy, itp.)
   - Kategoryzacja dokumentów (specyfikacja, projekt, instrukcja, inne)
@@ -720,6 +723,19 @@ Projekt jest otwarty na współpracę. Aby dodać nowe funkcjonalności:
 - **Kolory**: Zamieniono wszystkie hardcoded kolory Tailwind na CSS variables w komponentach dashboardu
 - **Layout**: Sidebar, top bar i wszystkie główne komponenty obsługują dark mode
 - **Funkcje kolorów**: Priority i status badges używają CSS variables z fallback dla dark mode
+
+### Migracja do nowoczesnego sidebara shadcn/ui z aktywnym oznaczaniem stron
+- **Shadcn/ui Sidebar**: Pełna migracja z custom sidebara na oficjalne komponenty shadcn/ui
+- **Aktywne oznaczanie**: Implementacja `usePathname` dla automatycznego wykrywania aktywnej strony
+- **Komponenty**: `SidebarProvider`, `Sidebar`, `SidebarContent`, `SidebarHeader`, `SidebarMenu`, `SidebarMenuButton`
+- **Funkcja isActive**: Inteligentne wykrywanie aktywnej strony z obsługą nested routes
+- **Responsywność**: Wbudowana obsługa mobile z tooltipami i collapsible behavior
+- **Layout**: Flex-based layout z `SidebarProvider` dla lepszej kontroli stanu
+- **TopBarUser**: Przeniesiony do `SidebarHeader` dla lepszej organizacji
+- **Styling**: Automatyczne active states z `data-[active=true]` attributes
+- **Avatar Fix**: Naprawiono wyświetlanie avatara w menu użytkownika - teraz używa `avatarUrl` z bazy danych
+- **Wielokrotne dane dostępowe**: Rozszerzono system do obsługi wielu rekordów z możliwością dodawania, edycji i usuwania
+- **Dokumentacja**: Zaktualizowano `component-relationships.txt` z opisem zmian
 
 ## 📋 Ostatnie aktualizacje
 

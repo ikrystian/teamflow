@@ -1,5 +1,6 @@
 "use client"
 
+import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { TopBarUser } from "@/components/dashboard/top-bar-user"
 import {
@@ -10,12 +11,25 @@ import {
   Calendar,
   BarChart3,
 } from "lucide-react"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+} from "@/components/ui/sidebar"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
+  const pathname = usePathname()
+
   const navigation = [
     { name: "Panel", href: "/dashboard", icon: Home },
     { name: "Moje zadania", href: "/dashboard/tasks", icon: CheckSquare },
@@ -25,45 +39,55 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { name: "Kalendarz", href: "/dashboard/calendar", icon: Calendar },
   ]
 
+  // Function to check if a navigation item is active
+  const isActive = (href: string) => {
+    if (href === "/dashboard") {
+      return pathname === "/dashboard"
+    }
+    return pathname.startsWith(href)
+  }
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Sidebar - always visible, narrow on mobile, full width on desktop */}
-      <div className="fixed inset-y-0 left-0 flex w-16 lg:w-64 flex-col">
-        <div className="flex flex-col flex-grow bg-card border-r border-border">
-          {/* Header - show logo on desktop, hide on mobile */}
-          <div className="hidden lg:flex h-16 items-center px-4">
-            <h1 className="text-xl font-bold text-foreground flex-1">TeamFlow</h1>
-            <TopBarUser />
-          </div>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        <Sidebar className="border-r">
+          <SidebarHeader className="border-b">
+            <div className="flex h-16 items-center px-4">
+              <h1 className="text-xl font-bold text-foreground">TeamFlow</h1>
+              <div className="ml-auto">
+                <TopBarUser />
+              </div>
+            </div>
+          </SidebarHeader>
+          <SidebarContent>
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {navigation.map((item) => (
+                    <SidebarMenuItem key={item.name}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive(item.href)}
+                        tooltip={item.name}
+                      >
+                        <Link href={item.href}>
+                          <item.icon />
+                          <span>{item.name}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
+        </Sidebar>
 
-          {/* Mobile header - just user avatar */}
-          <div className="flex lg:hidden h-16 items-center justify-center px-2">
-            <TopBarUser />
-          </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 space-y-1 px-2 py-4">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="group flex items-center justify-center lg:justify-start px-2 py-2 text-sm font-medium rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                title={item.name} // Show tooltip on mobile
-              >
-                <item.icon className="h-5 w-5 lg:mr-3" />
-                <span className="hidden lg:block">{item.name}</span>
-              </Link>
-            ))}
-          </nav>
-        </div>
+        {/* Main content */}
+        <main className="flex-1">
+          {children}
+        </main>
       </div>
-
-      {/* Main content */}
-      <div className="pl-16 lg:pl-64">
-
-            {children}
-
-      </div>
-    </div>
+    </SidebarProvider>
   )
 }

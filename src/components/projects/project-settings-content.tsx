@@ -8,8 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Plus, Settings, GripVertical, Edit, Trash2, Key, Save } from "lucide-react"
+import { ArrowLeft, Plus, Settings, GripVertical, Edit, Trash2, Key, Save, Eye, EyeOff, X } from "lucide-react"
 import { TaskStatusDialog } from "./task-status-dialog"
+import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import {
   DndContext,
   closestCenter,
@@ -142,16 +143,18 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
   const [loading, setLoading] = useState(true)
   const [statusDialogOpen, setStatusDialogOpen] = useState(false)
   const [editingStatus, setEditingStatus] = useState<TaskStatus | null>(null)
-  const [credentialsForm, setCredentialsForm] = useState({
-    repositoryUrl: '',
-    databaseUrl: '',
-    serverUrl: '',
-    apiUrl: '',
-    adminPanelUrl: '',
-    stagingUrl: '',
-    productionUrl: ''
+  const [credentialsList, setCredentialsList] = useState<Array<{
+    id: string
+    name: string
+    content: string
+  }>>([])
+  const [newCredential, setNewCredential] = useState({
+    name: '',
+    content: ''
   })
+  const [editingCredential, setEditingCredential] = useState<string | null>(null)
   const [savingCredentials, setSavingCredentials] = useState(false)
+  const [showCredentials, setShowCredentials] = useState<Record<string, boolean>>({})
   const router = useRouter()
 
   const sensors = useSensors(
@@ -196,35 +199,82 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
 
   useEffect(() => {
     if (project) {
-      setCredentialsForm({
-        repositoryUrl: project.repositoryUrl || '',
-        databaseUrl: project.databaseUrl || '',
-        serverUrl: project.serverUrl || '',
-        apiUrl: project.apiUrl || '',
-        adminPanelUrl: project.adminPanelUrl || '',
-        stagingUrl: project.stagingUrl || '',
-        productionUrl: project.productionUrl || ''
-      })
+      // Parse credentials from JSON if exists
+      let parsedCredentials: Array<{id: string, name: string, content: string}> = []
+      if (project.credentials) {
+        try {
+          const parsed = JSON.parse(project.credentials)
+          // Handle both old format (single object) and new format (array)
+          if (Array.isArray(parsed)) {
+            parsedCredentials = parsed
+          } else if (parsed.name && parsed.content) {
+            // Convert old format to new format
+            parsedCredentials = [{
+              id: Date.now().toString(),
+              name: parsed.name,
+              content: parsed.content
+            }]
+          }
+        } catch (error) {
+          console.error('Error parsing credentials:', error)
+        }
+      }
+      setCredentialsList(parsedCredentials)
     }
   }, [project])
 
-  const handleCredentialsSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSavingCredentials(true)
+  const handleAddCredential = () => {
+    if (!newCredential.name.trim() || !newCredential.content.trim()) {
+      return
+    }
 
+    const credential = {
+      id: Date.now().toString(),
+      name: newCredential.name,
+      content: newCredential.content
+    }
+
+    setCredentialsList(prev => [...prev, credential])
+    setNewCredential({ name: '', content: '' })
+    saveCredentialsList([...credentialsList, credential])
+  }
+
+  const handleEditCredential = (id: string) => {
+    setEditingCredential(id)
+  }
+
+  const handleSaveEdit = (id: string, name: string, content: string) => {
+    const updatedList = credentialsList.map(cred =>
+      cred.id === id ? { ...cred, name, content } : cred
+    )
+    setCredentialsList(updatedList)
+    setEditingCredential(null)
+    saveCredentialsList(updatedList)
+  }
+
+  const handleDeleteCredential = (id: string) => {
+    const updatedList = credentialsList.filter(cred => cred.id !== id)
+    setCredentialsList(updatedList)
+    saveCredentialsList(updatedList)
+  }
+
+  const saveCredentialsList = async (list: typeof credentialsList) => {
+    setSavingCredentials(true)
     try {
       const response = await fetch(`/api/projects/${projectId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(credentialsForm),
+        body: JSON.stringify({
+          credentials: JSON.stringify(list)
+        }),
       })
 
       if (response.ok) {
         const data = await response.json()
         setProject(data.project)
-        // Show success message or toast here
+        // Show success message or toast
       } else {
         console.error('Failed to update credentials')
       }
@@ -235,10 +285,17 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
     }
   }
 
-  const handleCredentialsChange = (field: string, value: string) => {
-    setCredentialsForm(prev => ({
+  const handleNewCredentialChange = (field: 'name' | 'content', value: string) => {
+    setNewCredential(prev => ({
       ...prev,
       [field]: value
+    }))
+  }
+
+  const toggleShowCredential = (id: string) => {
+    setShowCredentials(prev => ({
+      ...prev,
+      [id]: !prev[id]
     }))
   }
 
@@ -353,90 +410,66 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
             <span>Dane dostępowe</span>
           </CardTitle>
           <CardDescription>
-            Skonfiguruj linki i adresy związane z projektem
+            Dodaj nazwę i szczegóły danych dostępowych do projektu (hasła, klucze API, linki, itp.)
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleCredentialsSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="repositoryUrl">Repozytorium kodu</Label>
-                <Input
-                  id="repositoryUrl"
-                  type="url"
-                  placeholder="https://github.com/user/repo"
-                  value={credentialsForm.repositoryUrl}
-                  onChange={(e) => handleCredentialsChange('repositoryUrl', e.target.value)}
-                />
+          <div className="space-y-6">
+            {/* Existing credentials list */}
+            {credentialsList.length > 0 && (
+              <div className="space-y-4">
+                <h4 className="text-sm font-medium">Zapisane dane dostępowe</h4>
+                {credentialsList.map((credential) => (
+                  <CredentialItem
+                    key={credential.id}
+                    credential={credential}
+                    isEditing={editingCredential === credential.id}
+                    isVisible={showCredentials[credential.id] || false}
+                    onEdit={() => handleEditCredential(credential.id)}
+                    onSave={(name, content) => handleSaveEdit(credential.id, name, content)}
+                    onDelete={() => handleDeleteCredential(credential.id)}
+                    onToggleVisibility={() => toggleShowCredential(credential.id)}
+                    onCancelEdit={() => setEditingCredential(null)}
+                  />
+                ))}
               </div>
-              <div>
-                <Label htmlFor="serverUrl">Serwer</Label>
-                <Input
-                  id="serverUrl"
-                  type="url"
-                  placeholder="https://server.example.com"
-                  value={credentialsForm.serverUrl}
-                  onChange={(e) => handleCredentialsChange('serverUrl', e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="apiUrl">API</Label>
-                <Input
-                  id="apiUrl"
-                  type="url"
-                  placeholder="https://api.example.com"
-                  value={credentialsForm.apiUrl}
-                  onChange={(e) => handleCredentialsChange('apiUrl', e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="databaseUrl">Baza danych</Label>
-                <Input
-                  id="databaseUrl"
-                  type="url"
-                  placeholder="https://db.example.com"
-                  value={credentialsForm.databaseUrl}
-                  onChange={(e) => handleCredentialsChange('databaseUrl', e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="adminPanelUrl">Panel administracyjny</Label>
-                <Input
-                  id="adminPanelUrl"
-                  type="url"
-                  placeholder="https://admin.example.com"
-                  value={credentialsForm.adminPanelUrl}
-                  onChange={(e) => handleCredentialsChange('adminPanelUrl', e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="stagingUrl">Środowisko testowe</Label>
-                <Input
-                  id="stagingUrl"
-                  type="url"
-                  placeholder="https://staging.example.com"
-                  value={credentialsForm.stagingUrl}
-                  onChange={(e) => handleCredentialsChange('stagingUrl', e.target.value)}
-                />
-              </div>
-              <div className="md:col-span-2">
-                <Label htmlFor="productionUrl">Środowisko produkcyjne</Label>
-                <Input
-                  id="productionUrl"
-                  type="url"
-                  placeholder="https://production.example.com"
-                  value={credentialsForm.productionUrl}
-                  onChange={(e) => handleCredentialsChange('productionUrl', e.target.value)}
-                />
+            )}
+
+            {/* Add new credential form */}
+            <div className="border rounded-lg p-4 bg-muted/50">
+              <h4 className="text-sm font-medium mb-4">Dodaj nowe dane dostępowe</h4>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="newCredentialName">Nazwa dostępów</Label>
+                  <Input
+                    id="newCredentialName"
+                    placeholder="np. Dane dostępowe do serwera produkcyjnego"
+                    value={newCredential.name}
+                    onChange={(e) => handleNewCredentialChange('name', e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="newCredentialContent">Dane dostępowe</Label>
+                  <RichTextEditor
+                    content={newCredential.content}
+                    onChange={(content) => handleNewCredentialChange('content', content)}
+                    placeholder="Wprowadź dane dostępowe (hasła, klucze API, linki, itp.)"
+                  />
+                </div>
+
+                <div className="flex justify-end">
+                  <Button
+                    onClick={handleAddCredential}
+                    disabled={!newCredential.name.trim() || !newCredential.content.trim() || savingCredentials}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    {savingCredentials ? 'Dodawanie...' : 'Dodaj dane dostępowe'}
+                  </Button>
+                </div>
               </div>
             </div>
-            <div className="flex justify-end">
-              <Button type="submit" disabled={savingCredentials}>
-                <Save className="mr-2 h-4 w-4" />
-                {savingCredentials ? 'Zapisywanie...' : 'Zapisz dane dostępowe'}
-              </Button>
-            </div>
-          </form>
+          </div>
         </CardContent>
       </Card>
 
@@ -501,6 +534,131 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
     </div>
     </div>
     </main>
+    </div>
+  )
+}
+
+// Credential Item Component
+interface CredentialItemProps {
+  credential: {
+    id: string
+    name: string
+    content: string
+  }
+  isEditing: boolean
+  isVisible: boolean
+  onEdit: () => void
+  onSave: (name: string, content: string) => void
+  onDelete: () => void
+  onToggleVisibility: () => void
+  onCancelEdit: () => void
+}
+
+function CredentialItem({
+  credential,
+  isEditing,
+  isVisible,
+  onEdit,
+  onSave,
+  onDelete,
+  onToggleVisibility,
+  onCancelEdit
+}: CredentialItemProps) {
+  const [editName, setEditName] = useState(credential.name)
+  const [editContent, setEditContent] = useState(credential.content)
+
+  const handleSave = () => {
+    if (editName.trim() && editContent.trim()) {
+      onSave(editName, editContent)
+    }
+  }
+
+  const handleCancel = () => {
+    setEditName(credential.name)
+    setEditContent(credential.content)
+    onCancelEdit()
+  }
+
+  if (isEditing) {
+    return (
+      <div className="border rounded-lg p-4 bg-background">
+        <div className="space-y-4">
+          <div>
+            <Label>Nazwa dostępów</Label>
+            <Input
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              placeholder="Nazwa dostępów"
+            />
+          </div>
+
+          <div>
+            <Label>Dane dostępowe</Label>
+            <RichTextEditor
+              content={editContent}
+              onChange={setEditContent}
+              placeholder="Wprowadź dane dostępowe"
+            />
+          </div>
+
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" size="sm" onClick={handleCancel}>
+              <X className="mr-2 h-4 w-4" />
+              Anuluj
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleSave}
+              disabled={!editName.trim() || !editContent.trim()}
+            >
+              <Save className="mr-2 h-4 w-4" />
+              Zapisz
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="border rounded-lg p-4 bg-background">
+      <div className="flex items-start justify-between mb-2">
+        <h5 className="font-medium">{credential.name}</h5>
+        <div className="flex space-x-2">
+          <Button variant="outline" size="sm" onClick={onToggleVisibility}>
+            {isVisible ? (
+              <>
+                <EyeOff className="mr-2 h-4 w-4" />
+                Ukryj
+              </>
+            ) : (
+              <>
+                <Eye className="mr-2 h-4 w-4" />
+                Pokaż
+              </>
+            )}
+          </Button>
+          <Button variant="outline" size="sm" onClick={onEdit}>
+            <Edit className="mr-2 h-4 w-4" />
+            Edytuj
+          </Button>
+          <Button variant="outline" size="sm" onClick={onDelete}>
+            <Trash2 className="mr-2 h-4 w-4" />
+            Usuń
+          </Button>
+        </div>
+      </div>
+
+      {isVisible ? (
+        <div
+          className="prose prose-sm max-w-none text-foreground"
+          dangerouslySetInnerHTML={{ __html: credential.content }}
+        />
+      ) : (
+        <div className="text-sm text-muted-foreground italic">
+          Dane dostępowe są ukryte. Kliknij "Pokaż" aby je wyświetlić.
+        </div>
+      )}
     </div>
   )
 }

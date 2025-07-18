@@ -115,7 +115,8 @@ export async function PATCH(
       apiUrl,
       adminPanelUrl,
       stagingUrl,
-      productionUrl
+      productionUrl,
+      credentials
     } = await request.json()
 
     // Verify user has access to the project
@@ -153,7 +154,8 @@ export async function PATCH(
         ...(apiUrl !== undefined && { apiUrl }),
         ...(adminPanelUrl !== undefined && { adminPanelUrl }),
         ...(stagingUrl !== undefined && { stagingUrl }),
-        ...(productionUrl !== undefined && { productionUrl })
+        ...(productionUrl !== undefined && { productionUrl }),
+        ...(credentials !== undefined && { credentials })
       },
       include: {
         team: {

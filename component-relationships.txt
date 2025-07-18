@@ -108,6 +108,49 @@ SETTINGS LINK RELOCATION:
 - Used asChild prop on DropdownMenuItem to properly wrap Link component
 - Removed unused Settings icon import from layout.tsx
 
+SHADCN/UI SIDEBAR MIGRATION:
+- Migrated from custom sidebar to shadcn/ui Sidebar components
+- Added usePathname hook for active state detection
+- Implemented SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarMenu components
+- Added isActive function to determine current page based on pathname
+- SidebarMenuButton now uses isActive prop for proper active state styling
+- Moved TopBarUser to SidebarHeader for better organization
+- Updated layout structure to use flex layout with SidebarProvider
+- Added tooltip support for menu items
+- Maintains responsive behavior with shadcn/ui's built-in mobile handling
+
+TOPBARUSER AVATAR FIX:
+- Fixed avatar display issue in TopBarUser component
+- Added useEffect to fetch user profile from /api/user/profile
+- Now uses userProfile.avatarUrl instead of session.user.image
+- Consistent with other avatar displays throughout the app (settings, avatar upload)
+- Added fallback logic: userProfile data -> session data -> defaults
+- Proper TypeScript interface for UserProfile
+- Maintains backward compatibility with NextAuth session data
+
+MULTIPLE CREDENTIALS SYSTEM:
+- Evolved from single credential to multiple credentials list system
+- Users can now add, edit, delete multiple credential records per project
+- Updated project-settings-content.tsx:
+  * New credentialsList state: Array<{id: string, name: string, content: string}>
+  * Added newCredential state for form input
+  * Created CredentialItem component for individual credential management
+  * Each credential has independent show/hide state
+  * Functions: handleAddCredential, handleEditCredential, handleSaveEdit, handleDeleteCredential
+  * Backward compatibility: converts old single credential format to array format
+- Updated project-info-content.tsx:
+  * Displays multiple credentials as separate cards
+  * Each credential has independent show/hide toggle
+  * Handles both old format (single object) and new format (array)
+  * Updated showCredentials state to Record<string, boolean> for multiple items
+- CredentialItem component features:
+  * Edit mode with inline form (name input + rich text editor)
+  * View mode with show/hide toggle
+  * Edit, Delete, Save, Cancel actions
+  * Rich text content rendering with proper styling
+- Database storage: Array of credentials stored as JSON string in credentials field
+- Enhanced UX: users can organize credentials by categories (prod, staging, API keys, etc.)
+
 ---
 
 Component Relationships - Loading Layout System

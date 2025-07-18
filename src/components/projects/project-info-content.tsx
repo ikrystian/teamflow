@@ -15,8 +15,9 @@ import {
   Info,
   Key,
   FileText,
-  ExternalLink,
-  Edit
+  Edit,
+  Eye,
+  EyeOff
 } from "lucide-react"
 import Link from "next/link"
 import { FileUpload } from "@/components/ui/file-upload"
@@ -104,6 +105,7 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
   const [project, setProject] = useState<ProjectDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [documents, setDocuments] = useState<ProjectDetails['documents']>([])
+  const [showCredentials, setShowCredentials] = useState<Record<string, boolean>>({})
   const router = useRouter()
 
   useEffect(() => {
@@ -489,100 +491,86 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
             <Key className="h-5 w-5" />
             <span>Dane dostępowe</span>
           </CardTitle>
-          <CardDescription>Linki i adresy związane z projektem</CardDescription>
+          <CardDescription>Dane dostępowe do projektu (hasła, klucze API, linki, itp.)</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {project.repositoryUrl && (
-            <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-1">Repozytorium kodu</h4>
-              <a
-                href={project.repositoryUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:text-blue-800 flex items-center space-x-1"
-              >
-                <span>{project.repositoryUrl}</span>
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            </div>
-          )}
-          {project.serverUrl && (
-            <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-1">Serwer</h4>
-              <a
-                href={project.serverUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:text-blue-800 flex items-center space-x-1"
-              >
-                <span>{project.serverUrl}</span>
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            </div>
-          )}
-          {project.apiUrl && (
-            <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-1">API</h4>
-              <a
-                href={project.apiUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:text-blue-800 flex items-center space-x-1"
-              >
-                <span>{project.apiUrl}</span>
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            </div>
-          )}
-          {project.adminPanelUrl && (
-            <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-1">Panel administracyjny</h4>
-              <a
-                href={project.adminPanelUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:text-blue-800 flex items-center space-x-1"
-              >
-                <span>{project.adminPanelUrl}</span>
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            </div>
-          )}
-          {project.stagingUrl && (
-            <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-1">Środowisko testowe</h4>
-              <a
-                href={project.stagingUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:text-blue-800 flex items-center space-x-1"
-              >
-                <span>{project.stagingUrl}</span>
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            </div>
-          )}
-          {project.productionUrl && (
-            <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-1">Środowisko produkcyjne</h4>
-              <a
-                href={project.productionUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:text-blue-800 flex items-center space-x-1"
-              >
-                <span>{project.productionUrl}</span>
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            </div>
-          )}
-          {!project.repositoryUrl && !project.serverUrl && !project.apiUrl &&
-           !project.adminPanelUrl && !project.stagingUrl && !project.productionUrl && (
-            <div className="text-center py-4 text-gray-500">
-              <p className="text-sm">Brak skonfigurowanych danych dostępowych</p>
-              <p className="text-xs mt-1">Skonfiguruj je w ustawieniach projektu</p>
-            </div>
-          )}
+          {(() => {
+            // Parse credentials from JSON if exists
+            let parsedCredentials: Array<{id: string, name: string, content: string}> = []
+            if (project.credentials) {
+              try {
+                const parsed = JSON.parse(project.credentials)
+                // Handle both old format (single object) and new format (array)
+                if (Array.isArray(parsed)) {
+                  parsedCredentials = parsed
+                } else if (parsed.name && parsed.content) {
+                  // Convert old format to new format for display
+                  parsedCredentials = [{
+                    id: 'legacy',
+                    name: parsed.name,
+                    content: parsed.content
+                  }]
+                }
+              } catch (error) {
+                console.error('Error parsing credentials:', error)
+              }
+            }
+
+            if (parsedCredentials.length > 0) {
+              return (
+                <div className="space-y-4">
+                  {parsedCredentials.map((credential) => (
+                    <div key={credential.id} className="border rounded-lg p-4 bg-muted/50">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-sm font-medium text-foreground">
+                          {credential.name}
+                        </h4>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowCredentials(prev => ({
+                            ...prev,
+                            [credential.id]: !prev[credential.id]
+                          }))}
+                        >
+                          {showCredentials[credential.id] ? (
+                            <>
+                              <EyeOff className="mr-2 h-4 w-4" />
+                              Ukryj
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="mr-2 h-4 w-4" />
+                              Pokaż
+                            </>
+                          )}
+                        </Button>
+                      </div>
+
+                      {showCredentials[credential.id] ? (
+                        <div
+                          className="prose prose-sm max-w-none text-foreground"
+                          dangerouslySetInnerHTML={{ __html: credential.content }}
+                        />
+                      ) : (
+                        <div className="text-sm text-muted-foreground italic">
+                          Dane dostępowe są ukryte. Kliknij "Pokaż" aby je wyświetlić.
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )
+            } else {
+              return (
+                <div className="text-center py-4 text-muted-foreground">
+                  <p className="text-sm">Brak skonfigurowanych danych dostępowych</p>
+                  <p className="text-xs mt-1">Skonfiguruj je w ustawieniach projektu</p>
+                </div>
+              )
+            }
+          })()}
+
           <div className="pt-2 border-t">
             <Link href={`/dashboard/projects/${projectId}/settings`}>
               <Button variant="outline" size="sm">
