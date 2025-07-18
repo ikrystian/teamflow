@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { AvatarUpload } from "@/components/ui/avatar-upload"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import { Separator } from "@/components/ui/separator"
@@ -18,7 +18,6 @@ import {
   Shield,
   Palette,
   Save,
-  Camera,
   Loader2
 } from "lucide-react"
 import { useSession } from "next-auth/react"
@@ -173,6 +172,13 @@ export function SettingsContent() {
     }))
   }
 
+  const handleAvatarChange = (avatarUrl: string | null) => {
+    setUserProfile(prev => prev ? {
+      ...prev,
+      avatarUrl
+    } : null)
+  }
+
   if (isLoadingProfile) {
     return (
       <div className="container mx-auto py-6 px-4">
@@ -240,23 +246,12 @@ export function SettingsContent() {
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Avatar Section */}
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-20 w-20">
-                    <AvatarImage src={session?.user?.image || ""} />
-                    <AvatarFallback className="text-lg">
-                      {session?.user?.name?.charAt(0) || "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <Button variant="outline" size="sm" className="flex items-center gap-2">
-                      <Camera className="h-4 w-4" />
-                      Zmień zdjęcie
-                    </Button>
-                    <p className="text-sm text-gray-500 mt-1">
-                      JPG, PNG lub GIF. Maksymalnie 2MB.
-                    </p>
-                  </div>
-                </div>
+                <AvatarUpload
+                  currentAvatarUrl={userProfile?.avatarUrl}
+                  fallbackText={session?.user?.name?.charAt(0) || "U"}
+                  onAvatarChange={handleAvatarChange}
+                  size="lg"
+                />
 
                 <Separator />
 

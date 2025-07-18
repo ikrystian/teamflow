@@ -161,6 +161,10 @@ Ograniczenia:
 
 ### Users
 - GET /api/users - Lista wszystkich użytkowników (z opcjonalnym wyszukiwaniem)
+- GET /api/user/profile - Pobieranie profilu aktualnego użytkownika
+- PUT /api/user/profile - Aktualizacja profilu użytkownika
+- POST /api/user/avatar - Przesyłanie zdjęcia profilowego
+- DELETE /api/user/avatar - Usuwanie zdjęcia profilowego
 
 ### Projects
 - GET /api/projects - Lista projektów (z filtrowaniem po teamId)
@@ -535,3 +539,40 @@ Ograniczenia:
 - /dashboard/projects/[projectId]/info - informacje o projekcie
 - /dashboard/projects/[projectId]/settings - ustawienia projektu
 - Wyświetlanie: automatyczne formatowanie (minuty/godziny)
+
+### Implementacja zmiany zdjęcia profilowego ✅
+**Data implementacji**: 2025-01-17
+
+**Dodane pliki**:
+- `src/app/api/user/avatar/route.ts` - API endpoint do obsługi zdjęć profilowych
+- `src/components/ui/avatar-upload.tsx` - Komponent do uploadowania avatara
+
+**Zmodyfikowane pliki**:
+- `src/components/settings/settings-content.tsx` - Integracja komponentu AvatarUpload
+
+**Funkcjonalności**:
+
+1. **POST /api/user/avatar** - Przesyłanie zdjęcia profilowego
+   - Walidacja typu pliku (tylko obrazy)
+   - Maksymalny rozmiar: 5MB
+   - Automatyczne usuwanie poprzedniego avatara
+   - Unikalne nazwy plików z timestamp
+   - Pliki zapisywane w public/uploads/avatars/
+
+2. **DELETE /api/user/avatar** - Usuwanie zdjęcia profilowego
+   - Usuwanie pliku z dysku
+   - Aktualizacja bazy danych (avatarUrl = null)
+
+3. **Komponent AvatarUpload**
+   - Drag & drop interface
+   - Preview zdjęcia przed przesłaniem
+   - Walidacja po stronie klienta
+   - Dialog z opcjami zmiany/usunięcia
+   - Responsywny design z różnymi rozmiarami
+   - Integracja z istniejącym systemem avatarów
+
+**Ograniczenia**:
+- Maksymalny rozmiar pliku: 5MB
+- Obsługiwane formaty: wszystkie typy image/*
+- Pliki są zapisywane w public/uploads/avatars/
+- Automatyczne usuwanie poprzednich avatarów przy zmianie
