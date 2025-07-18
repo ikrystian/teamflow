@@ -564,6 +564,60 @@ Ograniczenia:
    - Unikalne nazwy plików z timestamp
    - Pliki zapisywane w public/uploads/avatars/
 
+### Implementacja zdjęć projektów ✅
+**Data implementacji**: 2025-01-18
+
+**Dodane pliki**:
+- `src/app/api/projects/random-image/route.ts` - API endpoint do pobierania losowych zdjęć z Pexels
+- `src/app/api/projects/[projectId]/image/route.ts` - API endpoint do uploadowania zdjęć projektów
+- `src/components/projects/project-image-selector.tsx` - Komponent do wyboru zdjęcia projektu
+
+**Zmodyfikowane pliki**:
+- `prisma/schema.prisma` - Dodanie pola imageUrl do modelu Project
+- `src/app/api/projects/route.ts` - Obsługa imageUrl w tworzeniu projektów
+- `src/app/api/projects/[projectId]/route.ts` - Obsługa imageUrl w aktualizacji projektów
+- `src/components/projects/create-project-dialog.tsx` - Integracja komponentu wyboru zdjęcia
+- `src/components/projects/projects-content.tsx` - Wyświetlanie zdjęć na kartach projektów
+- `.env` i `env.sample` - Dodanie PEXELS_API_KEY
+
+**Funkcjonalności**:
+
+1. **Model Project** - Dodanie pola imageUrl (opcjonalne)
+
+2. **GET /api/projects/random-image** - Pobieranie losowych zdjęć z Pexels
+   - Parametry: query (domyślnie "business office workspace"), orientation
+   - Integracja z Pexels API
+   - Zwraca losowe zdjęcie z wyników wyszukiwania
+
+3. **POST /api/projects/[projectId]/image** - Upload zdjęcia projektu
+   - Walidacja typu pliku (tylko obrazy)
+   - Maksymalny rozmiar: 10MB
+   - Automatyczne usuwanie poprzedniego zdjęcia
+   - Pliki zapisywane w public/uploads/projects/
+
+4. **DELETE /api/projects/[projectId]/image** - Usuwanie zdjęcia projektu
+
+5. **ProjectImageSelector** - Komponent do wyboru zdjęcia
+   - Upload pliku z drag & drop
+   - Pobieranie losowego zdjęcia z Pexels
+   - Podgląd wybranego zdjęcia
+   - Możliwość usunięcia zdjęcia
+
+6. **Lista projektów** - Wyświetlanie zdjęć na kartach
+   - Zdjęcie projektu na górze karty (aspect ratio 16:9)
+   - Placeholder z ikoną gdy brak zdjęcia
+   - Responsywne obrazy z Next.js Image
+
+**Testowanie**:
+- Wszystkie komponenty przetestowane i działają poprawnie
+- API endpoints zwracają prawidłowe odpowiedzi
+- Baza danych zaktualizowana z migracją
+- Fallback dla braku klucza Pexels API (używa Unsplash)
+- Next.js config zaktualizowany dla zewnętrznych obrazów
+- Dokumentacja zaktualizowana z instrukcjami konfiguracji
+
+**Status**: ✅ KOMPLETNE - Funkcjonalność w pełni zaimplementowana i przetestowana
+
 2. **DELETE /api/user/avatar** - Usuwanie zdjęcia profilowego
    - Usuwanie pliku z dysku
    - Aktualizacja bazy danych (avatarUrl = null)

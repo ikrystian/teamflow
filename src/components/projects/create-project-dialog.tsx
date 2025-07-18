@@ -20,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { ProjectImageSelector } from "./project-image-selector"
 
 interface Team {
   id: string
@@ -42,6 +43,7 @@ export function CreateProjectDialog({
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [teamId, setTeamId] = useState("")
+  const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
@@ -59,7 +61,8 @@ export function CreateProjectDialog({
         body: JSON.stringify({
           name,
           description: description || undefined,
-          teamId
+          teamId,
+          imageUrl
         }),
       })
 
@@ -67,6 +70,7 @@ export function CreateProjectDialog({
         setName("")
         setDescription("")
         setTeamId("")
+        setImageUrl(null)
         onProjectCreated()
       } else {
         const data = await response.json()
@@ -83,6 +87,7 @@ export function CreateProjectDialog({
     setName("")
     setDescription("")
     setTeamId("")
+    setImageUrl(null)
     setError("")
     onOpenChange(false)
   }
@@ -135,6 +140,11 @@ export function CreateProjectDialog({
                 </SelectContent>
               </Select>
             </div>
+
+            <ProjectImageSelector
+              selectedImageUrl={imageUrl}
+              onImageChange={setImageUrl}
+            />
 
             {error && (
               <div className="text-red-500 text-sm">{error}</div>

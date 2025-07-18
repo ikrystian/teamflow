@@ -5,15 +5,17 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
-import { Plus, FolderOpen, Calendar, Users } from "lucide-react"
+import { Plus, FolderOpen, Calendar, Users, ImageIcon } from "lucide-react"
 import { CreateProjectDialog } from "./create-project-dialog"
 import Link from "next/link"
+import Image from "next/image"
 
 interface Project {
   id: string
   name: string
   description?: string
   status: string
+  imageUrl?: string
   createdAt: string
   team: {
     id: string
@@ -163,12 +165,29 @@ export function ProjectsContent() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           {projects.map((project) => {
             const stats = getTaskStats(project.tasks)
             return (
               <Link key={project.id} href={`/dashboard/projects/${project.id}`}>
-                <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                <Card className="hover:shadow-md transition-shadow cursor-pointer overflow-hidden">
+                  {/* Project Image */}
+                  <div className="relative h-48 bg-muted">
+                    {project.imageUrl ? (
+                      <Image
+                        src={project.imageUrl}
+                        alt={project.name}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full">
+                        <ImageIcon className="h-12 w-12 text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
+
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg truncate">{project.name}</CardTitle>

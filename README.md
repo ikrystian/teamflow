@@ -7,7 +7,7 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 ### ✅ Zaimplementowane (MVP)
 - **Uwierzytelnianie użytkowników** - Rejestracja i logowanie z NextAuth.js
 - **Zarządzanie zespołami** - Tworzenie zespołów, edycja nazw zespołów i pełne zarządzanie członkami
-- **Zarządzanie projektami** - Tworzenie projektów w ramach zespołów
+- **Zarządzanie projektami** - Tworzenie projektów w ramach zespołów z możliwością dodawania zdjęć
 - **Zarządzanie zadaniami** - Pełna funkcjonalność CRUD dla zadań z szacowanym czasem, edycją i usuwaniem
 - **Widok tablicy Kanban w stylu Trello** - Nowoczesna tablica z uproszczonymi kartami, drag & drop i szczegółami po kliknięciu
 - **Konfigurowalne statusy zadań** - Możliwość definiowania własnych statusów dla każdego projektu
@@ -22,6 +22,7 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 - **Mono theme** - Monochromatyczny motyw z wykorzystaniem najnowszej wersji shadcn/ui
 - **Responsywny interfejs** - Zbudowany z shadcn/ui i Tailwind CSS
 - **Nowoczesna nawigacja** - Sidebar z aktywnym oznaczaniem stron i responsywnym designem
+- **Zdjęcia projektów** - Upload własnych zdjęć lub automatyczne pobieranie losowych zdjęć z Unsplash
 
 ### 🔄 Planowane funkcjonalności
 - Zaproszenia do zespołów przez email
@@ -77,7 +78,14 @@ Plik `.env` jest już skonfigurowany z podstawowymi ustawieniami:
 DATABASE_URL="file:./dev.db"
 NEXTAUTH_SECRET="your-secret-key-here"
 NEXTAUTH_URL="http://localhost:3000"
+PEXELS_API_KEY="your-pexels-api-key-here"  # Opcjonalne - dla losowych zdjęć
 ```
+
+**Konfiguracja Pexels API (opcjonalna)**:
+- Zarejestruj się na [Pexels.com](https://www.pexels.com/api/)
+- Uzyskaj darmowy klucz API
+- Dodaj go do pliku `.env` jako `PEXELS_API_KEY`
+- Bez klucza API aplikacja używa zdjęć z Unsplash jako fallback
 
 5. **Uruchom aplikację**
 ```bash
