@@ -342,9 +342,14 @@ Ograniczenia:
 
 **Nowe API endpoints**:
 - GET /api/projects/[projectId]/documents - pobieranie dokumentów projektu
-- POST /api/projects/[projectId]/documents - uploadowanie dokumentu
+- POST /api/projects/[projectId]/documents - uploadowanie dokumentu (✅ NAPRAWIONE)
 - DELETE /api/projects/[projectId]/documents?documentId=X - usuwanie dokumentu
 - Rozszerzono PATCH /api/projects/[projectId] o obsługę danych dostępowych
+
+**Rozwiązane problemy**:
+- ✅ Naprawiono funkcjonalność uploadowania dokumentów do projektów
+- ✅ Dodano lepszą obsługę błędów w API i frontend
+- ✅ Zweryfikowano poprawność działania całego procesu upload → filesystem → database
 
 **Funkcjonalności**:
 - Zapisywanie i edycja danych dostępowych projektu (linki do repozytoriów, serwerów, API itp.)

@@ -155,10 +155,13 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
         const data = await response.json()
         setDocuments(prev => [data.document, ...(prev || [])])
       } else {
-        console.error('Failed to upload document')
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        console.error('Failed to upload document:', response.status, errorData)
+        alert(`Failed to upload document: ${errorData.error || 'Unknown error'}`)
       }
     } catch (error) {
       console.error('Error uploading document:', error)
+      alert(`Error uploading document: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
