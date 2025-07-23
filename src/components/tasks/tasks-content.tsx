@@ -6,7 +6,7 @@ import type { Session } from "next-auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { Plus, CheckSquare, Calendar, User as UserIcon, Filter, Edit, Clock, MoreHorizontal, Trash2 } from "lucide-react"
 import { CreateTaskDialog } from "./create-task-dialog"
@@ -408,12 +408,12 @@ export function TasksContent() {
                       <div className="flex items-center space-x-4">
                         {task.assignee && (
                           <div className="flex items-center space-x-2">
-                            <Avatar className="h-6 w-6">
-                              <AvatarImage src={task.assignee.avatarUrl} alt={task.assignee.name} />
-                              <AvatarFallback className="text-xs">
-                                {task.assignee.name?.charAt(0) || "U"}
-                              </AvatarFallback>
-                            </Avatar>
+                            <ClickableAvatar
+                              userId={task.assignee.id}
+                              avatarUrl={task.assignee.avatarUrl}
+                              name={task.assignee.name}
+                              size="md"
+                            />
                             <span className="text-sm text-muted-foreground">{task.assignee.name}</span>
                           </div>
                         )}

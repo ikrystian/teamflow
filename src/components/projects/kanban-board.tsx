@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { Button } from "@/components/ui/button"
 import { Calendar, Clock, Edit, MoreHorizontal, Plus, AlertCircle, Trash2 } from "lucide-react"
 import {
@@ -209,12 +209,13 @@ function SortableTaskCard({
 
           <div className="flex items-center justify-between">
             {task.assignee ? (
-              <Avatar className="h-7 w-7 border-2 border-white shadow-sm">
-                <AvatarImage src={task.assignee.avatarUrl} />
-                <AvatarFallback className="text-xs bg-gradient-to-br from-blue-400 to-purple-500 text-white font-medium">
-                  {task.assignee.name?.charAt(0) || "U"}
-                </AvatarFallback>
-              </Avatar>
+              <ClickableAvatar
+                userId={task.assignee.id}
+                avatarUrl={task.assignee.avatarUrl}
+                name={task.assignee.name}
+                size="lg"
+                className="border-2 border-white shadow-sm"
+              />
             ) : (
               <div className="h-7 w-7" />
             )}
@@ -538,12 +539,13 @@ export function KanbanBoard({
                 </h3>
                 <div className="flex items-center justify-between mt-2">
                   {activeTask.assignee && (
-                    <Avatar className="h-6 w-6 border-2 border-white shadow-sm">
-                      <AvatarImage src={activeTask.assignee.avatarUrl} />
-                      <AvatarFallback className="text-xs bg-gradient-to-br from-blue-400 to-purple-500 text-white font-medium">
-                        {activeTask.assignee.name?.charAt(0) || "U"}
-                      </AvatarFallback>
-                    </Avatar>
+                    <ClickableAvatar
+                      userId={activeTask.assignee.id}
+                      avatarUrl={activeTask.assignee.avatarUrl}
+                      name={activeTask.assignee.name}
+                      size="md"
+                      className="border-2 border-white shadow-sm"
+                    />
                   )}
                   {activeTask.priority && (
                     <Badge

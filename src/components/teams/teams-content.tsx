@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { Plus, Users, Settings } from "lucide-react"
 import { CreateTeamDialog } from "./create-team-dialog"
@@ -140,12 +141,14 @@ export function TeamsContent() {
                     </div>
                     <div className="flex -space-x-2">
                       {team.members.slice(0, 5).map((member) => (
-                        <Avatar key={member.id} className="h-8 w-8 border-2 border-background">
-                          <AvatarImage src={member.avatarUrl} alt={member.name} />
-                          <AvatarFallback className="text-xs">
-                            {member.name?.charAt(0) || "U"}
-                          </AvatarFallback>
-                        </Avatar>
+                        <ClickableAvatar
+                          key={member.id}
+                          userId={member.id}
+                          avatarUrl={member.avatarUrl}
+                          name={member.name}
+                          size="md"
+                          className="border-2 border-background"
+                        />
                       ))}
                       {team.members.length > 5 && (
                         <div className="h-8 w-8 rounded-full bg-muted border-2 border-background flex items-center justify-center">

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import {
   ArrowLeft,
@@ -440,12 +440,12 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
           <div className="flex flex-wrap gap-4">
             {project.team.members.map((member) => (
               <div key={member.id} className="flex items-center space-x-3">
-                <Avatar>
-                  <AvatarImage src={member.avatarUrl} />
-                  <AvatarFallback>
-                    {member.name?.split(' ').map(n => n[0]).join('') || 'U'}
-                  </AvatarFallback>
-                </Avatar>
+                <ClickableAvatar
+                  userId={member.id}
+                  avatarUrl={member.avatarUrl}
+                  name={member.name}
+                  size="lg"
+                />
                 <div>
                   <p className="text-sm font-medium">{member.name}</p>
                   <p className="text-xs text-gray-500">{member.email}</p>

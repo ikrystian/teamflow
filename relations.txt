@@ -165,3 +165,44 @@ TaskDetailsDialog → (pobiera dane z API) → TaskTodos (synchronizuje stan z p
 **Lokalizacja wyświetlania**:
 - Lista zadań w My Tasks: obok subtasks i informacji o czasie
 - Dashboard w sekcji "Ostatnie zadania": pod nazwą projektu obok subtasks
+
+### Unifikacja komponentów CreateTaskDialog
+
+**Data**: 2025-01-23
+**Funkcjonalność**: Zsynchronizowano wygląd i funkcjonalność komponentów CreateTaskDialog między widokiem "moje zadania" i widokiem projektu
+
+**Problem**:
+- Komponent CreateTaskDialog w widoku projektu (`src/components/projects/create-task-dialog.tsx`) miał inny wygląd i funkcjonalność niż komponent z widoku "moje zadania" (`src/components/tasks/create-task-dialog.tsx`)
+- Różnice obejmowały: styling, layout, komponenty (RichTextEditor vs Textarea, DatePicker vs Input), układ pól
+
+**Rozwiązanie**:
+- Zaktualizowano komponent `src/components/projects/create-task-dialog.tsx` aby wyglądał identycznie jak komponent z widoku "moje zadania"
+- Dodano RichTextEditor zamiast zwykłego Textarea dla opisu zadania
+- Dodano DatePicker zamiast zwykłego Input type="date" dla terminu wykonania
+- Zaktualizowano layout na grid z responsive kolumnami
+- Ujednolicono styling (spacing, heights, colors, typography)
+- Poprawiono styling sekcji załączników (obrazków)
+- Dodano lepsze animacje i efekty hover
+
+**Główne zmiany**:
+1. **Import komponentów**: Dodano RichTextEditor i DatePicker
+2. **Layout**: Zmieniono z prostego grid na space-y-4 z responsive grid dla niektórych sekcji
+3. **Styling**: Ujednolicono klasy CSS, wysokości (h-10), spacing (space-y-2)
+4. **Komponenty**:
+   - Opis: Textarea → RichTextEditor z bogatym formatowaniem
+   - Data: Input type="date" → DatePicker z kalendarzem
+   - Priorytet: Dodano kolorowe kropki dla wizualizacji
+   - Przypisany: Dodano awatary z inicjałami
+5. **Dialog**: Zwiększono szerokość (625px → 700px), dodano overflow-y-auto
+6. **Footer**: Dodano lepsze animacje loading i responsive layout
+
+**Zachowane różnice**:
+- Komponent z widoku projektu nie ma wyboru projektu (projectId przekazywane jako prop)
+- Komponent z widoku projektu ma wybór statusu zadania (pobierany z API projektu)
+- Komponent z widoku "moje zadania" ma wybór projektu z listy dostępnych projektów
+
+**Zmienione pliki**:
+- `src/components/projects/create-task-dialog.tsx` - kompletna aktualizacja UI i funkcjonalności
+
+**Relacja komponentów**:
+ProjectDetailsContent → CreateTaskDialog (projekt) - identyczny wygląd jak TasksContent → CreateTaskDialog (moje zadania)

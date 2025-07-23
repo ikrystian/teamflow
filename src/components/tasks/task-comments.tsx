@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { MessageSquare, Send, MoreHorizontal, Trash2 } from "lucide-react"
@@ -185,12 +186,12 @@ export function TaskComments({
         ) : (
           comments.map((comment) => (
             <div key={comment.id} className="flex space-x-3 group">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={comment.author.avatarUrl} />
-                <AvatarFallback className="text-xs">
-                  {comment.author.name?.charAt(0) || "U"}
-                </AvatarFallback>
-              </Avatar>
+              <ClickableAvatar
+                userId={comment.author.id}
+                avatarUrl={comment.author.avatarUrl}
+                name={comment.author.name}
+                size="md"
+              />
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">

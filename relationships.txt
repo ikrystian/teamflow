@@ -161,6 +161,8 @@ Ograniczenia:
 
 ### Users
 - GET /api/users - Lista wszystkich użytkowników (z opcjonalnym wyszukiwaniem)
+- GET /api/users/[userId] - Pobieranie profilu konkretnego użytkownika ze statystykami
+- GET /api/users/[userId]/stats - Pobieranie szczegółowych statystyk użytkownika
 - GET /api/user/profile - Pobieranie profilu aktualnego użytkownika
 - PUT /api/user/profile - Aktualizacja profilu użytkownika
 - POST /api/user/avatar - Przesyłanie zdjęcia profilowego
@@ -238,6 +240,7 @@ Ograniczenia:
 - TeamsPage - Lista zespołów
 - ReportsPage - Strona raportów i analiz (z DashboardLayout i sprawdzaniem sesji)
 - CalendarPage - Widok kalendarza
+- UserProfilePage - Strona profilu użytkownika (/dashboard/profile/[userId])
 
 ### Content Components
 - DashboardContent - Zawartość dashboardu ze statystykami
@@ -268,6 +271,8 @@ Ograniczenia:
 
 ### UI Components (shadcn/ui)
 - Button, Card, Badge, Avatar, Input, Label, Select, Dialog, etc.
+- ClickableAvatar - Komponent avatara z linkiem do profilu użytkownika
+- UserProfileContent - Komponent wyświetlający profil użytkownika ze statystykami
 
 ## Przepływ danych
 
@@ -403,6 +408,63 @@ Ograniczenia:
 - Dialog podobny do CreateTeamDialog dla spójności
 - Automatyczne odświeżanie listy po edycji
 - Obsługa stanów ładowania i błędów
+
+## Nowe funkcjonalności - Profile użytkowników
+
+### Implementacja profili użytkowników ✅
+**Data implementacji**: 2025-01-18
+
+**Dodane pliki**:
+- `src/app/api/users/[userId]/route.ts` - API endpoint do pobierania profilu użytkownika po ID
+- `src/app/api/users/[userId]/stats/route.ts` - API endpoint do pobierania statystyk użytkownika
+- `src/app/dashboard/profile/[userId]/page.tsx` - Strona profilu użytkownika
+- `src/components/profile/user-profile-content.tsx` - Komponent profilu użytkownika
+- `src/components/ui/clickable-avatar.tsx` - Komponent klikalnego avatara
+
+**Zmodyfikowane pliki**:
+- Wszystkie komponenty z avatarami użytkowników (kanban-board, tasks-content, teams-content, project-info-content, task-comments)
+- `relationships.txt` - Aktualizacja dokumentacji
+
+**Funkcjonalności**:
+
+1. **GET /api/users/[userId]** - Pobieranie profilu użytkownika
+   - Dane publiczne użytkownika (bez telefonu dla prywatności)
+   - Tylko dane z projektów/zespołów gdzie aktualny użytkownik ma dostęp
+   - Podstawowe statystyki (zadania, zespoły, czas pracy, komentarze)
+   - Ostatnie zadania, komentarze i wpisy czasu
+
+2. **GET /api/users/[userId]/stats** - Szczegółowe statystyki
+   - Filtrowanie po zakresie czasowym (tydzień, miesiąc, wszystko)
+   - Statystyki zadań według statusu i priorytetu
+   - Statystyki czasu pracy z dziennym rozkładem
+   - Zaangażowanie w projekty
+   - Ostatnia aktywność
+
+3. **Strona profilu /dashboard/profile/[userId]**
+   - Informacje o użytkowniku z avatarem
+   - Statystyki w kartach (zadania, zespoły, czas, komentarze)
+   - Zakładki z aktywnością: zadania, zespoły, komentarze, czas pracy
+   - Wskaźnik ukończenia zadań
+   - Responsywny design
+
+4. **Klikalne avatary**
+   - Wszystkie avatary użytkowników są teraz klikalne
+   - Przekierowują do profilu użytkownika
+   - Hover effect z tooltipem
+   - Zachowana funkcjonalność w kontekstach gdzie nie powinny być klikalne
+
+**Bezpieczeństwo**:
+- Użytkownicy widzą tylko profile osób z wspólnych zespołów/projektów
+- Dane telefonu nie są udostępniane publicznie
+- Wszystkie endpointy wymagają autoryzacji
+- Filtrowanie danych według uprawnień użytkownika
+
+**UX/UI**:
+- Spójny design z resztą aplikacji
+- Ładowanie z szkieletami
+- Obsługa błędów i stanów pustych
+- Intuicyjna nawigacja z przyciskiem "Wróć"
+- Tooltips na avatarach z nazwą użytkownika
 
 ## Nowe funkcjonalności - Zarządzanie członkami zespołów
 

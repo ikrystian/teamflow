@@ -149,31 +149,29 @@ export function TaskDetailsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden">
         <DialogHeader className="space-y-3">
-          <div className="flex items-start justify-between">
-            <div className="flex-1 min-w-0">
-              <DialogTitle className="text-2xl font-bold pr-8 line-clamp-2">
-                {task.title}
-              </DialogTitle>
-              <div className="flex items-center gap-2 mt-3 flex-wrap">
-                <Badge variant="outline" className="text-xs font-medium">
-                  {task.project.name}
+          <div className="space-y-4">
+            <DialogTitle className="text-2xl font-bold line-clamp-2">
+              {task.title}
+            </DialogTitle>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge variant="outline" className="text-xs font-medium">
+                {task.project.name}
+              </Badge>
+              <Badge variant="outline" className="text-xs font-medium">
+                {task.project.team.name}
+              </Badge>
+              {task.priority && (
+                <Badge variant="secondary" className={getPriorityColor(task.priority)}>
+                  {task.priority === "Low" ? "Niski" : task.priority === "Medium" ? "Średni" : "Wysoki"}
                 </Badge>
-                <Badge variant="outline" className="text-xs font-medium">
-                  {task.project.team.name}
-                </Badge>
-                {task.priority && (
-                  <Badge variant="secondary" className={getPriorityColor(task.priority)}>
-                    {task.priority === "Low" ? "Niski" : task.priority === "Medium" ? "Średni" : "Wysoki"}
-                  </Badge>
-                )}
-                <Badge variant="default" className={getStatusColor(task.status)}>
-                  {task.status === "completed" ? "Ukończono" :
-                   task.status === "in progress" ? "W toku" :
-                   task.status === "on hold" ? "Wstrzymano" : task.status}
-                </Badge>
-              </div>
+              )}
+              <Badge variant="default" className={getStatusColor(task.status)}>
+                {task.status === "completed" ? "Ukończono" :
+                 task.status === "in progress" ? "W toku" :
+                 task.status === "on hold" ? "Wstrzymano" : task.status}
+              </Badge>
             </div>
-            <div className="flex items-center gap-2 ml-4">
+            <div className="flex items-center gap-2">
               {onTimeTracking && (
                 <Button
                   variant="outline"
