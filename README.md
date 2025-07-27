@@ -453,12 +453,58 @@ Aplikacja jest gotowa do wdrożenia na platformach takich jak:
 - **Railway**
 - **Heroku**
 
+### Deployment na Vercel
+
+1. **Przygotowanie do wdrożenia**
+```bash
+# Upewnij się, że build działa lokalnie
+npm run build
+```
+
+2. **Konfiguracja zmiennych środowiskowych w Vercel**
+Ustaw następujące zmienne w panelu Vercel:
+```env
+DATABASE_URL="your-production-database-url"
+NEXTAUTH_SECRET="your-secure-secret-key"
+NEXTAUTH_URL="https://your-app-domain.vercel.app"
+PEXELS_API_KEY="your-pexels-api-key"
+```
+
+3. **Automatyczne wdrożenie**
+- Aplikacja zawiera `vercel.json` z odpowiednią konfiguracją
+- Build script automatycznie uruchamia `prisma generate`
+- Postinstall hook zapewnia wygenerowanie klienta Prisma
+
 Przed wdrożeniem pamiętaj o:
-1. Ustawieniu zmiennych środowiskowych
+1. Ustawieniu zmiennych środowiskowych w panelu Vercel
 2. Migracji na bazę danych produkcyjną (np. PostgreSQL)
 3. Wygenerowaniu bezpiecznego `NEXTAUTH_SECRET`
 
 ## 🔧 Rozwiązywanie problemów
+
+### Prisma Client Initialization Error na Vercel
+Jeśli napotkasz błąd: "Prisma has detected that this project was built on Vercel, which caches dependencies":
+
+1. **Sprawdź konfigurację build script**
+```bash
+# package.json powinien zawierać:
+"build": "prisma generate && next build"
+"postinstall": "prisma generate"
+```
+
+2. **Upewnij się, że vercel.json jest skonfigurowany**
+```json
+{
+  "buildCommand": "prisma generate && next build",
+  "installCommand": "npm install && prisma generate"
+}
+```
+
+3. **Wygeneruj klienta lokalnie**
+```bash
+npx prisma generate
+npm run build
+```
 
 ### PDF Export - "doc.autoTable is not a function"
 Jeśli napotkasz błąd związany z eksportem PDF, upewnij się że:
