@@ -3,7 +3,7 @@ import tailwindcssAnimate from "tailwindcss-animate";
 import tailwindcssTypography from "@tailwindcss/typography";
 
 /** @type {import('tailwindcss').Config} */
-export default {
+const config = {
   darkMode: ["class"],
   content: [
     './pages/**/*.{ts,tsx}',
@@ -82,3 +82,5 @@ export default {
     tailwindcssTypography,
   ],
 };
+
+export default config;

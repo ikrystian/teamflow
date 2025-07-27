@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
+import type { Session } from "next-auth"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -9,21 +10,17 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { LoadingSkeleton, LoadingCard } from "@/components/ui/loading-skeleton"
 import {
-  User,
   MapPin,
   Briefcase,
-  Building,
   Globe,
   Calendar,
   CheckSquare,
   Clock,
   MessageSquare,
   Users,
-  FolderOpen,
   TrendingUp,
   ArrowLeft
 } from "lucide-react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 
 interface UserProfile {
@@ -106,7 +103,7 @@ interface UserProfileContentProps {
 }
 
 export function UserProfileContent({ userId }: UserProfileContentProps) {
-  const { data: session } = useSession()
+  const { data: session } = useSession() as { data: Session | null }
   const router = useRouter()
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)

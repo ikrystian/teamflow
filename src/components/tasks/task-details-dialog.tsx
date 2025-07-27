@@ -257,6 +257,7 @@ export function TaskDetailsDialog({
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
+                      {/* eslint-disable-next-line jsx-a11y/alt-text */}
                       <Image className="h-5 w-5" />
                       Załączniki ({task.images.length})
                     </CardTitle>

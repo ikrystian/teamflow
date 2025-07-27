@@ -2,15 +2,15 @@
 
 import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { 
-  Upload, 
-  X, 
-  File, 
-  FileText, 
-  FileImage, 
-  FileVideo, 
+import {
+  Upload,
+  X,
+  File,
+  FileText,
+  FileImage,
+  FileVideo,
   FileAudio,
   Download,
   Eye
@@ -46,7 +46,7 @@ interface FileUploadProps {
   className?: string
 }
 
-export function FileUpload({ 
+export function FileUpload({
   files,
   onFileUpload,
   onFileDelete,
@@ -58,6 +58,7 @@ export function FileUpload({
   maxFiles = 10,
   title = "Pliki",
   description = "Załączone pliki",
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   categories = ["specification", "design", "manual", "other"],
   showCategories = true,
   showDescriptions = true,
@@ -105,7 +106,7 @@ export function FileUpload({
     if (file.size > maxSize) {
       return `Plik jest za duży. Maksymalny rozmiar: ${formatFileSize(maxSize)}`
     }
-    
+
     if (files.length >= maxFiles) {
       return `Osiągnięto maksymalną liczbę plików: ${maxFiles}`
     }
@@ -146,7 +147,7 @@ export function FileUpload({
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     setDragOver(false)
-    
+
     const files = e.dataTransfer.files
     if (files) {
       handleFileSelect(files)

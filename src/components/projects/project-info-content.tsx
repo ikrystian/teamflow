@@ -554,7 +554,7 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
                         />
                       ) : (
                         <div className="text-sm text-muted-foreground italic">
-                          Dane dostępowe są ukryte. Kliknij "Pokaż" aby je wyświetlić.
+                          Dane dostępowe są ukryte. Kliknij &quot;Pokaż&quot; aby je wyświetlić.
                         </div>
                       )}
                     </div>

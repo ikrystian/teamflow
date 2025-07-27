@@ -3,10 +3,9 @@
 import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { 
-  Camera, 
-  Upload, 
-  X, 
+import {
+  Camera,
+  Upload,
   Loader2,
   Trash2
 } from "lucide-react"
@@ -31,7 +30,7 @@ interface AvatarUploadProps {
 
 const sizeClasses = {
   sm: "h-8 w-8",
-  md: "h-12 w-12", 
+  md: "h-12 w-12",
   lg: "h-20 w-20",
   xl: "h-32 w-32"
 }
@@ -43,7 +42,7 @@ const fallbackSizeClasses = {
   xl: "text-2xl"
 }
 
-export function AvatarUpload({ 
+export function AvatarUpload({
   currentAvatarUrl,
   fallbackText = "U",
   onAvatarChange,
@@ -132,7 +131,7 @@ export function AvatarUpload({
         setPreviewUrl(e.target?.result as string)
       }
       reader.readAsDataURL(file)
-      
+
       handleFileSelect(file)
     }
     // Reset input
@@ -142,7 +141,7 @@ export function AvatarUpload({
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     setDragOver(false)
-    
+
     const file = e.dataTransfer.files?.[0]
     if (file) {
       // Create preview
@@ -151,7 +150,7 @@ export function AvatarUpload({
         setPreviewUrl(e.target?.result as string)
       }
       reader.readAsDataURL(file)
-      
+
       handleFileSelect(file)
     }
   }
@@ -185,7 +184,7 @@ export function AvatarUpload({
           {fallbackText}
         </AvatarFallback>
       </Avatar>
-      
+
       <div className="flex flex-col gap-2">
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
@@ -201,7 +200,7 @@ export function AvatarUpload({
                 Prześlij nowe zdjęcie profilowe. Maksymalny rozmiar: 5MB.
               </DialogDescription>
             </DialogHeader>
-            
+
             <div className="space-y-4">
               {/* Current/Preview Avatar */}
               <div className="flex justify-center">
@@ -233,7 +232,7 @@ export function AvatarUpload({
                   className="hidden"
                   disabled={uploading}
                 />
-                
+
                 {uploading ? (
                   <div className="flex flex-col items-center gap-2">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -278,7 +277,7 @@ export function AvatarUpload({
             </div>
           </DialogContent>
         </Dialog>
-        
+
         <p className="text-sm text-gray-500">
           JPG, PNG lub GIF. Maksymalnie 5MB.
         </p>
