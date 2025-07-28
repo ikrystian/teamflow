@@ -488,15 +488,16 @@ Jeśli napotkasz błąd: "Prisma has detected that this project was built on Ver
 1. **Sprawdź konfigurację build script**
 ```bash
 # package.json powinien zawierać:
-"build": "prisma generate && next build"
-"postinstall": "prisma generate"
+"build": "npx prisma generate && next build"
+"postinstall": "npx prisma generate"
 ```
 
 2. **Upewnij się, że vercel.json jest skonfigurowany**
 ```json
 {
-  "buildCommand": "prisma generate && next build",
-  "installCommand": "npm install && prisma generate"
+  "env": {
+    "PRISMA_GENERATE_DATAPROXY": "true"
+  }
 }
 ```
 
