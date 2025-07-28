@@ -1,14 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { signIn, getSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Zap } from "lucide-react"
+import { toast } from "sonner"
 
 export default function SignIn() {
   const [email, setEmail] = useState("")
@@ -16,6 +17,21 @@ export default function SignIn() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const toastShownRef = useRef(false)
+
+  // Sprawdź czy jest komunikat o pomyślnej rejestracji
+  useEffect(() => {
+    const message = searchParams.get('message')
+    if (message && !toastShownRef.current) {
+      toastShownRef.current = true
+      toast.success(message)
+      // Usuń parametr z URL bez przeładowania strony
+      const url = new URL(window.location.href)
+      url.searchParams.delete('message')
+      window.history.replaceState({}, '', url.toString())
+    }
+  }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

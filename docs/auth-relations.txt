@@ -1,0 +1,79 @@
+RELACJE MIĘDZY KOMPONENTAMI UWIERZYTELNIANIA - TEAMFLOW
+
+=== STRUKTURA UWIERZYTELNIANIA ===
+
+1. STRONA REJESTRACJI (/auth/signup)
+   - Plik: src/app/auth/signup/page.tsx
+   - Funkcjonalność: Formularz rejestracji nowego użytkownika
+   - API: POST /api/auth/register
+   - Przekierowanie: Po pomyślnej rejestracji → /auth/signin?message=Konto zostało utworzone pomyślnie
+
+2. STRONA LOGOWANIA (/auth/signin)
+   - Plik: src/app/auth/signin/page.tsx
+   - Funkcjonalność: Formularz logowania + wyświetlanie komunikatu o rejestracji
+   - API: NextAuth.js credentials provider
+   - Obsługa parametru URL: message (wyświetla toast z komunikatem)
+   - Przekierowanie: Po pomyślnym logowaniu → /dashboard
+
+3. API REJESTRACJI
+   - Plik: src/app/api/auth/register/route.ts
+   - Funkcjonalność: Tworzenie nowego użytkownika w bazie danych
+   - Walidacja: Sprawdzanie czy użytkownik już istnieje
+   - Hashowanie hasła: bcrypt
+
+4. KONFIGURACJA NEXTAUTH
+   - Plik: src/lib/auth.ts
+   - Provider: Credentials (email + hasło)
+   - Adapter: PrismaAdapter
+   - Sesja: JWT strategy
+
+=== PRZEPŁYW REJESTRACJI I LOGOWANIA ===
+
+1. Użytkownik wypełnia formularz rejestracji
+2. POST /api/auth/register → tworzy użytkownika w bazie
+3. Przekierowanie na /auth/signin?message=Konto zostało utworzone pomyślnie
+4. Strona logowania odczytuje parametr 'message' z URL
+5. useEffect wyświetla toast.success() z komunikatem
+6. URL zostaje oczyszczony z parametru (history.replaceState)
+7. Użytkownik może się zalogować
+
+=== SYSTEM POWIADOMIEŃ ===
+
+- Biblioteka: sonner (toast notifications)
+- Komponent: src/components/ui/sonner.tsx
+- Dodany do layout: src/app/layout.tsx
+- Użycie: toast.success(), toast.error()
+
+=== PLIKI ZWIĄZANE Z UWIERZYTELNIANIEM ===
+
+- src/app/auth/signup/page.tsx - Strona rejestracji
+- src/app/auth/signin/page.tsx - Strona logowania
+- src/app/api/auth/register/route.ts - API rejestracji
+- src/app/api/auth/[...nextauth]/route.ts - NextAuth handler
+- src/lib/auth.ts - Konfiguracja NextAuth
+- src/components/ui/sonner.tsx - Komponent toastów
+- src/app/layout.tsx - Layout z Toaster
+
+=== ZALEŻNOŚCI ===
+
+- next-auth: Uwierzytelnianie
+- @auth/prisma-adapter: Adapter dla Prisma
+- bcryptjs: Hashowanie haseł
+- sonner: Toast notifications
+- prisma: ORM do bazy danych
+
+=== AKTUALIZACJA (2025-07-28) ===
+
+Dodano funkcjonalność wyświetlania komunikatu o pomyślnej rejestracji:
+- Strona logowania obsługuje parametr URL 'message'
+- Automatyczne wyświetlanie toast notification
+- Czyszczenie URL po wyświetleniu komunikatu
+- Używa systemu toastów Sonner już zaimplementowanego w aplikacji
+- Zabezpieczenie przed wielokrotnym wyświetlaniem toasta (useRef)
+
+=== ROZWIĄZANIE PROBLEMU PODWÓJNYCH TOASTÓW ===
+
+Problem: W React 18 z Strict Mode komponenty renderują się dwukrotnie w trybie deweloperskim
+Rozwiązanie: Użycie useRef do śledzenia czy toast już został wyświetlony
+- toastShownRef.current = true po pierwszym wyświetleniu
+- Sprawdzenie !toastShownRef.current przed wyświetleniem toasta
