@@ -1,0 +1,92 @@
+RELACJE MIĘDZY KOMPONENTAMI - DODAWANIE KOLUMN Z TABLICY ZADAŃ
+
+=== GŁÓWNE KOMPONENTY ===
+
+1. KanbanBoard (src/components/projects/kanban-board.tsx)
+   - Główny komponent tablicy zadań
+   - Zarządza statusami zadań (kolumnami)
+   - Zawiera przycisk "Dodaj kolumnę" na końcu listy kolumn
+   - Używa TaskStatusDialog do tworzenia nowych statusów
+
+2. TaskStatusDialog (src/components/projects/task-status-dialog.tsx)
+   - Dialog do tworzenia/edycji statusów zadań
+   - Używany zarówno w ustawieniach projektu jak i w tablicy zadań
+   - Pozwala na ustawienie nazwy, koloru i czy status jest domyślny
+
+3. KanbanColumn (wewnętrzny komponent w kanban-board.tsx)
+   - Reprezentuje pojedynczą kolumnę w tablicy
+   - Zawiera zadania dla danego statusu
+   - Obsługuje drag & drop zadań
+
+=== PRZEPŁYW DANYCH ===
+
+KanbanBoard:
+├── Pobiera statusy zadań z API (/api/projects/[projectId]/task-statuses)
+├── Renderuje kolumny dla każdego statusu
+├── Dodaje przycisk "Dodaj kolumnę" na końcu
+└── Otwiera TaskStatusDialog po kliknięciu przycisku
+
+TaskStatusDialog:
+├── Tworzy nowy status przez POST /api/projects/[projectId]/task-statuses
+├── Po zapisaniu wywołuje callback onStatusSaved
+└── KanbanBoard odświeża listę statusów
+
+=== API ENDPOINTS ===
+
+GET /api/projects/[projectId]/task-statuses
+- Pobiera wszystkie statusy dla projektu
+- Tworzy domyślne statusy jeśli nie istnieją
+
+POST /api/projects/[projectId]/task-statuses
+- Tworzy nowy status zadania
+- Wymaga: name, color, isDefault
+- Automatycznie ustawia kolejność (order)
+
+=== STRUKTURA BAZY DANYCH ===
+
+TaskStatus:
+- id: string (cuid)
+- name: string (nazwa statusu)
+- color: string (kolor hex)
+- order: int (kolejność w tablicy)
+- isDefault: boolean (czy domyślny dla nowych zadań)
+- projectId: string (powiązanie z projektem)
+
+=== FUNKCJONALNOŚCI ===
+
+1. Dodawanie kolumny z tablicy:
+   - Przycisk "Dodaj kolumnę" na końcu tablicy
+   - Otwiera dialog TaskStatusDialog
+   - Po zapisaniu automatycznie odświeża tablicę
+
+2. Zarządzanie statusami:
+   - Tworzenie nowych statusów
+   - Wybór koloru z palety predefiniowanych kolorów
+   - Ustawianie statusu jako domyślny
+
+3. Integracja z istniejącymi funkcjami:
+   - Drag & drop zadań między kolumnami
+   - Automatyczne przypisywanie statusu do zadań
+   - Synchronizacja z ustawieniami projektu
+
+=== STYLE I UI ===
+
+Przycisk "Dodaj kolumnę":
+- Karta z przerywaną ramką (border-dashed)
+- Hover efekty
+- Ikona Plus z tekstem
+- Szerokość 72 (w-72) jak inne kolumny
+- Wysokość dopasowana do zawartości (h-fit)
+
+Dialog:
+- Wykorzystuje shadcn/ui komponenty
+- Responsywny design
+- Walidacja formularza
+- Obsługa błędów
+
+=== BEZPIECZEŃSTWO ===
+
+- Weryfikacja uprawnień użytkownika do projektu
+- Walidacja danych wejściowych
+- Unikalne nazwy statusów w ramach projektu
+- Unikalna kolejność statusów w ramach projektu

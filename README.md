@@ -12,6 +12,7 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 - **Widok tablicy Kanban w stylu Trello** - Nowoczesna tablica z uproszczonymi kartami, drag & drop i szczegółami po kliknięciu
 - **Konfigurowalne statusy zadań** - Możliwość definiowania własnych statusów dla każdego projektu
 - **Ustawienia projektu** - Zarządzanie statusami zadań z kolorami i kolejnością
+- **Dodawanie kolumn z tablicy** - Możliwość dodawania nowych kolumn (statusów) bezpośrednio z tablicy zadań
 - **Time tracking** - Logowanie czasu pracy nad zadaniami, śledzenie postępu względem szacowanego czasu
 - **Załączniki obrazków** - Możliwość dodawania obrazków do zadań podczas tworzenia i edycji
 - **Dokumenty projektów** - Upload i zarządzanie dokumentami projektów (PDF, DOC, itp.) z kategoryzacją
