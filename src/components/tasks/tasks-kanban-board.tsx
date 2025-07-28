@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ClickableAvatar } from "@/components/ui/clickable-avatar"
@@ -37,7 +37,7 @@ import {
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { TaskDetailsDialog } from "./task-details-dialog"
-import type { Task } from "@/types"
+import type { Task, TaskStatus } from "@/types"
 import type { Session } from "next-auth"
 import { toast } from "sonner"
 
@@ -59,10 +59,7 @@ interface TasksKanbanBoardProps {
   session: Session | null
 }
 
-interface StatusColumn {
-  id: string
-  name: string
-  color: string
+interface StatusColumn extends TaskStatus {
   tasks: Task[]
 }
 
@@ -231,7 +228,7 @@ function QuickAddTask({
   projects,
   session
 }: {
-  status: string
+  status: TaskStatus
   onTaskCreated: () => void
   projects: Array<{
     id: string
@@ -264,21 +261,6 @@ function QuickAddTask({
     setError("")
 
     try {
-      // Get the status ID for the selected project based on status name
-      const statusResponse = await fetch(`/api/projects/${selectedProjectId}/task-statuses`)
-      let statusId = undefined
-
-      if (statusResponse.ok) {
-        const { taskStatuses } = await statusResponse.json()
-        const matchingStatus = taskStatuses.find((s: { name: string; isDefault: boolean }) =>
-          s.name === status ||
-          (status === "To Do" && s.isDefault)
-        )
-        if (matchingStatus) {
-          statusId = matchingStatus.id
-        }
-      }
-
       const response = await fetch("/api/tasks", {
         method: "POST",
         headers: {
@@ -287,7 +269,7 @@ function QuickAddTask({
         body: JSON.stringify({
           title: title.trim(),
           projectId: selectedProjectId,
-          statusId: statusId,
+          statusId: status.id,
           assigneeId: session?.user?.id // Automatycznie przypisz do autora
         }),
       })
@@ -469,7 +451,7 @@ function KanbanColumn({
             ))}
 
             <QuickAddTask
-              status={status.name}
+              status={status}
               onTaskCreated={onTaskCreated}
               projects={projects}
               session={session}
@@ -491,6 +473,7 @@ export function TasksKanbanBoard({
   projects,
   session
 }: TasksKanbanBoardProps) {
+  const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
   const [activeTask, setActiveTask] = useState<Task | null>(null)
   const [optimisticTasks, setOptimisticTasks] = useState<Task[]>(tasks)
   const [updatingTasks, setUpdatingTasks] = useState<Set<string>>(new Set())
@@ -499,6 +482,22 @@ export function TasksKanbanBoard({
 
   // Always use optimistic tasks for display
   const displayTasks = optimisticTasks
+
+  const fetchTaskStatuses = useCallback(async () => {
+    try {
+      const response = await fetch('/api/system/task-statuses')
+      if (response.ok) {
+        const data = await response.json()
+        setTaskStatuses(data.taskStatuses)
+      }
+    } catch (error) {
+      console.error("Error fetching task statuses:", error)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchTaskStatuses()
+  }, [fetchTaskStatuses])
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -511,41 +510,21 @@ export function TasksKanbanBoard({
     })
   )
 
-  // Create status columns based on unique statuses from tasks
-  const statusColumns: StatusColumn[] = [
-    {
-      id: "to-do",
-      name: "To Do",
-      color: "#6B7280",
-      tasks: displayTasks.filter(task =>
-        task.status === "To Do" || task.status === "todo" || task.status === "pending"
-      )
-    },
-    {
-      id: "in-progress",
-      name: "In Progress",
-      color: "#3B82F6",
-      tasks: displayTasks.filter(task =>
-        task.status === "In Progress" || task.status === "in progress" || task.status === "active"
-      )
-    },
-    {
-      id: "review",
-      name: "Review",
-      color: "#F59E0B",
-      tasks: displayTasks.filter(task =>
-        task.status === "Review" || task.status === "review" || task.status === "testing"
-      )
-    },
-    {
-      id: "done",
-      name: "Done",
-      color: "#10B981",
-      tasks: displayTasks.filter(task =>
-        task.status === "Done" || task.status === "completed" || task.status === "finished"
-      )
-    }
-  ]
+  const getTasksByStatus = (status: TaskStatus) => {
+    return displayTasks.filter(task => {
+      // Match by statusId if available, otherwise by status name
+      if (task.statusId) {
+        return task.statusId === status.id
+      }
+      return task.status === status.name
+    })
+  }
+
+  // Create status columns based on global task statuses
+  const statusColumns: StatusColumn[] = taskStatuses.map(status => ({
+    ...status,
+    tasks: getTasksByStatus(status)
+  }))
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event
@@ -562,28 +541,25 @@ export function TasksKanbanBoard({
     const taskId = active.id as string
     const newStatusId = over.id as string
 
-    // Find the status name from column id
-    const statusMap: Record<string, string> = {
-      "to-do": "To Do",
-      "in-progress": "In Progress",
-      "review": "Review",
-      "done": "Done"
-    }
-
-    const newStatus = statusMap[newStatusId]
-    if (!newStatus) return
+    // Find the status by id
+    const newTaskStatus = taskStatuses.find(status => status.id === newStatusId)
+    if (!newTaskStatus) return
 
     const task = displayTasks.find(t => t.id === taskId)
-    if (!task || task.status === newStatus) return
+    if (!task || (task.statusId === newTaskStatus.id || task.status === newTaskStatus.name)) return
 
     // Optimistic update - immediately update UI
     setUpdatingTasks(prev => new Set(prev).add(taskId))
     setOptimisticTasks(prev =>
-      prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t)
+      prev.map(t => t.id === taskId ? {
+        ...t,
+        status: newTaskStatus.name,
+        statusId: newTaskStatus.id
+      } : t)
     )
 
     // Show immediate feedback
-    toast.loading(`Przenoszenie zadania do "${newStatus}"...`, {
+    toast.loading(`Przenoszenie zadania do "${newTaskStatus.name}"...`, {
       id: `move-task-${taskId}`,
       duration: 2000
     })
@@ -595,26 +571,35 @@ export function TasksKanbanBoard({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          status: newStatus
+          status: newTaskStatus.name,
+          statusId: newTaskStatus.id
         }),
       })
 
       if (!response.ok) {
         // Revert optimistic update on error - restore original task
         setOptimisticTasks(prev =>
-          prev.map(t => t.id === taskId ? { ...t, status: task.status } : t)
+          prev.map(t => t.id === taskId ? {
+            ...t,
+            status: task.status,
+            statusId: task.statusId
+          } : t)
         )
         console.error("Failed to update task status")
         toast.error("Nie udało się przenieść zadania. Spróbuj ponownie.")
       } else {
         // Success - keep optimistic update and refresh data in background
-        toast.success(`Zadanie przeniesione do "${newStatus}"`)
+        toast.success(`Zadanie przeniesione do "${newTaskStatus.name}"`)
         onTaskUpdated()
       }
     } catch (error) {
       // Revert optimistic update on error - restore original task
       setOptimisticTasks(prev =>
-        prev.map(t => t.id === taskId ? { ...t, status: task.status } : t)
+        prev.map(t => t.id === taskId ? {
+          ...t,
+          status: task.status,
+          statusId: task.statusId
+        } : t)
       )
       console.error("Error updating task status:", error)
       toast.error("Wystąpił błąd podczas przenoszenia zadania")

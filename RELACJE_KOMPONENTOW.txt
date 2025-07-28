@@ -3,36 +3,43 @@ RELACJE MIĘDZY KOMPONENTAMI - GLOBALNE STATUSY ZADAŃ
 === GŁÓWNE KOMPONENTY ===
 
 1. KanbanBoard (src/components/projects/kanban-board.tsx)
-   - Główny komponent tablicy zadań
+   - Główny komponent tablicy zadań dla projektów
    - Zarządza statusami zadań (kolumnami) - teraz pobiera globalne statusy
    - Zawiera przycisk "Dodaj kolumnę" na końcu listy kolumn
    - Używa TaskStatusDialog do tworzenia nowych statusów (przekierowuje do globalnego API)
    - FUNKCJONALNOŚĆ: Każda kolumna ma QuickAddTask do szybkiego dodawania zadań
 
-2. SystemTaskStatuses (src/components/settings/system-task-statuses.tsx)
+2. TasksKanbanBoard (src/components/tasks/tasks-kanban-board.tsx)
+   - Główny komponent tablicy zadań dla widoku "Wszystkie zadania"
+   - ZAKTUALIZOWANY: Teraz pobiera globalne statusy z API (/api/system/task-statuses)
+   - Używa tych samych statusów co są zdefiniowane w ustawieniach
+   - Obsługuje drag & drop z aktualizacją statusId i status name
+   - FUNKCJONALNOŚĆ: Każda kolumna ma QuickAddTask do szybkiego dodawania zadań
+
+3. SystemTaskStatuses (src/components/settings/system-task-statuses.tsx)
    - NOWY KOMPONENT: Zarządzanie globalnymi statusami zadań w ustawieniach systemowych
    - Pozwala na tworzenie, edycję, usuwanie i zmianę kolejności statusów
    - Używa SystemTaskStatusDialog do edycji statusów
    - Drag & drop do zmiany kolejności
 
-3. SystemTaskStatusDialog (src/components/settings/system-task-status-dialog.tsx)
+4. SystemTaskStatusDialog (src/components/settings/system-task-status-dialog.tsx)
    - NOWY KOMPONENT: Dialog do tworzenia/edycji globalnych statusów zadań
    - Pozwala na ustawienie nazwy, koloru i czy status jest domyślny
    - Używany w ustawieniach systemowych
 
-4. TaskStatusDialog (src/components/projects/task-status-dialog.tsx)
+5. TaskStatusDialog (src/components/projects/task-status-dialog.tsx)
    - Dialog do tworzenia/edycji statusów zadań (zachowany dla kompatybilności)
    - Teraz przekierowuje do globalnego API zamiast API per-projekt
 
-3. KanbanColumn (wewnętrzny komponent w kanban-board.tsx)
+6. KanbanColumn (wewnętrzny komponent w obu kanban-board.tsx)
    - Reprezentuje pojedynczą kolumnę w tablicy
    - Zawiera zadania dla danego statusu
    - Obsługuje drag & drop zadań
-   - NOWA FUNKCJONALNOŚĆ: Zawiera QuickAddTask na dole kolumny
+   - FUNKCJONALNOŚĆ: Zawiera QuickAddTask na dole kolumny
 
-4. QuickAddTask (wewnętrzny komponent w kanban-board.tsx)
-   - NOWY KOMPONENT: Pozwala na szybkie dodawanie zadań bezpośrednio w kolumnie
-   - Automatycznie ustawia status zadania na podstawie kolumny, w której jest dodawane
+7. QuickAddTask (wewnętrzny komponent w obu kanban-board.tsx)
+   - Pozwala na szybkie dodawanie zadań bezpośrednio w kolumnie
+   - Automatycznie ustawia status zadania na podstawie kolumny (używa statusId)
    - Używa prostego formularza z tytułem zadania
    - Automatycznie przypisuje zadanie do aktualnego użytkownika
 
@@ -44,12 +51,19 @@ Ustawienia systemowe:
 ├── Używa SystemTaskStatusDialog do tworzenia/edycji
 └── Drag & drop do zmiany kolejności
 
-KanbanBoard:
+KanbanBoard (projekty):
 ├── Pobiera globalne statusy zadań z API (/api/projects/[projectId]/task-statuses)
 ├── API przekierowuje do globalnych statusów
 ├── Renderuje kolumny dla każdego statusu
 ├── Dodaje przycisk "Dodaj kolumnę" na końcu
 └── Otwiera TaskStatusDialog po kliknięciu przycisku (przekierowuje do globalnego API)
+
+TasksKanbanBoard (wszystkie zadania):
+├── Pobiera globalne statusy bezpośrednio z API (/api/system/task-statuses)
+├── Renderuje kolumny dla każdego statusu z globalnych ustawień
+├── Obsługuje drag & drop z aktualizacją statusId i status name
+├── Filtruje zadania według statusId (jeśli dostępne) lub status name
+└── QuickAddTask używa statusId do tworzenia zadań
 
 === API ENDPOINTS ===
 
