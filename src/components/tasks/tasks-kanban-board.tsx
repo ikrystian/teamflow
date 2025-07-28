@@ -255,7 +255,7 @@ function QuickAddTask({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!title.trim() || !selectedProjectId) return
+    if (!title.trim()) return
 
     setLoading(true)
     setError("")
@@ -268,7 +268,7 @@ function QuickAddTask({
         },
         body: JSON.stringify({
           title: title.trim(),
-          projectId: selectedProjectId,
+          projectId: selectedProjectId && selectedProjectId !== "no-project" ? selectedProjectId : undefined,
           statusId: status.id,
           assigneeId: session?.user?.id // Automatycznie przypisz do autora
         }),
@@ -328,12 +328,15 @@ function QuickAddTask({
             autoFocus
             disabled={loading}
           />
-          {projects.length > 1 && (
+          {projects.length > 0 && (
             <Select value={selectedProjectId} onValueChange={setSelectedProjectId} disabled={loading}>
               <SelectTrigger className="mb-2">
-                <SelectValue placeholder="Wybierz projekt" />
+                <SelectValue placeholder="Wybierz projekt (opcjonalne)" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="no-project">
+                  <span className="text-muted-foreground">Brak projektu</span>
+                </SelectItem>
                 {projects.map((project) => (
                   <SelectItem key={project.id} value={project.id}>
                     {project.name} • {project.team.name}

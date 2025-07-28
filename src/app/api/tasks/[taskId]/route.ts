@@ -326,7 +326,7 @@ export async function DELETE(
     const canDelete =
       existingTask.createdById === session.user.id || // Task creator
       existingTask.assigneeId === session.user.id || // Assigned user
-      existingTask.project.team.members.some(member => member.id === session.user.id) // Team member
+      (existingTask.project && existingTask.project.team.members.some(member => member.id === session.user.id)) // Team member (only for tasks with projects)
 
     if (!canDelete) {
       return NextResponse.json(

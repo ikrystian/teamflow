@@ -167,7 +167,7 @@ export function CreateTaskDialog({
         body: JSON.stringify({
           title,
           description: description || undefined,
-          projectId,
+          projectId: projectId && projectId !== "no-project" ? projectId : undefined,
           assigneeId: assigneeId || undefined,
           priority: priority || undefined,
           dueDate: dueDate || undefined,
@@ -256,13 +256,16 @@ export function CreateTaskDialog({
 
             <div className="space-y-2">
               <Label htmlFor="project" className="text-sm font-medium">
-                Projekt <span className="text-destructive">*</span>
+                Projekt <span className="text-xs text-muted-foreground">(opcjonalne)</span>
               </Label>
-              <Select value={projectId} onValueChange={setProjectId} required>
+              <Select value={projectId} onValueChange={setProjectId}>
                 <SelectTrigger className="h-10">
-                  <SelectValue placeholder="Wybierz projekt" />
+                  <SelectValue placeholder="Wybierz projekt (opcjonalne)" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="no-project">
+                    <span className="text-muted-foreground">Brak projektu</span>
+                  </SelectItem>
                   {projects.map((project) => (
                     <SelectItem key={project.id} value={project.id}>
                       <div className="flex flex-col items-start">
@@ -436,7 +439,7 @@ export function CreateTaskDialog({
             </Button>
             <Button
               type="submit"
-              disabled={loading || !title.trim() || !projectId}
+              disabled={loading || !title.trim()}
               className="h-10"
             >
               {loading ? (

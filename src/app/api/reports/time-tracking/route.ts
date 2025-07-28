@@ -127,22 +127,24 @@ export async function GET(request: NextRequest) {
       const userStat = userStats.get(userId)
       userStat.totalHours += entry.hours
       userStat.entriesCount += 1
-      userStat.projects.add(entry.task.project.name)
+      userStat.projects.add(entry.task.project?.name || "No Project")
 
-      // Project statistics
-      const projectId = entry.task.project.id
-      if (!projectStats.has(projectId)) {
-        projectStats.set(projectId, {
-          project: entry.task.project,
-          totalHours: 0,
-          entriesCount: 0,
-          users: new Set()
-        })
+      // Project statistics (only for tasks with projects)
+      if (entry.task.project) {
+        const projectId = entry.task.project.id
+        if (!projectStats.has(projectId)) {
+          projectStats.set(projectId, {
+            project: entry.task.project,
+            totalHours: 0,
+            entriesCount: 0,
+            users: new Set()
+          })
+        }
+        const projectStat = projectStats.get(projectId)
+        projectStat.totalHours += entry.hours
+        projectStat.entriesCount += 1
+        projectStat.users.add(entry.user.name)
       }
-      const projectStat = projectStats.get(projectId)
-      projectStat.totalHours += entry.hours
-      projectStat.entriesCount += 1
-      projectStat.users.add(entry.user.name)
 
       // Daily statistics
       const dateKey = entry.date.toISOString().split('T')[0]

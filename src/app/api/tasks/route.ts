@@ -20,15 +20,30 @@ export async function GET(request: NextRequest) {
       where: {
         ...(projectId && { projectId }),
         ...(assigneeId && { assigneeId }),
-        project: {
-          team: {
-            members: {
-              some: {
-                id: session.user.id
+        OR: [
+          // Tasks with projects where user is a team member
+          {
+            project: {
+              team: {
+                members: {
+                  some: {
+                    id: session.user.id
+                  }
+                }
               }
             }
+          },
+          // Tasks without projects created by the user
+          {
+            projectId: undefined,
+            createdById: session.user.id
+          },
+          // Tasks without projects assigned to the user
+          {
+            projectId: undefined,
+            assigneeId: session.user.id
           }
-        }
+        ]
       },
       include: {
         project: {
@@ -122,32 +137,34 @@ export async function POST(request: NextRequest) {
 
     const { title, description, projectId, assigneeId, priority, dueDate, estimatedHours, statusId } = await request.json()
 
-    if (!title || !projectId) {
+    if (!title) {
       return NextResponse.json(
-        { error: "Title and project ID are required" },
+        { error: "Title is required" },
         { status: 400 }
       )
     }
 
-    // Verify user has access to the project
-    const project = await prisma.project.findFirst({
-      where: {
-        id: projectId,
-        team: {
-          members: {
-            some: {
-              id: session.user.id
+    // Verify user has access to the project (only if projectId is provided)
+    if (projectId) {
+      const project = await prisma.project.findFirst({
+        where: {
+          id: projectId,
+          team: {
+            members: {
+              some: {
+                id: session.user.id
+              }
             }
           }
         }
-      }
-    })
+      })
 
-    if (!project) {
-      return NextResponse.json(
-        { error: "Project not found or access denied" },
-        { status: 404 }
-      )
+      if (!project) {
+        return NextResponse.json(
+          { error: "Project not found or access denied" },
+          { status: 404 }
+        )
+      }
     }
 
     let finalStatusId = statusId

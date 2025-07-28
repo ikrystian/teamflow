@@ -96,8 +96,9 @@ export async function POST(request: NextRequest) {
       if (userId) whereClause.userId = userId;
       if (teamId) {
         if (!whereClause.task) whereClause.task = {};
-        if (!whereClause.task.project) whereClause.task.project = {};
-        whereClause.task.project.teamId = teamId;
+        whereClause.task.project = {
+          teamId: teamId
+        };
       }
 
       const timeEntries = await prisma.timeEntry.findMany({
@@ -140,8 +141,8 @@ export async function POST(request: NextRequest) {
       data = timeEntries.map(entry => ({
         "Date": entry.date.toISOString().split('T')[0],
         "User": entry.user.name || entry.user.email,
-        "Team": entry.task.project.team.name,
-        "Project": entry.task.project.name,
+        "Team": entry.task.project?.team.name || "No Project",
+        "Project": entry.task.project?.name || "No Project",
         "Task": entry.task.title,
         "Task Status": entry.task.status,
         "Task Priority": entry.task.priority || "None",

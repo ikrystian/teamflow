@@ -22,7 +22,7 @@ export async function GET(
     // Calculate date range based on timeRange parameter
     let dateFilter = {}
     const now = new Date()
-    
+
     if (timeRange === "week") {
       const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
       dateFilter = { gte: weekAgo }
@@ -128,8 +128,8 @@ export async function GET(
       }
     })
 
-    // Get project details for the stats
-    const projectIds = projectStats.map(stat => stat.projectId)
+    // Get project details for the stats (filter out null project IDs)
+    const projectIds = projectStats.map(stat => stat.projectId).filter((id): id is string => id !== null)
     const projects = await prisma.project.findMany({
       where: {
         id: { in: projectIds },

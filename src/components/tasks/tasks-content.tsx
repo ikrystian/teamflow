@@ -102,15 +102,20 @@ export function TasksContent() {
 
   const handleEditTask = async (task: Task, e: React.MouseEvent) => {
     e.stopPropagation();
-    // Fetch team members for the task's project
-    try {
-      const response = await fetch(`/api/teams/${task.project.team.id}/members`)
-      if (response.ok) {
-        const data = await response.json()
-        setTeamMembers(data.members)
+    // Fetch team members for the task's project (if it has one)
+    if (task.project) {
+      try {
+        const response = await fetch(`/api/teams/${task.project.team.id}/members`)
+        if (response.ok) {
+          const data = await response.json()
+          setTeamMembers(data.members)
+        }
+      } catch (error) {
+        console.error("Error fetching team members:", error)
       }
-    } catch (error) {
-      console.error("Error fetching team members:", error)
+    } else {
+      // For tasks without projects, we can't fetch team members
+      setTeamMembers([])
     }
 
     setSelectedTask(task)
@@ -289,7 +294,7 @@ export function TasksContent() {
             <Filter className="mr-2 h-4 w-4" />
             Wszystkie
           </Button>
-          <Button onClick={() => setCreateDialogOpen(true)} disabled={projects.length === 0}>
+          <Button onClick={() => setCreateDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Utwórz zadanie
           </Button>
@@ -364,16 +369,6 @@ export function TasksContent() {
         <TabsContent value="list" className="space-y-4">
           {loading ? (
             <PageLoadingLayout variant="list" />
-          ) : projects.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center text-center py-16">
-                <CheckSquare className="h-16 w-16 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Brak dostępnych projektów</h3>
-                <p className="text-muted-foreground mb-6 max-w-sm">
-                  Musisz mieć projekty, aby móc tworzyć zadania
-                </p>
-              </CardContent>
-            </Card>
           ) : tasks.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center text-center py-16">
@@ -406,9 +401,15 @@ export function TasksContent() {
                       <div className="flex-1 min-w-0">
                         <CardTitle className="text-lg font-semibold truncate">{task.title}</CardTitle>
                         <CardDescription className="flex items-center gap-2 mt-1">
-                          <span>{task.project.name}</span>
-                          <span>•</span>
-                          <span>{task.project.team.name}</span>
+                          {task.project ? (
+                            <>
+                              <span>{task.project.name}</span>
+                              <span>•</span>
+                              <span>{task.project.team.name}</span>
+                            </>
+                          ) : (
+                            <span className="text-muted-foreground">Brak projektu</span>
+                          )}
                         </CardDescription>
                       </div>
                       <div className="flex items-center gap-2 ml-4">

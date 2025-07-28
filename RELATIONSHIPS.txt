@@ -1,0 +1,84 @@
+RELACJE MIĘDZY ELEMENTAMI W SYSTEMIE TEAMFLOW
+
+=== AKTUALIZACJA: ZADANIA BEZ PROJEKTÓW ===
+Data: 2025-01-28
+Zmiana: Pole projektId w modelu Task jest teraz opcjonalne
+
+GŁÓWNE RELACJE:
+
+1. USER (Użytkownik)
+   - Może należeć do wielu TEAMS (zespołów) - relacja many-to-many
+   - Może być przypisany do wielu TASKS (zadań) jako assignee - relacja one-to-many
+   - Może tworzyć TASKS (zadania) jako creator - relacja one-to-many
+   - Może dodawać COMMENTS (komentarze) do zadań - relacja one-to-many
+   - Może logować TIME_ENTRIES (wpisy czasu) - relacja one-to-many
+   - Może uploadować PROJECT_DOCUMENTS (dokumenty projektów) - relacja one-to-many
+
+2. TEAM (Zespół)
+   - Może mieć wielu USERS (użytkowników) jako członków - relacja many-to-many
+   - Może mieć wiele PROJECTS (projektów) - relacja one-to-many
+
+3. PROJECT (Projekt)
+   - Należy do jednego TEAM (zespołu) - relacja many-to-one
+   - Może mieć wiele TASKS (zadań) - relacja one-to-many [OPCJONALNE]
+   - Może mieć wiele PROJECT_DOCUMENTS (dokumentów) - relacja one-to-many
+
+4. TASK (Zadanie) - ZAKTUALIZOWANE
+   - OPCJONALNIE należy do PROJECT (projektu) - relacja many-to-one [OPCJONALNE]
+   - OPCJONALNIE ma przypisanego USER (użytkownika) jako assignee - relacja many-to-one
+   - OPCJONALNIE ma USER (użytkownika) jako creator - relacja many-to-one
+   - Ma jeden TASK_STATUS (status zadania) - relacja many-to-one
+   - Może mieć wiele SUBTASKS (podzadań) - relacja one-to-many
+   - Może mieć wiele COMMENTS (komentarzy) - relacja one-to-many
+   - Może mieć wiele TIME_ENTRIES (wpisów czasu) - relacja one-to-many
+   - Może mieć wiele TASK_IMAGES (obrazków) - relacja one-to-many
+   - Może mieć wiele TODOS (elementów listy do zrobienia) - relacja one-to-many
+
+5. TASK_STATUS (Status zadania)
+   - Może być przypisany do wielu TASKS (zadań) - relacja one-to-many
+   - Jest globalny dla całego systemu
+
+6. SUBTASK (Podzadanie)
+   - Należy do jednego TASK (zadania) - relacja many-to-one
+
+7. COMMENT (Komentarz)
+   - Należy do jednego TASK (zadania) - relacja many-to-one
+   - Ma jednego USER (użytkownika) jako autora - relacja many-to-one
+
+8. TIME_ENTRY (Wpis czasu)
+   - Należy do jednego TASK (zadania) - relacja many-to-one
+   - Ma jednego USER (użytkownika) - relacja many-to-one
+
+9. TASK_IMAGE (Obrazek zadania)
+   - Należy do jednego TASK (zadania) - relacja many-to-one
+
+10. TODO (Element listy do zrobienia)
+    - Należy do jednego TASK (zadania) - relacja many-to-one
+
+11. PROJECT_DOCUMENT (Dokument projektu)
+    - Należy do jednego PROJECT (projektu) - relacja many-to-one
+    - Ma jednego USER (użytkownika) jako uploader - relacja many-to-one
+
+=== NOWE MOŻLIWOŚCI PO AKTUALIZACJI ===
+
+1. ZADANIA NIEZALEŻNE:
+   - Zadania mogą istnieć bez przypisania do projektu
+   - Użytkownicy mogą tworzyć zadania osobiste/ogólne
+   - Zadania bez projektów są widoczne tylko dla:
+     * Użytkownika, który je utworzył (createdById)
+     * Użytkownika, do którego są przypisane (assigneeId)
+
+2. DOSTĘP DO ZADAŃ:
+   - Zadania z projektami: dostęp przez członkostwo w zespole projektu
+   - Zadania bez projektów: dostęp przez utworzenie lub przypisanie
+
+3. INTERFEJS UŻYTKOWNIKA:
+   - Pole "Projekt" w formularzach tworzenia zadań jest opcjonalne
+   - Zadania bez projektów wyświetlają "Brak projektu" w interfejsie
+   - Wszystkie funkcjonalności (komentarze, czas, załączniki) działają normalnie
+
+=== BEZPIECZEŃSTWO ===
+
+- Zadania z projektami: weryfikacja członkostwa w zespole
+- Zadania bez projektów: weryfikacja autorstwa lub przypisania
+- Brak możliwości dostępu do zadań innych użytkowników bez odpowiednich uprawnień

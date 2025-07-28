@@ -154,12 +154,20 @@ export function TaskDetailsDialog({
               {task.title}
             </DialogTitle>
             <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="outline" className="text-xs font-medium">
-                {task.project.name}
-              </Badge>
-              <Badge variant="outline" className="text-xs font-medium">
-                {task.project.team.name}
-              </Badge>
+              {task.project ? (
+                <>
+                  <Badge variant="outline" className="text-xs font-medium">
+                    {task.project.name}
+                  </Badge>
+                  <Badge variant="outline" className="text-xs font-medium">
+                    {task.project.team.name}
+                  </Badge>
+                </>
+              ) : (
+                <Badge variant="outline" className="text-xs font-medium text-muted-foreground">
+                  Brak projektu
+                </Badge>
+              )}
               {task.priority && (
                 <Badge variant="secondary" className={getPriorityColor(task.priority)}>
                   {task.priority === "Low" ? "Niski" : task.priority === "Medium" ? "Średni" : "Wysoki"}
