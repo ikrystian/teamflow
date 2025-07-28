@@ -23,7 +23,7 @@ export default function SignUp() {
     setError("")
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match")
+      setError("Hasła nie pasują do siebie")
       setIsLoading(false)
       return
     }
@@ -45,10 +45,10 @@ export default function SignUp() {
         router.push("/auth/signin?message=Account created successfully")
       } else {
         const data = await response.json()
-        setError(data.error || "An error occurred")
+        setError(data.error || "Wystąpił błąd")
       }
     } catch {
-      setError("An error occurred. Please try again.")
+      setError("Wystąpił błąd. Spróbuj ponownie.")
     } finally {
       setIsLoading(false)
     }
@@ -58,19 +58,19 @@ export default function SignUp() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl text-center">Create your account</CardTitle>
+          <CardTitle className="text-2xl text-center">Utwórz swoje konto</CardTitle>
           <CardDescription className="text-center">
-            Enter your information to get started with TeamFlow
+            Wprowadź swoje dane, aby rozpocząć korzystanie z TeamFlow
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="name">Imię i Nazwisko</Label>
               <Input
                 id="name"
                 type="text"
-                placeholder="Enter your full name"
+                placeholder="Wprowadź swoje imię i nazwisko"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -81,29 +81,29 @@ export default function SignUp() {
               <Input
                 id="email"
                 type="email"
-                placeholder="Enter your email"
+                placeholder="Wprowadź swój email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Hasło</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="Create a password"
+                placeholder="Utwórz hasło"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword">Potwierdź hasło</Label>
               <Input
                 id="confirmPassword"
                 type="password"
-                placeholder="Confirm your password"
+                placeholder="Potwierdź swoje hasło"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
@@ -113,13 +113,13 @@ export default function SignUp() {
               <div className="text-red-500 text-sm text-center">{error}</div>
             )}
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Creating account..." : "Create Account"}
+              {isLoading ? "Tworzenie konta..." : "Utwórz konto"}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
-            Already have an account?{" "}
+            Masz już konto?{" "}
             <Link href="/auth/signin" className="text-blue-600 hover:underline">
-              Sign in
+              Zaloguj się
             </Link>
           </div>
         </CardContent>

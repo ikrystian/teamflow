@@ -29,7 +29,7 @@ export default function SignIn() {
       })
 
       if (result?.error) {
-        setError("Invalid credentials")
+        setError("Nieprawidłowe dane uwierzytelniające")
       } else {
         const session = await getSession()
         if (session) {
@@ -37,7 +37,7 @@ export default function SignIn() {
         }
       }
     } catch {
-      setError("An error occurred. Please try again.")
+      setError("Wystąpił błąd. Spróbuj ponownie.")
     } finally {
       setIsLoading(false)
     }
@@ -47,9 +47,9 @@ export default function SignIn() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl text-center">Sign in to TeamFlow</CardTitle>
+          <CardTitle className="text-2xl text-center">Zaloguj się do TeamFlow</CardTitle>
           <CardDescription className="text-center">
-            Enter your credentials to access your account
+            Wprowadź swoje dane, aby uzyskać dostęp do konta
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -59,18 +59,18 @@ export default function SignIn() {
               <Input
                 id="email"
                 type="email"
-                placeholder="Enter your email"
+                placeholder="Wprowadź swój email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Hasło</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="Enter your password"
+                placeholder="Wprowadź swoje hasło"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -80,13 +80,13 @@ export default function SignIn() {
               <div className="text-red-500 text-sm text-center">{error}</div>
             )}
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign In"}
+              {isLoading ? "Logowanie..." : "Zaloguj się"}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
-            Don&apos;t have an account?{" "}
+            Nie masz konta?{" "}
             <Link href="/auth/signup" className="text-blue-600 hover:underline">
-              Sign up
+              Zarejestruj się
             </Link>
           </div>
         </CardContent>
