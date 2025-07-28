@@ -1,0 +1,116 @@
+# Relacje między elementami w TeamFlow
+
+## Nowe komponenty dodane w tej sesji:
+
+### TasksKanbanBoard (src/components/tasks/tasks-kanban-board.tsx)
+- **Cel**: Widok tablicy Kanban dla wszystkich zadań użytkownika w dashboard/tasks
+- **Inspiracja**: Interfejs Asana z łatwym dodawaniem zadań
+- **Funkcjonalności**:
+  - Drag & drop zadań między kolumnami statusów
+  - Szybkie dodawanie zadań bezpośrednio w kolumnach
+  - Wybór projektu przy dodawaniu zadania
+  - Optymistyczne aktualizacje UI
+  - Obsługa błędów i stanów ładowania
+  - Empty states dla pustych kolumn
+
+### Komponenty wewnętrzne TasksKanbanBoard:
+
+#### SortableTaskCard
+- **Cel**: Karta zadania z możliwością przeciągania
+- **Funkcjonalności**:
+  - Drag & drop z @dnd-kit/sortable
+  - Menu kontekstowe z opcjami (edytuj, loguj czas, usuń)
+  - Wyświetlanie priorytetu, terminu, szacowanego czasu
+  - Avatar przypisanej osoby
+  - Oznaczenie przeterminowanych zadań
+
+#### QuickAddTask
+- **Cel**: Szybkie dodawanie zadań w kolumnach
+- **Funkcjonalności**:
+  - Inline formularz z polem tekstowym
+  - Wybór projektu (jeśli użytkownik ma więcej niż 1 projekt)
+  - Automatyczne przypisanie statusu na podstawie kolumny
+  - Obsługa błędów i walidacja
+  - Loading states
+
+#### KanbanColumn
+- **Cel**: Kolumna statusu z zadaniami
+- **Funkcjonalności**:
+  - Droppable area dla drag & drop
+  - Licznik zadań w nagłówku
+  - Kolorowe oznaczenie statusu
+  - Empty state dla pustych kolumn
+
+## Integracja z istniejącymi komponentami:
+
+### TasksContent (src/components/tasks/tasks-content.tsx)
+- **Zmiany**: Dodano TasksKanbanBoard do zakładki "board"
+- **Zastąpiono**: Placeholder z komunikatem o przyszłej implementacji
+- **Dodano**: Obsługę empty state gdy brak zadań
+- **Przekazywane props**: tasks, projects, funkcje obsługi zdarzeń
+
+### Wykorzystywane istniejące komponenty:
+- TaskDetailsDialog - szczegóły zadania
+- EditTaskDialog - edycja zadania (przez TasksContent)
+- TimeTrackingDialog - logowanie czasu (przez TasksContent)
+- CreateTaskDialog - tworzenie zadań (przez TasksContent)
+
+## API endpoints wykorzystywane:
+
+### Istniejące:
+- GET /api/tasks - pobieranie zadań użytkownika
+- POST /api/tasks - tworzenie nowych zadań
+- PATCH /api/tasks/[taskId] - aktualizacja statusu zadania
+- GET /api/projects/[projectId]/task-statuses - pobieranie statusów projektu
+
+### Logika statusów:
+- Zadania grupowane według statusu (To Do, In Progress, Review, Done)
+- Mapowanie różnych nazw statusów na standardowe kolumny
+- Przy tworzeniu zadania: pobieranie statusów projektu i przypisanie odpowiedniego statusId
+
+## Stany i zarządzanie danymi:
+
+### Optimistic Updates:
+- Natychmiastowa aktualizacja UI przy drag & drop
+- Revert w przypadku błędu API
+- Loading states dla zadań w trakcie aktualizacji
+
+### Error Handling:
+- Obsługa błędów w QuickAddTask
+- Wyświetlanie komunikatów błędów użytkownikowi
+- Fallback do poprzedniego stanu w przypadku niepowodzenia
+
+### Performance:
+- Używanie useMemo dla filtrowania zadań
+- Optymalizacja re-renderów z useCallback
+- Lazy loading komponentów
+
+## Styling i UX:
+
+### Design System:
+- Wykorzystanie shadcn/ui komponentów
+- Spójność z resztą aplikacji
+- Responsywny design
+
+### Interakcje:
+- Smooth animations dla drag & drop
+- Hover states i focus management
+- Accessibility support z @dnd-kit
+
+### Visual Feedback:
+- Loading spinners
+- Error states z kolorowym tłem
+- Empty states z pomocnymi komunikatami
+- Drag overlay z rotacją i cieniem
+
+## Relacje z bazą danych:
+
+### Task model:
+- status (string) - używany do grupowania w kolumnach
+- statusId (string) - referencja do TaskStatus (projektowy)
+- projectId - wymagany przy tworzeniu zadania
+
+### Logika hybrydowa:
+- Globalne kolumny statusów (To Do, In Progress, Review, Done)
+- Projektowe statusy (TaskStatus) mapowane na globalne kolumny
+- Fallback do domyślnego statusu projektu przy tworzeniu zadania

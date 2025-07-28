@@ -11,6 +11,7 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 - **Zarządzanie zadaniami** - Pełna funkcjonalność CRUD dla zadań z szacowanym czasem, edycją i usuwaniem
 - **Widoki zadań** - Trzy różne widoki zadań: Tablica (Kanban), Kalendarz i Lista
 - **Widok tablicy Kanban w stylu Trello** - Nowoczesna tablica z uproszczonymi kartami, drag & drop i szczegółami po kliknięciu
+- **Tablica zadań w Dashboard** - Widok tablicy Kanban w stylu Asana dla wszystkich zadań użytkownika z szybkim dodawaniem zadań
 - **Konfigurowalne statusy zadań** - Możliwość definiowania własnych statusów dla każdego projektu
 - **Ustawienia projektu** - Zarządzanie statusami zadań z kolorami i kolejnością
 - **Dodawanie kolumn z tablicy** - Możliwość dodawania nowych kolumn (statusów) bezpośrednio z tablicy zadań

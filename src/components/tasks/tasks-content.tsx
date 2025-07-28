@@ -14,6 +14,7 @@ import { CreateTaskDialog } from "./create-task-dialog"
 import { EditTaskDialog } from "./edit-task-dialog"
 import { TimeTrackingDialog } from "./time-tracking-dialog"
 import { TaskDetailsDialog } from "./task-details-dialog"
+import { TasksKanbanBoard } from "./tasks-kanban-board"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -314,15 +315,37 @@ export function TasksContent() {
 
         {/* Tab Content */}
         <TabsContent value="board" className="space-y-4">
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center text-center py-16">
-              <LayoutGrid className="h-16 w-16 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Widok tablicy</h3>
-              <p className="text-muted-foreground mb-6 max-w-sm">
-                Tutaj będzie wyświetlana tablica Kanban z zadaniami pogrupowanymi według statusu
-              </p>
-            </CardContent>
-          </Card>
+          {tasks.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center text-center py-16">
+                <LayoutGrid className="h-16 w-16 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">
+                  {filter === "all" ? "Brak zadań" :
+                   filter === "assigned" ? "Brak zadań przypisanych do Ciebie" :
+                   "Brak zadań"}
+                </h3>
+                <p className="text-muted-foreground mb-6 max-w-sm">
+                  {filter === "all" ? "Utwórz swoje pierwsze zadanie, aby zobaczyć tablicę" :
+                   filter === "assigned" ? "Brak zadań przypisanych Tobie" :
+                   "Brak zadań do wyświetlenia"}
+                </p>
+                <Button onClick={() => setCreateDialogOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Utwórz zadanie
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <TasksKanbanBoard
+              tasks={tasks}
+              onTaskUpdated={fetchTasks}
+              onTaskEdit={(task) => handleTaskEdit(task, { stopPropagation: () => {} } as React.MouseEvent)}
+              onTimeTracking={(task) => handleTimeTracking(task, { stopPropagation: () => {} } as React.MouseEvent)}
+              onTaskDelete={(task) => handleDeleteTask(task, { stopPropagation: () => {} } as React.MouseEvent)}
+              canEditTask={canEditTask}
+              projects={projects}
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="calendar" className="space-y-4">
