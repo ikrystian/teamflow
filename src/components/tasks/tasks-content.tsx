@@ -344,6 +344,7 @@ export function TasksContent() {
               onTaskDelete={(task) => handleDeleteTask(task, { stopPropagation: () => {} } as React.MouseEvent)}
               canEditTask={canEditTask}
               projects={projects}
+              session={session}
             />
           )}
         </TabsContent>

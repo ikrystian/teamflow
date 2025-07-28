@@ -30,8 +30,10 @@
   - Inline formularz z polem tekstowym
   - Wybór projektu (jeśli użytkownik ma więcej niż 1 projekt)
   - Automatyczne przypisanie statusu na podstawie kolumny
+  - **Automatyczne przypisanie do autora** - zadanie jest automatycznie przypisane do zalogowanego użytkownika
   - Obsługa błędów i walidacja
   - Loading states
+  - Toast notifications dla sukcesu/błędów
 
 #### KanbanColumn
 - **Cel**: Kolumna statusu z zadaniami
@@ -59,7 +61,7 @@
 
 ### Istniejące:
 - GET /api/tasks - pobieranie zadań użytkownika
-- POST /api/tasks - tworzenie nowych zadań
+- POST /api/tasks - tworzenie nowych zadań (z automatycznym assigneeId)
 - PATCH /api/tasks/[taskId] - aktualizacja statusu zadania
 - GET /api/projects/[projectId]/task-statuses - pobieranie statusów projektu
 
@@ -72,8 +74,10 @@
 
 ### Optimistic Updates:
 - Natychmiastowa aktualizacja UI przy drag & drop
-- Revert w przypadku błędu API
+- Revert w przypadku błędu API (przywrócenie oryginalnego statusu)
 - Loading states dla zadań w trakcie aktualizacji
+- Wizualne wskazówki (żółta ramka, spinner) podczas aktualizacji
+- Toast notifications z informacją o sukcesie/błędzie
 
 ### Error Handling:
 - Obsługa błędów w QuickAddTask
@@ -114,3 +118,23 @@
 - Globalne kolumny statusów (To Do, In Progress, Review, Done)
 - Projektowe statusy (TaskStatus) mapowane na globalne kolumny
 - Fallback do domyślnego statusu projektu przy tworzeniu zadania
+
+## Nowe funkcjonalności dodane w tej sesji:
+
+### Automatyczne przypisanie zadań do autora:
+- Zadania tworzone przez QuickAddTask są automatycznie przypisane do zalogowanego użytkownika
+- Przekazywanie sesji przez całą hierarchię komponentów (TasksContent → TasksKanbanBoard → KanbanColumn → QuickAddTask)
+- Wykorzystanie assigneeId w API call do /api/tasks
+
+### Ulepszone optymistyczne aktualizacje:
+- Lepsze zarządzanie stanem optimisticTasks (inicjalizacja z tasks zamiast pustej tablicy)
+- Prawidłowe revertowanie do oryginalnego statusu w przypadku błędu
+- Wizualne wskazówki podczas aktualizacji (żółta ramka, spinner)
+- Toast notifications z informacją o sukcesie/błędzie operacji
+
+### Ulepszone UX:
+- Hover effects dla kolumn podczas drag over
+- Loading indicators w kartach zadań
+- Error handling z toast notifications
+- Lepsze empty states w kolumnach
+- Responsywny design z overflow scroll

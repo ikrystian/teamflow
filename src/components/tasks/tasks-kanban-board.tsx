@@ -7,7 +7,7 @@ import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar, Clock, Edit, MoreHorizontal, Plus, AlertCircle, Trash2, X, Check } from "lucide-react"
+import { Calendar, Clock, Edit, MoreHorizontal, Plus, AlertCircle, Trash2, X, Check, Loader2 } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,6 +38,8 @@ import {
 import { CSS } from "@dnd-kit/utilities"
 import { TaskDetailsDialog } from "./task-details-dialog"
 import type { Task } from "@/types"
+import type { Session } from "next-auth"
+import { toast } from "sonner"
 
 interface TasksKanbanBoardProps {
   tasks: Task[]
@@ -54,6 +56,7 @@ interface TasksKanbanBoardProps {
       name: string
     }
   }>
+  session: Session | null
 }
 
 interface StatusColumn {
@@ -105,8 +108,9 @@ function SortableTaskCard({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition: isDragging ? 'none' : transition,
-    opacity: isDragging ? 0.3 : isUpdating ? 0.8 : 1,
+    opacity: isDragging ? 0.5 : isUpdating ? 0.8 : 1,
     scale: isDragging ? 1.05 : 1,
+    zIndex: isDragging ? 1000 : 'auto',
   }
 
   const isOverdue = (dueDate?: string) => {
@@ -122,15 +126,24 @@ function SortableTaskCard({
       {...listeners}
       className="touch-none"
     >
-      <Card className="mb-2 cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-blue-500">
+      <Card className={`mb-2 cursor-pointer hover:shadow-md transition-all border-l-4 ${
+        isUpdating
+          ? 'border-l-yellow-500 bg-yellow-50/50'
+          : 'border-l-blue-500'
+      }`}>
         <CardContent className="p-3">
           <div className="flex items-start justify-between mb-2">
-            <h4
-              className="font-medium text-sm leading-tight cursor-pointer hover:text-primary"
-              onClick={() => onViewDetails(task)}
-            >
-              {task.title}
-            </h4>
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <h4
+                className="font-medium text-sm leading-tight cursor-pointer hover:text-primary truncate"
+                onClick={() => onViewDetails(task)}
+              >
+                {task.title}
+              </h4>
+              {isUpdating && (
+                <Loader2 className="h-3 w-3 animate-spin text-yellow-600 flex-shrink-0" />
+              )}
+            </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
@@ -213,7 +226,8 @@ function SortableTaskCard({
 function QuickAddTask({
   status,
   onTaskCreated,
-  projects
+  projects,
+  session
 }: {
   status: string
   onTaskCreated: () => void
@@ -225,6 +239,7 @@ function QuickAddTask({
       name: string
     }
   }>
+  session: Session | null
 }) {
   const [isAdding, setIsAdding] = useState(false)
   const [title, setTitle] = useState("")
@@ -270,7 +285,8 @@ function QuickAddTask({
         body: JSON.stringify({
           title: title.trim(),
           projectId: selectedProjectId,
-          statusId: statusId
+          statusId: statusId,
+          assigneeId: session?.user?.id // Automatycznie przypisz do autora
         }),
       })
 
@@ -278,14 +294,19 @@ function QuickAddTask({
         setTitle("")
         setIsAdding(false)
         setError("")
+        toast.success("Zadanie zostało utworzone")
         onTaskCreated()
       } else {
         const data = await response.json()
-        setError(data.error || "Nie udało się utworzyć zadania")
+        const errorMessage = data.error || "Nie udało się utworzyć zadania"
+        setError(errorMessage)
+        toast.error(errorMessage)
       }
     } catch (error) {
       console.error("Error creating task:", error)
-      setError("Wystąpił błąd podczas tworzenia zadania")
+      const errorMessage = "Wystąpił błąd podczas tworzenia zadania"
+      setError(errorMessage)
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -376,7 +397,8 @@ function KanbanColumn({
   canEdit,
   onTaskCreated,
   updatingTasks,
-  projects
+  projects,
+  session
 }: {
   status: StatusColumn
   tasks: Task[]
@@ -395,14 +417,17 @@ function KanbanColumn({
       name: string
     }
   }>
+  session: Session | null
 }) {
-  const { setNodeRef } = useDroppable({
+  const { setNodeRef, isOver } = useDroppable({
     id: status.id,
   })
 
   return (
     <div className="flex-shrink-0 w-80">
-      <div className="bg-muted/30 rounded-lg p-4 h-full">
+      <div className={`bg-muted/30 rounded-lg p-4 h-full transition-colors ${
+        isOver ? 'bg-primary/10 ring-2 ring-primary/20' : ''
+      }`}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <div
@@ -445,6 +470,7 @@ function KanbanColumn({
               status={status.name}
               onTaskCreated={onTaskCreated}
               projects={projects}
+              session={session}
             />
           </div>
         </SortableContext>
@@ -460,16 +486,17 @@ export function TasksKanbanBoard({
   onTimeTracking,
   onTaskDelete,
   canEditTask,
-  projects
+  projects,
+  session
 }: TasksKanbanBoardProps) {
   const [activeTask, setActiveTask] = useState<Task | null>(null)
-  const [optimisticTasks, setOptimisticTasks] = useState<Task[]>([])
+  const [optimisticTasks, setOptimisticTasks] = useState<Task[]>(tasks)
   const [updatingTasks, setUpdatingTasks] = useState<Set<string>>(new Set())
   const [taskDetailsDialogOpen, setTaskDetailsDialogOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
 
-  // Use optimistic tasks if available, otherwise use props tasks
-  const displayTasks = optimisticTasks.length > 0 ? optimisticTasks : tasks
+  // Always use optimistic tasks for display
+  const displayTasks = optimisticTasks
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -547,11 +574,17 @@ export function TasksKanbanBoard({
     const task = displayTasks.find(t => t.id === taskId)
     if (!task || task.status === newStatus) return
 
-    // Optimistic update
+    // Optimistic update - immediately update UI
     setUpdatingTasks(prev => new Set(prev).add(taskId))
     setOptimisticTasks(prev =>
       prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t)
     )
+
+    // Show immediate feedback
+    toast.loading(`Przenoszenie zadania do "${newStatus}"...`, {
+      id: `move-task-${taskId}`,
+      duration: 2000
+    })
 
     try {
       const response = await fetch(`/api/tasks/${taskId}`, {
@@ -565,18 +598,24 @@ export function TasksKanbanBoard({
       })
 
       if (!response.ok) {
-        // Revert optimistic update on error
-        setOptimisticTasks([])
+        // Revert optimistic update on error - restore original task
+        setOptimisticTasks(prev =>
+          prev.map(t => t.id === taskId ? { ...t, status: task.status } : t)
+        )
         console.error("Failed to update task status")
-        // You could add a toast notification here
+        toast.error("Nie udało się przenieść zadania. Spróbuj ponownie.")
       } else {
-        // Success - trigger refresh
+        // Success - keep optimistic update and refresh data in background
+        toast.success(`Zadanie przeniesione do "${newStatus}"`)
         onTaskUpdated()
       }
     } catch (error) {
-      // Revert optimistic update on error
-      setOptimisticTasks([])
+      // Revert optimistic update on error - restore original task
+      setOptimisticTasks(prev =>
+        prev.map(t => t.id === taskId ? { ...t, status: task.status } : t)
+      )
       console.error("Error updating task status:", error)
+      toast.error("Wystąpił błąd podczas przenoszenia zadania")
     } finally {
       setUpdatingTasks(prev => {
         const newSet = new Set(prev)
@@ -591,9 +630,9 @@ export function TasksKanbanBoard({
     setTaskDetailsDialogOpen(true)
   }
 
-  // Reset optimistic state when tasks prop changes
+  // Sync optimistic tasks with props tasks when they change
   useEffect(() => {
-    setOptimisticTasks([])
+    setOptimisticTasks(tasks)
   }, [tasks])
 
   return (
@@ -618,6 +657,7 @@ export function TasksKanbanBoard({
               onTaskCreated={onTaskUpdated}
               updatingTasks={updatingTasks}
               projects={projects}
+              session={session}
             />
           ))}
         </div>
