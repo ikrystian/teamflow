@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { AvatarUpload } from "@/components/ui/avatar-upload"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { toast } from "sonner"
 
 import { Separator } from "@/components/ui/separator"
 import {
@@ -43,7 +44,7 @@ export function SettingsContent() {
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
-  const [saveMessage, setSaveMessage] = useState<string | null>(null)
+
 
   // Form state for profile data
   const [formData, setFormData] = useState({
@@ -116,7 +117,6 @@ export function SettingsContent() {
   const handleSaveProfile = async () => {
     try {
       setIsLoading(true)
-      setSaveMessage(null)
 
       const response = await fetch('/api/user/profile', {
         method: 'PUT',
@@ -129,17 +129,14 @@ export function SettingsContent() {
       if (response.ok) {
         const updatedProfile = await response.json()
         setUserProfile(updatedProfile)
-        setSaveMessage('Profil został pomyślnie zaktualizowany!')
-
-        // Clear success message after 3 seconds
-        setTimeout(() => setSaveMessage(null), 3000)
+        toast.success('Profil został pomyślnie zaktualizowany!')
       } else {
         const error = await response.json()
-        setSaveMessage(`Błąd: ${error.error || 'Nie udało się zaktualizować profilu'}`)
+        toast.error(`Błąd: ${error.error || 'Nie udało się zaktualizować profilu'}`)
       }
     } catch (error) {
       console.error('Error saving profile:', error)
-      setSaveMessage('Wystąpił błąd podczas zapisywania profilu')
+      toast.error('Wystąpił błąd podczas zapisywania profilu')
     } finally {
       setIsLoading(false)
     }
@@ -339,18 +336,8 @@ export function SettingsContent() {
                   />
                 </div>
 
-                {/* Save Button and Status Message */}
-                <div className="flex items-center justify-between pt-4 border-t">
-                  <div className="flex-1">
-                    {saveMessage && (
-                      <p className={`text-sm ${saveMessage.includes('Błąd') || saveMessage.includes('błąd')
-                          ? 'text-red-600'
-                          : 'text-green-600'
-                        }`}>
-                        {saveMessage}
-                      </p>
-                    )}
-                  </div>
+                {/* Save Button */}
+                <div className="flex items-center justify-end pt-4 border-t">
                   <Button
                     onClick={handleSaveProfile}
                     disabled={isLoading}
