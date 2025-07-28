@@ -28,8 +28,7 @@ RELACJE MIĘDZY KOMPONENTAMI - GLOBALNE STATUSY ZADAŃ
    - Używany w ustawieniach systemowych
 
 5. TaskStatusDialog (src/components/projects/task-status-dialog.tsx)
-   - Dialog do tworzenia/edycji statusów zadań (zachowany dla kompatybilności)
-   - Teraz przekierowuje do globalnego API zamiast API per-projekt
+   - USUNIĘTO: Komponent został usunięty wraz z funkcjonalnością dodawania kolumn z tablicy
 
 6. KanbanColumn (wewnętrzny komponent w obu kanban-board.tsx)
    - Reprezentuje pojedynczą kolumnę w tablicy
@@ -55,8 +54,8 @@ KanbanBoard (projekty):
 ├── Pobiera globalne statusy zadań z API (/api/projects/[projectId]/task-statuses)
 ├── API przekierowuje do globalnych statusów
 ├── Renderuje kolumny dla każdego statusu
-├── Dodaje przycisk "Dodaj kolumnę" na końcu
-└── Otwiera TaskStatusDialog po kliknięciu przycisku (przekierowuje do globalnego API)
+├── USUNIĘTO: Przycisk "Dodaj kolumnę" - funkcjonalność przeniesiona do ustawień systemowych
+└── Zarządzanie statusami odbywa się teraz tylko przez ustawienia systemowe
 
 TasksKanbanBoard (wszystkie zadania):
 ├── Pobiera globalne statusy bezpośrednio z API (/api/system/task-statuses)
@@ -92,7 +91,7 @@ GET /api/projects/[projectId]/task-statuses
 - Zachowana kompatybilność z istniejącymi komponentami
 
 POST /api/projects/[projectId]/task-statuses
-- Przekierowuje do globalnego API tworzenia statusów
+- USUNIĘTO: Endpoint został usunięty wraz z funkcjonalnością dodawania kolumn
 
 === STRUKTURA BAZY DANYCH ===
 
@@ -113,11 +112,10 @@ TaskStatus (ZMIENIONA - GLOBALNA):
    - Wybór koloru z palety predefiniowanych kolorów
    - Ustawianie statusu jako domyślny
 
-2. Dodawanie kolumny z tablicy (zachowane):
-   - Przycisk "Dodaj kolumnę" na końcu tablicy
-   - Otwiera dialog TaskStatusDialog
-   - Teraz tworzy globalne statusy zamiast per-projekt
-   - Po zapisaniu automatycznie odświeża tablicę
+2. Dodawanie kolumny z tablicy:
+   - USUNIĘTO: Przycisk "Dodaj kolumnę" został usunięty z tablicy projektów
+   - Zarządzanie statusami odbywa się teraz wyłącznie przez ustawienia systemowe
+   - Upraszcza interfejs użytkownika i centralizuje zarządzanie statusami
 
 3. Integracja z istniejącymi funkcjami:
    - Drag & drop zadań między kolumnami

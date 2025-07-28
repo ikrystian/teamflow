@@ -12,9 +12,8 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 - **Widoki zadań** - Trzy różne widoki zadań: Tablica (Kanban), Kalendarz i Lista
 - **Widok tablicy Kanban w stylu Trello** - Nowoczesna tablica z uproszczonymi kartami, drag & drop i szczegółami po kliknięciu
 - **Tablica zadań w Dashboard** - Widok tablicy Kanban w stylu Asana dla wszystkich zadań użytkownika z szybkim dodawaniem zadań
-- **Konfigurowalne statusy zadań** - Możliwość definiowania własnych statusów dla każdego projektu
-- **Ustawienia projektu** - Zarządzanie statusami zadań z kolorami i kolejnością
-- **Dodawanie kolumn z tablicy** - Możliwość dodawania nowych kolumn (statusów) bezpośrednio z tablicy zadań
+- **Globalne statusy zadań** - Centralne zarządzanie statusami zadań dla wszystkich projektów
+- **Centralne zarządzanie statusami** - Globalne statusy zadań zarządzane przez ustawienia systemowe
 - **Automatyczne ustawianie statusu zadania** - Zadania dodawane z konkretnej kolumny automatycznie otrzymują odpowiedni status
 - **Time tracking** - Logowanie czasu pracy nad zadaniami, śledzenie postępu względem szacowanego czasu
 - **Załączniki obrazków** - Możliwość dodawania obrazków do zadań podczas tworzenia i edycji
@@ -155,13 +154,14 @@ Aplikacja będzie dostępna pod adresem [http://localhost:3000](http://localhost
 - **Wizualne kolumny** - Kolumny w stylu Trello z szarym tłem i białymi kartami
 - **Animacje i efekty** - Płynne animacje hover, drag & drop z wizualnym feedbackiem
 
-### Konfigurowalne statusy zadań
-- **Ustawienia projektu** - Dostęp przez przycisk "Settings" w szczegółach projektu
+### Globalne statusy zadań
+- **Ustawienia systemowe** - Centralne zarządzanie statusami zadań w ustawieniach systemowych
 - **Własne statusy** - Tworzenie niestandardowych statusów (np. "Review", "Testing", "Blocked")
-- **Kolory statusów** - Wybór kolorów z palety lub własny kolor hex
+- **Kolory statusów** - Wybór kolorów z palety predefiniowanych kolorów
 - **Kolejność statusów** - Przeciąganie statusów w ustawieniach aby zmienić kolejność na tablicy
 - **Status domyślny** - Oznaczanie statusu jako domyślny dla nowych zadań
 - **Zarządzanie statusami** - Edycja i usuwanie statusów (z ochroną przed usunięciem używanych)
+- **Globalna dostępność** - Wszystkie projekty używają tych samych statusów dla spójności
 
 ### Szczegóły implementacji tablicy Trello
 - **TaskBoardFilters** - Nowy komponent do filtrowania zadań z dropdown menu

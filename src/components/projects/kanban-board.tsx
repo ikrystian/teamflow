@@ -37,7 +37,6 @@ import {
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { TaskDetailsDialog } from "../tasks/task-details-dialog"
-import { TaskStatusDialog } from "./task-status-dialog"
 import type { Task, TaskStatus } from "@/types"
 
 interface KanbanBoardProps {
@@ -455,7 +454,7 @@ export function KanbanBoard({
   const [updatingTasks, setUpdatingTasks] = useState<Set<string>>(new Set())
   const [taskDetailsDialogOpen, setTaskDetailsDialogOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
-  const [statusDialogOpen, setStatusDialogOpen] = useState(false)
+
 
   // Use optimistic tasks if available, otherwise use props tasks
   const displayTasks = optimisticTasks.length > 0 ? optimisticTasks : tasks
@@ -619,13 +618,7 @@ export function KanbanBoard({
     setTaskDetailsDialogOpen(true)
   }
 
-  const handleCreateColumn = () => {
-    setStatusDialogOpen(true)
-  }
 
-  const handleStatusSaved = () => {
-    fetchTaskStatuses()
-  }
 
   return (
     <>
@@ -652,21 +645,7 @@ export function KanbanBoard({
             />
           ))}
 
-          {/* Add Column Button */}
-          <div className="flex-shrink-0 w-72">
-            <Card className="h-fit border-2 border-dashed border-gray-300 hover:border-gray-400 transition-colors">
-              <CardContent className="p-4">
-                <Button
-                  variant="ghost"
-                  onClick={handleCreateColumn}
-                  className="w-full h-20 flex flex-col items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                >
-                  <Plus className="h-6 w-6 mb-2" />
-                  <span className="text-sm font-medium">Dodaj kolumnę</span>
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+
         </div>
 
         <DragOverlay>
@@ -712,13 +691,7 @@ export function KanbanBoard({
         canEdit={selectedTask ? canEditTask(selectedTask) : false}
       />
 
-      <TaskStatusDialog
-        open={statusDialogOpen}
-        onOpenChange={setStatusDialogOpen}
-        onStatusSaved={handleStatusSaved}
-        projectId={projectId}
-        status={null}
-      />
+
     </>
   )
 }
