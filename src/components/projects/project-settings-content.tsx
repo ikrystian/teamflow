@@ -18,6 +18,7 @@ interface Project {
   name: string
   description?: string
   status: string
+  color?: string
   repositoryUrl?: string
   databaseUrl?: string
   serverUrl?: string

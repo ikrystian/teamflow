@@ -40,13 +40,7 @@ interface TeamMember {
   avatarUrl?: string
 }
 
-interface TaskStatus {
-  id: string
-  name: string
-  color: string
-  order: number
-  isDefault: boolean
-}
+
 
 interface PendingImage {
   file: File
@@ -75,7 +69,6 @@ export function CreateTaskDialog({
   const [dueDate, setDueDate] = useState("")
   const [estimatedHours, setEstimatedHours] = useState("")
   const [statusId, setStatusId] = useState("")
-  const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [pendingImages, setPendingImages] = useState<PendingImage[]>([])
   const [loading, setLoading] = useState(false)
@@ -83,15 +76,17 @@ export function CreateTaskDialog({
 
   const selectedProject = projects.find(p => p.id === projectId)
 
-  const fetchTaskStatuses = useCallback(async () => {
+  const setDefaultStatus = useCallback(async () => {
     try {
       const response = await fetch('/api/system/task-statuses')
       if (response.ok) {
         const data = await response.json()
-        setTaskStatuses(data.taskStatuses)
 
-        // Set default status to the first option in the list (ordered by order field)
-        if (data.taskStatuses.length > 0) {
+        // Set default status - first look for isDefault: true, then use first available
+        const defaultStatus = data.taskStatuses.find((status: { isDefault: boolean }) => status.isDefault)
+        if (defaultStatus) {
+          setStatusId(defaultStatus.id)
+        } else if (data.taskStatuses.length > 0) {
           setStatusId(data.taskStatuses[0].id)
         }
       }
@@ -115,9 +110,9 @@ export function CreateTaskDialog({
 
   useEffect(() => {
     if (open) {
-      fetchTaskStatuses()
+      setDefaultStatus()
     }
-  }, [open, fetchTaskStatuses])
+  }, [open, setDefaultStatus])
 
   useEffect(() => {
     if (selectedProject) {
@@ -240,10 +235,8 @@ export function CreateTaskDialog({
     setEstimatedHours("")
     setTeamMembers([])
 
-    // Reset status to the first option in the list (ordered by order field)
-    if (taskStatuses.length > 0) {
-      setStatusId(taskStatuses[0].id)
-    }
+    // Reset status to default
+    setDefaultStatus()
 
     // Clean up pending images
     pendingImages.forEach(img => URL.revokeObjectURL(img.preview))
@@ -368,30 +361,7 @@ export function CreateTaskDialog({
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="status" className="text-sm font-medium">Status</Label>
-                <Select value={statusId} onValueChange={setStatusId}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Wybierz status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {taskStatuses.map((status) => (
-                      <SelectItem key={status.id} value={status.id}>
-                        <div className="flex items-center space-x-2">
-                          <div
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: status.color }}
-                          />
-                          <span>{status.name}</span>
-                          {status.isDefault && (
-                            <span className="text-xs text-gray-500">(domyślny)</span>
-                          )}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

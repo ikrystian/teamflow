@@ -12,7 +12,7 @@ interface Task {
   id: string
   title: string
   description?: string
-  status: string
+  statusId?: string
   priority?: string
   dueDate: string
   estimatedHours?: number

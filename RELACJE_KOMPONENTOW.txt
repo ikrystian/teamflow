@@ -237,3 +237,62 @@ Pole statusu w formularzu:
 - Pokazuje kolorowe kółko dla każdego statusu
 - Oznacza status domyślny tekstem "(domyślny)"
 - Domyślnie ustawiony na "To Do" lub pierwszy domyślny status
+
+=== UJEDNOLICENIE OBSŁUGI STATUSÓW ZADAŃ ===
+
+Data: 2025-01-28
+Cel: Ujednolicenie pobierania i zapisywania statusów zadań we wszystkich komponentach
+
+PROBLEM:
+- Różne komponenty używały różnych endpointów API do pobierania statusów
+- Niespójność w logice ustawiania domyślnego statusu
+- Mieszanie pola "status" (string) i "statusId" w zapisywaniu
+
+ROZWIĄZANIE:
+1. Wszystkie komponenty używają /api/system/task-statuses
+2. Ujednolicona logika domyślnego statusu (isDefault: true, potem pierwszy z listy)
+3. Usunięcie pola "status" (string) - tylko statusId
+4. Usunięcie niepotrzebnych endpointów projektowych
+
+ZMIANY:
+- src/components/projects/create-task-dialog.tsx: zmieniony endpoint na /api/system/task-statuses, usunięto pole status z formularza
+- src/components/tasks/create-task-dialog.tsx: ujednolicona logika domyślnego statusu, usunięto pole status z formularza
+- src/components/tasks/edit-task-dialog.tsx: zmieniony endpoint na /api/system/task-statuses, usunięto pole status z formularza
+- src/components/projects/kanban-board.tsx: zmieniony endpoint na /api/system/task-statuses, usunięto wysyłanie pola status
+- src/components/tasks/tasks-kanban-board.tsx: usunięto wysyłanie pola status
+- src/app/api/tasks/route.ts: już nie przyjmuje pola status
+- src/app/api/tasks/[taskId]/route.ts: usunięto obsługę pola status
+- prisma/schema.prisma: usunięto kolumnę status z modelu Task
+- Migracja Prisma: 20250728060224_remove_task_status_column
+- src/types/index.ts: usunięto pole status z interfejsu Task
+- Usunięto endpointy /api/projects/[projectId]/task-statuses/*
+
+UWAGA: Niektóre komponenty (np. project-details-content.tsx) nadal używają task.status i wymagają dalszej aktualizacji.
+
+=== USUNIĘCIE HARDCODED KOLORÓW STATUSÓW ZADAŃ ===
+
+Data: 2025-01-28
+Cel: Usunięcie wszystkich hardcoded kolorów statusów zadań i zastąpienie ich kolorami z tabeli TaskStatus
+
+PROBLEM:
+- Komponenty używały hardcoded kolorów w funkcjach getStatusColor()
+- Zadania nie powinny mieć pola color jako string
+- Kolory powinny pochodzić z tabeli TaskStatus przez statusId
+
+ROZWIĄZANIE:
+1. Usunięto wszystkie funkcje getStatusColor() z komponentów
+2. Dodano pobieranie statusów zadań z API w komponentach
+3. Zastąpiono hardcoded kolory kolorami z TaskStatus
+4. Przywrócono pole color w modelu TaskStatus
+
+ZMIANY:
+- src/components/tasks/tasks-content.tsx: usunięto getStatusColor(), dodano fetchTaskStatuses(), zastąpiono Badge kolorami z TaskStatus
+- src/components/tasks/task-details-dialog.tsx: usunięto getStatusColor(), dodano fetchTaskStatuses(), zastąpiono Badge kolorami z TaskStatus
+- src/components/tasks/edit-task-dialog.tsx: usunięto odwołanie do task.status (pole już nie istnieje)
+- prisma/schema.prisma: przywrócono pole color w modelu TaskStatus
+- src/components/projects/create-task-dialog.tsx: dodano pole color do interfejsu TaskStatus
+
+REZULTAT:
+- Wszystkie kolory statusów zadań pochodzą teraz z bazy danych
+- Brak hardcoded kolorów w komponentach
+- Spójna kolorystyka statusów w całej aplikacji

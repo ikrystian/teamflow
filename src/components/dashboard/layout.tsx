@@ -31,6 +31,7 @@ import {
 interface Project {
   id: string
   name: string
+  color?: string
   team: {
     id: string
     name: string

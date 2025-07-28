@@ -27,6 +27,7 @@ interface ProjectDetails {
   name: string
   description?: string
   status: string
+  color?: string
   createdAt: string
   updatedAt: string
 
@@ -203,18 +204,6 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
     return { total, completed, inProgress, overdue }
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "completed":
-        return "bg-green-100 text-green-800"
-      case "in progress":
-        return "bg-blue-100 text-blue-800"
-      case "on hold":
-        return "bg-yellow-100 text-yellow-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
 
   if (loading) {
     return <PageLoadingLayout variant="details" />
@@ -256,7 +245,7 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <Badge className={getStatusColor(project.status)}>
+          <Badge>
             {project.status}
           </Badge>
         </div>
@@ -299,7 +288,7 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                 <h4 className="text-sm font-medium text-muted-foreground">Status</h4>
               </div>
-              <Badge className={getStatusColor(project.status)} variant="secondary">
+              <Badge variant="secondary">
                 {project.status}
               </Badge>
             </div>

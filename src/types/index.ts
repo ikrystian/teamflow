@@ -32,7 +32,6 @@ export interface Task {
   id: string;
   title: string;
   description?: string;
-  status: string;
   statusId?: string;
   priority?: string;
   dueDate?: string;
@@ -41,6 +40,7 @@ export interface Task {
   project: {
     id: string;
     name: string;
+    color?: string;
     team: {
       id: string;
       name: string;

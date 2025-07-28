@@ -69,24 +69,22 @@ export function CreateTaskDialog({
   const [dueDate, setDueDate] = useState("")
   const [estimatedHours, setEstimatedHours] = useState("")
   const [statusId, setStatusId] = useState("")
-  const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
   const [pendingImages, setPendingImages] = useState<PendingImage[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
   const fetchTaskStatuses = useCallback(async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/task-statuses`)
+      const response = await fetch('/api/system/task-statuses')
       if (response.ok) {
         const data = await response.json()
-        setTaskStatuses(data.taskStatuses)
 
         // Set default status if available
         if (defaultStatusId) {
           // Use provided default status
           setStatusId(defaultStatusId)
         } else {
-          // Use project's default status or first available
+          // Use default status or first available
           const defaultStatus = data.taskStatuses.find((status: TaskStatus) => status.isDefault)
           if (defaultStatus) {
             setStatusId(defaultStatus.id)
@@ -98,13 +96,13 @@ export function CreateTaskDialog({
     } catch (error) {
       console.error("Error fetching task statuses:", error)
     }
-  }, [projectId, defaultStatusId])
+  }, [defaultStatusId])
 
   useEffect(() => {
-    if (open && projectId) {
+    if (open) {
       fetchTaskStatuses()
     }
-  }, [open, projectId, fetchTaskStatuses])
+  }, [open, fetchTaskStatuses])
 
   const uploadPendingImages = async (taskId: string) => {
     for (const pendingImage of pendingImages) {
@@ -319,30 +317,7 @@ export function CreateTaskDialog({
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="status" className="text-sm font-medium">Status</Label>
-              <Select value={statusId} onValueChange={setStatusId}>
-                <SelectTrigger className="h-10">
-                  <SelectValue placeholder="Wybierz status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {taskStatuses.map((status) => (
-                    <SelectItem key={status.id} value={status.id}>
-                      <div className="flex items-center space-x-2">
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: status.color }}
-                        />
-                        <span>{status.name}</span>
-                        {status.isDefault && (
-                          <span className="text-xs text-gray-500">(domyślny)</span>
-                        )}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">

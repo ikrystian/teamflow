@@ -44,6 +44,7 @@ export function CreateProjectDialog({
   const [description, setDescription] = useState("")
   const [teamId, setTeamId] = useState("")
   const [imageUrl, setImageUrl] = useState<string | null>(null)
+  const [color, setColor] = useState("#3B82F6")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
@@ -62,7 +63,8 @@ export function CreateProjectDialog({
           name,
           description: description || undefined,
           teamId,
-          imageUrl
+          imageUrl,
+          color
         }),
       })
 
@@ -71,6 +73,7 @@ export function CreateProjectDialog({
         setDescription("")
         setTeamId("")
         setImageUrl(null)
+        setColor("#3B82F6")
         onProjectCreated()
       } else {
         const data = await response.json()
@@ -88,6 +91,7 @@ export function CreateProjectDialog({
     setDescription("")
     setTeamId("")
     setImageUrl(null)
+    setColor("#3B82F6")
     setError("")
     onOpenChange(false)
   }
@@ -139,6 +143,48 @@ export function CreateProjectDialog({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="color">Kolor projektu</Label>
+              <div className="grid grid-cols-6 gap-2">
+                {[
+                  "#3B82F6", // Blue
+                  "#10B981", // Emerald
+                  "#F59E0B", // Amber
+                  "#EF4444", // Red
+                  "#8B5CF6", // Violet
+                  "#EC4899", // Pink
+                  "#06B6D4", // Cyan
+                  "#84CC16", // Lime
+                  "#F97316", // Orange
+                  "#6366F1", // Indigo
+                  "#14B8A6", // Teal
+                  "#A855F7", // Purple
+                ].map((colorOption) => (
+                  <button
+                    key={colorOption}
+                    type="button"
+                    className={`w-8 h-8 rounded-full border-2 transition-all ${
+                      color === colorOption ? "border-gray-900 scale-110" : "border-gray-300 hover:border-gray-400"
+                    }`}
+                    style={{ backgroundColor: colorOption }}
+                    onClick={() => setColor(colorOption)}
+                    disabled={loading}
+                  />
+                ))}
+              </div>
+              <div className="flex items-center space-x-2 mt-2">
+                <Label htmlFor="custom-color" className="text-sm">Własny kolor:</Label>
+                <input
+                  id="custom-color"
+                  type="color"
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  className="w-8 h-8 rounded border"
+                  disabled={loading}
+                />
+              </div>
             </div>
 
             <ProjectImageSelector

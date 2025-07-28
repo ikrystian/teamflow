@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { name, description, teamId, imageUrl } = await request.json()
+    const { name, description, teamId, imageUrl, color } = await request.json()
 
     if (!name || !teamId) {
       return NextResponse.json(
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
         name,
         description,
         teamId,
-        imageUrl
+        imageUrl,
       },
       include: {
         team: {

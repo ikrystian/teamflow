@@ -485,7 +485,7 @@ export function KanbanBoard({
 
   const fetchTaskStatuses = useCallback(async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/task-statuses`)
+      const response = await fetch('/api/system/task-statuses')
       if (response.ok) {
         const data = await response.json()
         setTaskStatuses(data.taskStatuses)
@@ -493,11 +493,11 @@ export function KanbanBoard({
     } catch (error) {
       console.error("Error fetching task statuses:", error)
     }
-  }, [projectId])
+  }, [])
 
   useEffect(() => {
     fetchTaskStatuses()
-  }, [projectId, fetchTaskStatuses])
+  }, [fetchTaskStatuses])
 
   const handleDragStart = (event: DragStartEvent) => {
     const task = displayTasks.find(t => t.id === event.active.id)
@@ -527,7 +527,7 @@ export function KanbanBoard({
     }
 
     // If the task is already in this status, do nothing
-    if (task.statusId === newStatus.id || task.status === newStatus.name) {
+    if (task.statusId === newStatus.id) {
       return
     }
 
@@ -540,22 +540,16 @@ export function KanbanBoard({
     // Optimistic update - immediately update the task in local state
     const updatedTask = {
       ...task,
-      status: newStatus.name,
-      statusId: newStatus.id.startsWith('default-') ? undefined : newStatus.id
+      statusId: newStatus.id
     }
 
     setOptimisticTasks(prevTasks =>
       prevTasks.map(t => t.id === taskId ? updatedTask : t)
     )
 
-    // Prepare update data - don't send statusId for default statuses
-    const updateData: { status: string, statusId?: string } = {
-      status: newStatus.name,
-    }
-
-    // Only send statusId if it's a real database status (not a default one)
-    if (!newStatus.id.startsWith('default-')) {
-      updateData.statusId = newStatus.id
+    // Prepare update data
+    const updateData = {
+      statusId: newStatus.id
     }
 
     try {
@@ -604,13 +598,8 @@ export function KanbanBoard({
 
   const getTasksByStatus = (status: TaskStatus) => {
     return displayTasks.filter(task => {
-      // For real database statuses
-      if (!status.id.startsWith('default-')) {
-        return task.statusId === status.id
-      }
-
-      // For default statuses, match by name and either no statusId or matching statusId
-      return task.status === status.name && (!task.statusId || task.statusId === status.id)
+      // Match by statusId
+      return task.statusId === status.id
     })
   }
 

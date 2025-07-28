@@ -47,6 +47,7 @@ model Project {
   description String?
   status      String       @default("In Progress") // e.g., "In Progress", "Completed"
   imageUrl    String?      // URL do zdjęcia projektu
+  color       String       @default("#3B82F6") // Kolor projektu (hex)
 
   // Access credentials fields
   repositoryUrl     String?  // URL do repozytorium kodu
@@ -72,7 +73,6 @@ model Task {
   id            String      @id @default(cuid())
   title         String
   description   String?     // Rich text content stored as HTML
-  status        String      @default("To Do") // e.g., "To Do", "In Progress", "Done" - will be deprecated in favor of statusId
   statusId      String?     // Reference to TaskStatus
   taskStatus    TaskStatus? @relation(fields: [statusId], references: [id])
   priority      String?     // e.g., "Low", "Medium", "High"

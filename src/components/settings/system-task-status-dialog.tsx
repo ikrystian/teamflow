@@ -30,20 +30,7 @@ interface SystemTaskStatusDialogProps {
   status?: TaskStatus | null
 }
 
-const predefinedColors = [
-  "#6B7280", // Gray
-  "#EF4444", // Red
-  "#F97316", // Orange
-  "#EAB308", // Yellow
-  "#22C55E", // Green
-  "#10B981", // Emerald
-  "#06B6D4", // Cyan
-  "#3B82F6", // Blue
-  "#6366F1", // Indigo
-  "#8B5CF6", // Violet
-  "#A855F7", // Purple
-  "#EC4899", // Pink
-]
+
 
 export function SystemTaskStatusDialog({
   open,
@@ -52,7 +39,6 @@ export function SystemTaskStatusDialog({
   status
 }: SystemTaskStatusDialogProps) {
   const [name, setName] = useState("")
-  const [color, setColor] = useState("#6B7280")
   const [isDefault, setIsDefault] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -62,11 +48,9 @@ export function SystemTaskStatusDialog({
   useEffect(() => {
     if (status) {
       setName(status.name)
-      setColor(status.color)
       setIsDefault(status.isDefault)
     } else {
       setName("")
-      setColor("#6B7280")
       setIsDefault(false)
     }
     setError("")
@@ -97,7 +81,6 @@ export function SystemTaskStatusDialog({
         },
         body: JSON.stringify({
           name: name.trim(),
-          color,
           isDefault,
         }),
       })
@@ -118,7 +101,6 @@ export function SystemTaskStatusDialog({
 
   const handleClose = () => {
     setName("")
-    setColor("#6B7280")
     setIsDefault(false)
     setError("")
     onOpenChange(false)
@@ -151,34 +133,7 @@ export function SystemTaskStatusDialog({
               />
             </div>
 
-            <div className="grid gap-2">
-              <Label>Kolor</Label>
-              <div className="grid grid-cols-6 gap-2">
-                {predefinedColors.map((colorOption) => (
-                  <button
-                    key={colorOption}
-                    type="button"
-                    className={`w-8 h-8 rounded-full border-2 ${
-                      color === colorOption ? "border-gray-900" : "border-gray-300"
-                    }`}
-                    style={{ backgroundColor: colorOption }}
-                    onClick={() => setColor(colorOption)}
-                    disabled={loading}
-                  />
-                ))}
-              </div>
-              <div className="flex items-center space-x-2 mt-2">
-                <Label htmlFor="custom-color" className="text-sm">Własny kolor:</Label>
-                <input
-                  id="custom-color"
-                  type="color"
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  className="w-8 h-8 rounded border"
-                  disabled={loading}
-                />
-              </div>
-            </div>
+
 
             <div className="flex items-center space-x-2">
               <Switch

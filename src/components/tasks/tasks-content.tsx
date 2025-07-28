@@ -43,10 +43,19 @@ interface Project {
   }
 }
 
+interface TaskStatus {
+  id: string
+  name: string
+  color: string
+  order: number
+  isDefault: boolean
+}
+
 export function TasksContent() {
   const { data: session } = useSession() as { data: Session | null }
   const [tasks, setTasks] = useState<Task[]>([])
   const [projects, setProjects] = useState<Project[]>([])
+  const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
   const [loading, setLoading] = useState(true)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
@@ -87,9 +96,21 @@ export function TasksContent() {
     }
   }
 
+  const fetchTaskStatuses = async () => {
+    try {
+      const response = await fetch('/api/system/task-statuses')
+      if (response.ok) {
+        const data = await response.json()
+        setTaskStatuses(data.taskStatuses)
+      }
+    } catch (error) {
+      console.error("Error fetching task statuses:", error)
+    }
+  }
+
   useEffect(() => {
     const fetchData = async () => {
-      await Promise.all([fetchTasks(), fetchProjects()])
+      await Promise.all([fetchTasks(), fetchProjects(), fetchTaskStatuses()])
       setLoading(false)
     }
     fetchData()
@@ -224,18 +245,14 @@ export function TasksContent() {
     }
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Done":
-        return "bg-green-500/10 text-green-600 dark:text-green-400"
-      case "In Progress":
-        return "bg-blue-500/10 text-blue-600 dark:text-blue-400"
-      case "To Do":
-        return "bg-muted text-muted-foreground"
-      default:
-        return "bg-muted text-muted-foreground"
+  const getTaskStatus = (task: Task) => {
+    if (task.statusId) {
+      return taskStatuses.find(status => status.id === task.statusId)
     }
+    return null
   }
+
+
 
   const isOverdue = (dueDate?: string) => {
     if (!dueDate) return false
@@ -394,7 +411,10 @@ export function TasksContent() {
               {tasks.map((task) => (
                 <Card
                   key={task.id}
-                  className="transition-all hover:shadow-md cursor-pointer border-l-4 border-l-transparent hover:border-l-primary"
+                  className="transition-all hover:shadow-md cursor-pointer border-l-4"
+                  style={{
+                    borderLeftColor: task.project?.color || '#3B82F6'
+                  }}
                   onClick={() => handleTaskDetails(task)}
                 >
                   <CardHeader className="pb-3">
@@ -419,11 +439,18 @@ export function TasksContent() {
                             {task.priority === "Low" ? "Niski" : task.priority === "Medium" ? "Średni" : "Wysoki"}
                           </Badge>
                         )}
-                        <Badge variant="secondary" className={getStatusColor(task.status)}>
-                          {task.status === "completed" ? "Ukończono" :
-                           task.status === "in progress" ? "W toku" :
-                           task.status === "on hold" ? "Wstrzymano" : task.status}
-                        </Badge>
+                        {(() => {
+                          const taskStatus = getTaskStatus(task)
+                          return (
+                            <Badge
+                              variant="secondary"
+                              className="text-white"
+                              style={{ backgroundColor: taskStatus?.color || '#6B7280' }}
+                            >
+                              {taskStatus?.name || 'Brak statusu'}
+                            </Badge>
+                          )
+                        })()}
 
                         {/* Action Menu */}
                         <DropdownMenu>

@@ -122,7 +122,7 @@ export async function PATCH(
     }
 
     const { taskId } = await params
-    const { title, description, status, statusId, priority, dueDate, assigneeId, estimatedHours } = await request.json()
+    const { title, description, statusId, priority, dueDate, assigneeId, estimatedHours } = await request.json()
 
     // Fetch task to check permissions
     const existingTask = await prisma.task.findFirst({
@@ -182,7 +182,6 @@ export async function PATCH(
     const updateData: {
       title?: string;
       description?: string;
-      status?: string;
       statusId?: string;
       priority?: string;
       dueDate?: Date | null;
@@ -191,7 +190,6 @@ export async function PATCH(
   } = {}
     if (title !== undefined) updateData.title = title
     if (description !== undefined) updateData.description = description
-    if (status !== undefined) updateData.status = status
     if (statusId !== undefined) updateData.statusId = statusId
     if (priority !== undefined) updateData.priority = priority
     if (dueDate !== undefined) updateData.dueDate = dueDate ? new Date(dueDate) : null

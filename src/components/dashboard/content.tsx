@@ -40,7 +40,6 @@ interface Task {
   id: string
   title: string
   description?: string
-  status: string
   statusId?: string
   priority?: string
   dueDate?: string
@@ -225,19 +224,6 @@ export function DashboardContent() {
     }
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Done":
-        return "bg-green-500/10 text-green-600 dark:text-green-400"
-      case "In Progress":
-        return "bg-blue-500/10 text-blue-600 dark:text-blue-400"
-      case "To Do":
-        return "bg-muted text-muted-foreground"
-      default:
-        return "bg-muted text-muted-foreground"
-    }
-  }
-
   const formatDueDate = (dueDate?: string) => {
     if (!dueDate) return "Brak terminu"
     const date = new Date(dueDate)
@@ -409,9 +395,7 @@ export function DashboardContent() {
                         {task.priority === "High" ? "Wysoki" : task.priority === "Medium" ? "Średni" : "Niski"}
                       </Badge>
                     )}
-                    <Badge className={getStatusColor(task.status)}>
-                      {task.status === "Done" ? "Ukończono" : task.status === "In Progress" ? "W toku" : "Do zrobienia"}
-                    </Badge>
+
                     <span className="text-sm text-muted-foreground">
                       {formatDueDate(task.dueDate)}
                     </span>

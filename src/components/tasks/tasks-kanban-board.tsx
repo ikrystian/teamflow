@@ -124,11 +124,16 @@ function SortableTaskCard({
       {...listeners}
       className="touch-none"
     >
-      <Card className={`mb-2 cursor-pointer hover:shadow-md transition-all border-l-4 ${
-        isUpdating
-          ? 'border-l-yellow-500 bg-yellow-50/50'
-          : 'border-l-blue-500'
-      }`}>
+      <Card
+        className={`mb-2 cursor-pointer hover:shadow-md transition-all border-l-4 ${
+          isUpdating
+            ? 'border-l-yellow-500 bg-yellow-50/50'
+            : ''
+        }`}
+        style={{
+          borderLeftColor: isUpdating ? undefined : (task.project?.color || '#3B82F6')
+        }}
+      >
         <CardContent className="p-3">
           <div className="flex items-start justify-between mb-2">
             <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -422,10 +427,6 @@ function KanbanColumn({
       }`}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <div
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: status.color }}
-            />
             <h3 className="font-semibold text-sm">{status.name}</h3>
             <Badge variant="secondary" className="text-xs">
               {tasks.length}
@@ -525,11 +526,8 @@ export function TasksKanbanBoard({
 
   const getTasksByStatus = (status: TaskStatus) => {
     return displayTasks.filter(task => {
-      // Match by statusId if available, otherwise by status name
-      if (task.statusId) {
-        return task.statusId === status.id
-      }
-      return task.status === status.name
+      // Match by statusId
+      return task.statusId === status.id
     })
   }
 
@@ -559,14 +557,13 @@ export function TasksKanbanBoard({
     if (!newTaskStatus) return
 
     const task = displayTasks.find(t => t.id === taskId)
-    if (!task || (task.statusId === newTaskStatus.id || task.status === newTaskStatus.name)) return
+    if (!task || task.statusId === newTaskStatus.id) return
 
     // Optimistic update - immediately update UI
     setUpdatingTasks(prev => new Set(prev).add(taskId))
     setOptimisticTasks(prev =>
       prev.map(t => t.id === taskId ? {
         ...t,
-        status: newTaskStatus.name,
         statusId: newTaskStatus.id
       } : t)
     )
@@ -584,7 +581,6 @@ export function TasksKanbanBoard({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          status: newTaskStatus.name,
           statusId: newTaskStatus.id
         }),
       })
@@ -594,7 +590,6 @@ export function TasksKanbanBoard({
         setOptimisticTasks(prev =>
           prev.map(t => t.id === taskId ? {
             ...t,
-            status: task.status,
             statusId: task.statusId
           } : t)
         )
@@ -610,7 +605,6 @@ export function TasksKanbanBoard({
       setOptimisticTasks(prev =>
         prev.map(t => t.id === taskId ? {
           ...t,
-          status: task.status,
           statusId: task.statusId
         } : t)
       )

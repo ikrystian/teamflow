@@ -46,6 +46,7 @@ interface ProjectDetails {
   name: string
   description?: string
   status: string
+  color?: string
   createdAt: string
   updatedAt: string
   team: {
@@ -161,18 +162,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     return true // Simplified for now
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "completed":
-        return "bg-green-100 text-green-800"
-      case "in progress":
-        return "bg-blue-100 text-blue-800"
-      case "on hold":
-        return "bg-yellow-100 text-yellow-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
+
 
   const getPriorityColor = (priority?: string) => {
     switch (priority?.toLowerCase()) {
@@ -187,16 +177,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     }
   }
 
-  const getTaskStats = (tasks: Task[]) => {
-    const total = tasks.length
-    const completed = tasks.filter(task => task.status.toLowerCase() === "done").length
-    const inProgress = tasks.filter(task => task.status.toLowerCase() === "in progress").length
-    const overdue = tasks.filter(task =>
-      task.dueDate && new Date(task.dueDate) < new Date() && task.status.toLowerCase() !== "done"
-    ).length
 
-    return { total, completed, inProgress, overdue }
-  }
 
   const getFilteredTasks = (tasks: Task[]) => {
     if (taskFilter === "all") return tasks
@@ -297,7 +278,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     )
   }
 
-  const stats = getTaskStats(project.tasks);
+
 
   return (
         <div>
@@ -318,7 +299,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <Badge className={getStatusColor(project.status)}>
+          <Badge>
             {project.status}
           </Badge>
 
@@ -430,9 +411,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-2">
                           <h4 className="font-medium">{task.title}</h4>
-                          <Badge className={getStatusColor(task.status)} variant="secondary">
-                            {task.status === "completed" ? "Ukończono" : task.status === "in progress" ? "W toku" : task.status === "on hold" ? "Wstrzymano" : task.status}
-                          </Badge>
+
                           {task.priority && (
                             <Badge className={getPriorityColor(task.priority)} variant="outline">
                               {task.priority === "high" ? "Wysoki" : task.priority === "medium" ? "Średni" : task.priority === "low" ? "Niski" : task.priority}

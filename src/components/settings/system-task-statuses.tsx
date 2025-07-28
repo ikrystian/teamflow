@@ -80,10 +80,7 @@ function SortableTaskStatus({ status, onEdit, onDelete }: SortableTaskStatusProp
         >
           <GripVertical className="h-5 w-5 text-gray-400" />
         </div>
-        <div
-          className="w-4 h-4 rounded-full"
-          style={{ backgroundColor: status.color }}
-        />
+
         <div>
           <div className="flex items-center space-x-2">
             <span className="font-medium">{status.name}</span>

@@ -41,7 +41,6 @@ export function EditTaskDialog({
 }: EditTaskDialogProps) {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
-  const [status, setStatus] = useState("")
   const [statusId, setStatusId] = useState("")
   const [assigneeId, setAssigneeId] = useState("")
   const [priority, setPriority] = useState("")
@@ -53,10 +52,8 @@ export function EditTaskDialog({
   const [error, setError] = useState("")
 
   const fetchTaskStatuses = useCallback(async () => {
-    if (!task?.project?.id) return
-
     try {
-      const response = await fetch(`/api/projects/${task.project.id}/task-statuses`)
+      const response = await fetch('/api/system/task-statuses')
       if (response.ok) {
         const data = await response.json()
         setTaskStatuses(data.taskStatuses)
@@ -66,23 +63,11 @@ export function EditTaskDialog({
           if (task.statusId) {
             // If task has a statusId, use it
             setStatusId(task.statusId)
-            const matchingStatus = data.taskStatuses.find((s: TaskStatus) => s.id === task.statusId)
-            if (matchingStatus) {
-              setStatus(matchingStatus.name)
-            }
-          } else if (task.status) {
-            // If task only has old status field, try to find matching status by name
-            const matchingStatus = data.taskStatuses.find((s: TaskStatus) => s.name === task.status)
-            if (matchingStatus) {
-              setStatusId(matchingStatus.id)
-              setStatus(matchingStatus.name)
-            }
           } else {
             // If no status set, use the default status
             const defaultStatus = data.taskStatuses.find((s: TaskStatus) => s.isDefault)
             if (defaultStatus) {
               setStatusId(defaultStatus.id)
-              setStatus(defaultStatus.name)
             }
           }
         }
@@ -126,7 +111,6 @@ export function EditTaskDialog({
         body: JSON.stringify({
           title: title.trim(),
           description: description.trim() || undefined,
-          status,
           statusId: statusId || undefined,
           assigneeId: assigneeId === "unassigned" ? undefined : assigneeId,
           priority: priority || undefined,
@@ -153,7 +137,6 @@ export function EditTaskDialog({
     setTitle("")
     setDescription("")
     setImages([])
-    setStatus("")
     setStatusId("")
     setAssigneeId("unassigned")
     setPriority("")
@@ -212,7 +195,7 @@ export function EditTaskDialog({
   const hasChanges = task ? (
     title.trim() !== task.title ||
     (description.trim() || undefined) !== task.description ||
-    status !== task.status ||
+    statusId !== task.statusId ||
     (assigneeId === "unassigned" ? undefined : assigneeId) !== task.assignee?.id ||
     (priority || undefined) !== task.priority ||
     (dueDate || undefined) !== (task.dueDate ? task.dueDate.split('T')[0] : undefined) ||
@@ -253,41 +236,22 @@ export function EditTaskDialog({
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="status">Status</Label>
-                <Select value={statusId || status} onValueChange={(value) => {
-                  const selectedStatus = taskStatuses.find(s => s.id === value)
-                  if (selectedStatus) {
-                    setStatusId(value)
-                    setStatus(selectedStatus.name)
-                  } else {
-                    // Fallback for old status values
-                    setStatus(value)
-                    setStatusId("")
-                  }
-                }} required>
+                <Select value={statusId} onValueChange={setStatusId} required>
                   <SelectTrigger>
                     <SelectValue placeholder="Wybierz status" />
                   </SelectTrigger>
                   <SelectContent>
-                    {taskStatuses.length > 0 ? (
-                      taskStatuses.map((taskStatus) => (
-                        <SelectItem key={taskStatus.id} value={taskStatus.id}>
-                          <div className="flex items-center space-x-2">
-                            <div
-                              className="w-3 h-3 rounded-full"
-                              style={{ backgroundColor: taskStatus.color }}
-                            />
-                            <span>{taskStatus.name}</span>
-                          </div>
-                        </SelectItem>
-                      ))
-                    ) : (
-                      // Fallback to default statuses if no custom ones are configured
-                      <>
-                        <SelectItem value="To Do">Do zrobienia</SelectItem>
-                        <SelectItem value="In Progress">W toku</SelectItem>
-                        <SelectItem value="Done">Zrobione</SelectItem>
-                      </>
-                    )}
+                    {taskStatuses.map((taskStatus) => (
+                      <SelectItem key={taskStatus.id} value={taskStatus.id}>
+                        <div className="flex items-center space-x-2">
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: taskStatus.color }}
+                          />
+                          <span>{taskStatus.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

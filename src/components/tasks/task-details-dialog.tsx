@@ -29,6 +29,14 @@ import { TaskComments } from "@/components/tasks/task-comments"
 import { TaskTodos } from "@/components/tasks/task-todos"
 import type { Task, Todo } from "@/types"
 
+interface TaskStatus {
+  id: string
+  name: string
+  color: string
+  order: number
+  isDefault: boolean
+}
+
 interface TaskDetailsDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -52,6 +60,7 @@ export function TaskDetailsDialog({
 }: TaskDetailsDialogProps) {
   const [comments, setComments] = useState(task?.comments || [])
   const [todos, setTodos] = useState(task?.todos || [])
+  const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
 
   // Fetch fresh task data when dialog opens
   useEffect(() => {
@@ -70,8 +79,21 @@ export function TaskDetailsDialog({
       }
     }
 
+    const fetchTaskStatuses = async () => {
+      try {
+        const response = await fetch('/api/system/task-statuses')
+        if (response.ok) {
+          const data = await response.json()
+          setTaskStatuses(data.taskStatuses)
+        }
+      } catch (error) {
+        console.error("Error fetching task statuses:", error)
+      }
+    }
+
     if (open && task?.id) {
       fetchTaskData()
+      fetchTaskStatuses()
     } else {
       setComments(task?.comments || [])
       setTodos(task?.todos || [])
@@ -108,17 +130,11 @@ export function TaskDetailsDialog({
     }
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Done":
-        return "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20"
-      case "In Progress":
-        return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
-      case "To Do":
-        return "bg-muted text-muted-foreground border-border"
-      default:
-        return "bg-muted text-muted-foreground border-border"
+  const getTaskStatus = (task: Task) => {
+    if (task.statusId) {
+      return taskStatuses.find(status => status.id === task.statusId)
     }
+    return null
   }
 
   const isOverdue = (dueDate?: string) => {
@@ -173,11 +189,18 @@ export function TaskDetailsDialog({
                   {task.priority === "Low" ? "Niski" : task.priority === "Medium" ? "Średni" : "Wysoki"}
                 </Badge>
               )}
-              <Badge variant="default" className={getStatusColor(task.status)}>
-                {task.status === "completed" ? "Ukończono" :
-                 task.status === "in progress" ? "W toku" :
-                 task.status === "on hold" ? "Wstrzymano" : task.status}
-              </Badge>
+              {(() => {
+                const taskStatus = getTaskStatus(task)
+                return (
+                  <Badge
+                    variant="default"
+                    className="text-white"
+                    style={{ backgroundColor: taskStatus?.color || '#6B7280' }}
+                  >
+                    {taskStatus?.name || 'Brak statusu'}
+                  </Badge>
+                )
+              })()}
             </div>
             <div className="flex items-center gap-2">
               {onTimeTracking && (

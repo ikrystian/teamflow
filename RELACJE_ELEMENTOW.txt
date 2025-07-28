@@ -138,3 +138,29 @@
 - Error handling z toast notifications
 - Lepsze empty states w kolumnach
 - Responsywny design z overflow scroll
+
+## Zmiany w kolorach projektów i statusów (2025-07-28):
+
+### Usunięto możliwość wyboru koloru dla statusów zadań:
+- Usunięto sekcję wyboru kolorów z SystemTaskStatusDialog
+- Usunięto predefinedColors array
+- Usunięto stan color i związane funkcje
+- Statusy zadań używają teraz stałych kolorów zdefiniowanych w kodzie
+
+### Dodano możliwość wyboru koloru przy tworzeniu projektu:
+- Dodano pole color do modelu Project w schema.prisma (domyślnie #3B82F6)
+- Dodano sekcję wyboru koloru w CreateProjectDialog z predefiniowanymi kolorami
+- Dodano możliwość wyboru własnego koloru przez color picker
+- Zaktualizowano API endpoint /api/projects do obsługi pola color
+
+### Karty zadań używają koloru projektu:
+- Zaktualizowano SortableTaskCard w tasks-kanban-board.tsx
+- Zaktualizowano karty zadań w tasks-content.tsx (widok listy)
+- Obramowanie kart zadań używa teraz koloru projektu (task.project?.color)
+- Fallback do domyślnego koloru #3B82F6 gdy projekt nie ma koloru
+
+### Zaktualizowano typy TypeScript:
+- Dodano pole color?: string do wszystkich interfejsów Project
+- Zaktualizowano typy w src/types/index.ts
+- Zaktualizowano interfejsy w komponentach projektów
+- Pole color jest opcjonalne dla kompatybilności wstecznej

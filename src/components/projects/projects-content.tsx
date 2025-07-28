@@ -24,7 +24,7 @@ interface Project {
   tasks: {
     id: string
     title: string
-    status: string
+    statusId?: string
     priority?: string
     dueDate?: string
     assignee?: {
@@ -98,8 +98,9 @@ export function ProjectsContent() {
 
   const getTaskStats = (tasks: Project["tasks"]) => {
     const total = tasks.length
-    const completed = tasks.filter(task => task.status === "Done").length
-    const inProgress = tasks.filter(task => task.status === "In Progress").length
+    // TODO: Update to use statusId with proper status lookup
+    const completed = 0 // tasks.filter(task => task.statusId === "done-status-id").length
+    const inProgress = 0 // tasks.filter(task => task.statusId === "in-progress-status-id").length
     return { total, completed, inProgress }
   }
 
