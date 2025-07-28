@@ -8,7 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
-import { Plus, CheckSquare, Calendar, User as UserIcon, Filter, Edit, Clock, MoreHorizontal, Trash2 } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Plus, CheckSquare, Calendar, User as UserIcon, Filter, Edit, Clock, MoreHorizontal, Trash2, LayoutGrid, List } from "lucide-react"
 import { CreateTaskDialog } from "./create-task-dialog"
 import { EditTaskDialog } from "./edit-task-dialog"
 import { TimeTrackingDialog } from "./time-tracking-dialog"
@@ -55,6 +56,7 @@ export function TasksContent() {
   const [teamMembers, setTeamMembers] = useState<User[]>([])
   const [filter, setFilter] = useState<"all" | "assigned">("assigned")
   const [deletingTask, setDeletingTask] = useState(false)
+  const [activeTab, setActiveTab] = useState("board")
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -293,173 +295,215 @@ export function TasksContent() {
         </div>
       </div>
 
-      {/* Content */}
-      <div className="space-y-4">
-        {loading ? (
-          <PageLoadingLayout variant="list" />
-        ) : projects.length === 0 ? (
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="board" className="flex items-center gap-2">
+            <LayoutGrid className="h-4 w-4" />
+            Tablica
+          </TabsTrigger>
+          <TabsTrigger value="calendar" className="flex items-center gap-2">
+            <Calendar className="h-4 w-4" />
+            Kalendarz
+          </TabsTrigger>
+          <TabsTrigger value="list" className="flex items-center gap-2">
+            <List className="h-4 w-4" />
+            Lista
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Tab Content */}
+        <TabsContent value="board" className="space-y-4">
           <Card>
             <CardContent className="flex flex-col items-center justify-center text-center py-16">
-              <CheckSquare className="h-16 w-16 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Brak dostępnych projektów</h3>
+              <LayoutGrid className="h-16 w-16 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Widok tablicy</h3>
               <p className="text-muted-foreground mb-6 max-w-sm">
-                Musisz mieć projekty, aby móc tworzyć zadania
+                Tutaj będzie wyświetlana tablica Kanban z zadaniami pogrupowanymi według statusu
               </p>
             </CardContent>
           </Card>
-        ) : tasks.length === 0 ? (
+        </TabsContent>
+
+        <TabsContent value="calendar" className="space-y-4">
           <Card>
             <CardContent className="flex flex-col items-center justify-center text-center py-16">
-              <CheckSquare className="h-16 w-16 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">
-                {filter === "assigned" ? "Brak przypisanych zadań" : "Brak zadań"}
-              </h3>
-              <p className="text-muted-foreground mb-4 max-w-sm">
-                {filter === "assigned"
-                  ? "Nie masz jeszcze przypisanych żadnych zadań."
-                  : "Nie utworzono jeszcze żadnych zadań."
-                }
+              <Calendar className="h-16 w-16 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Widok kalendarza</h3>
+              <p className="text-muted-foreground mb-6 max-w-sm">
+                Tutaj będzie wyświetlany kalendarz z zadaniami według terminów wykonania
               </p>
-              <Button onClick={() => setCreateDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Utwórz zadanie
-              </Button>
             </CardContent>
           </Card>
-        ) : (
-          <div className="grid gap-4">
-            {tasks.map((task) => (
-              <Card
-                key={task.id}
-                className="transition-all hover:shadow-md cursor-pointer border-l-4 border-l-transparent hover:border-l-primary"
-                onClick={() => handleTaskDetails(task)}
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-lg font-semibold truncate">{task.title}</CardTitle>
-                      <CardDescription className="flex items-center gap-2 mt-1">
-                        <span>{task.project.name}</span>
-                        <span>•</span>
-                        <span>{task.project.team.name}</span>
-                      </CardDescription>
-                    </div>
-                    <div className="flex items-center gap-2 ml-4">
-                      {task.priority && (
-                        <Badge variant="outline" className={getPriorityColor(task.priority)}>
-                          {task.priority === "Low" ? "Niski" : task.priority === "Medium" ? "Średni" : "Wysoki"}
+        </TabsContent>
+
+        <TabsContent value="list" className="space-y-4">
+          {loading ? (
+            <PageLoadingLayout variant="list" />
+          ) : projects.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center text-center py-16">
+                <CheckSquare className="h-16 w-16 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Brak dostępnych projektów</h3>
+                <p className="text-muted-foreground mb-6 max-w-sm">
+                  Musisz mieć projekty, aby móc tworzyć zadania
+                </p>
+              </CardContent>
+            </Card>
+          ) : tasks.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center text-center py-16">
+                <CheckSquare className="h-16 w-16 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">
+                  {filter === "assigned" ? "Brak przypisanych zadań" : "Brak zadań"}
+                </h3>
+                <p className="text-muted-foreground mb-4 max-w-sm">
+                  {filter === "assigned"
+                    ? "Nie masz jeszcze przypisanych żadnych zadań."
+                    : "Nie utworzono jeszcze żadnych zadań."
+                  }
+                </p>
+                <Button onClick={() => setCreateDialogOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Utwórz zadanie
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              {tasks.map((task) => (
+                <Card
+                  key={task.id}
+                  className="transition-all hover:shadow-md cursor-pointer border-l-4 border-l-transparent hover:border-l-primary"
+                  onClick={() => handleTaskDetails(task)}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-lg font-semibold truncate">{task.title}</CardTitle>
+                        <CardDescription className="flex items-center gap-2 mt-1">
+                          <span>{task.project.name}</span>
+                          <span>•</span>
+                          <span>{task.project.team.name}</span>
+                        </CardDescription>
+                      </div>
+                      <div className="flex items-center gap-2 ml-4">
+                        {task.priority && (
+                          <Badge variant="outline" className={getPriorityColor(task.priority)}>
+                            {task.priority === "Low" ? "Niski" : task.priority === "Medium" ? "Średni" : "Wysoki"}
+                          </Badge>
+                        )}
+                        <Badge variant="secondary" className={getStatusColor(task.status)}>
+                          {task.status === "completed" ? "Ukończono" :
+                           task.status === "in progress" ? "W toku" :
+                           task.status === "on hold" ? "Wstrzymano" : task.status}
                         </Badge>
-                      )}
-                      <Badge variant="secondary" className={getStatusColor(task.status)}>
-                        {task.status === "completed" ? "Ukończono" :
-                         task.status === "in progress" ? "W toku" :
-                         task.status === "on hold" ? "Wstrzymano" : task.status}
-                      </Badge>
 
-                      {/* Action Menu */}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={(e) => handleTimeTracking(task, e)}>
-                            <Clock className="mr-2 h-4 w-4" />
-                            Loguj czas
-                          </DropdownMenuItem>
-                          {canEditTask(task) && (
-                            <DropdownMenuItem onClick={(e) => handleEditTask(task, e)}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edytuj zadanie
+                        {/* Action Menu */}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={(e) => handleTimeTracking(task, e)}>
+                              <Clock className="mr-2 h-4 w-4" />
+                              Loguj czas
                             </DropdownMenuItem>
-                          )}
-                          {canEditTask(task) && (
-                            <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={(e) => handleDeleteTask(task, e)}
-                                className="text-destructive focus:text-destructive"
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Usuń zadanie
+                            {canEditTask(task) && (
+                              <DropdownMenuItem onClick={(e) => handleEditTask(task, e)}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edytuj zadanie
                               </DropdownMenuItem>
-                            </>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                            )}
+                            {canEditTask(task) && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={(e) => handleDeleteTask(task, e)}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Usuń zadanie
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="space-y-3">
-                    {task.description && (
-                      <p className="text-muted-foreground text-sm line-clamp-2">
-                        {task.description}
-                      </p>
-                    )}
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="space-y-3">
+                      {task.description && (
+                        <p className="text-muted-foreground text-sm line-clamp-2">
+                          {task.description}
+                        </p>
+                      )}
 
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        {task.assignee && (
-                          <div className="flex items-center space-x-2">
-                            <ClickableAvatar
-                              userId={task.assignee.id}
-                              avatarUrl={task.assignee.avatarUrl}
-                              name={task.assignee.name}
-                              size="md"
-                            />
-                            <span className="text-sm text-muted-foreground">{task.assignee.name}</span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          {task.assignee && (
+                            <div className="flex items-center space-x-2">
+                              <ClickableAvatar
+                                userId={task.assignee.id}
+                                avatarUrl={task.assignee.avatarUrl}
+                                name={task.assignee.name}
+                                size="md"
+                              />
+                              <span className="text-sm text-muted-foreground">{task.assignee.name}</span>
+                            </div>
+                          )}
+
+                          {task.subtasks.length > 0 && (
+                            <div className="text-sm text-muted-foreground">
+                              {task.subtasks.filter(st => st.isCompleted).length}/{task.subtasks.length} podzadania
+                            </div>
+                          )}
+
+                          {getTodoProgress(task) && (
+                            <div className="text-sm text-muted-foreground">
+                              {getTodoProgress(task)!.completed}/{getTodoProgress(task)!.total} zadania do wykonania
+                            </div>
+                          )}
+
+                          {/* Time tracking info */}
+                          <div className="flex items-center space-x-1 text-sm text-muted-foreground">
+                            <Clock className="h-4 w-4" />
+                            <span>{formatHours(getTotalTimeSpent(task))}</span>
+                            {task.estimatedHours && (
+                              <span className="text-muted-foreground/70">
+                                / {formatHours(task.estimatedHours)} planowane
+                              </span>
+                            )}
                           </div>
-                        )}
+                        </div>
 
-                        {task.subtasks.length > 0 && (
-                          <div className="text-sm text-muted-foreground">
-                            {task.subtasks.filter(st => st.isCompleted).length}/{task.subtasks.length} podzadania
-                          </div>
-                        )}
-
-                        {getTodoProgress(task) && (
-                          <div className="text-sm text-muted-foreground">
-                            {getTodoProgress(task)!.completed}/{getTodoProgress(task)!.total} zadania do wykonania
-                          </div>
-                        )}
-
-                        {/* Time tracking info */}
-                        <div className="flex items-center space-x-1 text-sm text-muted-foreground">
-                          <Clock className="h-4 w-4" />
-                          <span>{formatHours(getTotalTimeSpent(task))}</span>
-                          {task.estimatedHours && (
-                            <span className="text-muted-foreground/70">
-                              / {formatHours(task.estimatedHours)} planowane
-                            </span>
+                        <div className="flex items-center space-x-4">
+                          {task.dueDate && (
+                            <div className={`flex items-center space-x-1 text-sm ${
+                              isOverdue(task.dueDate) ? "text-destructive" : "text-muted-foreground"
+                            }`}>
+                              <Calendar className="h-4 w-4" />
+                              <span>{formatDueDate(task.dueDate)}</span>
+                            </div>
                           )}
                         </div>
                       </div>
-
-                      <div className="flex items-center space-x-4">
-                        {task.dueDate && (
-                          <div className={`flex items-center space-x-1 text-sm ${
-                            isOverdue(task.dueDate) ? "text-destructive" : "text-muted-foreground"
-                          }`}>
-                            <Calendar className="h-4 w-4" />
-                            <span>{formatDueDate(task.dueDate)}</span>
-                          </div>
-                        )}
-                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Dialogs */}
       <CreateTaskDialog

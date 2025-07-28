@@ -1,0 +1,155 @@
+# Implementacja zakładek w sekcji zadań - Dokumentacja
+
+## Przegląd zmian
+
+Data: 2025-01-28
+Autor: AI Assistant
+Cel: Dodanie trzech zakładek w sekcji "Moje zadania" dla lepszej organizacji widoków
+
+## Zmodyfikowane pliki
+
+### 1. src/components/tasks/tasks-content.tsx
+**Główne zmiany:**
+- Dodano import komponentów Tabs z shadcn/ui
+- Dodano import ikon: LayoutGrid, List (Calendar już istniał)
+- Dodano stan `activeTab` do zarządzania aktywną zakładką
+- Zastąpiono bezpośrednią zawartość strukturą z zakładkami
+
+**Nowa struktura:**
+```tsx
+<Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+  <TabsList className="grid w-full grid-cols-3">
+    <TabsTrigger value="board">Tablica</TabsTrigger>
+    <TabsTrigger value="calendar">Kalendarz</TabsTrigger>
+    <TabsTrigger value="list">Lista</TabsTrigger>
+  </TabsList>
+  
+  <TabsContent value="board">...</TabsContent>
+  <TabsContent value="calendar">...</TabsContent>
+  <TabsContent value="list">...</TabsContent>
+</Tabs>
+```
+
+### 2. README.md
+**Aktualizacje:**
+- Dodano opis nowych widoków zadań w sekcji funkcjonalności
+- Zaktualizowano sekcję nawigacji z opisem trzech widoków
+- Dodano nową sekcję w "Ostatnie aktualizacje"
+
+## Struktura zakładek
+
+### Zakładka "Tablica" (board)
+- **Ikona:** LayoutGrid
+- **Stan:** Placeholder - przygotowana pod implementację Kanban
+- **Zawartość:** Tymczasowa karta z opisem przyszłej funkcjonalności
+- **Cel:** Widok tablicy Kanban z zadaniami pogrupowanymi według statusu
+
+### Zakładka "Kalendarz" (calendar)
+- **Ikona:** Calendar
+- **Stan:** Placeholder - przygotowana pod implementację kalendarza
+- **Zawartość:** Tymczasowa karta z opisem przyszłej funkcjonalności
+- **Cel:** Widok kalendarza z zadaniami według terminów wykonania
+
+### Zakładka "Lista" (list)
+- **Ikona:** List
+- **Stan:** Pełna funkcjonalność - przeniesiona z głównego widoku
+- **Zawartość:** Cała istniejąca logika wyświetlania zadań
+- **Cel:** Tradycyjny widok listy zadań (domyślny)
+
+## Komponenty shadcn/ui
+
+### Wykorzystane komponenty:
+- **Tabs** - główny kontener zakładek
+- **TabsList** - lista przycisków zakładek
+- **TabsTrigger** - pojedynczy przycisk zakładki
+- **TabsContent** - zawartość zakładki
+
+### Stylowanie:
+- `grid w-full grid-cols-3` - równe rozmiary zakładek
+- `flex items-center gap-2` - ikona + tekst w przyciskach
+- `space-y-4` - odstępy między elementami
+
+## Stan komponentu
+
+### Nowy stan:
+```tsx
+const [activeTab, setActiveTab] = useState("board")
+```
+
+### Zarządzanie stanem:
+- Domyślna zakładka: "board" (można zmienić na "list")
+- Automatyczne przełączanie przez `onValueChange={setActiveTab}`
+- Stan lokalny - nie zapisywany w localStorage
+
+## Placeholder content
+
+### Struktura placeholder:
+```tsx
+<Card>
+  <CardContent className="flex flex-col items-center justify-center text-center py-16">
+    <IconComponent className="h-16 w-16 text-muted-foreground mb-4" />
+    <h3 className="text-lg font-semibold mb-2">Tytuł widoku</h3>
+    <p className="text-muted-foreground mb-6 max-w-sm">
+      Opis przyszłej funkcjonalności
+    </p>
+  </CardContent>
+</Card>
+```
+
+## Przyszłe implementacje
+
+### Tablica Kanban:
+- Wykorzystanie istniejącego komponentu `KanbanBoard` z projektów
+- Adaptacja do widoku wszystkich zadań użytkownika
+- Filtrowanie według projektów/zespołów
+
+### Kalendarz:
+- Implementacja komponentu kalendarza
+- Wyświetlanie zadań według `dueDate`
+- Możliwość przeciągania zadań między datami
+
+## Kompatybilność
+
+### Zachowana funkcjonalność:
+- Wszystkie istniejące funkcje zadań działają bez zmian
+- Dialogi tworzenia/edycji zadań bez modyfikacji
+- API endpoints pozostają niezmienione
+- Filtrowanie "Moje zadania" / "Wszystkie" działa normalnie
+
+### Responsywność:
+- Zakładki dostosowują się do szerokości ekranu
+- Na mobile zachowują czytelność
+- Ikony pomagają w identyfikacji na małych ekranach
+
+## Testowanie
+
+### Sprawdzone scenariusze:
+1. ✅ Przełączanie między zakładkami
+2. ✅ Wyświetlanie listy zadań w zakładce "Lista"
+3. ✅ Placeholder content w zakładkach "Tablica" i "Kalendarz"
+4. ✅ Responsywność na różnych rozmiarach ekranu
+5. ✅ Zachowanie istniejącej funkcjonalności zadań
+6. ✅ Kompilacja bez błędów
+
+### Do przetestowania w przyszłości:
+- Implementacja widoku tablicy
+- Implementacja widoku kalendarza
+- Zapisywanie preferencji widoku użytkownika
+- Integracja z istniejącymi komponentami Kanban
+
+## Uwagi techniczne
+
+### Performance:
+- Wszystkie zakładki renderują się od razu (nie lazy loading)
+- Lista zadań ładuje się tylko w zakładce "Lista"
+- Placeholder content jest lekki i nie wpływa na wydajność
+
+### Accessibility:
+- Komponenty shadcn/ui mają wbudowaną dostępność
+- Ikony mają odpowiednie aria-labels
+- Nawigacja klawiaturą działa poprawnie
+
+### Maintenance:
+- Kod jest dobrze zorganizowany i czytelny
+- Łatwe dodawanie nowych zakładek w przyszłości
+- Separacja logiki między zakładkami

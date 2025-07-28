@@ -9,6 +9,7 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 - **Zarządzanie zespołami** - Tworzenie zespołów, edycja nazw zespołów i pełne zarządzanie członkami
 - **Zarządzanie projektami** - Tworzenie projektów w ramach zespołów z możliwością dodawania zdjęć
 - **Zarządzanie zadaniami** - Pełna funkcjonalność CRUD dla zadań z szacowanym czasem, edycją i usuwaniem
+- **Widoki zadań** - Trzy różne widoki zadań: Tablica (Kanban), Kalendarz i Lista
 - **Widok tablicy Kanban w stylu Trello** - Nowoczesna tablica z uproszczonymi kartami, drag & drop i szczegółami po kliknięciu
 - **Konfigurowalne statusy zadań** - Możliwość definiowania własnych statusów dla każdego projektu
 - **Ustawienia projektu** - Zarządzanie statusami zadań z kolorami i kolejnością
@@ -238,13 +239,15 @@ if (loading) {
 
 ### Nawigacja
 - **Dashboard** - Przegląd statystyk i ostatnich aktywności
-- **My Tasks** - Zadania przypisane do Ciebie z możliwością edycji i logowania czasu
+- **My Tasks** - Zadania przypisane do Ciebie z trzema widokami:
+  - **Tablica** - Widok Kanban z zadaniami pogrupowanymi według statusu (w przygotowaniu)
+  - **Kalendarz** - Zadania wyświetlane według terminów wykonania (w przygotowaniu)
+  - **Lista** - Tradycyjny widok listy zadań z pełnymi szczegółami
 - **Teams** - Zarządzanie zespołami (tworzenie, edycja nazw, zarządzanie członkami)
 - **Projects** - Zarządzanie projektami
 - **Reports** - Szczegółowe raporty i analizy czasu pracy oraz postępu projektów
 - **Calendar** - Widok kalendarza z zadaniami według terminów wykonania
 - **Ustawienia** - Dostępne przez menu użytkownika (kliknij avatar w prawym górnym rogu)
-- **Calendar** - Widok kalendarza z zadaniami
 
 ## 📊 System raportów
 
@@ -795,6 +798,18 @@ Projekt jest otwarty na współpracę. Aby dodać nowe funkcjonalności:
 - **Dokumentacja**: Zaktualizowano `component-relationships.txt` z opisem zmian
 
 ## 📋 Ostatnie aktualizacje
+
+### Implementacja zakładek w sekcji zadań (2025-01-28)
+- **Nowe zakładki**: Dodano trzy zakładki w sekcji "Moje zadania":
+  - **Tablica** - Przygotowana pod implementację widoku Kanban
+  - **Kalendarz** - Przygotowana pod implementację widoku kalendarza
+  - **Lista** - Istniejący widok listy zadań (domyślnie aktywny)
+- **Komponenty shadcn/ui**: Wykorzystano najnowsze komponenty Tabs z shadcn/ui
+- **Placeholder content**: Każda zakładka ma tymczasową zawartość z opisem przyszłej funkcjonalności
+- **Responsywny design**: Zakładki dostosowują się do różnych rozmiarów ekranu
+- **Ikony**: Każda zakładka ma dedykowaną ikonę (LayoutGrid, Calendar, List)
+- **Stan aktywnej zakładki**: Zarządzanie stanem aktywnej zakładki w komponencie
+- **Dokumentacja**: Zaktualizowano README z opisem nowych widoków zadań
 
 ### Naprawa liczby zadań z todolist (2025-01-17)
 - **Problem**: Nieprawidłowa liczba zadań w szczegółach projektu - nie uwzględniała todos
