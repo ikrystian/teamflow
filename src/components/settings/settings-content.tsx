@@ -391,8 +391,10 @@ export function SettingsContent() {
                       <Label>Powiadomienia email</Label>
                       <p className="text-sm text-gray-500">Otrzymuj powiadomienia na email</p>
                     </div>
-                    <Switch
+                    <Switch disabled
                       checked={otherSettings.notifications.email}
+
+
                       onCheckedChange={(checked) => handleNotificationChange("email", checked)}
                     />
                   </div>
@@ -402,7 +404,7 @@ export function SettingsContent() {
                       <Label>Powiadomienia push</Label>
                       <p className="text-sm text-gray-500">Otrzymuj powiadomienia w przeglądarce</p>
                     </div>
-                    <Switch
+                    <Switch disabled
                       checked={otherSettings.notifications.push}
                       onCheckedChange={(checked) => handleNotificationChange("push", checked)}
                     />
@@ -415,7 +417,7 @@ export function SettingsContent() {
                       <Label>Przypisanie zadania</Label>
                       <p className="text-sm text-gray-500">Gdy zostaniesz przypisany do zadania</p>
                     </div>
-                    <Switch
+                    <Switch disabled
                       checked={otherSettings.notifications.taskAssigned}
                       onCheckedChange={(checked) => handleNotificationChange("taskAssigned", checked)}
                     />
@@ -426,7 +428,7 @@ export function SettingsContent() {
                       <Label>Ukończenie zadania</Label>
                       <p className="text-sm text-gray-500">Gdy zadanie zostanie ukończone</p>
                     </div>
-                    <Switch
+                    <Switch disabled
                       checked={otherSettings.notifications.taskCompleted}
                       onCheckedChange={(checked) => handleNotificationChange("taskCompleted", checked)}
                     />
@@ -437,7 +439,7 @@ export function SettingsContent() {
                       <Label>Aktualizacje projektów</Label>
                       <p className="text-sm text-gray-500">Zmiany w projektach, w których uczestniczysz</p>
                     </div>
-                    <Switch
+                    <Switch disabled
                       checked={otherSettings.notifications.projectUpdates}
                       onCheckedChange={(checked) => handleNotificationChange("projectUpdates", checked)}
                     />
@@ -448,7 +450,7 @@ export function SettingsContent() {
                       <Label>Zaproszenia do zespołu</Label>
                       <p className="text-sm text-gray-500">Gdy zostaniesz zaproszony do zespołu</p>
                     </div>
-                    <Switch
+                    <Switch disabled
                       checked={otherSettings.notifications.teamInvites}
                       onCheckedChange={(checked) => handleNotificationChange("teamInvites", checked)}
                     />
@@ -461,7 +463,7 @@ export function SettingsContent() {
                       <Label>Raport tygodniowy</Label>
                       <p className="text-sm text-gray-500">Podsumowanie aktywności z tygodnia</p>
                     </div>
-                    <Switch
+                    <Switch disabled
                       checked={otherSettings.notifications.weeklyReport}
                       onCheckedChange={(checked) => handleNotificationChange("weeklyReport", checked)}
                     />
@@ -472,7 +474,7 @@ export function SettingsContent() {
                       <Label>Wiadomości marketingowe</Label>
                       <p className="text-sm text-gray-500">Informacje o nowych funkcjach i aktualizacjach</p>
                     </div>
-                    <Switch
+                    <Switch disabled
                       checked={otherSettings.notifications.marketing}
                       onCheckedChange={(checked) => handleNotificationChange("marketing", checked)}
                     />
@@ -500,7 +502,7 @@ export function SettingsContent() {
                       <Label>Widoczny profil</Label>
                       <p className="text-sm text-gray-500">Czy inni mogą zobaczyć Twój profil</p>
                     </div>
-                    <Switch
+                    <Switch disabled
                       checked={otherSettings.privacy.profileVisible}
                       onCheckedChange={(checked) => handlePrivacyChange("profileVisible", checked)}
                     />
@@ -511,7 +513,7 @@ export function SettingsContent() {
                       <Label>Pokaż email</Label>
                       <p className="text-sm text-gray-500">Czy inni mogą zobaczyć Twój adres email</p>
                     </div>
-                    <Switch
+                    <Switch disabled
                       checked={otherSettings.privacy.showEmail}
                       onCheckedChange={(checked) => handlePrivacyChange("showEmail", checked)}
                     />
@@ -522,7 +524,7 @@ export function SettingsContent() {
                       <Label>Pokaż telefon</Label>
                       <p className="text-sm text-gray-500">Czy inni mogą zobaczyć Twój numer telefonu</p>
                     </div>
-                    <Switch
+                    <Switch disabled
                       checked={otherSettings.privacy.showPhone}
                       onCheckedChange={(checked) => handlePrivacyChange("showPhone", checked)}
                     />
@@ -533,7 +535,7 @@ export function SettingsContent() {
                       <Label>Widoczna aktywność</Label>
                       <p className="text-sm text-gray-500">Czy inni mogą zobaczyć Twoją aktywność</p>
                     </div>
-                    <Switch
+                    <Switch disabled
                       checked={otherSettings.privacy.activityVisible}
                       onCheckedChange={(checked) => handlePrivacyChange("activityVisible", checked)}
                     />
@@ -577,6 +579,7 @@ export function SettingsContent() {
                     <Label>Motyw</Label>
                     <div className="flex gap-2">
                       <Button
+                      disabled
                         variant={theme === "light" ? "default" : "outline"}
                         size="sm"
                         onClick={() => setTheme("light")}
@@ -584,6 +587,7 @@ export function SettingsContent() {
                         Jasny
                       </Button>
                       <Button
+                      disabled
                         variant={theme === "dark" ? "default" : "outline"}
                         size="sm"
                         onClick={() => setTheme("dark")}
@@ -591,6 +595,7 @@ export function SettingsContent() {
                         Ciemny
                       </Button>
                       <Button
+                      disabled
                         variant={theme === "system" ? "default" : "outline"}
                         size="sm"
                         onClick={() => setTheme("system")}
@@ -604,6 +609,7 @@ export function SettingsContent() {
                     <Label>Język</Label>
                     <div className="flex gap-2">
                       <Button
+                      disabled
                         variant={otherSettings.appearance.language === "pl" ? "default" : "outline"}
                         size="sm"
                         onClick={() => setOtherSettings(prev => ({
@@ -614,6 +620,7 @@ export function SettingsContent() {
                         Polski
                       </Button>
                       <Button
+                      disabled
                         variant={otherSettings.appearance.language === "en" ? "default" : "outline"}
                         size="sm"
                         onClick={() => setOtherSettings(prev => ({
@@ -630,6 +637,7 @@ export function SettingsContent() {
                     <Label>Strefa czasowa</Label>
                     <div className="flex gap-2">
                       <Button
+                      disabled
                         variant={otherSettings.appearance.timezone === "Europe/Warsaw" ? "default" : "outline"}
                         size="sm"
                         onClick={() => setOtherSettings(prev => ({
@@ -640,6 +648,7 @@ export function SettingsContent() {
                         Europa/Warszawa
                       </Button>
                       <Button
+                      disabled
                         variant={otherSettings.appearance.timezone === "UTC" ? "default" : "outline"}
                         size="sm"
                         onClick={() => setOtherSettings(prev => ({
@@ -656,14 +665,6 @@ export function SettingsContent() {
             </Card>
           </TabsContent>
         </Tabs>
-
-        {/* Save Button */}
-        <div className="flex justify-end">
-          <Button onClick={handleSaveProfile} disabled={isLoading} className="flex items-center gap-2">
-            <Save className="h-4 w-4" />
-            {isLoading ? "Zapisywanie..." : "Zapisz zmiany"}
-          </Button>
-        </div>
       </div>
     </div>
   )
