@@ -24,6 +24,7 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 - **Responsywny interfejs** - Zbudowany z shadcn/ui i Tailwind CSS
 - **Nowoczesna nawigacja** - Sidebar z aktywnym oznaczaniem stron i responsywnym designem
 - **Zdjęcia projektów** - Upload własnych zdjęć lub automatyczne pobieranie losowych zdjęć z Unsplash
+- **Preferencje widoku projektów** - Automatyczne zapisywanie preferencji widoku (lista/tablica) dla każdego projektu w localStorage
 
 ### 🔄 Planowane funkcjonalności
 - Zaproszenia do zespołów przez email

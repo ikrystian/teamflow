@@ -127,7 +127,7 @@ function SortableTaskCard({
         onClick={handleCardClick}
       >
         <CardContent className="p-3">
-          <div className="flex items-start justify-between mb-3">
+          <div className="flex items-start justify-between mb-3 ">
             <div
               {...attributes}
               {...listeners}

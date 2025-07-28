@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
+import { useProjectViewPreferences } from "@/hooks/use-project-view-preferences"
 
 import {
   ArrowLeft,
@@ -74,7 +75,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   const [timeTrackingDialogOpen, setTimeTrackingDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
-  const [viewMode, setViewMode] = useState<"list" | "board">("list")
+  const { viewMode, updateViewMode, isLoaded: viewPreferencesLoaded } = useProjectViewPreferences(projectId)
   const [taskFilter, setTaskFilter] = useState<"all" | "mine" | string>("all")
   const [deletingTask, setDeletingTask] = useState(false)
   const router = useRouter()
@@ -277,7 +278,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     }
   }
 
-  if (loading) {
+  if (loading || !viewPreferencesLoaded) {
     return <PageLoadingLayout variant="details" />
   }
 
@@ -326,7 +327,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
             <Button
               variant={viewMode === "list" ? "default" : "ghost"}
               size="sm"
-              onClick={() => setViewMode("list")}
+              onClick={() => updateViewMode("list")}
               className="rounded-r-none"
             >
               <List className="h-4 w-4" />
@@ -334,7 +335,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
             <Button
               variant={viewMode === "board" ? "default" : "ghost"}
               size="sm"
-              onClick={() => setViewMode("board")}
+              onClick={() => updateViewMode("board")}
               className="rounded-l-none"
             >
               <LayoutGrid className="h-4 w-4" />
@@ -369,45 +370,6 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         <main className="py-10">
           <div className="px-4 sm:px-6 lg:px-8">
     <div  className="space-y-6">
-      {/* Header */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
-              <span className="text-sm text-muted-foreground">Wszystkie zadania</span>
-            </div>
-            <p className="text-2xl font-bold mt-1">{stats.total}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm text-muted-foreground">Ukończone</span>
-            </div>
-            <p className="text-2xl font-bold mt-1 text-green-600">{stats.completed}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span className="text-sm text-muted-foreground">W toku</span>
-            </div>
-            <p className="text-2xl font-bold mt-1 text-blue-600">{stats.inProgress}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-              <span className="text-sm text-muted-foreground">Zaległe</span>
-            </div>
-            <p className="text-2xl font-bold mt-1 text-red-600">{stats.overdue}</p>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Tasks */}
       {viewMode === "list" ? (
