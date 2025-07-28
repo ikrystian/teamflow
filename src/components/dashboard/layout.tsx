@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation"
 import Link from "next/link"
+import { useEffect, useState } from "react"
 import { TopBarUser } from "@/components/dashboard/top-bar-user"
 import {
   Home,
@@ -10,6 +11,7 @@ import {
   CheckSquare,
   Calendar,
   BarChart3,
+  ChevronRight,
 } from "lucide-react"
 import {
   Sidebar,
@@ -20,8 +22,20 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarProvider,
 } from "@/components/ui/sidebar"
+
+interface Project {
+  id: string
+  name: string
+  team: {
+    id: string
+    name: string
+  }
+}
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -29,12 +43,12 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname()
+  const [projects, setProjects] = useState<Project[]>([])
 
   const navigation = [
     { name: "Panel", href: "/dashboard", icon: Home },
     { name: "Moje zadania", href: "/dashboard/tasks", icon: CheckSquare },
     { name: "Zespoły", href: "/dashboard/teams", icon: Users },
-    { name: "Projekty", href: "/dashboard/projects", icon: FolderOpen },
     { name: "Raporty", href: "/dashboard/reports", icon: BarChart3 },
     { name: "Kalendarz", href: "/dashboard/calendar", icon: Calendar },
   ]
@@ -46,6 +60,23 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     }
     return pathname.startsWith(href)
   }
+
+  // Fetch projects
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const response = await fetch('/api/projects')
+        if (response.ok) {
+          const data = await response.json()
+          setProjects(data.projects || [])
+        }
+      } catch (error) {
+        console.error('Error fetching projects:', error)
+      }
+    }
+
+    fetchProjects()
+  }, [])
 
   return (
     <SidebarProvider>
@@ -77,6 +108,35 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
+
+                  {/* Projects with always visible submenu */}
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive("/dashboard/projects")}
+                      tooltip="Projekty"
+                    >
+                      <Link href="/dashboard/projects">
+                        <FolderOpen />
+                        <span>Projekty</span>
+                      </Link>
+                    </SidebarMenuButton>
+
+                    <SidebarMenuSub>
+                      {projects.map((project) => (
+                        <SidebarMenuSubItem key={project.id}>
+                          <SidebarMenuSubButton
+                            asChild
+                            isActive={pathname === `/dashboard/projects/${project.id}`}
+                          >
+                            <Link href={`/dashboard/projects/${project.id}`}>
+                              <span className="truncate">{project.name}</span>
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  </SidebarMenuItem>
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
