@@ -450,12 +450,15 @@ function KanbanColumn({
               />
             ))}
 
-            <QuickAddTask
-              status={status}
-              onTaskCreated={onTaskCreated}
-              projects={projects}
-              session={session}
-            />
+            {/* Wyświetl przycisk dodawania zadania tylko w domyślnej kolumnie */}
+            {status.isDefault && (
+              <QuickAddTask
+                status={status}
+                onTaskCreated={onTaskCreated}
+                projects={projects}
+                session={session}
+              />
+            )}
           </div>
         </SortableContext>
       </div>

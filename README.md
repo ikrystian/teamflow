@@ -15,6 +15,7 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 - **Globalne statusy zadań** - Centralne zarządzanie statusami zadań dla wszystkich projektów
 - **Centralne zarządzanie statusami** - Globalne statusy zadań zarządzane przez ustawienia systemowe
 - **Automatyczne ustawianie statusu zadania** - Zadania dodawane z konkretnej kolumny automatycznie otrzymują odpowiedni status
+- **Inteligentne dodawanie zadań** - Przycisk "Dodaj zadanie" wyświetlany tylko w kolumnie oznaczonej jako domyślna w ustawieniach
 - **Time tracking** - Logowanie czasu pracy nad zadaniami, śledzenie postępu względem szacowanego czasu
 - **Załączniki obrazków** - Możliwość dodawania obrazków do zadań podczas tworzenia i edycji
 - **Dokumenty projektów** - Upload i zarządzanie dokumentami projektów (PDF, DOC, itp.) z kategoryzacją
@@ -800,6 +801,19 @@ Projekt jest otwarty na współpracę. Aby dodać nowe funkcjonalności:
 - **Dokumentacja**: Zaktualizowano `component-relationships.txt` z opisem zmian
 
 ## 📋 Ostatnie aktualizacje
+
+### Optymalizacja dodawania zadań - przycisk tylko w domyślnej kolumnie (2025-01-28)
+- **Problem**: Przycisk "Dodaj zadanie" wyświetlał się we wszystkich kolumnach tablicy Kanban
+- **Rozwiązanie**: Przycisk "Dodaj zadanie" wyświetla się tylko w kolumnie oznaczonej jako domyślna (isDefault: true)
+- **Korzyści**:
+  - Lepsze UX - jasne wskazanie gdzie dodawać nowe zadania
+  - Zgodność z konwencją, że nowe zadania zaczynają w pierwszej kolumnie
+  - Mniej wizualnego bałaganu w interfejsie
+- **Pliki zmienione**:
+  - `src/components/tasks/tasks-kanban-board.tsx` - dodano warunek `{status.isDefault && ...}`
+  - `src/components/projects/kanban-board.tsx` - dodano warunek `{status.isDefault && ...}`
+  - `RELACJE_KOMPONENTOW.txt` - zaktualizowano dokumentację
+  - `README.md` - dodano opis nowej funkcjonalności
 
 ### Implementacja zakładek w sekcji zadań (2025-01-28)
 - **Nowe zakładki**: Dodano trzy zakładki w sekcji "Moje zadania":

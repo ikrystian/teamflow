@@ -41,6 +41,7 @@ RELACJE MIĘDZY KOMPONENTAMI - GLOBALNE STATUSY ZADAŃ
    - Automatycznie ustawia status zadania na podstawie kolumny (używa statusId)
    - Używa prostego formularza z tytułem zadania
    - Automatycznie przypisuje zadanie do aktualnego użytkownika
+   - NOWA FUNKCJONALNOŚĆ: Wyświetlany tylko w kolumnie oznaczonej jako domyślna (isDefault: true)
 
 === PRZEPŁYW DANYCH ===
 
