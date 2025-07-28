@@ -7,6 +7,7 @@ RELACJE MIĘDZY KOMPONENTAMI - DODAWANIE KOLUMN Z TABLICY ZADAŃ
    - Zarządza statusami zadań (kolumnami)
    - Zawiera przycisk "Dodaj kolumnę" na końcu listy kolumn
    - Używa TaskStatusDialog do tworzenia nowych statusów
+   - NOWA FUNKCJONALNOŚĆ: Każda kolumna ma QuickAddTask do szybkiego dodawania zadań
 
 2. TaskStatusDialog (src/components/projects/task-status-dialog.tsx)
    - Dialog do tworzenia/edycji statusów zadań
@@ -17,6 +18,13 @@ RELACJE MIĘDZY KOMPONENTAMI - DODAWANIE KOLUMN Z TABLICY ZADAŃ
    - Reprezentuje pojedynczą kolumnę w tablicy
    - Zawiera zadania dla danego statusu
    - Obsługuje drag & drop zadań
+   - NOWA FUNKCJONALNOŚĆ: Zawiera QuickAddTask na dole kolumny
+
+4. QuickAddTask (wewnętrzny komponent w kanban-board.tsx)
+   - NOWY KOMPONENT: Pozwala na szybkie dodawanie zadań bezpośrednio w kolumnie
+   - Automatycznie ustawia status zadania na podstawie kolumny, w której jest dodawane
+   - Używa prostego formularza z tytułem zadania
+   - Automatycznie przypisuje zadanie do aktualnego użytkownika
 
 === PRZEPŁYW DANYCH ===
 
@@ -90,3 +98,21 @@ Dialog:
 - Walidacja danych wejściowych
 - Unikalne nazwy statusów w ramach projektu
 - Unikalna kolejność statusów w ramach projektu
+
+=== NOWA FUNKCJONALNOŚĆ - AUTOMATYCZNE USTAWIANIE STATUSU ===
+
+QuickAddTask komponent:
+- Dodany do każdej kolumny w kanban board
+- Automatycznie ustawia status zadania na podstawie kolumny
+- Prosty formularz z tytułem zadania
+- Eliminuje potrzebę ręcznego wybierania statusu
+
+Przepływ:
+1. Użytkownik klika "Dodaj zadanie" w konkretnej kolumnie
+2. Pojawia się formularz z polem tytułu
+3. Po wysłaniu zadanie jest tworzone z automatycznym statusem
+4. Zadanie pojawia się w odpowiedniej kolumnie
+
+Zmodyfikowane pliki:
+- src/components/projects/kanban-board.tsx (dodany QuickAddTask)
+- src/components/projects/create-task-dialog.tsx (obsługa defaultStatusId)

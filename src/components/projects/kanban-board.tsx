@@ -5,7 +5,9 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { Button } from "@/components/ui/button"
-import { Calendar, Clock, Edit, MoreHorizontal, Plus, AlertCircle, Trash2 } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Calendar, Clock, Edit, MoreHorizontal, Plus, AlertCircle, Trash2, Check, X } from "lucide-react"
+import { toast } from "sonner"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -242,6 +244,120 @@ function SortableTaskCard({
   )
 }
 
+function QuickAddTask({
+  status,
+  onTaskCreated,
+  projectId
+}: {
+  status: TaskStatus
+  onTaskCreated: () => void
+  projectId: string
+}) {
+  const [isAdding, setIsAdding] = useState(false)
+  const [title, setTitle] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!title.trim()) return
+
+    setLoading(true)
+    setError("")
+
+    try {
+      const response = await fetch("/api/tasks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: title.trim(),
+          projectId: projectId,
+          statusId: status.id,
+        }),
+      })
+
+      if (response.ok) {
+        setTitle("")
+        setIsAdding(false)
+        setError("")
+        toast.success("Zadanie zostało utworzone")
+        onTaskCreated()
+      } else {
+        const data = await response.json()
+        const errorMessage = data.error || "Nie udało się utworzyć zadania"
+        setError(errorMessage)
+        toast.error(errorMessage)
+      }
+    } catch (error) {
+      console.error("Error creating task:", error)
+      const errorMessage = "Wystąpił błąd podczas tworzenia zadania"
+      setError(errorMessage)
+      toast.error(errorMessage)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCancel = () => {
+    setTitle("")
+    setIsAdding(false)
+    setError("")
+  }
+
+  if (!isAdding) {
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setIsAdding(true)}
+        className="w-full justify-start text-muted-foreground hover:text-foreground"
+      >
+        <Plus className="mr-2 h-4 w-4" />
+        Dodaj zadanie
+      </Button>
+    )
+  }
+
+  return (
+    <Card className="border-dashed border-2 border-gray-300">
+      <CardContent className="p-3">
+        <form onSubmit={handleSubmit} className="space-y-2">
+          <Input
+            placeholder="Wprowadź tytuł zadania..."
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            disabled={loading}
+            autoFocus
+          />
+          {error && (
+            <p className="text-sm text-red-600">{error}</p>
+          )}
+          <div className="flex gap-2">
+            <Button
+              type="submit"
+              size="sm"
+              disabled={!title.trim() || loading}
+            >
+              <Check className="h-4 w-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleCancel}
+              disabled={loading}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  )
+}
+
 function KanbanColumn({
   status,
   tasks,
@@ -250,7 +366,8 @@ function KanbanColumn({
   onViewDetails,
   onDelete,
   canEdit,
-  onCreateTask,
+  onTaskCreated,
+  projectId,
   updatingTasks
 }: {
   status: TaskStatus
@@ -260,7 +377,8 @@ function KanbanColumn({
   onViewDetails: (task: Task) => void
   onDelete: (task: Task) => void
   canEdit: (task: Task) => boolean
-  onCreateTask: () => void
+  onTaskCreated: () => void
+  projectId: string
   updatingTasks: Set<string>
 }) {
   const { setNodeRef, isOver } = useDroppable({
@@ -290,14 +408,6 @@ function KanbanColumn({
               {tasks.length}
             </Badge>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onCreateTask}
-            className="h-7 w-7 p-0 hover:bg-gray-200 rounded-lg transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
         </div>
 
         <SortableContext
@@ -317,6 +427,12 @@ function KanbanColumn({
                 isUpdating={updatingTasks.has(task.id)}
               />
             ))}
+
+            <QuickAddTask
+              status={status}
+              onTaskCreated={onTaskCreated}
+              projectId={projectId}
+            />
           </div>
         </SortableContext>
       </div>
@@ -496,11 +612,7 @@ export function KanbanBoard({
     })
   }
 
-  const handleCreateTask = () => {
-    // This will be handled by the parent component
-    // For now, we'll just trigger the task updated callback
-    onTaskUpdated()
-  }
+
 
   const handleViewDetails = (task: Task) => {
     setSelectedTask(task)
@@ -534,7 +646,8 @@ export function KanbanBoard({
               onViewDetails={handleViewDetails}
               onDelete={onTaskDelete}
               canEdit={canEditTask}
-              onCreateTask={handleCreateTask}
+              onTaskCreated={onTaskUpdated}
+              projectId={projectId}
               updatingTasks={updatingTasks}
             />
           ))}

@@ -339,7 +339,7 @@ export function TasksContent() {
             <TasksKanbanBoard
               tasks={tasks}
               onTaskUpdated={fetchTasks}
-              onTaskEdit={(task) => handleTaskEdit(task, { stopPropagation: () => {} } as React.MouseEvent)}
+              onTaskEdit={(task) => handleEditTask(task, { stopPropagation: () => {} } as React.MouseEvent)}
               onTimeTracking={(task) => handleTimeTracking(task, { stopPropagation: () => {} } as React.MouseEvent)}
               onTaskDelete={(task) => handleDeleteTask(task, { stopPropagation: () => {} } as React.MouseEvent)}
               canEditTask={canEditTask}

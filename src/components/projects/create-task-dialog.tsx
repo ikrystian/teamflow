@@ -51,6 +51,7 @@ interface CreateTaskDialogProps {
   onTaskCreated: () => void
   projectId: string
   teamMembers: TeamMember[]
+  defaultStatusId?: string
 }
 
 export function CreateTaskDialog({
@@ -58,7 +59,8 @@ export function CreateTaskDialog({
   onOpenChange,
   onTaskCreated,
   projectId,
-  teamMembers
+  teamMembers,
+  defaultStatusId
 }: CreateTaskDialogProps) {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
@@ -80,17 +82,23 @@ export function CreateTaskDialog({
         setTaskStatuses(data.taskStatuses)
 
         // Set default status if available
-        const defaultStatus = data.taskStatuses.find((status: TaskStatus) => status.isDefault)
-        if (defaultStatus) {
-          setStatusId(defaultStatus.id)
-        } else if (data.taskStatuses.length > 0) {
-          setStatusId(data.taskStatuses[0].id)
+        if (defaultStatusId) {
+          // Use provided default status
+          setStatusId(defaultStatusId)
+        } else {
+          // Use project's default status or first available
+          const defaultStatus = data.taskStatuses.find((status: TaskStatus) => status.isDefault)
+          if (defaultStatus) {
+            setStatusId(defaultStatus.id)
+          } else if (data.taskStatuses.length > 0) {
+            setStatusId(data.taskStatuses[0].id)
+          }
         }
       }
     } catch (error) {
       console.error("Error fetching task statuses:", error)
     }
-  }, [projectId])
+  }, [projectId, defaultStatusId])
 
   useEffect(() => {
     if (open && projectId) {
