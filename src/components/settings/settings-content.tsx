@@ -19,9 +19,11 @@ import {
   Shield,
   Palette,
   Save,
-  Loader2
+  Loader2,
+  Settings
 } from "lucide-react"
 import { useSession } from "next-auth/react"
+import { SystemTaskStatuses } from "./system-task-statuses"
 
 interface UserProfile {
   id: string
@@ -211,7 +213,7 @@ export function SettingsContent() {
       <div className="container mx-auto py-6 px-4">
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="h-4 w-4" />
               Profil
@@ -227,6 +229,10 @@ export function SettingsContent() {
             <TabsTrigger value="appearance" className="flex items-center gap-2">
               <Palette className="h-4 w-4" />
               Wygląd
+            </TabsTrigger>
+            <TabsTrigger value="task-statuses" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Statusy zadań
             </TabsTrigger>
           </TabsList>
 
@@ -650,6 +656,10 @@ export function SettingsContent() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="task-statuses" className="space-y-6">
+            <SystemTaskStatuses />
           </TabsContent>
         </Tabs>
       </div>

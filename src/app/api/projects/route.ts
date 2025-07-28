@@ -98,41 +98,22 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create project and default task statuses in a transaction
-    const result = await prisma.$transaction(async (tx) => {
-      // Create the project
-      const project = await tx.project.create({
-        data: {
-          name,
-          description,
-          teamId,
-          imageUrl
-        },
-        include: {
-          team: {
-            select: {
-              id: true,
-              name: true
-            }
+    // Create the project (statusy są teraz globalne, nie tworzymy ich per projekt)
+    const result = await prisma.project.create({
+      data: {
+        name,
+        description,
+        teamId,
+        imageUrl
+      },
+      include: {
+        team: {
+          select: {
+            id: true,
+            name: true
           }
         }
-      })
-
-      // Create default task statuses
-      const defaultStatuses = [
-        { name: "To Do", color: "#6B7280", order: 0, isDefault: true },
-        { name: "In Progress", color: "#3B82F6", order: 1, isDefault: false },
-        { name: "Done", color: "#10B981", order: 2, isDefault: false }
-      ]
-
-      await tx.taskStatus.createMany({
-        data: defaultStatuses.map(status => ({
-          ...status,
-          projectId: project.id
-        }))
-      })
-
-      return project
+      }
     })
 
     return NextResponse.json({ project: result }, { status: 201 })

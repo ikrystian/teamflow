@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useEffect } from "react"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { Button } from "@/components/ui/button"
@@ -211,7 +211,9 @@ function SortableTaskCard({
             {task.assignee && (
               <div className="flex items-center justify-end">
                 <ClickableAvatar
-                  user={task.assignee}
+                  userId={task.assignee.id}
+                  avatarUrl={task.assignee.avatarUrl}
+                  name={task.assignee.name}
                   size="sm"
                 />
               </div>
@@ -268,7 +270,7 @@ function QuickAddTask({
 
       if (statusResponse.ok) {
         const { taskStatuses } = await statusResponse.json()
-        const matchingStatus = taskStatuses.find((s: any) =>
+        const matchingStatus = taskStatuses.find((s: { name: string; isDefault: boolean }) =>
           s.name === status ||
           (status === "To Do" && s.isDefault)
         )

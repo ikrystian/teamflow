@@ -65,7 +65,6 @@ model Project {
   teamId      String
   team        Team         @relation(fields: [teamId], references: [id])
   tasks       Task[]
-  taskStatuses TaskStatus[]
   documents   ProjectDocument[]
 }
 
@@ -112,12 +111,10 @@ model TaskStatus {
   isDefault Boolean  @default(false) // Whether this is the default status for new tasks
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  projectId String
-  project   Project  @relation(fields: [projectId], references: [id])
   tasks     Task[]
 
-  @@unique([projectId, name]) // Ensure unique status names per project
-  @@unique([projectId, order]) // Ensure unique order per project
+  @@unique([name]) // Ensure unique status names globally
+  @@unique([order]) // Ensure unique order globally
 }
 
 model Subtask {

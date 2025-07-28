@@ -162,18 +162,17 @@ export async function PATCH(
       )
     }
 
-    // If statusId is provided, verify it belongs to this project
+    // If statusId is provided, verify it exists globally
     if (statusId !== undefined) {
-      const taskStatus = await prisma.taskStatus.findFirst({
+      const taskStatus = await prisma.taskStatus.findUnique({
         where: {
-          id: statusId,
-          projectId: existingTask.projectId
+          id: statusId
         }
       })
 
       if (!taskStatus) {
         return NextResponse.json(
-          { error: "Invalid status for this project" },
+          { error: "Task status not found" },
           { status: 400 }
         )
       }

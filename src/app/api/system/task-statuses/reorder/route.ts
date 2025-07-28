@@ -4,11 +4,8 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import type { Session } from "next-auth"
 
-// POST /api/projects/[projectId]/task-statuses/reorder - Reorder task statuses
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> }
-) {
+// POST /api/system/task-statuses/reorder - Reorder global task statuses
+export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions) as Session | null
 
@@ -16,7 +13,6 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { projectId } = await params
     const { statusIds } = await request.json()
 
     if (!Array.isArray(statusIds)) {
@@ -26,28 +22,7 @@ export async function POST(
       )
     }
 
-    // Verify user has access to the project
-    const project = await prisma.project.findFirst({
-      where: {
-        id: projectId,
-        team: {
-          members: {
-            some: {
-              id: session.user.id
-            }
-          }
-        }
-      }
-    })
-
-    if (!project) {
-      return NextResponse.json(
-        { error: "Project not found or access denied" },
-        { status: 404 }
-      )
-    }
-
-    // Verify all status IDs exist globally
+    // Verify all status IDs exist
     const existingStatuses = await prisma.taskStatus.findMany({
       where: {
         id: { in: statusIds }

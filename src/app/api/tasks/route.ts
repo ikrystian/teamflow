@@ -152,26 +152,24 @@ export async function POST(request: NextRequest) {
 
     let finalStatusId = statusId
 
-    // If statusId is provided, verify it belongs to this project
+    // If statusId is provided, verify it exists globally
     if (statusId) {
-      const taskStatus = await prisma.taskStatus.findFirst({
+      const taskStatus = await prisma.taskStatus.findUnique({
         where: {
-          id: statusId,
-          projectId
+          id: statusId
         }
       })
 
       if (!taskStatus) {
         return NextResponse.json(
-          { error: "Invalid status for this project" },
+          { error: "Task status not found" },
           { status: 400 }
         )
       }
     } else {
-      // If no statusId provided, find the default status for this project
+      // If no statusId provided, find the default status globally
       const defaultStatus = await prisma.taskStatus.findFirst({
         where: {
-          projectId,
           isDefault: true
         }
       })

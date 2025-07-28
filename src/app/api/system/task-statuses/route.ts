@@ -4,11 +4,8 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import type { Session } from "next-auth"
 
-// GET /api/projects/[projectId]/task-statuses - Get all task statuses for a project
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> }
-) {
+// GET /api/system/task-statuses - Get all global task statuses
+export async function GET() {
   try {
     const session = await getServerSession(authOptions) as Session | null
 
@@ -16,30 +13,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { projectId } = await params
-
-    // Verify user has access to the project
-    const project = await prisma.project.findFirst({
-      where: {
-        id: projectId,
-        team: {
-          members: {
-            some: {
-              id: session.user.id
-            }
-          }
-        }
-      }
-    })
-
-    if (!project) {
-      return NextResponse.json(
-        { error: "Project not found or access denied" },
-        { status: 404 }
-      )
-    }
-
-    // Get global task statuses
+    // Get all task statuses ordered by order
     const taskStatuses = await prisma.taskStatus.findMany({
       orderBy: {
         order: "asc"
@@ -78,11 +52,8 @@ export async function GET(
   }
 }
 
-// POST /api/projects/[projectId]/task-statuses - Create a new task status (redirects to global API)
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> }
-) {
+// POST /api/system/task-statuses - Create a new global task status
+export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions) as Session | null
 
@@ -90,7 +61,6 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { projectId } = await params
     const { name, color, isDefault } = await request.json()
 
     if (!name) {
@@ -100,29 +70,7 @@ export async function POST(
       )
     }
 
-    // Verify user has access to the project
-    const project = await prisma.project.findFirst({
-      where: {
-        id: projectId,
-        team: {
-          members: {
-            some: {
-              id: session.user.id
-            }
-          }
-        }
-      }
-    })
-
-    if (!project) {
-      return NextResponse.json(
-        { error: "Project not found or access denied" },
-        { status: 404 }
-      )
-    }
-
-    // Redirect to global task status API
-    // Check if status name already exists globally
+    // Check if status name already exists
     const existingStatus = await prisma.taskStatus.findFirst({
       where: {
         name

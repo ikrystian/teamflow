@@ -11,10 +11,10 @@ interface TaskStatusUpdateInput {
   isDefault?: boolean;
 }
 
-// PATCH /api/projects/[projectId]/task-statuses/[statusId] - Update a task status
+// PATCH /api/system/task-statuses/[statusId] - Update a global task status
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; statusId: string }> }
+  { params }: { params: Promise<{ statusId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions) as Session | null
@@ -23,31 +23,10 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { projectId, statusId } = await params
+    const { statusId } = await params
     const { name, color, order, isDefault } = await request.json()
 
-    // Verify user has access to the project
-    const project = await prisma.project.findFirst({
-      where: {
-        id: projectId,
-        team: {
-          members: {
-            some: {
-              id: session.user.id
-            }
-          }
-        }
-      }
-    })
-
-    if (!project) {
-      return NextResponse.json(
-        { error: "Project not found or access denied" },
-        { status: 404 }
-      )
-    }
-
-    // Verify the task status exists globally
+    // Verify the status exists
     const existingStatus = await prisma.taskStatus.findUnique({
       where: { id: statusId }
     })
@@ -105,19 +84,18 @@ export async function PATCH(
       })
     }
 
-    // Prepare update data
-    const updateData: TaskStatusUpdateInput = {}
-    if (name !== undefined) updateData.name = name
-    if (color !== undefined) updateData.color = color
-    if (order !== undefined) updateData.order = order
-    if (isDefault !== undefined) updateData.isDefault = isDefault
-
-    const taskStatus = await prisma.taskStatus.update({
+    // Update the status
+    const updatedStatus = await prisma.taskStatus.update({
       where: { id: statusId },
-      data: updateData
+      data: {
+        ...(name && { name }),
+        ...(color && { color }),
+        ...(order !== undefined && { order }),
+        ...(isDefault !== undefined && { isDefault })
+      }
     })
 
-    return NextResponse.json({ taskStatus })
+    return NextResponse.json({ taskStatus: updatedStatus })
   } catch (error) {
     console.error("Error updating task status:", error)
     return NextResponse.json(
@@ -127,10 +105,10 @@ export async function PATCH(
   }
 }
 
-// DELETE /api/projects/[projectId]/task-statuses/[statusId] - Delete a task status
+// DELETE /api/system/task-statuses/[statusId] - Delete a global task status
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; statusId: string }> }
+  { params }: { params: Promise<{ statusId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions) as Session | null
@@ -139,30 +117,9 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { projectId, statusId } = await params
+    const { statusId } = await params
 
-    // Verify user has access to the project
-    const project = await prisma.project.findFirst({
-      where: {
-        id: projectId,
-        team: {
-          members: {
-            some: {
-              id: session.user.id
-            }
-          }
-        }
-      }
-    })
-
-    if (!project) {
-      return NextResponse.json(
-        { error: "Project not found or access denied" },
-        { status: 404 }
-      )
-    }
-
-    // Verify the task status exists globally
+    // Verify the status exists
     const existingStatus = await prisma.taskStatus.findUnique({
       where: { id: statusId },
       include: {
@@ -177,7 +134,7 @@ export async function DELETE(
       )
     }
 
-    // Check if there are tasks using this status
+    // Check if status is being used by any tasks
     if (existingStatus.tasks.length > 0) {
       return NextResponse.json(
         { error: "Cannot delete status that is being used by tasks" },
@@ -185,6 +142,7 @@ export async function DELETE(
       )
     }
 
+    // Delete the status
     await prisma.taskStatus.delete({
       where: { id: statusId }
     })

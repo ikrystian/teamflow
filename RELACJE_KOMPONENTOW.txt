@@ -1,18 +1,28 @@
-RELACJE MIĘDZY KOMPONENTAMI - DODAWANIE KOLUMN Z TABLICY ZADAŃ
+RELACJE MIĘDZY KOMPONENTAMI - GLOBALNE STATUSY ZADAŃ
 
 === GŁÓWNE KOMPONENTY ===
 
 1. KanbanBoard (src/components/projects/kanban-board.tsx)
    - Główny komponent tablicy zadań
-   - Zarządza statusami zadań (kolumnami)
+   - Zarządza statusami zadań (kolumnami) - teraz pobiera globalne statusy
    - Zawiera przycisk "Dodaj kolumnę" na końcu listy kolumn
-   - Używa TaskStatusDialog do tworzenia nowych statusów
-   - NOWA FUNKCJONALNOŚĆ: Każda kolumna ma QuickAddTask do szybkiego dodawania zadań
+   - Używa TaskStatusDialog do tworzenia nowych statusów (przekierowuje do globalnego API)
+   - FUNKCJONALNOŚĆ: Każda kolumna ma QuickAddTask do szybkiego dodawania zadań
 
-2. TaskStatusDialog (src/components/projects/task-status-dialog.tsx)
-   - Dialog do tworzenia/edycji statusów zadań
-   - Używany zarówno w ustawieniach projektu jak i w tablicy zadań
+2. SystemTaskStatuses (src/components/settings/system-task-statuses.tsx)
+   - NOWY KOMPONENT: Zarządzanie globalnymi statusami zadań w ustawieniach systemowych
+   - Pozwala na tworzenie, edycję, usuwanie i zmianę kolejności statusów
+   - Używa SystemTaskStatusDialog do edycji statusów
+   - Drag & drop do zmiany kolejności
+
+3. SystemTaskStatusDialog (src/components/settings/system-task-status-dialog.tsx)
+   - NOWY KOMPONENT: Dialog do tworzenia/edycji globalnych statusów zadań
    - Pozwala na ustawienie nazwy, koloru i czy status jest domyślny
+   - Używany w ustawieniach systemowych
+
+4. TaskStatusDialog (src/components/projects/task-status-dialog.tsx)
+   - Dialog do tworzenia/edycji statusów zadań (zachowany dla kompatybilności)
+   - Teraz przekierowuje do globalnego API zamiast API per-projekt
 
 3. KanbanColumn (wewnętrzny komponent w kanban-board.tsx)
    - Reprezentuje pojedynczą kolumnę w tablicy
@@ -28,54 +38,78 @@ RELACJE MIĘDZY KOMPONENTAMI - DODAWANIE KOLUMN Z TABLICY ZADAŃ
 
 === PRZEPŁYW DANYCH ===
 
+Ustawienia systemowe:
+├── SystemTaskStatuses pobiera globalne statusy z API (/api/system/task-statuses)
+├── Renderuje listę statusów z możliwością edycji
+├── Używa SystemTaskStatusDialog do tworzenia/edycji
+└── Drag & drop do zmiany kolejności
+
 KanbanBoard:
-├── Pobiera statusy zadań z API (/api/projects/[projectId]/task-statuses)
+├── Pobiera globalne statusy zadań z API (/api/projects/[projectId]/task-statuses)
+├── API przekierowuje do globalnych statusów
 ├── Renderuje kolumny dla każdego statusu
 ├── Dodaje przycisk "Dodaj kolumnę" na końcu
-└── Otwiera TaskStatusDialog po kliknięciu przycisku
-
-TaskStatusDialog:
-├── Tworzy nowy status przez POST /api/projects/[projectId]/task-statuses
-├── Po zapisaniu wywołuje callback onStatusSaved
-└── KanbanBoard odświeża listę statusów
+└── Otwiera TaskStatusDialog po kliknięciu przycisku (przekierowuje do globalnego API)
 
 === API ENDPOINTS ===
 
-GET /api/projects/[projectId]/task-statuses
-- Pobiera wszystkie statusy dla projektu
+GLOBALNE STATUSY:
+GET /api/system/task-statuses
+- Pobiera wszystkie globalne statusy zadań
 - Tworzy domyślne statusy jeśli nie istnieją
 
-POST /api/projects/[projectId]/task-statuses
-- Tworzy nowy status zadania
+POST /api/system/task-statuses
+- Tworzy nowy globalny status zadania
 - Wymaga: name, color, isDefault
 - Automatycznie ustawia kolejność (order)
 
+PATCH /api/system/task-statuses/[statusId]
+- Aktualizuje globalny status zadania
+
+DELETE /api/system/task-statuses/[statusId]
+- Usuwa globalny status zadania (tylko jeśli nie jest używany)
+
+POST /api/system/task-statuses/reorder
+- Zmienia kolejność globalnych statusów
+
+KOMPATYBILNOŚĆ Z PROJEKTAMI:
+GET /api/projects/[projectId]/task-statuses
+- Przekierowuje do globalnych statusów
+- Zachowana kompatybilność z istniejącymi komponentami
+
+POST /api/projects/[projectId]/task-statuses
+- Przekierowuje do globalnego API tworzenia statusów
+
 === STRUKTURA BAZY DANYCH ===
 
-TaskStatus:
+TaskStatus (ZMIENIONA - GLOBALNA):
 - id: string (cuid)
 - name: string (nazwa statusu)
 - color: string (kolor hex)
 - order: int (kolejność w tablicy)
 - isDefault: boolean (czy domyślny dla nowych zadań)
-- projectId: string (powiązanie z projektem)
+- USUNIĘTE: projectId (statusy są teraz globalne)
 
 === FUNKCJONALNOŚCI ===
 
-1. Dodawanie kolumny z tablicy:
-   - Przycisk "Dodaj kolumnę" na końcu tablicy
-   - Otwiera dialog TaskStatusDialog
-   - Po zapisaniu automatycznie odświeża tablicę
-
-2. Zarządzanie statusami:
-   - Tworzenie nowych statusów
+1. Zarządzanie globalnymi statusami (Ustawienia systemowe):
+   - Nowa zakładka "Statusy zadań" w ustawieniach systemowych
+   - Tworzenie, edycja, usuwanie globalnych statusów
+   - Drag & drop do zmiany kolejności
    - Wybór koloru z palety predefiniowanych kolorów
    - Ustawianie statusu jako domyślny
+
+2. Dodawanie kolumny z tablicy (zachowane):
+   - Przycisk "Dodaj kolumnę" na końcu tablicy
+   - Otwiera dialog TaskStatusDialog
+   - Teraz tworzy globalne statusy zamiast per-projekt
+   - Po zapisaniu automatycznie odświeża tablicę
 
 3. Integracja z istniejącymi funkcjami:
    - Drag & drop zadań między kolumnami
    - Automatyczne przypisywanie statusu do zadań
-   - Synchronizacja z ustawieniami projektu
+   - Wszystkie projekty używają tych samych statusów
+   - Zachowana kompatybilność z istniejącymi komponentami
 
 === STYLE I UI ===
 
@@ -94,12 +128,26 @@ Dialog:
 
 === BEZPIECZEŃSTWO ===
 
-- Weryfikacja uprawnień użytkownika do projektu
+- Weryfikacja uprawnień użytkownika (tylko zalogowani użytkownicy)
 - Walidacja danych wejściowych
-- Unikalne nazwy statusów w ramach projektu
-- Unikalna kolejność statusów w ramach projektu
+- Unikalne nazwy statusów globalnie
+- Unikalna kolejność statusów globalnie
+- Sprawdzanie czy status nie jest używany przed usunięciem
 
-=== NOWA FUNKCJONALNOŚĆ - AUTOMATYCZNE USTAWIANIE STATUSU ===
+=== MIGRACJA Z STATUSÓW PER-PROJEKT DO GLOBALNYCH ===
+
+Zmiany w bazie danych:
+- Usunięto pole projectId z modelu TaskStatus
+- Usunięto ograniczenia unique per projekt
+- Dodano globalne ograniczenia unique
+- Zachowano relację z zadaniami
+
+Kompatybilność wsteczna:
+- API projektów przekierowuje do globalnych statusów
+- Istniejące komponenty działają bez zmian
+- Zachowane endpointy dla kompatybilności
+
+=== FUNKCJONALNOŚĆ - AUTOMATYCZNE USTAWIANIE STATUSU ===
 
 QuickAddTask komponent:
 - Dodany do każdej kolumny w kanban board
@@ -113,6 +161,15 @@ Przepływ:
 3. Po wysłaniu zadanie jest tworzone z automatycznym statusem
 4. Zadanie pojawia się w odpowiedniej kolumnie
 
+Nowe pliki:
+- src/components/settings/system-task-statuses.tsx
+- src/components/settings/system-task-status-dialog.tsx
+- src/app/api/system/task-statuses/route.ts
+- src/app/api/system/task-statuses/[statusId]/route.ts
+- src/app/api/system/task-statuses/reorder/route.ts
+
 Zmodyfikowane pliki:
-- src/components/projects/kanban-board.tsx (dodany QuickAddTask)
-- src/components/projects/create-task-dialog.tsx (obsługa defaultStatusId)
+- src/components/settings/settings-content.tsx (dodana zakładka)
+- src/components/projects/project-settings-content.tsx (usunięta sekcja statusów)
+- src/app/api/projects/[projectId]/task-statuses/* (przekierowanie do globalnych)
+- prisma/schema.prisma (usunięto projectId z TaskStatus)
