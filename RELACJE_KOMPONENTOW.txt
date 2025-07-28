@@ -42,6 +42,7 @@ RELACJE MIĘDZY KOMPONENTAMI - GLOBALNE STATUSY ZADAŃ
    - Używa prostego formularza z tytułem zadania
    - Automatycznie przypisuje zadanie do aktualnego użytkownika
    - NOWA FUNKCJONALNOŚĆ: Wyświetlany tylko w kolumnie oznaczonej jako domyślna (isDefault: true)
+   - NOWA FUNKCJONALNOŚĆ: Parametr hideProjectSelect ukrywa select z projektem w widoku "Moje zadania"
 
 === PRZEPŁYW DANYCH ===
 
@@ -186,3 +187,53 @@ Zmodyfikowane pliki:
 - src/components/projects/project-settings-content.tsx (usunięta sekcja statusów)
 - src/app/api/projects/[projectId]/task-statuses/* (przekierowanie do globalnych)
 - prisma/schema.prisma (usunięto projectId z TaskStatus)
+
+=== UKRYWANIE SELECTA PROJEKTU W "MOJE ZADANIA" ===
+
+Data: 2025-01-28
+Cel: Ukrycie selecta z projektem w formularzu dodawania zadania w widoku "Moje zadania"
+
+Zmiany w QuickAddTask:
+- Dodano parametr hideProjectSelect?: boolean
+- Warunek !hideProjectSelect && projects.length > 0 dla wyświetlania selecta
+- Select z projektem jest ukryty gdy hideProjectSelect = true
+
+Zmiany w TasksKanbanBoard:
+- Dodano parametr hideProjectSelect?: boolean do interfejsu TasksKanbanBoardProps
+- Przekazywanie parametru do komponentu KanbanColumn
+- Przekazywanie parametru do komponentu QuickAddTask
+
+Zmiany w tasks-content.tsx:
+- Przekazywanie hideProjectSelect={filter === "assigned"} do TasksKanbanBoard
+- W widoku "Moje zadania" (filter === "assigned") select projektu jest ukryty
+
+Logika:
+- W widoku "Wszystkie zadania" select projektu jest widoczny
+- W widoku "Moje zadania" select projektu jest ukryty
+- Zadania w "Moje zadania" są automatycznie przypisywane do użytkownika bez wyboru projektu
+
+=== DOMYŚLNY STATUS "TO DO" W OKIENKU TWORZENIA ZADANIA ===
+
+Data: 2025-01-28
+Cel: Ustawienie domyślnego statusu na "To Do" w okienku dialogowym tworzenia zadania
+
+Zmiany w CreateTaskDialog (src/components/tasks/create-task-dialog.tsx):
+- Dodano interfejs TaskStatus
+- Dodano stan statusId i taskStatuses
+- Dodano funkcję fetchTaskStatuses() do pobierania statusów z API
+- Dodano logikę ustawiania domyślnego statusu na "To Do" lub pierwszy status oznaczony jako domyślny
+- Dodano pole statusu do formularza z selectem
+- Zaktualizowano handleSubmit() aby przekazywał statusId do API
+- Zaktualizowano resetForm() aby resetował status do domyślnego
+
+Logika ustawiania domyślnego statusu:
+1. Zawsze wybiera pierwszą opcję z listy statusów (sortowanej według pola 'order')
+2. Statusy są pobierane z API w kolejności rosnącej według pola 'order'
+3. Domyślnie pierwszym statusem jest "To Do" (order: 0, isDefault: true)
+4. Status jest ustawiany przy otwarciu dialogu i po zresetowaniu formularza
+
+Pole statusu w formularzu:
+- Wyświetla listę wszystkich dostępnych statusów
+- Pokazuje kolorowe kółko dla każdego statusu
+- Oznacza status domyślny tekstem "(domyślny)"
+- Domyślnie ustawiony na "To Do" lub pierwszy domyślny status

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -40,6 +40,14 @@ interface TeamMember {
   avatarUrl?: string
 }
 
+interface TaskStatus {
+  id: string
+  name: string
+  color: string
+  order: number
+  isDefault: boolean
+}
+
 interface PendingImage {
   file: File
   preview: string
@@ -66,12 +74,31 @@ export function CreateTaskDialog({
   const [priority, setPriority] = useState("")
   const [dueDate, setDueDate] = useState("")
   const [estimatedHours, setEstimatedHours] = useState("")
+  const [statusId, setStatusId] = useState("")
+  const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [pendingImages, setPendingImages] = useState<PendingImage[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
   const selectedProject = projects.find(p => p.id === projectId)
+
+  const fetchTaskStatuses = useCallback(async () => {
+    try {
+      const response = await fetch('/api/system/task-statuses')
+      if (response.ok) {
+        const data = await response.json()
+        setTaskStatuses(data.taskStatuses)
+
+        // Set default status to the first option in the list (ordered by order field)
+        if (data.taskStatuses.length > 0) {
+          setStatusId(data.taskStatuses[0].id)
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching task statuses:", error)
+    }
+  }, [])
 
   const fetchTeamMembers = async (teamId: string) => {
     try {
@@ -85,6 +112,12 @@ export function CreateTaskDialog({
       setTeamMembers([])
     }
   }
+
+  useEffect(() => {
+    if (open) {
+      fetchTaskStatuses()
+    }
+  }, [open, fetchTaskStatuses])
 
   useEffect(() => {
     if (selectedProject) {
@@ -171,7 +204,8 @@ export function CreateTaskDialog({
           assigneeId: assigneeId || undefined,
           priority: priority || undefined,
           dueDate: dueDate || undefined,
-          estimatedHours: estimatedHours ? parseFloat(estimatedHours) : undefined
+          estimatedHours: estimatedHours ? parseFloat(estimatedHours) : undefined,
+          statusId: statusId || undefined
         }),
       })
 
@@ -205,6 +239,11 @@ export function CreateTaskDialog({
     setDueDate("")
     setEstimatedHours("")
     setTeamMembers([])
+
+    // Reset status to the first option in the list (ordered by order field)
+    if (taskStatuses.length > 0) {
+      setStatusId(taskStatuses[0].id)
+    }
 
     // Clean up pending images
     pendingImages.forEach(img => URL.revokeObjectURL(img.preview))
@@ -325,6 +364,31 @@ export function CreateTaskDialog({
                         <span>Wysoki</span>
                       </div>
                     </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="status" className="text-sm font-medium">Status</Label>
+                <Select value={statusId} onValueChange={setStatusId}>
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder="Wybierz status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {taskStatuses.map((status) => (
+                      <SelectItem key={status.id} value={status.id}>
+                        <div className="flex items-center space-x-2">
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: status.color }}
+                          />
+                          <span>{status.name}</span>
+                          {status.isDefault && (
+                            <span className="text-xs text-gray-500">(domyślny)</span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

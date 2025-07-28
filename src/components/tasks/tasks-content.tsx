@@ -350,6 +350,7 @@ export function TasksContent() {
               canEditTask={canEditTask}
               projects={projects}
               session={session}
+              hideProjectSelect={filter === "assigned"}
             />
           )}
         </TabsContent>

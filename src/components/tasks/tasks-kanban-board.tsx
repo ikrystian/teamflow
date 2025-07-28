@@ -57,6 +57,7 @@ interface TasksKanbanBoardProps {
     }
   }>
   session: Session | null
+  hideProjectSelect?: boolean
 }
 
 interface StatusColumn extends TaskStatus {
@@ -226,7 +227,8 @@ function QuickAddTask({
   status,
   onTaskCreated,
   projects,
-  session
+  session,
+  hideProjectSelect = false
 }: {
   status: TaskStatus
   onTaskCreated: () => void
@@ -239,6 +241,7 @@ function QuickAddTask({
     }
   }>
   session: Session | null
+  hideProjectSelect?: boolean
 }) {
   const [isAdding, setIsAdding] = useState(false)
   const [title, setTitle] = useState("")
@@ -328,7 +331,7 @@ function QuickAddTask({
             autoFocus
             disabled={loading}
           />
-          {projects.length > 0 && (
+          {!hideProjectSelect && projects.length > 0 && (
             <Select value={selectedProjectId} onValueChange={setSelectedProjectId} disabled={loading}>
               <SelectTrigger className="mb-2">
                 <SelectValue placeholder="Wybierz projekt (opcjonalne)" />
@@ -385,7 +388,8 @@ function KanbanColumn({
   onTaskCreated,
   updatingTasks,
   projects,
-  session
+  session,
+  hideProjectSelect = false
 }: {
   status: StatusColumn
   tasks: Task[]
@@ -405,6 +409,7 @@ function KanbanColumn({
     }
   }>
   session: Session | null
+  hideProjectSelect?: boolean
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: status.id,
@@ -460,6 +465,7 @@ function KanbanColumn({
                 onTaskCreated={onTaskCreated}
                 projects={projects}
                 session={session}
+                hideProjectSelect={hideProjectSelect}
               />
             )}
           </div>
@@ -477,7 +483,8 @@ export function TasksKanbanBoard({
   onTaskDelete,
   canEditTask,
   projects,
-  session
+  session,
+  hideProjectSelect = false
 }: TasksKanbanBoardProps) {
   const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
   const [activeTask, setActiveTask] = useState<Task | null>(null)
@@ -651,6 +658,7 @@ export function TasksKanbanBoard({
               updatingTasks={updatingTasks}
               projects={projects}
               session={session}
+              hideProjectSelect={hideProjectSelect}
             />
           ))}
         </div>
