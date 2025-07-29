@@ -7,7 +7,7 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 ### ✅ Zaimplementowane (MVP)
 - **Uwierzytelnianie użytkowników** - Rejestracja i logowanie z NextAuth.js z komunikatem o pomyślnej rejestracji
 - **Zarządzanie zespołami** - Tworzenie zespołów, edycja nazw zespołów i pełne zarządzanie członkami
-- **Zarządzanie projektami** - Tworzenie projektów w ramach zespołów z możliwością dodawania zdjęć
+- **Zarządzanie projektami** - Tworzenie projektów w ramach zespołów z możliwością dodawania zdjęć i wyboru kolorów
 - **Zarządzanie zadaniami** - Pełna funkcjonalność CRUD dla zadań z szacowanym czasem, edycją i usuwaniem
 - **Zadania bez projektów** - Możliwość tworzenia zadań niezwiązanych z konkretnym projektem
 - **Widoki zadań** - Trzy różne widoki zadań: Tablica (Kanban), Kalendarz i Lista
@@ -32,6 +32,7 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 - **Preferencje widoku projektów** - Automatyczne zapisywanie preferencji widoku (lista/tablica) dla każdego projektu w localStorage
 - **Ujednolicone komponenty tablicy** - Tablica zadań w projektach używa tego samego komponentu co w sekcji zadań dla spójności UX
 - **Oznaczanie zadań jako zakończone** - Możliwość szybkiego oznaczania zadań jako zakończone z menu dropdown z wizualnym oznaczeniem zielonym kolorem
+- **Kolorowe oznaczenia projektów** - Kolorowe kwadraty przed nazwami projektów w lewym menu odpowiadające kolorom wybranym podczas tworzenia
 
 ### 🔄 Planowane funkcjonalności
 - Zaproszenia do zespołów przez email

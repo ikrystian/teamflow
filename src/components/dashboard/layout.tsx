@@ -130,7 +130,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                             isActive={pathname === `/dashboard/projects/${project.id}`}
                           >
                             <Link href={`/dashboard/projects/${project.id}`}>
-                              <span className="truncate">{project.name}</span>
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className="w-3 h-3 rounded-sm flex-shrink-0"
+                                  style={{ backgroundColor: project.color || '#3B82F6' }}
+                                />
+                                <span className="truncate">{project.name}</span>
+                              </div>
                             </Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
