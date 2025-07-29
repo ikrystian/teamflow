@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
-import { Plus, FolderOpen, Calendar, Users, ImageIcon, Edit, MoreVertical } from "lucide-react"
+import { Plus, FolderOpen, Calendar, Users, ImageIcon, Edit, MoreVertical, Archive, ArchiveX } from "lucide-react"
 import { CreateProjectDialog } from "./create-project-dialog"
 import { EditProjectDialog } from "./edit-project-dialog"
 import {
@@ -14,6 +14,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import Link from "next/link"
 import Image from "next/image"
 
@@ -22,6 +29,7 @@ interface Project {
   name: string
   description?: string
   status: string
+  archived?: boolean
   imageUrl?: string
   createdAt: string
   team: {
@@ -52,6 +60,8 @@ interface Team {
   name: string
 }
 
+type ProjectFilter = "active" | "archived" | "all"
+
 export function ProjectsContent() {
   const [projects, setProjects] = useState<Project[]>([])
   const [teams, setTeams] = useState<Team[]>([])
@@ -59,10 +69,12 @@ export function ProjectsContent() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
+  const [projectFilter, setProjectFilter] = useState<ProjectFilter>("active")
 
-  const fetchProjects = async () => {
+  const fetchProjects = async (filter: ProjectFilter = projectFilter) => {
     try {
-      const response = await fetch("/api/projects")
+      const includeArchived = filter === "archived" || filter === "all"
+      const response = await fetch(`/api/projects?includeArchived=${includeArchived}`)
       if (response.ok) {
         const data = await response.json()
         setProjects(data.projects)
@@ -108,6 +120,46 @@ export function ProjectsContent() {
     fetchProjects()
   }
 
+  const handleArchiveProject = async (project: Project) => {
+    try {
+      const response = await fetch(`/api/projects/${project.id}/archive`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          archived: !project.archived
+        }),
+      })
+
+      if (response.ok) {
+        fetchProjects()
+      } else {
+        console.error("Failed to archive/unarchive project")
+      }
+    } catch (error) {
+      console.error("Error archiving/unarchiving project:", error)
+    }
+  }
+
+  const handleFilterChange = (filter: ProjectFilter) => {
+    setProjectFilter(filter)
+    fetchProjects(filter)
+  }
+
+  const getFilteredProjects = () => {
+    switch (projectFilter) {
+      case "active":
+        return projects.filter(project => !project.archived)
+      case "archived":
+        return projects.filter(project => project.archived)
+      case "all":
+        return projects
+      default:
+        return projects.filter(project => !project.archived)
+    }
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Completed":
@@ -144,10 +196,22 @@ export function ProjectsContent() {
           <h1 className="text-2xl font-bold text-foreground">Projekty</h1>
           <p className="text-muted-foreground">Zarządzaj swoimi projektami i śledź postępy</p>
         </div>
-        <Button onClick={() => setCreateDialogOpen(true)} disabled={teams.length === 0}>
-          <Plus className="mr-2 h-4 w-4" />
-          Utwórz projekt
-        </Button>
+        <div className="flex items-center gap-4">
+          <Select value={projectFilter} onValueChange={handleFilterChange}>
+            <SelectTrigger className="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="active">Aktywne projekty</SelectItem>
+              <SelectItem value="archived">Zarchiwizowane projekty</SelectItem>
+              <SelectItem value="all">Wszystkie projekty</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button onClick={() => setCreateDialogOpen(true)} disabled={teams.length === 0}>
+            <Plus className="mr-2 h-4 w-4" />
+            Utwórz projekt
+          </Button>
+        </div>
       </div>
             </div>
           </div>
@@ -176,26 +240,34 @@ export function ProjectsContent() {
             </Link>
           </CardContent>
         </Card>
-      ) : projects.length === 0 ? (
+      ) : getFilteredProjects().length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <FolderOpen className="h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Brak projektów</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              {projectFilter === "archived" ? "Brak zarchiwizowanych projektów" :
+               projectFilter === "all" ? "Brak projektów" : "Brak aktywnych projektów"}
+            </h3>
             <p className="text-gray-500 text-center mb-4">
-              Utwórz swój pierwszy projekt, aby rozpocząć organizowanie zadań i współpracę
+              {projectFilter === "archived" ? "Nie masz żadnych zarchiwizowanych projektów" :
+               "Utwórz swój pierwszy projekt, aby rozpocząć organizowanie zadań i współpracę"}
             </p>
-            <Button onClick={() => setCreateDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Utwórz projekt
-            </Button>
+            {projectFilter !== "archived" && (
+              <Button onClick={() => setCreateDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Utwórz projekt
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-          {projects.map((project) => {
+          {getFilteredProjects().map((project) => {
             const stats = getTaskStats(project.tasks)
             return (
-              <Card key={project.id} className="hover:shadow-md transition-shadow overflow-hidden relative">
+              <Card key={project.id} className={`hover:shadow-md transition-shadow overflow-hidden relative ${
+                project.archived ? 'opacity-60 bg-muted/30' : ''
+              }`}>
                 {/* Edit Button */}
                 <div className="absolute top-2 right-2 z-10">
                   <DropdownMenu>
@@ -213,6 +285,19 @@ export function ProjectsContent() {
                       <DropdownMenuItem onClick={() => handleEditProject(project)}>
                         <Edit className="mr-2 h-4 w-4" />
                         Edytuj projekt
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleArchiveProject(project)}>
+                        {project.archived ? (
+                          <>
+                            <ArchiveX className="mr-2 h-4 w-4" />
+                            Przywróć projekt
+                          </>
+                        ) : (
+                          <>
+                            <Archive className="mr-2 h-4 w-4" />
+                            Archiwizuj projekt
+                          </>
+                        )}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -239,9 +324,17 @@ export function ProjectsContent() {
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg truncate">{project.name}</CardTitle>
-                      <Badge className={getStatusColor(project.status)}>
-                        {project.status}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        {project.archived && (
+                          <Badge variant="secondary" className="text-xs">
+                            <Archive className="mr-1 h-3 w-3" />
+                            Zarchiwizowany
+                          </Badge>
+                        )}
+                        <Badge className={getStatusColor(project.status)}>
+                          {project.status}
+                        </Badge>
+                      </div>
                     </div>
                     <CardDescription className="line-clamp-2">
                       {project.description || "Brak opisu"}

@@ -48,6 +48,7 @@ model Project {
   name        String
   description String?
   status      String       @default("In Progress") // e.g., "In Progress", "Completed"
+  archived    Boolean      @default(false) // Czy projekt jest zarchiwizowany
   imageUrl    String?      // URL do zdjęcia projektu
   color       String       @default("#3B82F6") // Kolor projektu (hex)
 

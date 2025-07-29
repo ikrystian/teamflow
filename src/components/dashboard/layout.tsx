@@ -61,11 +61,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     return pathname.startsWith(href)
   }
 
-  // Fetch projects
+  // Fetch projects (exclude archived by default)
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await fetch('/api/projects')
+        const response = await fetch('/api/projects?includeArchived=false')
         if (response.ok) {
           const data = await response.json()
           setProjects(data.projects || [])

@@ -14,10 +14,12 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const teamId = searchParams.get("teamId")
+    const includeArchived = searchParams.get("includeArchived") === "true"
 
     const projects = await prisma.project.findMany({
       where: {
         ...(teamId && { teamId }),
+        ...(!includeArchived && { archived: false }),
         team: {
           members: {
             some: {

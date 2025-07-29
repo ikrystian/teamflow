@@ -78,7 +78,7 @@ export function ReportsContent() {
     try {
       const [teamsRes, projectsRes] = await Promise.all([
         fetch("/api/teams"),
-        fetch("/api/projects")
+        fetch("/api/projects?includeArchived=false")
       ])
 
       if (teamsRes.ok) {

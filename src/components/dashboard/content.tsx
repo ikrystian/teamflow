@@ -43,7 +43,7 @@ export function DashboardContent() {
     try {
       const [teamsRes, projectsRes, tasksRes] = await Promise.all([
         fetch("/api/teams"),
-        fetch("/api/projects"),
+        fetch("/api/projects?includeArchived=false"),
         fetch(`/api/tasks?assigneeId=${session?.user?.id}`)
       ])
 

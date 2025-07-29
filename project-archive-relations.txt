@@ -1,0 +1,152 @@
+RELACJE MIĘDZY KOMPONENTAMI - ARCHIWIZOWANIE PROJEKTÓW
+========================================================
+
+Data: 2025-07-29
+Cel: Dodanie funkcjonalności archiwizowania projektów z możliwością filtrowania i przywracania
+
+## STRUKTURA BAZY DANYCH
+
+### Model Project (zaktualizowany):
+```prisma
+model Project {
+  id          String       @id @default(cuid())
+  name        String
+  description String?
+  status      String       @default("In Progress")
+  archived    Boolean      @default(false) // NOWE POLE
+  imageUrl    String?
+  color       String       @default("#3B82F6")
+  // ... pozostałe pola
+}
+```
+
+### Migracja:
+- Plik: prisma/migrations/20250729231814_add_project_archived_field/migration.sql
+- Dodano pole `archived` typu Boolean z domyślną wartością false
+
+## API ENDPOINTS
+
+### GET /api/projects
+- **Nowy parametr**: `?includeArchived=true/false`
+- **Domyślne zachowanie**: includeArchived=false (ukrywa zarchiwizowane projekty)
+- **Filtrowanie**: WHERE archived = false (gdy includeArchived=false)
+
+### PATCH /api/projects/[projectId]
+- **Nowe pole**: `archived` w body request
+- **Obsługa**: Aktualizacja pola archived w bazie danych
+
+### PATCH /api/projects/[projectId]/archive (NOWY ENDPOINT)
+- **Cel**: Dedykowany endpoint do archiwizowania/przywracania projektów
+- **Body**: `{ "archived": boolean }`
+- **Walidacja**: Sprawdza czy archived jest boolean
+- **Autoryzacja**: Sprawdza czy użytkownik ma dostęp do projektu
+- **Odpowiedź**: Zwraca zaktualizowany projekt + komunikat
+
+## KOMPONENTY UI
+
+### 1. ProjectsContent (src/components/projects/projects-content.tsx)
+
+#### Nowe funkcjonalności:
+- **Filtry projektów**: Select z opcjami "Aktywne projekty", "Zarchiwizowane projekty", "Wszystkie projekty"
+- **State**: `projectFilter: "active" | "archived" | "all"`
+- **Funkcje**:
+  - `handleFilterChange()` - zmiana filtra i odświeżenie listy
+  - `getFilteredProjects()` - filtrowanie projektów po stronie klienta
+  - `handleArchiveProject()` - archiwizowanie/przywracanie projektu
+
+#### Wizualne wskaźniki:
+- **Karta projektu**: Opacity 60% + bg-muted/30 dla zarchiwizowanych
+- **Badge**: "Zarchiwizowany" z ikoną Archive dla zarchiwizowanych projektów
+- **Menu dropdown**: Opcja "Archiwizuj projekt" / "Przywróć projekt" z odpowiednimi ikonami
+
+#### Interfejs Project (zaktualizowany):
+```typescript
+interface Project {
+  id: string
+  name: string
+  description?: string
+  status: string
+  archived?: boolean  // NOWE POLE
+  imageUrl?: string
+  // ... pozostałe pola
+}
+```
+
+### 2. Komponenty pobierające projekty (zaktualizowane)
+
+#### Lista komponentów z aktualizacją fetch:
+- **src/components/dashboard/layout.tsx**: `fetch('/api/projects?includeArchived=false')`
+- **src/components/tasks/tasks-content.tsx**: `fetch("/api/projects?includeArchived=false")`
+- **src/components/reports/reports-content.tsx**: `fetch("/api/projects?includeArchived=false")`
+- **src/components/dashboard/content.tsx**: `fetch("/api/projects?includeArchived=false")`
+
+#### Zachowanie:
+- **Domyślnie**: Wszystkie komponenty ukrywają zarchiwizowane projekty
+- **Wyjątek**: Tylko ProjectsContent może wyświetlać zarchiwizowane projekty przez filtry
+
+## IKONY I STYLE
+
+### Ikony z lucide-react:
+- **Archive**: Dla opcji "Archiwizuj projekt"
+- **ArchiveX**: Dla opcji "Przywróć projekt"
+- **Archive**: W badge dla zarchiwizowanych projektów
+
+### Style CSS:
+- **Zarchiwizowane projekty**: `opacity-60 bg-muted/30`
+- **Badge zarchiwizowany**: `variant="secondary"` z ikoną Archive
+
+## LOGIKA BIZNESOWA
+
+### Filtrowanie:
+1. **"Aktywne projekty"** (domyślny): Pokazuje tylko projekty z archived=false
+2. **"Zarchiwizowane projekty"**: Pokazuje tylko projekty z archived=true
+3. **"Wszystkie projekty"**: Pokazuje wszystkie projekty
+
+### Archiwizowanie:
+1. **Kliknięcie opcji**: Wywołuje handleArchiveProject()
+2. **API call**: PATCH /api/projects/[projectId]/archive
+3. **Toggle**: archived = !project.archived
+4. **Odświeżenie**: Automatyczne odświeżenie listy projektów
+
+### Bezpieczeństwo:
+- **Autoryzacja**: Tylko członkowie zespołu mogą archiwizować projekty
+- **Walidacja**: Sprawdzanie typu boolean dla pola archived
+- **Dostęp**: Weryfikacja uprawnień przed każdą operacją
+
+## KOMPATYBILNOŚĆ
+
+### Istniejące funkcjonalności:
+- **Status projektu**: Niezależny od archiwizowania (projekt może być "Completed" ale nie zarchiwizowany)
+- **Zadania**: Zadania w zarchiwizowanych projektach pozostają dostępne
+- **Zespoły**: Archiwizowanie nie wpływa na członkostwo w zespole
+- **Dokumenty**: Dokumenty projektów pozostają dostępne
+
+### Migracja danych:
+- **Istniejące projekty**: Automatycznie archived=false
+- **Brak wpływu**: Na istniejące funkcjonalności i dane
+
+## TESTOWANIE
+
+### Scenariusze do przetestowania:
+1. **Archiwizowanie projektu**: Sprawdzenie czy projekt znika z domyślnej listy
+2. **Przywracanie projektu**: Sprawdzenie czy projekt wraca do aktywnych
+3. **Filtry**: Testowanie wszystkich trzech opcji filtrowania
+4. **Wizualne wskaźniki**: Sprawdzenie opacity i badge dla zarchiwizowanych
+5. **Komponenty zewnętrzne**: Sprawdzenie czy dashboard/tasks/reports ukrywają zarchiwizowane
+6. **Autoryzacja**: Sprawdzenie czy tylko członkowie zespołu mogą archiwizować
+7. **API**: Testowanie parametru includeArchived w różnych endpointach
+
+### Przypadki brzegowe:
+- **Brak uprawnień**: Próba archiwizowania projektu bez dostępu
+- **Nieprawidłowe dane**: Wysłanie non-boolean do pola archived
+- **Nieistniejący projekt**: Próba archiwizowania nieistniejącego projektu
+- **Błędy sieci**: Obsługa błędów podczas archiwizowania
+
+## PRZYSZŁE ROZSZERZENIA
+
+### Możliwe ulepszenia:
+1. **Automatyczne archiwizowanie**: Po określonym czasie nieaktywności
+2. **Masowe archiwizowanie**: Zaznaczanie wielu projektów
+3. **Historia archiwizowania**: Logi kto i kiedy zarchiwizował projekt
+4. **Powiadomienia**: Informowanie zespołu o archiwizowaniu
+5. **Eksport zarchiwizowanych**: Możliwość eksportu danych przed archiwizowaniem

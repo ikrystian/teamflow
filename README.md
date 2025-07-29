@@ -130,6 +130,27 @@ Aplikacja będzie dostępna pod adresem [http://localhost:3000](http://localhost
   - Galeria dokumentów z możliwością pobierania
   - Edycja danych dostępowych w ustawieniach projektu
 
+### Archiwizowanie projektów ✅
+- **Archiwizowanie projektów** - Możliwość archiwizowania nieaktywnych projektów:
+  - Opcja "Archiwizuj projekt" w menu dropdown każdego projektu
+  - Zarchiwizowane projekty są domyślnie ukryte w całej aplikacji
+  - Wizualne oznaczenia zarchiwizowanych projektów (przezroczystość, badge)
+  - Możliwość przywracania zarchiwizowanych projektów
+- **Filtry projektów** - System filtrowania w widoku projektów:
+  - "Aktywne projekty" (domyślny) - pokazuje tylko aktywne projekty
+  - "Zarchiwizowane projekty" - pokazuje tylko zarchiwizowane projekty
+  - "Wszystkie projekty" - pokazuje wszystkie projekty
+- **Automatyczne ukrywanie** - Zarchiwizowane projekty są ukryte w:
+  - Dashboard (statystyki i lista projektów w sidebar)
+  - Formularzach tworzenia zadań (lista projektów do wyboru)
+  - Raportach (filtry projektów)
+  - Wszystkich innych miejscach wyświetlających listy projektów
+- **Bezpieczeństwo** - Tylko członkowie zespołu mogą archiwizować projekty
+- **Zachowanie danych** - Archiwizowanie nie usuwa danych:
+  - Zadania w zarchiwizowanych projektach pozostają dostępne
+  - Dokumenty i dane dostępowe są zachowane
+  - Historia i komentarze pozostają nienaruszone
+
 ### Ujednolicony system ładowania stron
 - **Spójne stany ładowania** - Jednolity wygląd ładowania na wszystkich stronach dashboardu
 - **Komponenty szkieletowe** - Zaawansowane animowane szkielety ładowania dopasowane do zawartości
@@ -316,6 +337,7 @@ model Project {
   name        String
   description String?
   status      String @default("In Progress")
+  archived    Boolean @default(false)  // Czy projekt jest zarchiwizowany
 
   // Access credentials fields
   repositoryUrl     String?  // URL do repozytorium kodu
@@ -572,6 +594,25 @@ DELETE /api/projects/[projectId]/documents?documentId=[id]
 - Maksymalny rozmiar pliku: 10MB
 - Obsługiwane formaty: wszystkie typy plików
 - Pliki są zapisywane w `public/uploads/projects/{projectId}/documents/`
+
+#### Archiwizowanie projektów
+```
+GET /api/projects?includeArchived=true/false
+PATCH /api/projects/[projectId]/archive
+```
+
+**GET parametry**:
+- `includeArchived` - Czy uwzględnić zarchiwizowane projekty (domyślnie: false)
+
+**PATCH parametry**:
+- `archived` - Boolean określający czy projekt ma być zarchiwizowany
+
+**Uprawnienia**: Tylko członkowie zespołu mogą archiwizować projekty
+
+**Odpowiedź**:
+- `200` - Projekt został zarchiwizowany/przywrócony
+- `400` - Nieprawidłowe dane (archived musi być boolean)
+- `404` - Projekt nie znaleziony lub brak dostępu
 
 ### Zadania (Tasks)
 

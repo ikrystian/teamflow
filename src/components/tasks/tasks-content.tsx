@@ -87,7 +87,7 @@ export function TasksContent() {
 
   const fetchProjects = async () => {
     try {
-      const response = await fetch("/api/projects")
+      const response = await fetch("/api/projects?includeArchived=false")
       if (response.ok) {
         const data = await response.json()
         setProjects(data.projects)
