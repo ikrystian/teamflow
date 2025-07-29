@@ -79,7 +79,6 @@ const getPriorityColor = (priority?: string) => {
 
 function SortableTaskCard({
   task,
-  onEdit,
   onTimeTracking,
   onViewDetails,
   onDelete,
@@ -131,7 +130,9 @@ function SortableTaskCard({
             : ''
         }`}
         style={{
-          borderLeftColor: isUpdating ? undefined : (task.project?.color || '#3B82F6')
+          borderLeftColor: isUpdating ? undefined : (task.project?.color || '#3B82F6'),
+          paddingTop: 5,
+          paddingBottom: 0
         }}
       >
         <CardContent className="p-3">
@@ -159,10 +160,7 @@ function SortableTaskCard({
                 </DropdownMenuItem>
                 {canEdit && (
                   <>
-                    <DropdownMenuItem onClick={() => onEdit(task)}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edytuj
-                    </DropdownMenuItem>
+
                     <DropdownMenuItem onClick={() => onTimeTracking(task)}>
                       <Clock className="mr-2 h-4 w-4" />
                       Loguj czas
@@ -183,7 +181,7 @@ function SortableTaskCard({
 
           <div className="space-y-2">
             <div className="text-xs text-muted-foreground">
-              {task.project.name} • {task.project.team.name}
+              {task?.project?.name} • {task?.project?.team?.name}
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
@@ -210,8 +208,7 @@ function SortableTaskCard({
                 </div>
               )}
             </div>
-
-            {task.assignee && (
+            {task.assignee  && (
               <div className="flex items-center justify-end">
                 <ClickableAvatar
                   userId={task.assignee.id}
@@ -659,7 +656,12 @@ export function TasksKanbanBoard({
 
         <DragOverlay>
           {activeTask ? (
-            <Card className="w-80 opacity-90 rotate-3 shadow-lg">
+            <Card
+              className="w-80 opacity-90 rotate-3 shadow-lg border-l-4"
+              style={{
+                borderLeftColor: activeTask.project?.color || '#3B82F6'
+              }}
+            >
               <CardContent className="p-3">
                 <h4 className="font-medium text-sm">{activeTask.title}</h4>
               </CardContent>

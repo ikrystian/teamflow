@@ -8,7 +8,7 @@ async function main() {
 
   // Create users
   const hashedPassword = await bcrypt.hash('password123', 10)
-  
+
   const user1 = await prisma.user.upsert({
     where: { email: 'john@example.com' },
     update: {},
@@ -64,7 +64,7 @@ async function main() {
       id: 'project-1',
       name: 'TeamFlow Application',
       description: 'Main project management application',
-      status: 'In Progress',
+
       teamId: team.id,
     },
   })
@@ -76,7 +76,7 @@ async function main() {
       id: 'project-2',
       name: 'Mobile App',
       description: 'Mobile version of the application',
-      status: 'In Progress',
+
       teamId: team.id,
     },
   })
@@ -89,7 +89,7 @@ async function main() {
       id: 'task-1',
       title: 'Implement user authentication',
       description: 'Set up NextAuth.js for user authentication',
-      status: 'Done',
+      statusId: 'status-done',
       priority: 'High',
       estimatedHours: 8,
       projectId: project1.id,
@@ -106,7 +106,7 @@ async function main() {
       id: 'task-2',
       title: 'Create project dashboard',
       description: 'Build the main dashboard with statistics',
-      status: 'In Progress',
+      statusId: 'status-in-progress',
       priority: 'Medium',
       estimatedHours: 12,
       projectId: project1.id,
@@ -123,7 +123,7 @@ async function main() {
       id: 'task-3',
       title: 'Design mobile UI',
       description: 'Create responsive design for mobile devices',
-      status: 'To Do',
+      statusId: 'status-todo',
       priority: 'Low',
       estimatedHours: 16,
       projectId: project2.id,
@@ -140,7 +140,7 @@ async function main() {
       id: 'task-4',
       title: 'Implement time tracking',
       description: 'Add time tracking functionality to tasks',
-      status: 'Done',
+      statusId: 'status-done',
       priority: 'High',
       estimatedHours: 6,
       projectId: project1.id,
@@ -195,7 +195,7 @@ async function main() {
       taskId: task4.id,
       userId: user1.id,
     },
-    
+
     // User 2 time entries
     {
       hours: 4,
@@ -225,7 +225,7 @@ async function main() {
       taskId: task2.id,
       userId: user2.id,
     },
-    
+
     // User 3 time entries
     {
       hours: 2,

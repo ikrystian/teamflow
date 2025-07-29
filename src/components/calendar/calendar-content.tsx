@@ -246,7 +246,7 @@ export function CalendarContent() {
                               <div
                                 key={task.id}
                                 className="text-xs p-1 rounded bg-blue-100 text-blue-800 truncate"
-                                title={`${task.title} - ${task.project.name}`}
+                                title={`${task?.title} - ${task?.project?.name}`}
                               >
                                 {task.title}
                               </div>
@@ -289,7 +289,7 @@ export function CalendarContent() {
                             <div className="flex-1">
                               <h4 className="font-medium text-gray-900">{task.title}</h4>
                               <p className="text-sm text-gray-500">
-                                {task.project.name} • {task.project.team.name}
+                                {task?.project?.name} • {task?.project?.team?.name}
                               </p>
                             </div>
                             <div className="flex items-center space-x-2">

@@ -23,10 +23,9 @@ import {
   Info
 } from "lucide-react"
 import Link from "next/link"
-import { CreateTaskDialog } from "./create-task-dialog"
+import { TaskFormDialog } from "../shared/task-form-dialog"
 import { KanbanBoard } from "./kanban-board"
 import { TaskDetailsDialog } from "../tasks/task-details-dialog"
-import { EditTaskDialog } from "../tasks/edit-task-dialog"
 import { TimeTrackingDialog } from "../tasks/time-tracking-dialog"
 import { TaskBoardFilters } from "./task-board-filters"
 import {
@@ -215,6 +214,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
       project: {
         id: project.id,
         name: project.name,
+        color: project.color, // Dodaj kolor projektu
         team: {
           id: project.team.id,
           name: project.team.name,
@@ -224,11 +224,11 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         ...task.assignee,
         email: project.team.members.find(m => m.id === task.assignee?.id)?.email || ''
       } : undefined,
-      createdBy: task.assignee ? { // This is likely a bug, but leaving for now to fix the type error
+      createdBy: task.assignee ? {
         ...task.assignee,
         email: project.team.members.find(m => m.id === task.assignee?.id)?.email || ''
       } : undefined,
-      timeEntries: [] // Add empty array for compatibility
+      timeEntries: []
     }))
   }
 
@@ -354,7 +354,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
 
       {/* Tasks */}
       {viewMode === "list" ? (
-        <Card>
+        <Card >
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
@@ -468,7 +468,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
             />
           </div>
           {getFilteredTasks(project.tasks).length === 0 ? (
-            <Card>
+            <Card >
               <CardContent className="py-12">
                 <div className="text-center">
                   <LayoutGrid className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -503,7 +503,8 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         </div>
       )}
 
-      <CreateTaskDialog
+      <TaskFormDialog
+        mode="create"
         open={createTaskDialogOpen}
         onOpenChange={setCreateTaskDialogOpen}
         onTaskCreated={handleTaskCreated}
@@ -522,7 +523,8 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         canEdit={selectedTask ? canEditTask() : false}
       />
 
-      <EditTaskDialog
+      <TaskFormDialog
+        mode="edit"
         open={editTaskDialogOpen}
         onOpenChange={setEditTaskDialogOpen}
         onTaskUpdated={handleTaskUpdated}

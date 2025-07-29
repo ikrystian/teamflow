@@ -29,6 +29,7 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 - **Nowoczesna nawigacja** - Sidebar z aktywnym oznaczaniem stron i responsywnym designem
 - **Zdjęcia projektów** - Upload własnych zdjęć lub automatyczne pobieranie losowych zdjęć z Unsplash
 - **Preferencje widoku projektów** - Automatyczne zapisywanie preferencji widoku (lista/tablica) dla każdego projektu w localStorage
+- **Ujednolicone komponenty tablicy** - Tablica zadań w projektach używa tego samego komponentu co w sekcji zadań dla spójności UX
 
 ### 🔄 Planowane funkcjonalności
 - Zaproszenia do zespołów przez email
@@ -827,6 +828,22 @@ Projekt jest otwarty na współpracę. Aby dodać nowe funkcjonalności:
 - **Ikony**: Każda zakładka ma dedykowaną ikonę (LayoutGrid, Calendar, List)
 - **Stan aktywnej zakładki**: Zarządzanie stanem aktywnej zakładki w komponencie
 - **Dokumentacja**: Zaktualizowano README z opisem nowych widoków zadań
+
+### Automatyczne przypisywanie zadań do zalogowanego użytkownika (2025-01-28)
+- **Funkcjonalność**: Zadania są automatycznie przypisywane do aktualnie zalogowanego użytkownika
+- **Implementacja**:
+  - Dodano `useSession` hook do komponentu `CreateTaskDialog`
+  - Automatyczne ustawianie `assigneeId` na `session.user.id` przy otwieraniu dialogu
+  - Automatyczne ustawianie przy zmianie projektu i resetowaniu formularza
+  - Pole "Przypisany" zmienione na tylko do odczytu z informacją o automatycznym przypisaniu
+- **UI/UX**:
+  - Pole wyświetla aktualnie zalogowanego użytkownika z avatarem
+  - Dodano etykietę "(automatycznie przypisane do Ciebie)"
+  - Stylowanie zgodne z motywem aplikacji (bg-muted/50, text-muted-foreground)
+- **Pliki zmienione**:
+  - `src/components/tasks/create-task-dialog.tsx` - główna implementacja
+  - `README.md` - dokumentacja nowej funkcjonalności
+- **Naprawione błędy**: Podczas implementacji naprawiono błąd w API `/api/projects` które używało nieistniejącego pola `status` w modelu Task (zmieniono na `statusId` i `taskStatus`)
 
 ### Naprawa liczby zadań z todolist (2025-01-17)
 - **Problem**: Nieprawidłowa liczba zadań w szczegółach projektu - nie uwzględniała todos

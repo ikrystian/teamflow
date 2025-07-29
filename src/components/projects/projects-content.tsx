@@ -25,6 +25,11 @@ interface Project {
     id: string
     title: string
     statusId?: string
+    taskStatus?: {
+      id: string
+      name: string
+      color: string
+    }
     priority?: string
     dueDate?: string
     assignee?: {

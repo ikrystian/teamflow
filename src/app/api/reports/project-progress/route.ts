@@ -57,6 +57,12 @@ export async function GET(request: NextRequest) {
                 avatarUrl: true
               }
             },
+            taskStatus: {
+              select: {
+                id: true,
+                name: true
+              }
+            },
             timeEntries: {
               where: {
                 ...(startDate && { date: { gte: new Date(startDate) } }),
@@ -80,9 +86,9 @@ export async function GET(request: NextRequest) {
     const projectReports = projects.map(project => {
       const tasks = project.tasks
       const totalTasks = tasks.length
-      const completedTasks = tasks.filter(task => task.status === "Done").length
-      const inProgressTasks = tasks.filter(task => task.status === "In Progress").length
-      const todoTasks = tasks.filter(task => task.status === "To Do").length
+      const completedTasks = tasks.filter(task => task.taskStatus?.name === "Done").length
+      const inProgressTasks = tasks.filter(task => task.taskStatus?.name === "In Progress").length
+      const todoTasks = tasks.filter(task => task.taskStatus?.name === "To Do").length
 
       // Calculate time statistics
       let totalLoggedHours = 0
@@ -115,7 +121,7 @@ export async function GET(request: NextRequest) {
       const overdueTasks = tasks.filter(task =>
         task.dueDate &&
         new Date(task.dueDate) < now &&
-        task.status !== "Done"
+        task.taskStatus?.name !== "Done"
       ).length
 
       // Calculate due soon tasks (next 7 days)
@@ -125,7 +131,7 @@ export async function GET(request: NextRequest) {
         task.dueDate &&
         new Date(task.dueDate) >= now &&
         new Date(task.dueDate) <= nextWeek &&
-        task.status !== "Done"
+        task.taskStatus?.name !== "Done"
       ).length
 
       // Task status distribution
@@ -155,7 +161,7 @@ export async function GET(request: NextRequest) {
           id: project.id,
           name: project.name,
           description: project.description,
-          status: project.status,
+
           team: project.team
         },
         taskStats: {

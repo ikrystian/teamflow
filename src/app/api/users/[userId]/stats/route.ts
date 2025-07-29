@@ -46,7 +46,7 @@ export async function GET(
 
     // Get task statistics
     const taskStats = await prisma.task.groupBy({
-      by: ['status'],
+      by: ['statusId'],
       where: {
         assigneeId: userId,
         ...accessFilter,
@@ -182,7 +182,11 @@ export async function GET(
 
     // Calculate completion rate
     const totalTasks = taskStats.reduce((sum, stat) => sum + stat._count.id, 0)
-    const completedTasks = taskStats.find(stat => stat.status === 'Done')?._count.id || 0
+    // Get the "Done" status ID first
+    const doneStatus = await prisma.taskStatus.findFirst({
+      where: { name: 'Done' }
+    })
+    const completedTasks = taskStats.find(stat => stat.statusId === doneStatus?.id)?._count.id || 0
     const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
 
     // Get team count
@@ -210,9 +214,14 @@ export async function GET(
         teamsCount,
         projectsCount: projectStatsWithDetails.length
       },
-      tasksByStatus: taskStats.map(stat => ({
-        status: stat.status,
-        count: stat._count.id
+      tasksByStatus: await Promise.all(taskStats.map(async (stat) => {
+        const status = await prisma.taskStatus.findUnique({
+          where: { id: stat.statusId || '' }
+        })
+        return {
+          status: status?.name || 'No Status',
+          count: stat._count.id
+        }
       })),
       tasksByPriority: priorityStats.map(stat => ({
         priority: stat.priority || 'None',

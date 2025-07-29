@@ -1,0 +1,85 @@
+RELACJE MIĘDZY KOMPONENTAMI TABLICY ZADAŃ
+==========================================
+
+## Unifikacja komponentów tablicy zadań
+
+### Przed zmianami:
+- src/components/projects/kanban-board.tsx - komponent tablicy dla projektów
+- src/components/tasks/tasks-kanban-board.tsx - komponent tablicy dla zadań
+
+### Po zmianach:
+- src/components/projects/kanban-board.tsx - używa tego samego stylu co tasks-kanban-board.tsx
+- src/components/tasks/tasks-kanban-board.tsx - wzorcowy komponent z najnowszym designem
+
+## Główne różnice i ujednolicenia:
+
+### 1. SortableTaskCard
+- **Przed**: Różne style, różne układy informacji
+- **Po**: Jednolity design z border-left w kolorze projektu, spójne rozmieszczenie elementów
+
+### 2. Drag & Drop
+- **Przed**: Różne style podczas przeciągania
+- **Po**: Jednolite zachowanie z opacity i zIndex
+
+### 3. QuickAddTask
+- **Przed**: Różne style przycisków i formularzy
+- **Po**: Spójny design z ikonami Check/X
+
+### 4. KanbanColumn
+- **Przed**: Różne style kolumn i nagłówków
+- **Po**: Jednolity design z bg-muted/30 i spójnymi Badge'ami
+
+### 5. Optimistic Updates
+- **Przed**: Różna logika aktualizacji
+- **Po**: Jednolita logika z toast notifications
+
+## Komponenty używające tablicy:
+
+### Projekty:
+- src/components/projects/project-details-content.tsx
+  - Używa KanbanBoard z projectId
+  - Przekazuje transformTasksForKanban()
+
+### Zadania:
+- src/components/tasks/tasks-content.tsx
+  - Używa TasksKanbanBoard
+  - Obsługuje projects, session, hideProjectSelect
+
+## Wspólne zależności:
+- @dnd-kit/core - drag & drop
+- @dnd-kit/sortable - sortowanie
+- shadcn/ui komponenty (Card, Badge, Button, etc.)
+- TaskDetailsDialog - szczegóły zadania
+- ClickableAvatar - awatary użytkowników
+
+## Korzyści z unifikacji:
+1. Spójny UX między sekcjami
+2. Łatwiejsze utrzymanie kodu
+3. Jednolite zachowanie drag & drop
+4. Spójne style i animacje
+5. Ujednolicone komunikaty błędów
+
+## Obramowanie projektu w kartach zadań:
+Wszystkie karty zadań mają teraz obramowanie w kolorze projektu (border-left-4):
+
+### Komponenty z obramowaniem projektu:
+- src/components/projects/kanban-board.tsx - SortableTaskCard i DragOverlay
+- src/components/tasks/tasks-kanban-board.tsx - SortableTaskCard i DragOverlay
+- src/components/tasks/tasks-content.tsx - karty w widoku listy
+- src/components/projects/project-details-content.tsx - karty w widoku listy
+- src/components/dashboard/content.tsx - ostatnie zadania
+
+### Implementacja:
+```tsx
+<Card
+  className="border-l-4"
+  style={{
+    borderLeftColor: task.project?.color || '#3B82F6'
+  }}
+>
+```
+
+### Kolory projektów:
+- Domyślny kolor: #3B82F6 (niebieski)
+- Kolory są pobierane z task.project?.color
+- Podczas aktualizacji zadania: żółte obramowanie (#FBBF24)

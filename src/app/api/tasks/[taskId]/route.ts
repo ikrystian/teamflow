@@ -32,6 +32,13 @@ export async function GET(
         }
       },
       include: {
+        taskStatus: {
+          select: {
+            id: true,
+            name: true,
+            color: true
+          }
+        },
         project: {
           select: {
             id: true,
@@ -89,7 +96,8 @@ export async function GET(
           orderBy: {
             date: "desc"
           }
-        }
+        },
+        images: true
       }
     })
 

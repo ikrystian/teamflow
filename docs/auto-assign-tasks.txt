@@ -1,0 +1,117 @@
+=== AUTOMATYCZNE PRZYPISYWANIE ZADAŃ DO ZALOGOWANEGO UŻYTKOWNIKA ===
+
+Data: 2025-01-28
+Autor: AI Assistant
+
+=== OPIS FUNKCJONALNOŚCI ===
+
+Implementacja automatycznego przypisywania zadań do aktualnie zalogowanego użytkownika
+w komponencie CreateTaskDialog. Zadania są teraz zawsze przypisywane do osoby, która
+je tworzy, co upraszcza proces tworzenia zadań i zapewnia lepsze UX.
+
+=== ZMIANY W KODZIE ===
+
+1. KOMPONENT: src/components/tasks/create-task-dialog.tsx
+
+   DODANE IMPORTY:
+   - useSession z "next-auth/react"
+   - type Session z "next-auth"
+
+   DODANE ZMIENNE:
+   - const { data: session } = useSession() as { data: Session | null }
+
+   ZMODYFIKOWANE USEEFFECT HOOKS:
+
+   a) useEffect dla otwierania dialogu:
+      - Dodano automatyczne ustawianie assigneeId na session.user.id
+      - Dependency array: [open, setDefaultStatus, session?.user?.id]
+
+   b) useEffect dla zmiany projektu:
+      - Dodano automatyczne ustawianie assigneeId na session.user.id
+      - Dependency array: [selectedProject, session?.user?.id]
+
+   c) resetForm funkcja:
+      - Dodano automatyczne ustawianie assigneeId na session.user.id
+      - Warunek sprawdzający czy session?.user?.id istnieje
+
+   ZMODYFIKOWANY UI:
+   - Pole "Przypisany" zmienione z Select na div tylko do odczytu
+   - Dodano etykietę "(automatycznie przypisane do Ciebie)"
+   - Wyświetlanie avatara i nazwy zalogowanego użytkownika
+   - Stylowanie: bg-muted/50, border, rounded-md
+
+=== LOGIKA DZIAŁANIA ===
+
+1. OTWIERANIE DIALOGU:
+   - Gdy dialog się otwiera (open = true)
+   - Sprawdzenie czy session?.user?.id istnieje
+   - Automatyczne ustawienie assigneeId = session.user.id
+
+2. ZMIANA PROJEKTU:
+   - Gdy użytkownik wybiera inny projekt
+   - Pobieranie członków zespołu dla nowego projektu
+   - Automatyczne ustawienie assigneeId = session.user.id
+
+3. RESETOWANIE FORMULARZA:
+   - Gdy formularz jest resetowany (po utworzeniu zadania lub zamknięciu)
+   - Wszystkie pola są czyszczone
+   - assigneeId jest ustawiane na session.user.id (jeśli sesja istnieje)
+
+4. WYSYŁANIE FORMULARZA:
+   - assigneeId jest automatycznie przekazywane w JSON do API
+   - Nie ma potrzeby dodatkowej walidacji - zawsze będzie ustawione
+
+=== KORZYŚCI ===
+
+1. LEPSZE UX:
+   - Użytkownik nie musi ręcznie wybierać siebie z listy
+   - Szybsze tworzenie zadań
+   - Mniej kroków w procesie
+
+2. SPÓJNOŚĆ:
+   - Wszystkie zadania mają przypisaną osobę
+   - Brak zadań "bez właściciela"
+   - Jasna odpowiedzialność za zadanie
+
+3. BEZPIECZEŃSTWO:
+   - Nie można przypadkowo przypisać zadania do kogoś innego
+   - Automatyczne wykorzystanie danych z sesji
+
+=== KOMPATYBILNOŚĆ ===
+
+- Zmiana jest w pełni kompatybilna wstecz
+- API pozostaje bez zmian
+- Istniejące zadania nie są dotknięte
+- Funkcjonalność edycji zadań pozostaje bez zmian
+
+=== PLIKI POWIĄZANE ===
+
+- src/components/tasks/create-task-dialog.tsx (główny plik)
+- src/app/api/tasks/route.ts (API endpoint - bez zmian)
+- src/types/next-auth.d.ts (typy sesji)
+- src/lib/auth.ts (konfiguracja NextAuth)
+
+=== TESTOWANIE ===
+
+1. Sprawdzić czy dialog otwiera się z ustawionym użytkownikiem
+2. Sprawdzić czy zmiana projektu nie resetuje przypisania
+3. Sprawdzić czy zadanie jest tworzone z poprawnym assigneeId
+4. Sprawdzić czy resetowanie formularza działa poprawnie
+5. Sprawdzić wyświetlanie gdy brak sesji (fallback)
+
+=== NAPRAWIONE BŁĘDY ===
+
+Podczas implementacji naprawiono również błąd w API /api/projects:
+- Problem: API używało nieistniejącego pola "status" w modelu Task
+- Rozwiązanie: Zmieniono na "statusId" i dodano relację "taskStatus"
+- Pliki naprawione:
+  * src/app/api/projects/route.ts - dodano taskStatus do include
+  * src/app/api/projects/[projectId]/route.ts - dodano taskStatus do include
+  * src/components/projects/project-info-content.tsx - zaktualizowano interfejs i logikę
+  * src/components/projects/projects-content.tsx - zaktualizowano interfejs
+
+=== PRZYSZŁE ULEPSZENIA ===
+
+1. Możliwość zmiany przypisanej osoby w edycji zadania
+2. Opcja przypisania do kogoś innego podczas tworzenia (jeśli potrzebne)
+3. Powiadomienia o nowych zadaniach dla przypisanych osób

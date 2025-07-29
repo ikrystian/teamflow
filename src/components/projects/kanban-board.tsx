@@ -6,8 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Calendar, Clock, Edit, MoreHorizontal, Plus, AlertCircle, Trash2, Check, X } from "lucide-react"
-import { toast } from "sonner"
+import { Calendar, Clock, Edit, MoreHorizontal, Plus, AlertCircle, Trash2, X, Check, Loader2 } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,6 +37,7 @@ import {
 import { CSS } from "@dnd-kit/utilities"
 import { TaskDetailsDialog } from "../tasks/task-details-dialog"
 import type { Task, TaskStatus } from "@/types"
+import { toast } from "sonner"
 
 interface KanbanBoardProps {
   projectId: string
@@ -91,8 +91,9 @@ function SortableTaskCard({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition: isDragging ? 'none' : transition,
-    opacity: isDragging ? 0.3 : isUpdating ? 0.8 : 1,
+    opacity: isDragging ? 0.5 : isUpdating ? 0.8 : 1,
     scale: isDragging ? 1.05 : 1,
+    zIndex: isDragging ? 1000 : 'auto',
   }
 
   const isOverdue = (dueDate?: string) => {
@@ -100,140 +101,100 @@ function SortableTaskCard({
     return new Date(dueDate) < new Date()
   }
 
-  const completedSubtasks = task.subtasks.filter(subtask => subtask.isCompleted).length
-  const completedTodos = task.todos?.filter(todo => todo.isCompleted).length || 0
-
-  // Handle click on card (not on dropdown menu)
-  const handleCardClick = (e: React.MouseEvent) => {
-    // Prevent click when dragging
-    if (isDragging) return
-
-    // Check if click is on the dropdown menu
-    const target = e.target as HTMLElement
-    if (target.closest('.task-dropdown')) return
-
-    onViewDetails(task)
-  }
-
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="mb-2"
+      {...attributes}
+      {...listeners}
+      className="touch-none"
     >
       <Card
-        className={`group hover:shadow-lg transition-all duration-200 ${
-          isUpdating ? 'ring-2 ring-blue-300 shadow-lg' : ''
-        } cursor-pointer hover:translate-y-[-1px] bg-card border-0 shadow-sm rounded-lg`}
-        onClick={handleCardClick}
+        className={`mb-2 cursor-pointer hover:shadow-md transition-all border-l-4 ${
+          isUpdating
+            ? 'border-l-yellow-500 bg-yellow-50/50'
+            : ''
+        }`}
+        style={{
+          borderLeftColor: isUpdating ? undefined : (task.project?.color || '#3B82F6'),
+          paddingTop: 5,
+          paddingBottom: 0
+        }}
       >
         <CardContent className="p-3">
-          <div className="flex items-start justify-between mb-3 ">
-            <div
-              {...attributes}
-              {...listeners}
-              className="flex-1 cursor-grab active:cursor-grabbing pr-2"
-            >
-              <h3 className={`text-sm font-medium leading-tight text-foreground ${
-                isUpdating ? 'text-blue-600' : ''
-              }`}>
+          <div className="flex items-start justify-between mb-2">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <h4
+                className="font-medium text-sm leading-tight cursor-pointer hover:text-primary truncate"
+                onClick={() => onViewDetails(task)}
+              >
                 {task.title}
-                {isUpdating && (
-                  <span className="ml-2 inline-block w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
-                )}
-              </h3>
+              </h4>
+              {isUpdating && (
+                <Loader2 className="h-3 w-3 animate-spin text-yellow-600 flex-shrink-0" />
+              )}
             </div>
-            <div className="flex-shrink-0 task-dropdown opacity-0 group-hover:opacity-100 transition-opacity">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-gray-100">
-                    <MoreHorizontal className="h-3 w-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                  <DropdownMenuItem onClick={() => onTimeTracking(task)}>
-                    <Clock className="mr-2 h-4 w-4" />
-                    Log Time
-                  </DropdownMenuItem>
-                  {canEdit && (
-                    <DropdownMenuItem onClick={() => onEdit(task)}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit Task
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                  <MoreHorizontal className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {canEdit && (
+                  <>
+                    <DropdownMenuItem onClick={() => onTimeTracking(task)}>
+                      <Clock className="mr-2 h-4 w-4" />
+                      Loguj czas
                     </DropdownMenuItem>
-                  )}
-                  {canEdit && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => onDelete(task)}
-                        className="text-red-600 focus:text-red-600"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete Task
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => onDelete(task)}
+                      className="text-destructive"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Usuń
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
-          {(task.priority || task.subtasks.length > 0) && (
-            <div className="flex flex-wrap gap-1 mb-3">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 flex-wrap">
               {task.priority && (
-                <Badge
-                  variant="outline"
-                  className={`${getPriorityColor(task.priority)} text-xs px-2 py-0.5 h-5 font-medium`}
-                >
+                <Badge variant="outline" className={`text-xs ${getPriorityColor(task.priority)}`}>
                   {task.priority}
                 </Badge>
               )}
 
-              {task.subtasks.length > 0 && (
-                <Badge
-                  variant="outline"
-                  className="bg-muted text-muted-foreground text-xs px-2 py-0.5 h-5 border-border"
-                >
-                  {completedSubtasks}/{task.subtasks.length}
-                </Badge>
+              {task.dueDate && (
+                <div className={`flex items-center gap-1 text-xs ${
+                  isOverdue(task.dueDate) ? 'text-red-600' : 'text-muted-foreground'
+                }`}>
+                  <Calendar className="h-3 w-3" />
+                  {new Date(task.dueDate).toLocaleDateString('pl-PL')}
+                  {isOverdue(task.dueDate) && <AlertCircle className="h-3 w-3 text-red-600" />}
+                </div>
               )}
 
-              {task.todos && task.todos.length > 0 && (
-                <Badge
-                  variant="outline"
-                  className="bg-muted text-muted-foreground text-xs px-2 py-0.5 h-5 border-border"
-                >
-                  {completedTodos}/{task.todos.length} Todos
-                </Badge>
+              {task.estimatedHours && (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3" />
+                  {task.estimatedHours}h
+                </div>
               )}
             </div>
-          )}
 
-          <div className="flex items-center justify-between">
-            {task.assignee ? (
-              <ClickableAvatar
-                userId={task.assignee.id}
-                avatarUrl={task.assignee.avatarUrl}
-                name={task.assignee.name}
-                size="lg"
-                className="border-2 border-white shadow-sm"
-              />
-            ) : (
-              <div className="h-7 w-7" />
-            )}
-
-            {task.dueDate && (
-              <div className={`flex items-center text-xs px-2 py-1 rounded-md ${
-                isOverdue(task.dueDate)
-                  ? "bg-red-50 text-red-700 border border-red-200"
-                  : "bg-muted text-muted-foreground border border-border"
-              }`}>
-                {isOverdue(task.dueDate) ? (
-                  <AlertCircle className="mr-1 h-3 w-3" />
-                ) : (
-                  <Calendar className="mr-1 h-3 w-3" />
-                )}
-                {new Date(task.dueDate).toLocaleDateString()}
+            {task.assignee && (
+              <div className="flex items-center justify-end">
+                <ClickableAvatar
+                  userId={task.assignee.id}
+                  avatarUrl={task.assignee.avatarUrl}
+                  name={task.assignee.name}
+                  size="sm"
+                />
               </div>
             )}
           </div>
@@ -385,25 +346,14 @@ function KanbanColumn({
   })
 
   return (
-    <div className="flex-shrink-0 w-72">
-      <div
-        ref={setNodeRef}
-        className={`bg-gray-100 rounded-xl p-3 h-full transition-all duration-300 ease-in-out ${
-          isOver
-            ? "bg-blue-50 border-2 border-blue-300 border-dashed shadow-xl scale-105 transform"
-            : "shadow-sm hover:shadow-md hover:bg-gray-50"
-        }`}
-        style={{ minHeight: '500px' }}
-      >
+    <div className="flex-shrink-0 w-80">
+      <div className={`bg-muted/30 rounded-lg p-4 h-full transition-colors ${
+        isOver ? 'bg-primary/10 ring-2 ring-primary/20' : ''
+      }`}>
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-2">
-            <h3 className="font-semibold text-foreground text-sm uppercase tracking-wide">
-              {status.name}
-            </h3>
-            <Badge
-              variant="secondary"
-              className="text-xs bg-muted text-muted-foreground hover:bg-accent transition-colors"
-            >
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold text-sm">{status.name}</h3>
+            <Badge variant="secondary" className="text-xs">
               {tasks.length}
             </Badge>
           </div>
@@ -413,7 +363,14 @@ function KanbanColumn({
           items={tasks.map(task => task.id)}
           strategy={verticalListSortingStrategy}
         >
-          <div className="space-y-2 min-h-[400px]">
+          <div ref={setNodeRef} className="space-y-2 min-h-[400px]">
+            {tasks.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                <div className="mb-2">Brak zadań</div>
+                <div className="text-xs">Przeciągnij zadanie tutaj lub dodaj nowe</div>
+              </div>
+            )}
+
             {tasks.map((task) => (
               <SortableTaskCard
                 key={task.id}
@@ -453,31 +410,25 @@ export function KanbanBoard({
 }: KanbanBoardProps) {
   const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
   const [activeTask, setActiveTask] = useState<Task | null>(null)
-  const [optimisticTasks, setOptimisticTasks] = useState<Task[]>([])
+  const [optimisticTasks, setOptimisticTasks] = useState<Task[]>(tasks)
   const [updatingTasks, setUpdatingTasks] = useState<Set<string>>(new Set())
   const [taskDetailsDialogOpen, setTaskDetailsDialogOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
 
-
-  // Use optimistic tasks if available, otherwise use props tasks
-  const displayTasks = optimisticTasks.length > 0 ? optimisticTasks : tasks
+  // Always use optimistic tasks for display
+  const displayTasks = optimisticTasks
 
   // Update optimistic tasks when props tasks change
   useEffect(() => {
     setOptimisticTasks(tasks)
   }, [tasks])
 
-  useEffect(() => {
-    if (selectedTask) {
-      const updatedSelectedTask = displayTasks.find(t => t.id === selectedTask.id);
-      if (updatedSelectedTask) {
-        setSelectedTask(updatedSelectedTask);
-      }
-    }
-  }, [displayTasks, selectedTask]);
-
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -500,7 +451,8 @@ export function KanbanBoard({
   }, [fetchTaskStatuses])
 
   const handleDragStart = (event: DragStartEvent) => {
-    const task = displayTasks.find(t => t.id === event.active.id)
+    const { active } = event
+    const task = displayTasks.find(t => t.id === active.id)
     setActiveTask(task || null)
   }
 
@@ -514,43 +466,19 @@ export function KanbanBoard({
     const newStatusId = over.id as string
 
     const task = displayTasks.find(t => t.id === taskId)
-    if (!task) {
-      console.error("Task not found:", taskId)
-      return
-    }
-
-    // Find the status by ID or name (for backward compatibility)
-    const newStatus = taskStatuses.find(s => s.id === newStatusId || s.name === newStatusId)
-    if (!newStatus) {
-      console.error("Status not found:", { newStatusId, availableStatuses: taskStatuses })
-      return
-    }
+    if (!task) return
 
     // If the task is already in this status, do nothing
-    if (task.statusId === newStatus.id) {
-      return
-    }
-
-    // Store original task state for potential rollback
-    const originalTask = { ...task }
+    if (task.statusId === newStatusId) return
 
     // Mark task as updating
     setUpdatingTasks(prev => new Set(prev).add(taskId))
 
-    // Optimistic update - immediately update the task in local state
-    const updatedTask = {
-      ...task,
-      statusId: newStatus.id
-    }
-
+    // Optimistic update
+    const updatedTask = { ...task, statusId: newStatusId }
     setOptimisticTasks(prevTasks =>
       prevTasks.map(t => t.id === taskId ? updatedTask : t)
     )
-
-    // Prepare update data
-    const updateData = {
-      statusId: newStatus.id
-    }
 
     try {
       const response = await fetch(`/api/tasks/${taskId}`, {
@@ -558,36 +486,27 @@ export function KanbanBoard({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(updateData),
+        body: JSON.stringify({ statusId: newStatusId }),
       })
 
       if (response.ok) {
-        // Success - refresh data from server to ensure consistency
         onTaskUpdated()
+        toast.success("Status zadania został zaktualizowany")
       } else {
-        // Error - rollback optimistic update
-        const errorData = await response.json()
-        console.error("Failed to update task status:", errorData)
-
+        // Rollback on error
         setOptimisticTasks(prevTasks =>
-          prevTasks.map(t => t.id === taskId ? originalTask : t)
+          prevTasks.map(t => t.id === taskId ? task : t)
         )
-
-        // Show error message to user
-        alert(`Failed to update task status: ${errorData.error || 'Unknown error'}`)
+        toast.error("Nie udało się zaktualizować statusu zadania")
       }
     } catch (error) {
       console.error("Error updating task status:", error)
-
-      // Rollback optimistic update on network error
+      // Rollback on error
       setOptimisticTasks(prevTasks =>
-        prevTasks.map(t => t.id === taskId ? originalTask : t)
+        prevTasks.map(t => t.id === taskId ? task : t)
       )
-
-      // Show error message to user
-      alert('Network error: Failed to update task status')
+      toast.error("Wystąpił błąd podczas aktualizacji statusu")
     } finally {
-      // Remove task from updating state
       setUpdatingTasks(prev => {
         const newSet = new Set(prev)
         newSet.delete(taskId)
@@ -621,7 +540,7 @@ export function KanbanBoard({
         onDragEnd={handleDragEnd}
       >
         <div className="flex space-x-4 overflow-x-auto pb-4">
-          {taskStatuses.map((status) => (
+          {taskStatuses.length > 0 ? taskStatuses.map((status) => (
             <KanbanColumn
               key={status.id}
               status={status}
@@ -635,7 +554,11 @@ export function KanbanBoard({
               projectId={projectId}
               updatingTasks={updatingTasks}
             />
-          ))}
+          )) : (
+            <div className="flex items-center justify-center w-full h-64 text-muted-foreground">
+              Ładowanie statusów zadań...
+            </div>
+          )}
 
 
         </div>

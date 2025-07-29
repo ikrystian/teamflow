@@ -55,7 +55,12 @@ interface ProjectDetails {
     id: string
     title: string
     description?: string
-    status: string
+    statusId?: string
+    taskStatus?: {
+      id: string
+      name: string
+      color: string
+    }
     priority?: string
     dueDate?: string
     createdAt: string
@@ -195,10 +200,10 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
 
   const getTaskStats = (tasks: ProjectDetails['tasks']) => {
     const total = tasks.length
-    const completed = tasks.filter(task => task.status.toLowerCase() === "done").length
-    const inProgress = tasks.filter(task => task.status.toLowerCase() === "in progress").length
+    const completed = tasks.filter(task => task.taskStatus?.name.toLowerCase() === "done").length
+    const inProgress = tasks.filter(task => task.taskStatus?.name.toLowerCase() === "in progress").length
     const overdue = tasks.filter(task =>
-      task.dueDate && new Date(task.dueDate) < new Date() && task.status.toLowerCase() !== "done"
+      task.dueDate && new Date(task.dueDate) < new Date() && task.taskStatus?.name.toLowerCase() !== "done"
     ).length
 
     return { total, completed, inProgress, overdue }

@@ -222,7 +222,7 @@ export function TaskDetailsDialog({
                   size="sm"
                   onClick={(e) => {
                     onOpenChange(false)
-                    onEdit?.(task, e)
+                    onEdit(task, e)
                   }}
                 >
                   <Edit className="h-4 w-4 mr-2" />

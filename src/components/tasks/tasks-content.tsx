@@ -10,8 +10,7 @@ import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, CheckSquare, Calendar, User as UserIcon, Filter, Edit, Clock, MoreHorizontal, Trash2, LayoutGrid, List } from "lucide-react"
-import { CreateTaskDialog } from "./create-task-dialog"
-import { EditTaskDialog } from "./edit-task-dialog"
+import { TaskFormDialog } from "../shared/task-form-dialog"
 import { TimeTrackingDialog } from "./time-tracking-dialog"
 import { TaskDetailsDialog } from "./task-details-dialog"
 import { TasksKanbanBoard } from "./tasks-kanban-board"
@@ -77,6 +76,7 @@ export function TasksContent() {
       const response = await fetch(url)
       if (response.ok) {
         const data = await response.json()
+        console.log(data.tasks)
         setTasks(data.tasks)
       }
     } catch (error) {
@@ -100,6 +100,7 @@ export function TasksContent() {
     try {
       const response = await fetch('/api/system/task-statuses')
       if (response.ok) {
+
         const data = await response.json()
         setTaskStatuses(data.taskStatuses)
       }
@@ -191,6 +192,7 @@ export function TasksContent() {
   }
 
   const handleTaskDetails = (task: Task) => {
+    console.log(task)
     setSelectedTask(task)
     setDetailsDialogOpen(true)
   }
@@ -444,8 +446,6 @@ export function TasksContent() {
                           return (
                             <Badge
                               variant="secondary"
-                              className="text-white"
-                              style={{ backgroundColor: taskStatus?.color || '#6B7280' }}
                             >
                               {taskStatus?.name || 'Brak statusu'}
                             </Badge>
@@ -559,14 +559,16 @@ export function TasksContent() {
       </Tabs>
 
       {/* Dialogs */}
-      <CreateTaskDialog
+      <TaskFormDialog
+        mode="create"
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onTaskCreated={handleTaskCreated}
         projects={projects}
       />
 
-      <EditTaskDialog
+      <TaskFormDialog
+        mode="edit"
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
         onTaskUpdated={handleTaskUpdated}

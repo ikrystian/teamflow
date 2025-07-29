@@ -10,79 +10,15 @@ import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { Plus, Users, FolderOpen, CheckSquare, Calendar } from "lucide-react"
 import Link from "next/link"
 import { TaskDetailsDialog } from "@/components/tasks/task-details-dialog"
-import { EditTaskDialog } from "@/components/tasks/edit-task-dialog"
+import { TaskFormDialog } from "@/components/shared/task-form-dialog"
 import { TimeTrackingDialog } from "@/components/tasks/time-tracking-dialog"
+import type { Task, User } from "@/types"
 
 interface DashboardStats {
   myTasks: number
   teams: number
   projects: number
   dueToday: number
-}
-
-interface User {
-  id: string
-  name: string
-  email: string
-  avatarUrl?: string
-}
-
-interface TaskImage {
-  id: string
-  filename: string
-  url: string
-  mimeType: string
-  size: number
-  createdAt: string
-}
-
-interface Task {
-  id: string
-  title: string
-  description?: string
-  statusId?: string
-  priority?: string
-  dueDate?: string
-  estimatedHours?: number
-  createdAt: string
-  project: {
-    id: string
-    name: string
-    team: {
-      id: string
-      name: string
-    }
-  }
-  assignee?: User
-  createdBy?: User
-  subtasks: {
-    id: string
-    title: string
-    isCompleted: boolean
-  }[]
-  comments: {
-    id: string
-    content: string
-    createdAt: string
-    author: {
-      id: string
-      name: string
-      avatarUrl?: string
-    }
-  }[]
-  timeEntries?: {
-    id: string
-    hours: number
-    description?: string
-    date: string
-    user: User
-  }[]
-  images?: TaskImage[]
-  todos?: {
-    id: string
-    title: string
-    isCompleted: boolean
-  }[]
 }
 
 export function DashboardContent() {
@@ -368,7 +304,10 @@ export function DashboardContent() {
               {recentTasks.map((task) => (
                 <div
                   key={task.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent cursor-pointer transition-colors"
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent cursor-pointer transition-colors border-l-4"
+                  style={{
+                    borderLeftColor: task.project?.color || '#3B82F6'
+                  }}
                   onClick={() => handleTaskDetails(task)}
                 >
                   <div className="flex-1">
@@ -376,7 +315,7 @@ export function DashboardContent() {
                       {task.title}
                     </h4>
                     <div className="flex items-center space-x-3 text-sm text-muted-foreground">
-                      <span>{task.project.name}</span>
+                      <span>{task?.project?.name}</span>
                       {task.subtasks.length > 0 && (
                         <span>
                           {task.subtasks.filter(st => st.isCompleted).length}/{task.subtasks.length} subtasks
@@ -422,7 +361,8 @@ export function DashboardContent() {
     />
 
     {/* Edit Task Dialog */}
-    <EditTaskDialog
+    <TaskFormDialog
+      mode="edit"
       open={editTaskDialogOpen}
       onOpenChange={setEditTaskDialogOpen}
       task={selectedTask as Task}

@@ -4,13 +4,6 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import type { Session } from "next-auth"
 
-interface TaskStatusUpdateInput {
-  name?: string;
-  color?: string;
-  order?: number;
-  isDefault?: boolean;
-}
-
 // PATCH /api/system/task-statuses/[statusId] - Update a global task status
 export async function PATCH(
   request: NextRequest,

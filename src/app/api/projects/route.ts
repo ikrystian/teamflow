@@ -37,7 +37,14 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             title: true,
-            status: true,
+            statusId: true,
+            taskStatus: {
+              select: {
+                id: true,
+                name: true,
+                color: true
+              }
+            },
             priority: true,
             dueDate: true,
             assignee: {
@@ -70,7 +77,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { name, description, teamId, imageUrl, color } = await request.json()
+    const { name, description, teamId, imageUrl } = await request.json()
 
     if (!name || !teamId) {
       return NextResponse.json(

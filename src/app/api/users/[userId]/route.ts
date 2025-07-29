@@ -61,7 +61,7 @@ export async function GET(
           select: {
             id: true,
             title: true,
-            status: true,
+            statusId: true,
             priority: true,
             dueDate: true,
             createdAt: true,
@@ -98,7 +98,7 @@ export async function GET(
           select: {
             id: true,
             title: true,
-            status: true,
+            statusId: true,
             createdAt: true
           },
           orderBy: {
@@ -205,7 +205,9 @@ export async function GET(
     const completedTasks = await prisma.task.count({
       where: {
         assigneeId: userId,
-        status: "Done",
+        taskStatus: {
+          name: "Done"
+        },
         project: {
           team: {
             members: {

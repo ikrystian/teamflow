@@ -33,7 +33,7 @@ export async function GET() {
           select: {
             id: true,
             name: true,
-            status: true
+
           }
         }
       }

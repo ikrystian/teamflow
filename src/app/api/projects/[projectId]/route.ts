@@ -45,6 +45,13 @@ export async function GET(
         },
         tasks: {
           include: {
+            taskStatus: {
+              select: {
+                id: true,
+                name: true,
+                color: true
+              }
+            },
             assignee: {
               select: {
                 id: true,
@@ -170,7 +177,7 @@ export async function PATCH(
           select: {
             id: true,
             title: true,
-            status: true,
+            statusId: true,
             priority: true,
             dueDate: true,
             assignee: {

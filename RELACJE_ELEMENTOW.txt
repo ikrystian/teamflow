@@ -53,9 +53,36 @@
 
 ### Wykorzystywane istniejące komponenty:
 - TaskDetailsDialog - szczegóły zadania
-- EditTaskDialog - edycja zadania (przez TasksContent)
+- TaskFormDialog - zunifikowany komponent do tworzenia i edycji zadań (zastąpił CreateTaskDialog i EditTaskDialog)
 - TimeTrackingDialog - logowanie czasu (przez TasksContent)
-- CreateTaskDialog - tworzenie zadań (przez TasksContent)
+
+## Zunifikowany komponent TaskFormDialog
+
+### Lokalizacja: src/components/shared/task-form-dialog.tsx
+
+**Cel:** Zastąpienie 4 różnych komponentów (CreateTaskDialog i EditTaskDialog w różnych lokalizacjach) jednym zunifikowanym komponentem.
+
+**Funkcjonalności:**
+- Tryb tworzenia zadań (mode="create")
+- Tryb edycji zadań (mode="edit")
+- Automatyczne przypisywanie do aktualnego użytkownika (forceAssignToCurrentUser)
+- Obsługa różnych scenariuszy:
+  - Tworzenie zadań z wyborem projektu (TasksContent)
+  - Tworzenie zadań w konkretnym projekcie (ProjectDetailsContent)
+  - Tworzenie zadań z widoku "Moje zadania" (automatyczne przypisanie)
+  - Edycja zadań z pełną funkcjonalnością
+
+**Miejsca użycia:**
+1. TasksContent - tworzenie i edycja zadań
+2. ProjectDetailsContent - tworzenie i edycja zadań w projekcie
+3. DashboardContent - edycja zadań
+4. Przygotowany do użycia w KanbanBoard (zastąpi QuickAddTask w przyszłości)
+
+**Korzyści:**
+- Jeden komponent do utrzymania
+- Spójna funkcjonalność we wszystkich miejscach
+- Łatwiejsze dodawanie nowych funkcji
+- Mniejszy rozmiar bundle'a
 
 ## API endpoints wykorzystywane:
 
@@ -163,4 +190,37 @@
 - Dodano pole color?: string do wszystkich interfejsów Project
 - Zaktualizowano typy w src/types/index.ts
 - Zaktualizowano interfejsy w komponentach projektów
+
+## AUTOMATYCZNE PRZYPISYWANIE ZADAŃ Z WIDOKU "MOJE ZADANIA"
+
+### Lokalizacja: src/components/shared/task-form-dialog.tsx
+
+**Problem:** Gdy użytkownik otwierał okienko "Utwórz nowe zadanie" z widoku "Moje zadania", po wybraniu projektu mógł zmienić przypisaną osobę na kogoś innego, co było nieintuicyjne.
+
+**Rozwiązanie:** Dodano parametr `forceAssignToCurrentUser` do TaskFormDialog:
+
+**Zmiany w interfejsie:**
+```typescript
+interface TaskFormDialogProps {
+  // ... inne właściwości
+  forceAssignToCurrentUser?: boolean // When true, always assign to current user regardless of project
+}
+```
+
+**Logika działania:**
+1. Gdy `forceAssignToCurrentUser=true`, pole przypisanej osoby jest zablokowane
+2. Zawsze pokazuje aktualnego użytkownika jako przypisanego
+3. Nie pozwala na zmianę przypisania niezależnie od wybranego projektu
+4. Automatycznie ustawia assigneeId na session.user.id przy zmianie projektu
+
+**Implementacja w tasks-content.tsx:**
+```typescript
+<TaskFormDialog
+  mode="create"
+  // ... inne props
+  forceAssignToCurrentUser={filter === "assigned"}
+/>
+```
+
+**Efekt:** Gdy użytkownik jest w widoku "Moje zadania" (filter === "assigned"), nowe zadania są zawsze przypisywane do niego, niezależnie od wybranego projektu.
 - Pole color jest opcjonalne dla kompatybilności wstecznej

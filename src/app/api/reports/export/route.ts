@@ -115,9 +115,15 @@ export async function POST(request: NextRequest) {
             select: {
               id: true,
               title: true,
-              status: true,
+              statusId: true,
               priority: true,
               estimatedHours: true,
+              taskStatus: {
+                select: {
+                  id: true,
+                  name: true
+                }
+              },
               project: {
                 select: {
                   id: true,
@@ -144,7 +150,7 @@ export async function POST(request: NextRequest) {
         "Team": entry.task.project?.team.name || "No Project",
         "Project": entry.task.project?.name || "No Project",
         "Task": entry.task.title,
-        "Task Status": entry.task.status,
+        "Task Status": entry.task.taskStatus?.name || "No Status",
         "Task Priority": entry.task.priority || "None",
         "Hours Logged": entry.hours,
         "Estimated Hours": entry.task.estimatedHours || 0,
@@ -187,6 +193,12 @@ export async function POST(request: NextRequest) {
                   email: true
                 }
               },
+              taskStatus: {
+                select: {
+                  id: true,
+                  name: true
+                }
+              },
               timeEntries: {
                 where: {
                   ...(startDate && { date: { gte: new Date(startDate) } }),
@@ -201,15 +213,15 @@ export async function POST(request: NextRequest) {
       data = projects.flatMap(project =>
         project.tasks.map(task => {
           const totalLoggedHours = task.timeEntries.reduce((sum, entry) => sum + entry.hours, 0)
-          const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== "Done"
+          const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.taskStatus?.name !== "Done"
 
           return {
             "Team": project.team.name,
             "Project": project.name,
-            "Project Status": project.status,
+            "Project Status": "Active",
             "Task ID": task.id,
             "Task Title": task.title,
-            "Task Status": task.status,
+            "Task Status": task.taskStatus?.name || "No Status",
             "Task Priority": task.priority || "None",
             "Assignee": task.assignee?.name || "Unassigned",
             "Assignee Email": task.assignee?.email || "",

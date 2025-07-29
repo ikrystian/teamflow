@@ -11,7 +11,6 @@ import {
   CheckSquare,
   Calendar,
   BarChart3,
-  ChevronRight,
 } from "lucide-react"
 import {
   Sidebar,
