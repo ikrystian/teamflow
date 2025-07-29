@@ -43,6 +43,7 @@ export async function GET(
           select: {
             id: true,
             name: true,
+            color: true,
             team: {
               select: {
                 id: true,
@@ -212,6 +213,7 @@ export async function PATCH(
           select: {
             id: true,
             name: true,
+            color: true,
             team: {
               select: {
                 id: true,

@@ -404,7 +404,10 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                 {getFilteredTasks(project.tasks).map((task) => (
                   <div
                     key={task.id}
-                    className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                    className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors border-l-4"
+                    style={{
+                      borderLeftColor: project.color || '#3B82F6'
+                    }}
                     onClick={() => handleTaskDetails(task)}
                   >
                     <div className="flex items-start justify-between">

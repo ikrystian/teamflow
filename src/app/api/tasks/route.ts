@@ -50,6 +50,7 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             name: true,
+            color: true,
             team: {
               select: {
                 id: true,
@@ -212,7 +213,8 @@ export async function POST(request: NextRequest) {
         project: {
           select: {
             id: true,
-            name: true
+            name: true,
+            color: true
           }
         },
         assignee: {

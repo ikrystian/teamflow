@@ -179,11 +179,15 @@
 - Dodano sekcję wyboru koloru w CreateProjectDialog z predefiniowanymi kolorami
 - Dodano możliwość wyboru własnego koloru przez color picker
 - Zaktualizowano API endpoint /api/projects do obsługi pola color
+- Zaktualizowano API endpoints /api/tasks i /api/tasks/[taskId] do zwracania pola color projektu
 - Dodano kolorowe kwadraty przed nazwami projektów w lewym menu (layout.tsx)
 
-### Karty zadań używają koloru projektu:
-- Zaktualizowano SortableTaskCard w tasks-kanban-board.tsx
-- Zaktualizowano karty zadań w tasks-content.tsx (widok listy)
+### Karty zadań używają koloru projektu (obramowanie lewe):
+- SortableTaskCard w tasks-kanban-board.tsx - obramowanie lewe w kolorze projektu
+- Karty zadań w tasks-content.tsx (widok listy) - obramowanie lewe w kolorze projektu
+- SortableTaskCard w projects/kanban-board.tsx - obramowanie lewe w kolorze projektu
+- Karty zadań w project-details-content.tsx (widok listy) - obramowanie lewe w kolorze projektu
+- Ostatnie zadania w dashboard/content.tsx - obramowanie lewe w kolorze projektu
 - Obramowanie kart zadań używa teraz koloru projektu (task.project?.color)
 - Fallback do domyślnego koloru #3B82F6 gdy projekt nie ma koloru
 
