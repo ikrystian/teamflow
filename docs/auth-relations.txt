@@ -62,6 +62,38 @@ RELACJE MIĘDZY KOMPONENTAMI UWIERZYTELNIANIA - TEAMFLOW
 - sonner: Toast notifications
 - prisma: ORM do bazy danych
 
+=== AKTUALIZACJA (2025-07-29) - SYSTEM RÓL I ZARZĄDZANIE UŻYTKOWNIKAMI ===
+
+1. SYSTEM RÓL UŻYTKOWNIKÓW
+   - Dodano pole 'role' do modelu User w schema.prisma
+   - Dostępne role: 'user' (domyślna) i 'admin'
+   - Konto krystian@bpcoders.pl ustawione jako administrator
+   - Rola przekazywana w sesji JWT i dostępna w całej aplikacji
+
+2. MIDDLEWARE ADMINISTRATORA
+   - src/lib/admin.ts - funkcje sprawdzające uprawnienia administratora
+   - isAdmin() - sprawdza czy użytkownik ma uprawnienia admina
+   - getAdminSession() - zwraca sesję tylko dla administratorów
+   - isAdminEmail() - sprawdza konkretny email administratora
+
+3. API ZARZĄDZANIA UŻYTKOWNIKAMI (tylko dla administratorów)
+   - GET /api/admin/users - lista wszystkich użytkowników z paginacją i wyszukiwaniem
+   - GET /api/admin/users/[userId] - szczegóły konkretnego użytkownika
+   - PATCH /api/admin/users/[userId] - edycja użytkownika (dane, rola, hasło)
+   - DELETE /api/admin/users/[userId] - usuwanie użytkownika
+
+4. INTERFEJS ZARZĄDZANIA UŻYTKOWNIKAMI
+   - src/components/settings/user-management.tsx - komponent zarządzania użytkownikami
+   - Lista użytkowników z wyszukiwaniem i paginacją
+   - Edycja danych użytkowników i zmiany ról
+   - Usuwanie kont użytkowników (z potwierdzeniem)
+   - Wyświetlanie statystyk użytkowników (zadania, zespoły, itp.)
+
+5. INTEGRACJA Z USTAWIENIAMI
+   - Dodano zakładkę "Użytkownicy" w ustawieniach (widoczna tylko dla administratorów)
+   - Dynamiczne dostosowanie liczby kolumn w TabsList
+   - Sprawdzanie uprawnień administratora w komponencie ustawień
+
 === AKTUALIZACJA (2025-07-28) ===
 
 Dodano funkcjonalność wyświetlania komunikatu o pomyślnej rejestracji:
@@ -111,7 +143,14 @@ NOWE PLIKI:
 - src/app/api/user/sessions/route.ts - API zarządzania sesjami
 - src/components/settings/password-change-form.tsx - Komponent zmiany hasła
 - src/components/settings/active-sessions.tsx - Komponent aktywnych sesji
+- src/lib/admin.ts - Middleware sprawdzający uprawnienia administratora
+- src/app/api/admin/users/route.ts - API listy użytkowników (admin)
+- src/app/api/admin/users/[userId]/route.ts - API zarządzania konkretnym użytkownikiem (admin)
+- src/components/settings/user-management.tsx - Komponent zarządzania użytkownikami
+- scripts/create-admin.ts - Skrypt tworzący konto administratora
 
 ZMODYFIKOWANE PLIKI:
-- prisma/schema.prisma - Dodano modele NextAuth dla sesji
-- src/components/settings/settings-content.tsx - Dodano zakładkę bezpieczeństwa
+- prisma/schema.prisma - Dodano modele NextAuth dla sesji + pole role w User
+- src/components/settings/settings-content.tsx - Dodano zakładkę bezpieczeństwa + zarządzanie użytkownikami
+- src/lib/auth.ts - Uwzględnienie roli użytkownika w sesji JWT
+- src/types/next-auth.d.ts - Rozszerzenie typów NextAuth o pole role

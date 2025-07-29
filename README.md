@@ -41,6 +41,7 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 - Powiadomienia w aplikacji
 - ✅ ~~Załączniki plików (dokumenty, PDF, itp.)~~ - **ZAIMPLEMENTOWANE**
 - ✅ ~~Aktywne oznaczanie stron w nawigacji~~ - **ZAIMPLEMENTOWANE**
+- ✅ ~~System ról i zarządzanie użytkownikami~~ - **ZAIMPLEMENTOWANE**
 - Zaawansowane raporty i analityka
 - Wyszukiwarka globalna
 - Szablony projektów z predefiniowanymi statusami

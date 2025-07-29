@@ -21,12 +21,14 @@ import {
   Save,
   Loader2,
   Settings,
-  Key
+  Key,
+  Users
 } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { SystemTaskStatuses } from "./system-task-statuses"
 import { PasswordChangeForm } from "./password-change-form"
 import { ActiveSessions } from "./active-sessions"
+import { UserManagement } from "./user-management"
 
 interface UserProfile {
   id: string
@@ -49,6 +51,9 @@ export function SettingsContent() {
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+
+  // Check if user is admin
+  const isAdmin = session?.user?.role === 'admin' || session?.user?.email === 'krystian@bpcoders.pl'
 
 
   // Form state for profile data
@@ -216,7 +221,7 @@ export function SettingsContent() {
       <div className="container mx-auto py-6 px-4">
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-7' : 'grid-cols-6'}`}>
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="h-4 w-4" />
               Profil
@@ -241,6 +246,12 @@ export function SettingsContent() {
               <Settings className="h-4 w-4" />
               Statusy zadań
             </TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger value="users" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Użytkownicy
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="profile" className="space-y-6">
@@ -673,6 +684,12 @@ export function SettingsContent() {
           <TabsContent value="task-statuses" className="space-y-6">
             <SystemTaskStatuses />
           </TabsContent>
+
+          {isAdmin && (
+            <TabsContent value="users" className="space-y-6">
+              <UserManagement />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </div>
