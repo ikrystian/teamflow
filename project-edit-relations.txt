@@ -1,0 +1,65 @@
+RELACJE MIĘDZY KOMPONENTAMI - EDYCJA PROJEKTÓW
+
+1. KOMPONENTY GŁÓWNE:
+   - src/components/projects/projects-content.tsx - główny komponent listy projektów
+   - src/components/projects/edit-project-dialog.tsx - dialog edycji projektu (NOWY)
+   - src/components/projects/create-project-dialog.tsx - dialog tworzenia projektu (istniejący)
+   - src/components/projects/project-image-selector.tsx - selektor zdjęć (współdzielony)
+
+2. INTERFEJSY I TYPY:
+   - Project interface w projects-content.tsx:
+     * id, name, description, status, imageUrl, createdAt
+     * team: { id, name }
+     * tasks: array z zadaniami
+   
+   - Project interface w edit-project-dialog.tsx:
+     * id, name, description, imageUrl, color
+     * team: { id, name }
+     * Brak teamId - zespół nie może być zmieniany po utworzeniu
+
+3. STAN KOMPONENTU projects-content.tsx:
+   - editDialogOpen: boolean - kontroluje widoczność dialogu edycji
+   - selectedProject: Project | null - przechowuje wybrany projekt do edycji
+   - handleEditProject(project) - otwiera dialog edycji z wybranym projektem
+   - handleProjectUpdated() - zamyka dialog i odświeża listę projektów
+
+4. STRUKTURA KARTY PROJEKTU:
+   - Card z relative positioning
+   - DropdownMenu w prawym górnym rogu (absolute positioning)
+   - Link do szczegółów projektu owijający główną zawartość
+   - Przycisk edycji z stopPropagation() aby nie aktywować linku
+
+5. API ENDPOINTS:
+   - PATCH /api/projects/[projectId] - aktualizacja projektu
+   - Obsługiwane pola: name, description, imageUrl, color
+   - NIE obsługuje: teamId (zespół nie może być zmieniany)
+
+6. POLA EDYTOWALNE:
+   - Nazwa projektu (wymagane)
+   - Opis projektu (opcjonalne)
+   - Zdjęcie projektu (opcjonalne) - używa ProjectImageSelector
+   - Kolor projektu (opcjonalne) - paleta kolorów + custom color picker
+   - Zespół - TYLKO DO ODCZYTU (wyświetlany jako disabled field)
+
+7. WALIDACJA:
+   - Nazwa projektu jest wymagana
+   - Brak walidacji teamId (pole usunięte)
+   - Obsługa błędów z API
+
+8. WSPÓŁDZIELONE KOMPONENTY:
+   - ProjectImageSelector - używany w create i edit dialog
+   - Dropdown menu components z shadcn/ui
+   - Button, Input, Label, Textarea z shadcn/ui
+
+9. FLOW EDYCJI:
+   1. Użytkownik klika przycisk "..." na karcie projektu
+   2. Wybiera "Edytuj projekt" z dropdown menu
+   3. Otwiera się EditProjectDialog z danymi projektu
+   4. Użytkownik modyfikuje pola (oprócz zespołu)
+   5. Kliknięcie "Zapisz zmiany" wysyła PATCH request
+   6. Po sukcesie dialog się zamyka i lista projektów odświeża
+
+10. BEZPIECZEŃSTWO:
+    - API weryfikuje czy użytkownik ma dostęp do projektu
+    - Tylko członkowie zespołu mogą edytować projekt
+    - Zespół nie może być zmieniany (zabezpieczenie przed przypadkową zmianą)

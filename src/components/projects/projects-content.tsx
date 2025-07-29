@@ -5,8 +5,15 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
-import { Plus, FolderOpen, Calendar, Users, ImageIcon } from "lucide-react"
+import { Plus, FolderOpen, Calendar, Users, ImageIcon, Edit, MoreVertical } from "lucide-react"
 import { CreateProjectDialog } from "./create-project-dialog"
+import { EditProjectDialog } from "./edit-project-dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import Link from "next/link"
 import Image from "next/image"
 
@@ -50,6 +57,8 @@ export function ProjectsContent() {
   const [teams, setTeams] = useState<Team[]>([])
   const [loading, setLoading] = useState(true)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null)
 
   const fetchProjects = async () => {
     try {
@@ -86,6 +95,17 @@ export function ProjectsContent() {
   const handleProjectCreated = () => {
     fetchProjects()
     setCreateDialogOpen(false)
+  }
+
+  const handleEditProject = (project: Project) => {
+    setSelectedProject(project)
+    setEditDialogOpen(true)
+  }
+
+  const handleProjectUpdated = () => {
+    setEditDialogOpen(false)
+    setSelectedProject(null)
+    fetchProjects()
   }
 
   const getStatusColor = (status: string) => {
@@ -175,10 +195,32 @@ export function ProjectsContent() {
           {projects.map((project) => {
             const stats = getTaskStats(project.tasks)
             return (
-              <Link key={project.id} href={`/dashboard/projects/${project.id}`}>
-                <Card className="hover:shadow-md transition-shadow cursor-pointer overflow-hidden">
+              <Card key={project.id} className="hover:shadow-md transition-shadow overflow-hidden relative">
+                {/* Edit Button */}
+                <div className="absolute top-2 right-2 z-10">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 bg-white/80 hover:bg-white/90 backdrop-blur-sm"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleEditProject(project)}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edytuj projekt
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                <Link href={`/dashboard/projects/${project.id}`} className="block">
                   {/* Project Image */}
-                  <div className="relative h-48 bg-muted">
+                  <div className="relative h-48 bg-muted cursor-pointer">
                     {project.imageUrl ? (
                       <Image
                         src={project.imageUrl}
@@ -239,8 +281,8 @@ export function ProjectsContent() {
                       </div>
                     </div>
                   </CardContent>
-                </Card>
-              </Link>
+                </Link>
+              </Card>
             )
           })}
         </div>
@@ -250,6 +292,14 @@ export function ProjectsContent() {
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onProjectCreated={handleProjectCreated}
+        teams={teams}
+      />
+
+      <EditProjectDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onProjectUpdated={handleProjectUpdated}
+        project={selectedProject}
         teams={teams}
       />
     </div>
