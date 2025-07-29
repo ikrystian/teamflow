@@ -20,10 +20,13 @@ import {
   Palette,
   Save,
   Loader2,
-  Settings
+  Settings,
+  Key
 } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { SystemTaskStatuses } from "./system-task-statuses"
+import { PasswordChangeForm } from "./password-change-form"
+import { ActiveSessions } from "./active-sessions"
 
 interface UserProfile {
   id: string
@@ -213,10 +216,14 @@ export function SettingsContent() {
       <div className="container mx-auto py-6 px-4">
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="h-4 w-4" />
               Profil
+            </TabsTrigger>
+            <TabsTrigger value="security" className="flex items-center gap-2">
+              <Key className="h-4 w-4" />
+              Bezpieczeństwo
             </TabsTrigger>
             <TabsTrigger value="notifications" className="flex items-center gap-2">
               <Bell className="h-4 w-4" />
@@ -364,6 +371,11 @@ export function SettingsContent() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="security" className="space-y-6">
+            <PasswordChangeForm />
+            <ActiveSessions />
           </TabsContent>
 
           <TabsContent value="notifications" className="space-y-6">

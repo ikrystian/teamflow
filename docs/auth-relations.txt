@@ -77,3 +77,41 @@ Problem: W React 18 z Strict Mode komponenty renderują się dwukrotnie w trybie
 Rozwiązanie: Użycie useRef do śledzenia czy toast już został wyświetlony
 - toastShownRef.current = true po pierwszym wyświetleniu
 - Sprawdzenie !toastShownRef.current przed wyświetleniem toasta
+
+=== AKTUALIZACJA BEZPIECZEŃSTWA KONTA (2025-07-29) ===
+
+Dodano funkcjonalności bezpieczeństwa konta w dashboard/settings:
+
+1. ZMIANA HASŁA
+   - Plik: src/app/api/user/change-password/route.ts
+   - Funkcjonalność: Zmiana hasła użytkownika z walidacją
+   - Walidacja: Obecne hasło, siła nowego hasła (min. 8 znaków)
+   - Bezpieczeństwo: Hashowanie bcrypt, sprawdzenie czy nowe hasło różni się od obecnego
+
+2. ZARZĄDZANIE AKTYWNYMI SESJAMI
+   - Plik: src/app/api/user/sessions/route.ts
+   - Funkcjonalność: Pobieranie i usuwanie aktywnych sesji użytkownika
+   - Informacje o sesji: IP, urządzenie, przeglądarka, data utworzenia i wygaśnięcia
+   - Możliwość zakończenia pojedynczej sesji lub wszystkich innych sesji
+
+3. KOMPONENTY UI
+   - src/components/settings/password-change-form.tsx - Formularz zmiany hasła
+   - src/components/settings/active-sessions.tsx - Zarządzanie sesjami
+   - Dodano zakładkę "Bezpieczeństwo" w src/components/settings/settings-content.tsx
+
+4. MODELE BAZY DANYCH
+   - Dodano modele NextAuth: Account, Session, VerificationToken
+   - Rozszerzono model User o relacje accounts i sessions
+   - Session zawiera dodatkowe pola: userAgent, ipAddress dla bezpieczeństwa
+
+=== PLIKI DODANE/ZMODYFIKOWANE ===
+
+NOWE PLIKI:
+- src/app/api/user/change-password/route.ts - API zmiany hasła
+- src/app/api/user/sessions/route.ts - API zarządzania sesjami
+- src/components/settings/password-change-form.tsx - Komponent zmiany hasła
+- src/components/settings/active-sessions.tsx - Komponent aktywnych sesji
+
+ZMODYFIKOWANE PLIKI:
+- prisma/schema.prisma - Dodano modele NextAuth dla sesji
+- src/components/settings/settings-content.tsx - Dodano zakładkę bezpieczeństwa
