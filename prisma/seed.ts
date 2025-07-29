@@ -89,13 +89,13 @@ async function main() {
       id: 'task-1',
       title: 'Implement user authentication',
       description: 'Set up NextAuth.js for user authentication',
-      statusId: 'status-done',
+      statusId: null,
       priority: 'High',
       estimatedHours: 8,
       projectId: project1.id,
       assigneeId: user1.id,
       createdById: user1.id,
-      dueDate: new Date('2025-07-15'),
+      dueDate: new Date('2025-07-29'),
     },
   })
 
@@ -106,13 +106,13 @@ async function main() {
       id: 'task-2',
       title: 'Create project dashboard',
       description: 'Build the main dashboard with statistics',
-      statusId: 'status-in-progress',
+      statusId: null,
       priority: 'Medium',
       estimatedHours: 12,
       projectId: project1.id,
       assigneeId: user2.id,
       createdById: user1.id,
-      dueDate: new Date('2025-07-20'),
+      dueDate: new Date('2025-07-30'),
     },
   })
 
@@ -123,13 +123,13 @@ async function main() {
       id: 'task-3',
       title: 'Design mobile UI',
       description: 'Create responsive design for mobile devices',
-      statusId: 'status-todo',
+      statusId: null,
       priority: 'Low',
       estimatedHours: 16,
       projectId: project2.id,
       assigneeId: user3.id,
       createdById: user2.id,
-      dueDate: new Date('2025-07-25'),
+      dueDate: new Date('2025-07-31'),
     },
   })
 
@@ -140,13 +140,13 @@ async function main() {
       id: 'task-4',
       title: 'Implement time tracking',
       description: 'Add time tracking functionality to tasks',
-      statusId: 'status-done',
+      statusId: null,
       priority: 'High',
       estimatedHours: 6,
       projectId: project1.id,
       assigneeId: user1.id,
       createdById: user2.id,
-      dueDate: new Date('2025-07-10'),
+      dueDate: new Date('2025-08-01'),
     },
   })
 

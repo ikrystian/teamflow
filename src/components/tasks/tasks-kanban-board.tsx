@@ -7,7 +7,7 @@ import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar, Clock, Edit, MoreHorizontal, Plus, AlertCircle, Trash2, X, Check, Loader2 } from "lucide-react"
+import { Calendar, Clock, MoreHorizontal, Plus, AlertCircle, Trash2, X, Check, Loader2 } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -83,7 +83,9 @@ function SortableTaskCard({
   onViewDetails,
   onDelete,
   canEdit,
-  isUpdating = false
+  isUpdating = false,
+  onMarkComplete,
+  taskStatuses
 }: {
   task: Task
   onEdit: (task: Task) => void
@@ -92,6 +94,8 @@ function SortableTaskCard({
   onDelete: (task: Task) => void
   canEdit: boolean
   isUpdating?: boolean
+  onMarkComplete?: (task: Task) => void
+  taskStatuses: TaskStatus[]
 }) {
   const {
     attributes,
@@ -112,7 +116,20 @@ function SortableTaskCard({
 
   const isOverdue = (dueDate?: string) => {
     if (!dueDate) return false
+    // Don't show completed tasks as overdue
+    if (isTaskCompleted()) return false
     return new Date(dueDate) < new Date()
+  }
+
+  const isTaskCompleted = () => {
+    const doneStatus = taskStatuses.find(status => status.name === "Done")
+    return doneStatus && task.statusId === doneStatus.id
+  }
+
+  const handleMarkComplete = () => {
+    if (onMarkComplete) {
+      onMarkComplete(task)
+    }
   }
 
   return (
@@ -127,20 +144,22 @@ function SortableTaskCard({
         className={`mb-2 cursor-pointer hover:shadow-md transition-all border-l-4 ${
           isUpdating
             ? 'border-l-yellow-500 bg-yellow-50/50'
+            : isTaskCompleted()
+            ? 'bg-green-50/80 border-l-green-500'
             : ''
         }`}
         style={{
-          borderLeftColor: isUpdating ? undefined : (task.project?.color || '#3B82F6'),
+          borderLeftColor: isUpdating ? undefined : isTaskCompleted() ? '#10B981' : (task.project?.color || '#3B82F6'),
           paddingTop: 5,
           paddingBottom: 0
         }}
       >
-        <CardContent className="p-3">
+        <CardContent className="p-3"                 onClick={() => onViewDetails(task)}
+>
           <div className="flex items-start justify-between mb-2">
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <h4
                 className="font-medium text-sm leading-tight cursor-pointer hover:text-primary truncate"
-                onClick={() => onViewDetails(task)}
               >
                 {task.title}
               </h4>
@@ -160,7 +179,12 @@ function SortableTaskCard({
                 </DropdownMenuItem>
                 {canEdit && (
                   <>
-
+                    {!isTaskCompleted() && (
+                      <DropdownMenuItem onClick={handleMarkComplete}>
+                        <Check className="mr-2 h-4 w-4" />
+                        Oznacz jako zakończone
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem onClick={() => onTimeTracking(task)}>
                       <Clock className="mr-2 h-4 w-4" />
                       Loguj czas
@@ -391,7 +415,9 @@ function KanbanColumn({
   updatingTasks,
   projects,
   session,
-  hideProjectSelect = false
+  hideProjectSelect = false,
+  onMarkComplete,
+  taskStatuses
 }: {
   status: StatusColumn
   tasks: Task[]
@@ -412,6 +438,8 @@ function KanbanColumn({
   }>
   session: Session | null
   hideProjectSelect?: boolean
+  onMarkComplete?: (task: Task) => void
+  taskStatuses: TaskStatus[]
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: status.id,
@@ -453,6 +481,8 @@ function KanbanColumn({
                 onDelete={onDelete}
                 canEdit={canEdit(task)}
                 isUpdating={updatingTasks.has(task.id)}
+                onMarkComplete={onMarkComplete}
+                taskStatuses={taskStatuses}
               />
             ))}
 
@@ -621,6 +651,79 @@ export function TasksKanbanBoard({
     setTaskDetailsDialogOpen(true)
   }
 
+  const handleMarkComplete = async (task: Task) => {
+    // Find the "Done" status
+    const doneStatus = taskStatuses.find(status => status.name === "Done")
+    if (!doneStatus) {
+      toast.error("Nie znaleziono statusu 'Done'")
+      return
+    }
+
+    // Don't do anything if already completed
+    if (task.statusId === doneStatus.id) {
+      return
+    }
+
+    // Optimistic update - immediately update UI
+    setUpdatingTasks(prev => new Set(prev).add(task.id))
+    setOptimisticTasks(prev =>
+      prev.map(t => t.id === task.id ? {
+        ...t,
+        statusId: doneStatus.id
+      } : t)
+    )
+
+    // Show immediate feedback
+    toast.loading("Oznaczanie zadania jako zakończone...", {
+      id: `complete-task-${task.id}`,
+      duration: 2000
+    })
+
+    try {
+      const response = await fetch(`/api/tasks/${task.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          statusId: doneStatus.id
+        }),
+      })
+
+      if (!response.ok) {
+        // Revert optimistic update on error
+        setOptimisticTasks(prev =>
+          prev.map(t => t.id === task.id ? {
+            ...t,
+            statusId: task.statusId
+          } : t)
+        )
+        console.error("Failed to mark task as complete")
+        toast.error("Nie udało się oznaczyć zadania jako zakończone")
+      } else {
+        // Success - keep optimistic update and refresh data in background
+        toast.success("Zadanie oznaczone jako zakończone")
+        onTaskUpdated()
+      }
+    } catch (error) {
+      // Revert optimistic update on error
+      setOptimisticTasks(prev =>
+        prev.map(t => t.id === task.id ? {
+          ...t,
+          statusId: task.statusId
+        } : t)
+      )
+      console.error("Error marking task as complete:", error)
+      toast.error("Wystąpił błąd podczas oznaczania zadania")
+    } finally {
+      setUpdatingTasks(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(task.id)
+        return newSet
+      })
+    }
+  }
+
   // Sync optimistic tasks with props tasks when they change
   useEffect(() => {
     setOptimisticTasks(tasks)
@@ -650,6 +753,8 @@ export function TasksKanbanBoard({
               projects={projects}
               session={session}
               hideProjectSelect={hideProjectSelect}
+              onMarkComplete={handleMarkComplete}
+              taskStatuses={taskStatuses}
             />
           ))}
         </div>

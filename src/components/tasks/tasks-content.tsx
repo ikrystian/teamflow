@@ -14,6 +14,7 @@ import { TaskFormDialog } from "../shared/task-form-dialog"
 import { TimeTrackingDialog } from "./time-tracking-dialog"
 import { TaskDetailsDialog } from "./task-details-dialog"
 import { TasksKanbanBoard } from "./tasks-kanban-board"
+import { TasksWeeklyCalendar } from "./tasks-weekly-calendar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -256,8 +257,17 @@ export function TasksContent() {
 
 
 
-  const isOverdue = (dueDate?: string) => {
+  const isOverdue = (dueDate?: string, task?: Task) => {
     if (!dueDate) return false
+
+    // Don't show completed tasks as overdue
+    if (task && task.statusId && taskStatuses.length > 0) {
+      const doneStatus = taskStatuses.find(status => status.name === "Done")
+      if (doneStatus && task.statusId === doneStatus.id) {
+        return false
+      }
+    }
+
     return new Date(dueDate) < new Date()
   }
 
@@ -375,15 +385,10 @@ export function TasksContent() {
         </TabsContent>
 
         <TabsContent value="calendar" className="space-y-4">
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center text-center py-16">
-              <Calendar className="h-16 w-16 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Widok kalendarza</h3>
-              <p className="text-muted-foreground mb-6 max-w-sm">
-                Tutaj będzie wyświetlany kalendarz z zadaniami według terminów wykonania
-              </p>
-            </CardContent>
-          </Card>
+          <TasksWeeklyCalendar
+            tasks={tasks.filter(task => task.dueDate)}
+            onTaskUpdated={fetchTasks}
+          />
         </TabsContent>
 
         <TabsContent value="list" className="space-y-4">
@@ -541,7 +546,7 @@ export function TasksContent() {
                         <div className="flex items-center space-x-4">
                           {task.dueDate && (
                             <div className={`flex items-center space-x-1 text-sm ${
-                              isOverdue(task.dueDate) ? "text-destructive" : "text-muted-foreground"
+                              isOverdue(task.dueDate, task) ? "text-destructive" : "text-muted-foreground"
                             }`}>
                               <Calendar className="h-4 w-4" />
                               <span>{formatDueDate(task.dueDate)}</span>

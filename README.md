@@ -23,6 +23,7 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 - **Lista todos** - Funkcjonalność checklist w zadaniach z możliwością dodawania, edycji i usuwania elementów
 - **Dashboard** - Przegląd statystyk i ostatnich aktywności
 - **Widok kalendarza** - Wyświetlanie zadań według terminów wykonania
+- **Kalendarz tygodniowy** - Widok kalendarza na tydzień roboczy (Pn-Pt) z zadaniami w zakładce Kalendarz w sekcji Zadania
 - **Dark mode** - Tryb ciemny jako domyślny z możliwością przełączania (jasny/ciemny/systemowy)
 - **Mono theme** - Monochromatyczny motyw z wykorzystaniem najnowszej wersji shadcn/ui
 - **Responsywny interfejs** - Zbudowany z shadcn/ui i Tailwind CSS
@@ -30,6 +31,7 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 - **Zdjęcia projektów** - Upload własnych zdjęć lub automatyczne pobieranie losowych zdjęć z Unsplash
 - **Preferencje widoku projektów** - Automatyczne zapisywanie preferencji widoku (lista/tablica) dla każdego projektu w localStorage
 - **Ujednolicone komponenty tablicy** - Tablica zadań w projektach używa tego samego komponentu co w sekcji zadań dla spójności UX
+- **Oznaczanie zadań jako zakończone** - Możliwość szybkiego oznaczania zadań jako zakończone z menu dropdown z wizualnym oznaczeniem zielonym kolorem
 
 ### 🔄 Planowane funkcjonalności
 - Zaproszenia do zespołów przez email
@@ -745,6 +747,21 @@ Projekt jest otwarty na współpracę. Aby dodać nowe funkcjonalności:
   - Lepsze wyświetlanie błędów z tłem i obramowaniem
 - **Theme Toggle**: Dodano ikony dla każdej opcji motywu
 - **Dokumentacja**: Utworzono `MONO_THEME_IMPLEMENTATION.txt` z szczegółowym opisem zmian
+
+### Oznaczanie zadań jako zakończone
+- **Funkcjonalność**: Dodano możliwość szybkiego oznaczania zadań jako zakończone z menu dropdown
+- **Wizualne oznaczenie**: Zadania ze statusem "Done" mają:
+  - Zielone tło (bg-green-50/80)
+  - Zieloną lewą ramkę (#10B981 - emerald-500)
+- **Menu dropdown**: Opcja "Oznacz jako zakończone" z ikoną Check
+  - Widoczna tylko dla zadań, które nie są jeszcze zakończone
+  - Automatycznie przenosi zadanie do statusu "Done"
+- **Optymistyczna aktualizacja**: Natychmiastowa zmiana wyglądu przed potwierdzeniem z serwera
+- **Toast notifications**: Informacje o postępie i wyniku operacji
+- **Integracja**: Kompatybilne z istniejącym systemem globalnych statusów i drag & drop
+- **Ukrywanie przeterminowania**: Zadania oznaczone jako zakończone nie są wyświetlane jako przeterminowane
+- **Komponenty**: Zaktualizowano wszystkie komponenty wyświetlające zadania (Kanban, Lista, Kalendarz, Szczegóły)
+- **Dokumentacja**: Zaktualizowano `RELACJE_KOMPONENTOW.txt` z opisem implementacji
 
 ### Stylowanie strony "Moje zadania" według standardów shadcn/ui
 - **Refaktoryzacja layoutu**: Zastąpiono sticky top bar prostszym flex layout z `flex-1 space-y-4`

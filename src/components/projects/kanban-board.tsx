@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Calendar, Clock, Edit, MoreHorizontal, Plus, AlertCircle, Trash2, X, Check, Loader2 } from "lucide-react"
+import { Calendar, Clock, MoreHorizontal, Plus, AlertCircle, Trash2, X, Check, Loader2 } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -69,7 +69,8 @@ function SortableTaskCard({
   onViewDetails,
   onDelete,
   canEdit,
-  isUpdating = false
+  isUpdating = false,
+  taskStatuses
 }: {
   task: Task
   onEdit: (task: Task) => void
@@ -78,6 +79,7 @@ function SortableTaskCard({
   onDelete: (task: Task) => void
   canEdit: boolean
   isUpdating?: boolean
+  taskStatuses: TaskStatus[]
 }) {
   const {
     attributes,
@@ -98,6 +100,15 @@ function SortableTaskCard({
 
   const isOverdue = (dueDate?: string) => {
     if (!dueDate) return false
+
+    // Don't show completed tasks as overdue
+    if (task.statusId && taskStatuses.length > 0) {
+      const doneStatus = taskStatuses.find(status => status.name === "Done")
+      if (doneStatus && task.statusId === doneStatus.id) {
+        return false
+      }
+    }
+
     return new Date(dueDate) < new Date()
   }
 
@@ -328,7 +339,8 @@ function KanbanColumn({
   canEdit,
   onTaskCreated,
   projectId,
-  updatingTasks
+  updatingTasks,
+  taskStatuses
 }: {
   status: TaskStatus
   tasks: Task[]
@@ -340,6 +352,7 @@ function KanbanColumn({
   onTaskCreated: () => void
   projectId: string
   updatingTasks: Set<string>
+  taskStatuses: TaskStatus[]
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: status.id,
@@ -381,6 +394,7 @@ function KanbanColumn({
                 onDelete={onDelete}
                 canEdit={canEdit(task)}
                 isUpdating={updatingTasks.has(task.id)}
+                taskStatuses={taskStatuses}
               />
             ))}
 
@@ -553,6 +567,7 @@ export function KanbanBoard({
               onTaskCreated={onTaskUpdated}
               projectId={projectId}
               updatingTasks={updatingTasks}
+              taskStatuses={taskStatuses}
             />
           )) : (
             <div className="flex items-center justify-center w-full h-64 text-muted-foreground">

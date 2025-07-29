@@ -1,0 +1,137 @@
+# Relacje komponentów - Kalendarz tygodniowy zadań
+
+## Struktura komponentów
+
+### Główne komponenty
+1. **TasksContent** (`src/components/tasks/tasks-content.tsx`)
+   - Główny komponent sekcji zadań
+   - Zawiera zakładki: Tablica, Kalendarz, Lista
+   - Zarządza stanem zadań i filtrami
+
+2. **TasksWeeklyCalendar** (`src/components/tasks/tasks-weekly-calendar.tsx`)
+   - Nowy komponent kalendarza tygodniowego
+   - Wyświetla zadania w widoku tygodnia roboczego (Pn-Pt)
+   - Obsługuje nawigację tygodniową
+
+3. **TaskDetailsDialog** (`src/components/tasks/task-details-dialog.tsx`)
+   - Dialog szczegółów zadania
+   - Używany przez kalendarz do wyświetlania szczegółów po kliknięciu
+
+## Relacje między komponentami
+
+### TasksContent → TasksWeeklyCalendar
+- **Props przekazywane:**
+  - `tasks`: Array<Task> - filtrowane zadania z dueDate
+  - `onTaskUpdated`: () => void - callback do odświeżenia zadań
+
+### TasksWeeklyCalendar → TaskDetailsDialog
+- **Props przekazywane:**
+  - `task`: Task - wybrane zadanie
+  - `open`: boolean - stan otwarcia dialogu
+  - `onOpenChange`: (open: boolean) => void - callback zmiany stanu
+  - `onTaskUpdated`: () => void - callback do odświeżenia zadań
+
+## Funkcjonalności kalendarza tygodniowego
+
+### Wyświetlanie
+- Widok 5 kolumn (Poniedziałek - Piątek)
+- Każdy dzień pokazuje datę i nazwę dnia
+- Zadania wyświetlane jako karty z podstawowymi informacjami
+- Wyróżnienie dzisiejszego dnia (niebieskie tło)
+
+### Nawigacja
+- Przyciski poprzedni/następny tydzień
+- Przycisk "Dzisiaj" do powrotu do bieżącego tygodnia
+- Wyświetlanie zakresu dat tygodnia
+
+### Zadania
+- Filtrowanie zadań tylko z ustawioną datą wykonania (dueDate)
+- Grupowanie zadań według daty wykonania
+- Wyświetlanie podstawowych informacji:
+  - Tytuł zadania
+  - Nazwa projektu
+  - Priorytet (skrócone: N/Ś/W)
+  - Przypisana osoba (pierwsze imię)
+  - Status przeterminowania
+
+### Interakcje
+- Kliknięcie w zadanie otwiera dialog szczegółów
+- Hover efekty na kartach zadań
+- Responsywny design
+
+## Struktura danych
+
+### Task interface (używana przez kalendarz)
+```typescript
+interface Task {
+  id: string
+  title: string
+  dueDate?: string  // Kluczowe dla kalendarza
+  priority?: string
+  project?: {
+    id: string
+    name: string
+    team: {
+      id: string
+      name: string
+    }
+  }
+  assignee?: {
+    id: string
+    name: string
+    email: string
+    avatarUrl?: string
+  }
+  // ... inne pola
+}
+```
+
+## Logika kalendarza
+
+### Obliczanie tygodnia roboczego
+1. `getWeekStart(date)` - znajduje poniedziałek dla danej daty
+2. `getWeekDays(weekStart)` - generuje 5 dni roboczych
+3. `getTasksForDate(date)` - filtruje zadania dla konkretnego dnia
+
+### Formatowanie dat
+- Porównywanie dat przez ISO string (YYYY-MM-DD)
+- Lokalizacja polska dla wyświetlania dat
+- Obsługa stref czasowych
+
+### Stylowanie
+- Wykorzystanie shadcn/ui komponentów
+- Tailwind CSS dla responsywności
+- Konsystentne kolory z resztą aplikacji
+- Wyróżnienie dzisiejszego dnia i przeterminowanych zadań
+
+## Integracja z istniejącym systemem
+
+### API
+- Wykorzystuje istniejące API `/api/tasks`
+- Filtrowanie zadań po stronie klienta
+- Obsługa aktualizacji przez `onTaskUpdated` callback
+
+### Routing
+- Zintegrowany w istniejącą stronę `/dashboard/tasks`
+- Zakładka "Kalendarz" w komponencie TasksContent
+
+### Uprawnienia
+- Respektuje istniejące filtry zadań (assigned/all)
+- Wyświetla tylko zadania dostępne dla użytkownika
+
+## Przyszłe rozszerzenia
+
+### Możliwe ulepszenia
+1. Drag & drop zadań między dniami
+2. Dodawanie nowych zadań bezpośrednio z kalendarza
+3. Widok miesięczny jako alternatywa
+4. Kolorowanie zadań według projektów
+5. Miniaturki avatarów przypisanych osób
+6. Wskaźniki postępu zadań
+7. Integracja z zewnętrznymi kalendarzami
+
+### Optymalizacje
+1. Virtualizacja dla dużej liczby zadań
+2. Lazy loading zadań dla przyszłych tygodni
+3. Cache'owanie danych kalendarza
+4. Preload następnego/poprzedniego tygodnia

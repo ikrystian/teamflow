@@ -139,6 +139,15 @@ export function TaskDetailsDialog({
 
   const isOverdue = (dueDate?: string) => {
     if (!dueDate) return false
+
+    // Don't show completed tasks as overdue
+    if (task && task.statusId && taskStatuses.length > 0) {
+      const doneStatus = taskStatuses.find(status => status.name === "Done")
+      if (doneStatus && task.statusId === doneStatus.id) {
+        return false
+      }
+    }
+
     return new Date(dueDate) < new Date()
   }
 

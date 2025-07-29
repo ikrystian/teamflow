@@ -15,6 +15,11 @@ RELACJE MIĘDZY KOMPONENTAMI - GLOBALNE STATUSY ZADAŃ
    - Używa tych samych statusów co są zdefiniowane w ustawieniach
    - Obsługuje drag & drop z aktualizacją statusId i status name
    - FUNKCJONALNOŚĆ: Każda kolumna ma QuickAddTask do szybkiego dodawania zadań
+   - NOWA FUNKCJONALNOŚĆ: Możliwość oznaczania zadań jako zakończone
+     * Zadania ze statusem "Done" mają zielone tło (bg-green-50/80) i zieloną lewą ramkę (#10B981)
+     * W menu dropdown zadania pojawia się opcja "Oznacz jako zakończone" (tylko dla niezakończonych zadań)
+     * Automatyczne przeniesienie zadania do statusu "Done" z optymistyczną aktualizacją UI
+     * Toast notifications informujące o powodzeniu/błędzie operacji
 
 3. SystemTaskStatuses (src/components/settings/system-task-statuses.tsx)
    - NOWY KOMPONENT: Zarządzanie globalnymi statusami zadań w ustawieniach systemowych
@@ -291,6 +296,61 @@ ZMIANY:
 - src/components/tasks/edit-task-dialog.tsx: usunięto odwołanie do task.status (pole już nie istnieje)
 - prisma/schema.prisma: przywrócono pole color w modelu TaskStatus
 - src/components/projects/create-task-dialog.tsx: dodano pole color do interfejsu TaskStatus
+
+=== OZNACZANIE ZADAŃ JAKO ZAKOŃCZONE ===
+
+FUNKCJONALNOŚĆ:
+1. Zadania ze statusem "Done" są wizualnie oznaczone zielonym kolorem:
+   - Zielone tło: bg-green-50/80
+   - Zielona lewa ramka: #10B981 (emerald-500)
+
+2. Menu dropdown zadania zawiera opcję "Oznacz jako zakończone":
+   - Opcja widoczna tylko dla zadań, które nie są jeszcze zakończone
+   - Ikona Check z lucide-react
+   - Po kliknięciu automatycznie przenosi zadanie do statusu "Done"
+
+3. Optymistyczna aktualizacja UI:
+   - Natychmiastowa zmiana wyglądu zadania przed potwierdzeniem z serwera
+   - W przypadku błędu - przywrócenie poprzedniego stanu
+   - Toast notifications informujące o postępie i wyniku operacji
+
+4. Integracja z istniejącym systemem statusów:
+   - Używa globalnych statusów zadań z API /api/system/task-statuses
+   - Automatycznie znajduje status "Done" na podstawie nazwy
+   - Kompatybilne z drag & drop między kolumnami
+
+5. Ukrywanie przeterminowania dla zakończonych zadań:
+   - Zadania ze statusem "Done" nie są wyświetlane jako przeterminowane
+   - Logika zastosowana we wszystkich komponentach wyświetlających zadania
+   - Sprawdzanie statusu przed wyświetleniem czerwonego oznaczenia przeterminowania
+
+IMPLEMENTACJA:
+- src/components/tasks/tasks-kanban-board.tsx:
+  * Dodano funkcję isTaskCompleted() do sprawdzania statusu
+  * Dodano funkcję handleMarkComplete() do oznaczania jako zakończone
+  * Zaktualizowano SortableTaskCard z nowymi props (onMarkComplete, taskStatuses)
+  * Dodano zielone stylowanie dla zakończonych zadań
+  * Dodano opcję w menu dropdown z warunkiem !isTaskCompleted()
+  * Przekazano nowe props przez KanbanColumn do SortableTaskCard
+  * Zaktualizowano funkcję isOverdue() aby nie pokazywała zakończonych zadań jako przeterminowane
+
+- src/components/tasks/tasks-weekly-calendar.tsx:
+  * Dodano pobieranie statusów zadań z API
+  * Zaktualizowano funkcję isOverdue() z parametrem task i sprawdzaniem statusu "Done"
+  * Dodano state taskStatuses i fetchTaskStatuses()
+
+- src/components/tasks/tasks-content.tsx:
+  * Zaktualizowano funkcję isOverdue() z opcjonalnym parametrem task
+  * Dodano sprawdzanie statusu "Done" przed oznaczeniem jako przeterminowane
+
+- src/components/tasks/task-details-dialog.tsx:
+  * Zaktualizowano funkcję isOverdue() aby sprawdzała status zadania
+  * Dodano logikę ukrywania przeterminowania dla zakończonych zadań
+
+- src/components/projects/kanban-board.tsx:
+  * Dodano przekazywanie taskStatuses do SortableTaskCard
+  * Zaktualizowano funkcję isOverdue() w SortableTaskCard
+  * Dodano props taskStatuses do KanbanColumn i SortableTaskCard
 
 REZULTAT:
 - Wszystkie kolory statusów zadań pochodzą teraz z bazy danych
