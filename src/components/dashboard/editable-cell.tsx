@@ -14,12 +14,12 @@ import type { User, TaskStatus } from "@/types"
 import { UserPlus } from "lucide-react"
 
 interface EditableCellProps {
-  value: any
+  value: string | number | undefined
   type: "text" | "select" | "date" | "user" | "priority" | "status"
   options?: Array<{ value: string; label: string; color?: string }>
   users?: User[]
   taskStatuses?: TaskStatus[]
-  onSave: (value: any) => void
+  onSave: (value: string) => void
   className?: string
   placeholder?: string
 }
@@ -35,7 +35,7 @@ export function EditableCell({
   placeholder
 }: EditableCellProps) {
   const [isEditing, setIsEditing] = useState(false)
-  const [editValue, setEditValue] = useState(value)
+  const [editValue, setEditValue] = useState<string | number | undefined>(value)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -49,7 +49,7 @@ export function EditableCell({
   }, [isEditing])
 
   const handleSave = () => {
-    onSave(editValue)
+    onSave(String(editValue || ""))
     setIsEditing(false)
   }
 
@@ -72,7 +72,7 @@ export function EditableCell({
         return value || placeholder || "Kliknij aby edytować"
 
       case "date":
-        return value ? formatTaskDueDateWithRelative(value) : placeholder || "Ustaw termin"
+        return value ? formatTaskDueDateWithRelative(String(value)) : placeholder || "Ustaw termin"
 
       case "user":
         if (value && users.length > 0) {
@@ -112,8 +112,8 @@ export function EditableCell({
 
       case "priority":
         return value ? (
-          <Badge variant="outline" className={`text-xs ${getPriorityColor(value)}`}>
-            {getPriorityDisplayName(value)}
+          <Badge variant="outline" className={`text-xs ${getPriorityColor(String(value))}`}>
+            {getPriorityDisplayName(String(value))}
           </Badge>
         ) : (
           <span className="text-muted-foreground text-sm">{placeholder || "Ustaw priorytet"}</span>
@@ -170,9 +170,9 @@ export function EditableCell({
       case "user":
         return (
           <Select
-            value={editValue || "unassigned"}
+            value={String(editValue || "unassigned")}
             onValueChange={(value) => {
-              const finalValue = value === "unassigned" ? null : value
+              const finalValue = value === "unassigned" ? "" : value
               setEditValue(finalValue)
               onSave(finalValue)
               setIsEditing(false)
@@ -203,9 +203,9 @@ export function EditableCell({
       case "priority":
         return (
           <Select
-            value={editValue || ""}
+            value={String(editValue || "")}
             onValueChange={(value) => {
-              const finalValue = value === "" ? null : value
+              const finalValue = value === "" ? "" : value
               setEditValue(finalValue)
               onSave(finalValue)
               setIsEditing(false)
@@ -231,7 +231,7 @@ export function EditableCell({
       case "status":
         return (
           <Select
-            value={editValue || ""}
+            value={String(editValue || "")}
             onValueChange={(value) => {
               setEditValue(value)
               onSave(value)
@@ -254,7 +254,7 @@ export function EditableCell({
       case "select":
         return (
           <Select
-            value={editValue || ""}
+            value={String(editValue || "")}
             onValueChange={(value) => {
               setEditValue(value)
               onSave(value)

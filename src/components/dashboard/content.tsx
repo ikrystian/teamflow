@@ -69,7 +69,7 @@ export function DashboardContent() {
     fetchData()
   }, [fetchTasks])
 
-  const handleTaskUpdate = async (taskId: string, updates: Partial<Task>) => {
+  const handleTaskUpdate = async (taskId: string, updates: Partial<Task> & { assigneeId?: string }) => {
     try {
       const response = await fetch(`/api/tasks/${taskId}`, {
         method: "PATCH",

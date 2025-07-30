@@ -114,12 +114,12 @@ export function CalendarContent() {
       <div className="space-y-6 p-4 md:p-8 pt-6">
 
 
-              <Card>
-                <CardHeader>
+              <div>
+                <div>
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-xl">
+                    <div className="text-xl">
                       {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-                    </CardTitle>
+                    </div>
                     <div className="flex space-x-2">
                       <Button variant="outline" size="sm" onClick={() => navigateMonth('prev')}>
                         <ChevronLeft className="h-4 w-4" />
@@ -129,8 +129,8 @@ export function CalendarContent() {
                       </Button>
                     </div>
                   </div>
-                </CardHeader>
-                <CardContent>
+                </div>
+                <div>
                   <div className="grid grid-cols-7 gap-1 mb-4">
                     {dayNames.map(day => (
                       <div key={day} className="p-2 text-center font-medium text-gray-500 text-sm">
@@ -189,15 +189,15 @@ export function CalendarContent() {
                       )
                     })}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
               {/* Upcoming tasks */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Nadchodzące zadania</CardTitle>
-                </CardHeader>
-                <CardContent>
+              <div>
+                <div>
+                  <div className="text-xl">Nadchodzące zadania</div>
+                </div>
+                <div>
                   {tasks.length === 0 ? (
                     <div className="text-center py-8">
                       <CalendarIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -235,8 +235,8 @@ export function CalendarContent() {
                         ))}
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
       </div>
 
       {/* Task Details Sheet */}

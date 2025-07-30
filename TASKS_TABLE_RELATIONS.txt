@@ -1,0 +1,207 @@
+=== RELACJE ELEMENTÓW - TABELKA ZADAŃ W STYLU ASANA ===
+
+Data: 2025-01-30
+Cel: Udokumentowanie relacji między komponentami w ulepszonej tabeli zadań Dashboard
+
+=== GŁÓWNE KOMPONENTY ===
+
+1. **src/components/dashboard/tasks-table.tsx**
+   - Główny komponent tabeli zadań
+   - Używa @tanstack/react-table do zaawansowanej funkcjonalności
+   - Grupuje zadania według statusów z nagłówkami grup
+   - Obsługuje inline editing wszystkich pól
+
+2. **src/components/dashboard/editable-cell.tsx**
+   - Komponent do edycji inline pól w tabeli
+   - Obsługuje różne typy: text, date, user, priority, status
+   - Używa shadcn/ui komponentów (Input, Select, DatePicker)
+
+3. **src/components/dashboard/content.tsx**
+   - Kontener dla tabeli zadań w Dashboard
+   - Zarządza stanem zadań, użytkowników i statusów
+   - Implementuje funkcję handleTaskUpdate
+
+=== NOWE FUNKCJONALNOŚCI ===
+
+### 1. FILTROWANIE PROJEKTÓW ARCHIWALNYCH
+**Lokalizacja:** src/components/dashboard/tasks-table.tsx:70-71
+```typescript
+// Filter out tasks from archived projects
+const activeTasks = tasks.filter(task => !task.project?.archived)
+```
+
+**Efekt:** Zadania z projektów archiwalnych nie są wyświetlane w tabeli
+
+### 2. UKRYWANIE/POKAZYWANIE GRUP STATUSÓW
+**Stan:** 
+```typescript
+const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
+```
+
+**Funkcja przełączania:**
+```typescript
+const toggleGroupCollapse = (statusName: string) => {
+  setCollapsedGroups(prev => {
+    const newSet = new Set(prev)
+    if (newSet.has(statusName)) {
+      newSet.delete(statusName)
+    } else {
+      newSet.add(statusName)
+    }
+    return newSet
+  })
+}
+```
+
+**Nagłówek grupy (klikalny):**
+```typescript
+<button
+  onClick={() => toggleGroupCollapse(rowData.statusName)}
+  className="flex items-center gap-2 w-full text-left hover:bg-muted/50 rounded p-1 -m-1 transition-colors"
+>
+  {isCollapsed ? (
+    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+  ) : (
+    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+  )}
+  <h3 className="font-semibold text-lg">{rowData.statusName}</h3>
+  <Badge variant="secondary" className="ml-2">
+    {rowData.count}
+  </Badge>
+</button>
+```
+
+**Logika dodawania zadań:**
+```typescript
+// Add tasks only if group is not collapsed
+if (!collapsedGroups.has(status.name)) {
+  flatData.push(...groups[status.name])
+}
+```
+
+### 3. KOLUMNA ZARAPORTOWANY CZAS
+**Funkcja obliczania:**
+```typescript
+const getTotalReportedHours = (task: Task): number => {
+  return task.timeEntries?.reduce((total, entry) => total + entry.hours, 0) || 0
+}
+```
+
+**Kolumna w tabeli:**
+```typescript
+{
+  accessorKey: "reportedHours",
+  header: "Zaraportowany czas",
+  cell: ({ row }) => {
+    const task = rowData as Task
+    const reportedHours = getTotalReportedHours(task)
+    return (
+      <div className="flex items-center gap-2">
+        {reportedHours > 0 && <Clock className="h-3 w-3 text-muted-foreground" />}
+        <span className="text-sm">
+          {reportedHours > 0 ? `${reportedHours.toFixed(1)}h` : '-'}
+        </span>
+      </div>
+    )
+  }
+}
+```
+
+**Domyślna widoczność:** Ukryta na mniejszych ekranach
+```typescript
+const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
+  estimatedHours: false,
+  createdAt: false,
+  reportedHours: false, // Nowa kolumna
+})
+```
+
+### 4. HOVER EFFECTS NA RZĘDACH
+**Klasy CSS dla rzędów:**
+```typescript
+<TableRow
+  key={row.id}
+  className={isGroupHeader ? "bg-muted/30 hover:bg-muted/40" : "hover:bg-muted/20 group"}
+>
+```
+
+**Klasy CSS dla komórek:**
+```typescript
+<TableCell 
+  key={cell.id}
+  className="group-hover:bg-muted/10 transition-colors"
+>
+```
+
+**Efekt:** Po najechaniu na rząd zadania, wszystkie klikalne elementy są subtelnie podświetlone
+
+=== TYPY I INTERFEJSY ===
+
+**Rozszerzony typ dla aktualizacji zadań:**
+```typescript
+interface TaskUpdateData extends Partial<Task> {
+  assigneeId?: string
+}
+
+interface TasksTableProps {
+  tasks: Task[]
+  users: User[]
+  taskStatuses: TaskStatus[]
+  onTaskUpdate: (taskId: string, updates: TaskUpdateData) => Promise<void>
+}
+```
+
+**Typ wiersza tabeli:**
+```typescript
+type TableRow = Task | { isGroupHeader: true; statusName: string; count: number }
+```
+
+=== INTEGRACJA Z API ===
+
+**Endpoint aktualizacji zadań:** `/api/tasks/[taskId]` (PATCH)
+**Obsługiwane pola:**
+- title
+- description  
+- statusId
+- priority
+- dueDate
+- assigneeId (dla API, ale Task ma assignee)
+- estimatedHours
+
+**Funkcja aktualizacji w content.tsx:**
+```typescript
+const handleTaskUpdate = async (taskId: string, updates: Partial<Task> & { assigneeId?: string }) => {
+  try {
+    const response = await fetch(`/api/tasks/${taskId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updates),
+    })
+    if (response.ok) {
+      await fetchTasks() // Refresh tasks after update
+    }
+  } catch (error) {
+    console.error("Error updating task:", error)
+  }
+}
+```
+
+=== WYKORZYSTANE BIBLIOTEKI ===
+
+- **@tanstack/react-table** - Zaawansowana funkcjonalność tabeli
+- **lucide-react** - Ikony (ChevronDown, ChevronRight, Clock, etc.)
+- **shadcn/ui** - Komponenty UI (Table, Button, Badge, etc.)
+- **EditableCell** - Własny komponent do inline editing
+
+=== REZULTAT ===
+
+Tabelka zadań w Dashboard oferuje teraz:
+1. ✅ Filtrowanie zadań z projektów archiwalnych
+2. ✅ Zwijanie/rozwijanie grup statusów
+3. ✅ Kolumnę zaraportowanego czasu
+4. ✅ Hover effects dla lepszego UX
+5. ✅ Pełną funkcjonalność inline editing
+6. ✅ Sortowanie i filtrowanie kolumn
+7. ✅ Responsywny design z ukrywaniem kolumn
+
+Wszystkie zmiany są kompatybilne wstecz i nie wpływają na istniejące funkcjonalności.

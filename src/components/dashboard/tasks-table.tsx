@@ -13,7 +13,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { ArrowUpDown, ChevronDown, MoreHorizontal, Clock, Eye, EyeOff } from "lucide-react"
+import { ArrowUpDown, ChevronDown, ChevronRight, MoreHorizontal, Clock, Eye, EyeOff } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -44,11 +44,15 @@ import Link from "next/link"
 
 type TableRow = Task | { isGroupHeader: true; statusName: string; count: number }
 
+interface TaskUpdateData extends Partial<Task> {
+  assigneeId?: string
+}
+
 interface TasksTableProps {
   tasks: Task[]
   users: User[]
   taskStatuses: TaskStatus[]
-  onTaskUpdate: (taskId: string, updates: Partial<Task>) => Promise<void>
+  onTaskUpdate: (taskId: string, updates: TaskUpdateData) => Promise<void>
 }
 
 export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTableProps) {
@@ -57,15 +61,38 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
     estimatedHours: false, // Hide by default on smaller screens
     createdAt: false, // Hide by default on smaller screens
+    reportedHours: false, // Hide by default on smaller screens
   })
   const [rowSelection, setRowSelection] = useState({})
   const [hideEmptyGroups, setHideEmptyGroups] = useState(false)
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
+
+  // Function to toggle group collapse state
+  const toggleGroupCollapse = (statusName: string) => {
+    setCollapsedGroups(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(statusName)) {
+        newSet.delete(statusName)
+      } else {
+        newSet.add(statusName)
+      }
+      return newSet
+    })
+  }
+
+  // Function to calculate total reported hours for a task
+  const getTotalReportedHours = (task: Task): number => {
+    return task.timeEntries?.reduce((total, entry) => total + entry.hours, 0) || 0
+  }
 
   // Create flat data with group headers for single table
   const tableData = useMemo(() => {
     const groups: { [key: string]: Task[] } = {}
 
-    tasks.forEach(task => {
+    // Filter out tasks from archived projects
+    const activeTasks = tasks.filter(task => !task.project?.archived)
+
+    activeTasks.forEach(task => {
       const status = getTaskStatus(task, taskStatuses)
       const statusName = status?.name || "Bez statusu"
 
@@ -88,8 +115,10 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
           statusName: status.name,
           count: groups[status.name].length
         })
-        // Add tasks
-        flatData.push(...groups[status.name])
+        // Add tasks only if group is not collapsed
+        if (!collapsedGroups.has(status.name)) {
+          flatData.push(...groups[status.name])
+        }
       }
     })
 
@@ -100,11 +129,14 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
         statusName: "Bez statusu",
         count: groups["Bez statusu"].length
       })
-      flatData.push(...groups["Bez statusu"])
+      // Add tasks only if group is not collapsed
+      if (!collapsedGroups.has("Bez statusu")) {
+        flatData.push(...groups["Bez statusu"])
+      }
     }
 
     return flatData
-  }, [tasks, taskStatuses, hideEmptyGroups])
+  }, [tasks, taskStatuses, hideEmptyGroups, collapsedGroups])
 
   const columns: ColumnDef<TableRow>[] = [
     {
@@ -126,13 +158,22 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
 
         // Check if this is a group header row
         if ('isGroupHeader' in rowData) {
+          const isCollapsed = collapsedGroups.has(rowData.statusName)
           return (
-            <div className="flex items-center gap-2">
+            <button
+              onClick={() => toggleGroupCollapse(rowData.statusName)}
+              className="flex items-center gap-2 w-full text-left hover:bg-muted/50 rounded p-1 -m-1 transition-colors"
+            >
+              {isCollapsed ? (
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              )}
               <h3 className="font-semibold text-lg">{rowData.statusName}</h3>
               <Badge variant="secondary" className="ml-2">
                 {rowData.count}
               </Badge>
-            </div>
+            </button>
           )
         }
 
@@ -445,7 +486,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
               value={task.estimatedHours?.toString() || ""}
               type="text"
               onSave={(value) => {
-                const hours = value ? parseFloat(value) : null
+                const hours = value ? parseFloat(value) : undefined
                 onTaskUpdate(task.id, { estimatedHours: hours })
               }}
               placeholder="Szacowany czas (h)"
@@ -453,6 +494,51 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
             {task.estimatedHours && <span className="text-xs text-muted-foreground">h</span>}
           </div>
         )
+      },
+    },
+    {
+      accessorKey: "reportedHours",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2"
+          >
+            Zaraportowany czas
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
+      cell: ({ row }) => {
+        const rowData = row.original
+
+        // Return empty cell for group headers
+        if ('isGroupHeader' in rowData) {
+          return null
+        }
+
+        const task = rowData as Task
+        const reportedHours = getTotalReportedHours(task)
+        return (
+          <div className="flex items-center gap-2">
+            {reportedHours > 0 && <Clock className="h-3 w-3 text-muted-foreground" />}
+            <span className="text-sm">
+              {reportedHours > 0 ? `${reportedHours.toFixed(1)}h` : '-'}
+            </span>
+          </div>
+        )
+      },
+      sortingFn: (rowA, rowB) => {
+        // Group headers should stay at the top
+        if ('isGroupHeader' in rowA.original) return -1
+        if ('isGroupHeader' in rowB.original) return 1
+
+        const taskA = rowA.original as Task
+        const taskB = rowB.original as Task
+        const hoursA = getTotalReportedHours(taskA)
+        const hoursB = getTotalReportedHours(taskB)
+        return hoursA - hoursB
       },
     },
     {
@@ -552,7 +638,8 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
                   status: "Status",
                   project: "Projekt",
                   createdAt: "Data utworzenia",
-                  estimatedHours: "Szacowany czas"
+                  estimatedHours: "Szacowany czas",
+                  reportedHours: "Zaraportowany czas"
                 }
 
                 return (
@@ -612,7 +699,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
                   return (
                     <TableRow
                       key={row.id}
-                      className={isGroupHeader ? "bg-muted/30 hover:bg-muted/40" : ""}
+                      className={isGroupHeader ? "bg-muted/30 hover:bg-muted/40" : "hover:bg-muted/20 group"}
                     >
                       {isGroupHeader ? (
                         <TableCell colSpan={columns.length} className="py-3">
@@ -623,7 +710,10 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
                         </TableCell>
                       ) : (
                         row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id}>
+                          <TableCell
+                            key={cell.id}
+                            className="group-hover:bg-muted/10 transition-colors"
+                          >
                             {flexRender(
                               cell.column.columnDef.cell,
                               cell.getContext()
