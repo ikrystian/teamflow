@@ -91,7 +91,7 @@ export function DashboardContent() {
   }
 
   if (loading) {
-    return <PageLoadingLayout />
+    return <PageLoadingLayout variant="list" showTopBar={false} />
   }
 
   return (

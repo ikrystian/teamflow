@@ -7,7 +7,7 @@ export const formatTaskDueDate = (dateString: string) => {
   const date = new Date(dateString)
   const currentYear = new Date().getFullYear()
   const dateYear = date.getFullYear()
-  
+
   if (dateYear === currentYear) {
     // Jeśli data jest w obecnym roku, wyświetl dzień i pełną nazwę miesiąca
     return date.toLocaleDateString('pl-PL', {
@@ -36,5 +36,30 @@ export const formatTaskDueDateWithRelative = (dateString: string) => {
     return "Jutro"
   } else {
     return formatTaskDueDate(dateString)
+  }
+}
+
+/**
+ * Formatuje datę utworzenia w krótkim formacie
+ * Przykład: "15 sty" lub "15.01.2023" dla innych lat
+ */
+export const formatCreatedDate = (dateString: string) => {
+  const date = new Date(dateString)
+  const currentYear = new Date().getFullYear()
+  const dateYear = date.getFullYear()
+
+  if (dateYear === currentYear) {
+    // Jeśli data jest w obecnym roku, wyświetl dzień i skrót miesiąca
+    return date.toLocaleDateString('pl-PL', {
+      day: 'numeric',
+      month: 'short'
+    })
+  } else {
+    // Jeśli data jest w innym roku, wyświetl pełną datę w krótkim formacie
+    return date.toLocaleDateString('pl-PL', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    })
   }
 }

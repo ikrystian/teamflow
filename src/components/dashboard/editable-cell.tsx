@@ -115,13 +115,7 @@ export function EditableCell({
           const status = taskStatuses.find(s => s.id === value)
           if (status) {
             return (
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: status.color }}
-                />
-                <span className="text-sm">{status.name}</span>
-              </div>
+              <span className="text-sm">{status.name}</span>
             )
           }
         }
@@ -241,13 +235,7 @@ export function EditableCell({
             <SelectContent>
               {taskStatuses.map((status) => (
                 <SelectItem key={status.id} value={status.id}>
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: status.color }}
-                    />
-                    {status.name}
-                  </div>
+                  {status.name}
                 </SelectItem>
               ))}
             </SelectContent>

@@ -38,7 +38,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { EditableCell } from "./editable-cell"
 import { getPriorityColor, getPriorityDisplayName, getTaskStatus, isTaskOverdue } from "@/lib/task-utils"
-import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
+import { formatTaskDueDateWithRelative, formatCreatedDate } from "@/lib/date-utils"
 import type { Task, User, TaskStatus } from "@/types"
 
 interface TasksTableProps {
@@ -53,6 +53,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
     estimatedHours: false, // Hide by default on smaller screens
+    createdAt: false, // Hide by default on smaller screens
   })
   const [rowSelection, setRowSelection] = useState({})
   const [hideEmptyGroups, setHideEmptyGroups] = useState(false)
@@ -273,7 +274,12 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
               className="w-3 h-3 rounded-full flex-shrink-0"
               style={{ backgroundColor: task.project?.color || '#3B82F6' }}
             />
-            <span className="text-sm truncate">{task.project?.name}</span>
+            <span
+              className="text-sm truncate font-medium"
+              style={{ color: task.project?.color || '#3B82F6' }}
+            >
+              {task.project?.name}
+            </span>
           </div>
         )
       },
@@ -281,6 +287,34 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
         const nameA = rowA.original.project?.name || ""
         const nameB = rowB.original.project?.name || ""
         return nameA.localeCompare(nameB)
+      },
+    },
+    {
+      accessorKey: "createdAt",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2"
+          >
+            Data utworzenia
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
+      cell: ({ row }) => {
+        const task = row.original
+        return (
+          <span className="text-sm text-muted-foreground">
+            {formatCreatedDate(task.createdAt)}
+          </span>
+        )
+      },
+      sortingFn: (rowA, rowB) => {
+        const dateA = new Date(rowA.original.createdAt).getTime()
+        const dateB = new Date(rowB.original.createdAt).getTime()
+        return dateA - dateB
       },
     },
     {
@@ -406,6 +440,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
                   dueDate: "Data wykonania",
                   status: "Status",
                   project: "Projekt",
+                  createdAt: "Data utworzenia",
                   estimatedHours: "Szacowany czas"
                 }
 
@@ -457,10 +492,6 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
           return (
             <div key={statusName} className="space-y-2">
               <div className="flex items-center gap-2 px-2">
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: status?.color || '#6B7280' }}
-                />
                 <h3 className="font-semibold text-lg">{statusName}</h3>
                 <Badge variant="secondary" className="ml-2">
                   {statusTasks.length}

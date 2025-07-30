@@ -54,15 +54,18 @@ RELACJE MIĘDZY KOMPONENTAMI TABLICY ZADAŃ
 - src/components/dashboard/tasks-table.tsx
   - Główny komponent tabelki zadań w stylu Asana
   - Używa TanStack Table do sortowania, filtrowania, paginacji
-  - Grupuje zadania według statusów
+  - Grupuje zadania według statusów (bez kolorów statusów)
   - Obsługuje inline editing przez EditableCell
-  - Kolumny: nazwa, osoba przypisana, priorytet, data, status, projekt, szacowany czas
+  - Kolumny: nazwa, osoba przypisana, priorytet, data, status, projekt (z kolorami), data utworzenia, szacowany czas
+  - Nazwy projektów wyświetlane w kolorach projektów
+  - Kolumna daty utworzenia domyślnie ukryta
 
 - src/components/dashboard/editable-cell.tsx
   - Komponent do edycji inline różnych typów danych
   - Obsługuje: text, date, user, priority, status, select
   - Automatyczne zapisywanie po stracie focusa lub Enter
   - Placeholdery dla pustych wartości
+  - Statusy wyświetlane bez kolorów (tylko tekst)
 
 ## Wspólne zależności:
 - @dnd-kit/core - drag & drop
@@ -83,6 +86,7 @@ RELACJE MIĘDZY KOMPONENTAMI TABLICY ZADAŃ
 - src/lib/date-utils.ts
   - formatTaskDueDate() - formatowanie dat zadań
   - formatTaskDueDateWithRelative() - formatowanie z względnymi opisami
+  - formatCreatedDate() - formatowanie dat utworzenia w krótkim formacie
 
 ## Korzyści z unifikacji:
 1. Spójny UX między sekcjami
@@ -147,3 +151,48 @@ Wszystkie karty zadań mają teraz obramowanie w kolorze projektu (border-left-4
 3. Pobieranie rzeczywistych nazw dla dynamicznych segmentów
 4. Ukrywanie breadcrumbs na głównej stronie dashboardu
 5. Responsywny design z ikoną Home dla pierwszego elementu
+
+## ULEPSZENIA DASHBOARD TASKS TABLE
+==========================================
+
+### Data: 2025-01-30
+**Cel**: Ulepszenie dashboard'u - breadcrumbs, loading layout, usunięcie kolorów statusów, kolory projektów, kolumna daty utworzenia
+
+### FUNKCJONALNOŚĆ:
+1. **Breadcrumbs**: Już zaimplementowane w DashboardLayout
+2. **Loading layout**: Poprawiony - używa wariantu "list" bez top bar
+3. **Statusy**: Usunięte kolory ze statusów w całej tabeli
+4. **Projekty**: Nazwy projektów wyświetlane w kolorach projektów
+5. **Data utworzenia**: Dodana kolumna daty utworzenia (domyślnie ukryta)
+
+### NOWE FUNKCJE:
+- **src/lib/date-utils.ts**: formatCreatedDate() - formatowanie dat utworzenia w krótkim formacie
+
+### ZAKTUALIZOWANE KOMPONENTY:
+
+#### src/components/dashboard/tasks-table.tsx:
+- Dodana kolumna "Data utworzenia" z formatCreatedDate()
+- Nazwy projektów w kolorach projektów (font-medium + color style)
+- Usunięte kolory ze statusów w nagłówkach grup
+- Kolumna daty utworzenia domyślnie ukryta
+- Zaktualizowane mapowanie nazw kolumn
+
+#### src/components/dashboard/editable-cell.tsx:
+- Usunięte kolory ze statusów w wyświetlaniu i edycji
+- Statusy pokazywane tylko jako tekst
+
+#### src/components/dashboard/content.tsx:
+- Poprawiony loading layout - variant="list" showTopBar={false}
+
+### LOGIKA FORMATOWANIA DAT UTWORZENIA:
+- **formatCreatedDate(dateString)**:
+  * Jeśli data w obecnym roku: "15 sty"
+  * Jeśli data w innym roku: "15.01.2023"
+
+### REZULTAT:
+- Breadcrumbs działają poprawnie w dashboard layout
+- Lepszy loading layout bez niepotrzebnego top bar
+- Czytelniejsze statusy bez kolorów
+- Nazwy projektów wyróżnione kolorami projektów
+- Dodatkowa informacja o dacie utworzenia zadania
+- Lepsza organizacja kolumn z możliwością ukrywania
