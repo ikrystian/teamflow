@@ -13,6 +13,7 @@ import {
   Edit,
 } from "lucide-react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { useState, useEffect } from "react"
 import {
   DropdownMenu,
@@ -95,6 +96,7 @@ function ProjectIcon({ iconName, color, className = "w-4 h-4" }: {
 
 export function NavProjects({ projects, onEditProject }: NavProjectsProps) {
   const { isMobile } = useSidebar()
+  const pathname = usePathname()
   const [showArchived, setShowArchived] = useState(false)
   const [archivedProjects, setArchivedProjects] = useState<Project[]>([])
   const [archivedProjectsLoaded, setArchivedProjectsLoaded] = useState(false)
@@ -102,6 +104,11 @@ export function NavProjects({ projects, onEditProject }: NavProjectsProps) {
   // Filtruj projekty na aktywne i archiwizowane
   const activeProjects = projects.filter(project => !project.archived)
   const archivedProjectsFromProps = projects.filter(project => project.archived)
+
+  // Funkcja sprawdzająca czy projekt jest aktywny
+  const isProjectActive = (projectId: string) => {
+    return pathname.startsWith(`/dashboard/projects/${projectId}`)
+  }
 
   // Pobierz archiwizowane projekty gdy użytkownik chce je zobaczyć
   useEffect(() => {
@@ -139,7 +146,11 @@ export function NavProjects({ projects, onEditProject }: NavProjectsProps) {
         {/* Aktywne projekty */}
         {activeProjects.map((project) => (
           <SidebarMenuItem key={project.id}>
-            <SidebarMenuButton asChild tooltip={project.name}>
+            <SidebarMenuButton
+              asChild
+              tooltip={project.name}
+              isActive={isProjectActive(project.id)}
+            >
               <Link href={`/dashboard/projects/${project.id}`}>
                 <ProjectIcon
                   iconName={project.icon}
@@ -231,7 +242,11 @@ export function NavProjects({ projects, onEditProject }: NavProjectsProps) {
         {/* Archiwizowane projekty (pokazywane po kliknięciu "Więcej") */}
         {displayedArchivedProjects.map((project) => (
           <SidebarMenuItem key={`archived-${project.id}`}>
-            <SidebarMenuButton asChild tooltip={`${project.name} (zarchiwizowany)`}>
+            <SidebarMenuButton
+              asChild
+              tooltip={`${project.name} (zarchiwizowany)`}
+              isActive={isProjectActive(project.id)}
+            >
               <Link href={`/dashboard/projects/${project.id}`}>
                 <div className="opacity-60">
                   <ProjectIcon
