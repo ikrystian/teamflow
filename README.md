@@ -938,6 +938,20 @@ Projekt jest otwarty na współpracę. Aby dodać nowe funkcjonalności:
   - `test-todos-count.js` (nowy)
   - `TODOS_COUNT_FIX.txt` (dokumentacja)
 
+### Inteligentny sidebar projektów z archiwizacją (2025-07-30)
+- **Funkcjonalność**: Sidebar pokazuje aktywne projekty domyślnie, z opcją rozwinięcia archiwizowanych
+- **Implementacja**:
+  - Filtrowanie projektów na aktywne i archiwizowane w `NavProjects`
+  - Przycisk "Więcej" z tooltipem pokazującym liczbę zarchiwizowanych projektów
+  - Lazy loading archiwizowanych projektów (pobierane tylko gdy potrzebne)
+  - Wizualne rozróżnienie archiwizowanych projektów (opacity 60%, ikona Archive)
+  - Nowy parametr API `archivedOnly=true` dla `/api/projects`
+- **Pliki zmienione**:
+  - `src/components/dashboard/nav-projects.tsx` - główna logika filtrowania i UI
+  - `src/components/dashboard/layout.tsx` - zaktualizowany interfejs Project
+  - `src/app/api/projects/route.ts` - obsługa parametru archivedOnly
+  - `project-archive-relations.txt` - dokumentacja relacji
+
 ## 📄 Licencja
 
 Ten projekt jest dostępny na licencji MIT.

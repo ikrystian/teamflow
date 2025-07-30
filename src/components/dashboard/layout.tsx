@@ -35,6 +35,7 @@ interface Project {
   id: string
   name: string
   color?: string
+  archived?: boolean
   team: {
     id: string
     name: string
@@ -92,11 +93,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               name: "TeamFlow Pro",
               logo: () => <div className="w-4 h-4 bg-blue-500 rounded" />,
               plan: "Pro"
-            },
-            {
-              name: "TeamFlow Enterprise",
-              logo: () => <div className="w-4 h-4 bg-purple-500 rounded" />,
-              plan: "Enterprise"
             }
           ]} />
         </SidebarHeader>

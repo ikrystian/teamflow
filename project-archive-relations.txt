@@ -113,6 +113,32 @@ interface Project {
 - **Walidacja**: Sprawdzanie typu boolean dla pola archived
 - **Dostęp**: Weryfikacja uprawnień przed każdą operacją
 
+## NOWA FUNKCJONALNOŚĆ - SIDEBAR PROJEKTY (2025-07-30)
+
+### Aktualizacja NavProjects:
+1. **Filtrowanie projektów**: Aktywne projekty wyświetlane domyślnie
+2. **Przycisk "Więcej"**:
+   - Tooltip pokazuje liczbę zarchiwizowanych projektów
+   - Kliknięcie rozszerza/zwija listę archiwizowanych projektów
+   - Ikona chevron wskazuje stan (prawo=zwinięte, dół=rozwinięte)
+3. **Archiwizowane projekty**:
+   - Wyświetlane z opacity 60% i ikoną Archive
+   - Tooltip zawiera informację "(zarchiwizowany)"
+   - Opcja "Przywróć projekt" w menu kontekstowym
+4. **Lazy loading**: Archiwizowane projekty pobierane tylko gdy potrzebne
+
+### API Enhancement:
+- **Nowy parametr**: `archivedOnly=true` w `/api/projects`
+- **Logika filtrowania**:
+  - `archivedOnly=true`: tylko archiwizowane
+  - `includeArchived=false`: tylko aktywne (domyślne)
+  - `includeArchived=true` + `archivedOnly=false`: wszystkie
+
+### Interfejsy:
+- **Project interface**: Dodano pole `archived?: boolean`
+- **NavProjects**: Obsługa stanu rozwinięcia archiwizowanych projektów
+- **Layout**: Zaktualizowany interfejs Project z polem archived
+
 ## KOMPATYBILNOŚĆ
 
 ### Istniejące funkcjonalności:

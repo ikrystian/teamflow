@@ -15,11 +15,21 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const teamId = searchParams.get("teamId")
     const includeArchived = searchParams.get("includeArchived") === "true"
+    const archivedOnly = searchParams.get("archivedOnly") === "true"
+
+    // Określ warunki filtrowania na podstawie parametrów
+    let archivedCondition = {}
+    if (archivedOnly) {
+      archivedCondition = { archived: true }
+    } else if (!includeArchived) {
+      archivedCondition = { archived: false }
+    }
+    // Jeśli includeArchived=true i archivedOnly=false, nie dodajemy warunków archived
 
     const projects = await prisma.project.findMany({
       where: {
         ...(teamId && { teamId }),
-        ...(!includeArchived && { archived: false }),
+        ...archivedCondition,
         team: {
           members: {
             some: {
