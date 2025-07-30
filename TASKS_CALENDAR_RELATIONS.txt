@@ -7,6 +7,7 @@
    - Główny komponent sekcji zadań
    - Zawiera zakładki: Tablica, Kalendarz, Lista
    - Zarządza stanem zadań i filtrami
+   - **NOWA FUNKCJONALNOŚĆ**: Widok listy z datami deadline'ów w stylu Google Calendar
 
 2. **TasksWeeklyCalendar** (`src/components/tasks/tasks-weekly-calendar.tsx`)
    - Nowy komponent kalendarza tygodniowego
@@ -119,6 +120,33 @@ interface Task {
 - Respektuje istniejące filtry zadań (assigned/all)
 - Wyświetla tylko zadania dostępne dla użytkownika
 
+## Nowa funkcjonalność - Widok listy w stylu Google Calendar
+
+### Opis implementacji
+- **Lokalizacja**: Zakładka "Lista" w komponencie TasksContent
+- **Styl**: Inspirowany widokiem listy zadań z Google Calendar
+- **Layout**: Daty deadline'ów wyświetlane po lewej stronie w stałej kolumnie (80px szerokości)
+
+### Funkcjonalności
+1. **Grupowanie zadań według daty deadline**:
+   - Zadania sortowane chronologicznie według dueDate
+   - Zadania bez daty deadline wyświetlane na końcu
+
+2. **Wyświetlanie dat**:
+   - Data pokazana tylko przy pierwszym zadaniu w grupie
+   - Format: "Dzisiaj", "Jutro", "Wczoraj" lub dzień tygodnia + data
+   - Kolory: czerwony dla przeterminowanych, szary dla normalnych
+
+3. **Struktura layoutu**:
+   - Lewa kolumna (80px): Data deadline
+   - Prawa kolumna (flex-1): Karta zadania
+   - Hover efekty na całej grupie
+
+### Funkcje pomocnicze
+- `formatDateForCalendarView()`: Formatuje daty w stylu Google Calendar
+- `groupTasksByDate()`: Grupuje zadania według daty deadline
+- `isOverdue()`: Sprawdza czy zadanie jest przeterminowane
+
 ## Przyszłe rozszerzenia
 
 ### Możliwe ulepszenia
@@ -129,9 +157,11 @@ interface Task {
 5. Miniaturki avatarów przypisanych osób
 6. Wskaźniki postępu zadań
 7. Integracja z zewnętrznymi kalendarzami
+8. **NOWE**: Kompaktowy widok listy z możliwością zwijania grup dat
 
 ### Optymalizacje
 1. Virtualizacja dla dużej liczby zadań
 2. Lazy loading zadań dla przyszłych tygodni
 3. Cache'owanie danych kalendarza
 4. Preload następnego/poprzedniego tygodnia
+5. **NOWE**: Optymalizacja grupowania zadań dla dużych zbiorów danych

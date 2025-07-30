@@ -271,20 +271,66 @@ export function TasksContent() {
     return new Date(dueDate) < new Date()
   }
 
-  const formatDueDate = (dueDate?: string) => {
+
+
+  // Funkcja do formatowania daty w stylu kalendarza Google
+  const formatDateForCalendarView = (dueDate?: string) => {
     if (!dueDate) return null
     const date = new Date(dueDate)
     const today = new Date()
     const tomorrow = new Date(today)
     tomorrow.setDate(tomorrow.getDate() + 1)
+    const yesterday = new Date(today)
+    yesterday.setDate(yesterday.getDate() - 1)
 
     if (date.toDateString() === today.toDateString()) {
-      return "Today"
+      return {
+        primary: "Dzisiaj",
+        secondary: date.toLocaleDateString('pl-PL', { weekday: 'short' })
+      }
     } else if (date.toDateString() === tomorrow.toDateString()) {
-      return "Tomorrow"
+      return {
+        primary: "Jutro",
+        secondary: date.toLocaleDateString('pl-PL', { weekday: 'short' })
+      }
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return {
+        primary: "Wczoraj",
+        secondary: date.toLocaleDateString('pl-PL', { weekday: 'short' })
+      }
     } else {
-      return date.toLocaleDateString()
+      const dayName = date.toLocaleDateString('pl-PL', { weekday: 'short' })
+      const dayMonth = date.toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })
+      return {
+        primary: dayName,
+        secondary: dayMonth
+      }
     }
+  }
+
+  // Funkcja do grupowania zadań według daty deadline
+  const groupTasksByDate = (tasks: Task[]) => {
+    const grouped: { [key: string]: Task[] } = {}
+    const noDateTasks: Task[] = []
+
+    tasks.forEach(task => {
+      if (task.dueDate) {
+        const dateKey = new Date(task.dueDate).toDateString()
+        if (!grouped[dateKey]) {
+          grouped[dateKey] = []
+        }
+        grouped[dateKey].push(task)
+      } else {
+        noDateTasks.push(task)
+      }
+    })
+
+    // Sortowanie grup według daty
+    const sortedGroups = Object.entries(grouped).sort(([dateA], [dateB]) => {
+      return new Date(dateA).getTime() - new Date(dateB).getTime()
+    })
+
+    return { sortedGroups, noDateTasks }
   }
 
   if (loading) {
@@ -414,150 +460,182 @@ export function TasksContent() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-4">
-              {tasks.map((task) => (
-                <Card
-                  key={task.id}
-                  className="transition-all hover:shadow-md cursor-pointer border-l-4"
-                  style={{
-                    borderLeftColor: task.project?.color || '#3B82F6'
-                  }}
-                  onClick={() => handleTaskDetails(task)}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <CardTitle className="text-lg font-semibold truncate">{task.title}</CardTitle>
-                        <CardDescription className="flex items-center gap-2 mt-1">
-                          {task.project ? (
-                            <>
-                              <span>{task.project.name}</span>
-                              <span>•</span>
-                              <span>{task.project.team.name}</span>
-                            </>
-                          ) : (
-                            <span className="text-muted-foreground">Brak projektu</span>
-                          )}
-                        </CardDescription>
-                      </div>
-                      <div className="flex items-center gap-2 ml-4">
-                        {task.priority && (
-                          <Badge variant="outline" className={getPriorityColor(task.priority)}>
-                            {task.priority === "Low" ? "Niski" : task.priority === "Medium" ? "Średni" : "Wysoki"}
-                          </Badge>
-                        )}
-                        {(() => {
-                          const taskStatus = getTaskStatus(task)
-                          return (
-                            <Badge
-                              variant="secondary"
-                            >
-                              {taskStatus?.name || 'Brak statusu'}
-                            </Badge>
-                          )
-                        })()}
+            <div className="space-y-1">
+              {(() => {
+                const { sortedGroups, noDateTasks } = groupTasksByDate(tasks)
+                const allGroupedTasks: { dateKey?: string; task: Task; showDate: boolean }[] = []
 
-                        {/* Action Menu */}
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={(e) => handleTimeTracking(task, e)}>
-                              <Clock className="mr-2 h-4 w-4" />
-                              Loguj czas
-                            </DropdownMenuItem>
-                            {canEditTask(task) && (
-                              <DropdownMenuItem onClick={(e) => handleEditTask(task, e)}>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edytuj zadanie
-                              </DropdownMenuItem>
-                            )}
-                            {canEditTask(task) && (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  onClick={(e) => handleDeleteTask(task, e)}
-                                  className="text-destructive focus:text-destructive"
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Usuń zadanie
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="space-y-3">
-                      {task.description && (
-                        <p className="text-muted-foreground text-sm line-clamp-2">
-                          {task.description}
-                        </p>
-                      )}
+                // Dodaj zadania z datami
+                sortedGroups.forEach(([dateKey, dateTasks]) => {
+                  dateTasks.forEach((task, index) => {
+                    allGroupedTasks.push({
+                      dateKey,
+                      task,
+                      showDate: index === 0 // Pokaż datę tylko przy pierwszym zadaniu w grupie
+                    })
+                  })
+                })
 
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          {task.assignee && (
-                            <div className="flex items-center space-x-2">
-                              <ClickableAvatar
-                                userId={task.assignee.id}
-                                avatarUrl={task.assignee.avatarUrl}
-                                name={task.assignee.name}
-                                size="md"
-                              />
-                              <span className="text-sm text-muted-foreground">{task.assignee.name}</span>
-                            </div>
-                          )}
+                // Dodaj zadania bez dat na końcu
+                noDateTasks.forEach(task => {
+                  allGroupedTasks.push({
+                    task,
+                    showDate: false
+                  })
+                })
 
-                          {task.subtasks.length > 0 && (
-                            <div className="text-sm text-muted-foreground">
-                              {task.subtasks.filter(st => st.isCompleted).length}/{task.subtasks.length} podzadania
-                            </div>
-                          )}
-
-                          {getTodoProgress(task) && (
-                            <div className="text-sm text-muted-foreground">
-                              {getTodoProgress(task)!.completed}/{getTodoProgress(task)!.total} zadania do wykonania
-                            </div>
-                          )}
-
-                          {/* Time tracking info */}
-                          <div className="flex items-center space-x-1 text-sm text-muted-foreground">
-                            <Clock className="h-4 w-4" />
-                            <span>{formatHours(getTotalTimeSpent(task))}</span>
-                            {task.estimatedHours && (
-                              <span className="text-muted-foreground/70">
-                                / {formatHours(task.estimatedHours)} planowane
-                              </span>
-                            )}
+                return allGroupedTasks.map(({ dateKey, task, showDate }) => (
+                  <div key={task.id} className="flex items-start gap-4 group">
+                    {/* Kolumna z datą (stała szerokość) */}
+                    <div className="w-20 flex-shrink-0 pt-4">
+                      {showDate && dateKey && (() => {
+                        const dateInfo = formatDateForCalendarView(task.dueDate)
+                        return dateInfo ? (
+                          <div className={`text-right ${
+                            isOverdue(task.dueDate, task) ? 'text-red-600' : 'text-muted-foreground'
+                          }`}>
+                            <div className="text-sm font-medium">{dateInfo.primary}</div>
+                            <div className="text-xs">{dateInfo.secondary}</div>
                           </div>
-                        </div>
-
-                        <div className="flex items-center space-x-4">
-                          {task.dueDate && (
-                            <div className={`flex items-center space-x-1 text-sm ${
-                              isOverdue(task.dueDate, task) ? "text-destructive" : "text-muted-foreground"
-                            }`}>
-                              <Calendar className="h-4 w-4" />
-                              <span>{formatDueDate(task.dueDate)}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
+                        ) : null
+                      })()}
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
+
+                    {/* Karta zadania */}
+                    <div className="flex-1">
+                      <Card
+                        className="transition-all hover:shadow-md cursor-pointer border-l-4 group-hover:shadow-sm"
+                        style={{
+                          borderLeftColor: task.project?.color || '#3B82F6'
+                        }}
+                        onClick={() => handleTaskDetails(task)}
+                      >
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <CardTitle className="text-lg font-semibold truncate">{task.title}</CardTitle>
+                              <CardDescription className="flex items-center gap-2 mt-1">
+                                {task.project ? (
+                                  <>
+                                    <span>{task.project.name}</span>
+                                    <span>•</span>
+                                    <span>{task.project.team.name}</span>
+                                  </>
+                                ) : (
+                                  <span className="text-muted-foreground">Brak projektu</span>
+                                )}
+                              </CardDescription>
+                            </div>
+                            <div className="flex items-center gap-2 ml-4">
+                              {task.priority && (
+                                <Badge variant="outline" className={getPriorityColor(task.priority)}>
+                                  {task.priority === "Low" ? "Niski" : task.priority === "Medium" ? "Średni" : "Wysoki"}
+                                </Badge>
+                              )}
+                              {(() => {
+                                const taskStatus = getTaskStatus(task)
+                                return (
+                                  <Badge
+                                    variant="secondary"
+                                  >
+                                    {taskStatus?.name || 'Brak statusu'}
+                                  </Badge>
+                                )
+                              })()}
+
+                              {/* Action Menu */}
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={(e) => handleTimeTracking(task, e)}>
+                                    <Clock className="mr-2 h-4 w-4" />
+                                    Loguj czas
+                                  </DropdownMenuItem>
+                                  {canEditTask(task) && (
+                                    <DropdownMenuItem onClick={(e) => handleEditTask(task, e)}>
+                                      <Edit className="mr-2 h-4 w-4" />
+                                      Edytuj zadanie
+                                    </DropdownMenuItem>
+                                  )}
+                                  {canEditTask(task) && (
+                                    <>
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuItem
+                                        onClick={(e) => handleDeleteTask(task, e)}
+                                        className="text-destructive focus:text-destructive"
+                                      >
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Usuń zadanie
+                                      </DropdownMenuItem>
+                                    </>
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          <div className="space-y-3">
+                            {task.description && (
+                              <p className="text-muted-foreground text-sm line-clamp-2">
+                                {task.description}
+                              </p>
+                            )}
+
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-4">
+                                {task.assignee && (
+                                  <div className="flex items-center space-x-2">
+                                    <ClickableAvatar
+                                      userId={task.assignee.id}
+                                      avatarUrl={task.assignee.avatarUrl}
+                                      name={task.assignee.name}
+                                      size="md"
+                                    />
+                                    <span className="text-sm text-muted-foreground">{task.assignee.name}</span>
+                                  </div>
+                                )}
+
+                                {task.subtasks.length > 0 && (
+                                  <div className="text-sm text-muted-foreground">
+                                    {task.subtasks.filter(st => st.isCompleted).length}/{task.subtasks.length} podzadania
+                                  </div>
+                                )}
+
+                                {getTodoProgress(task) && (
+                                  <div className="text-sm text-muted-foreground">
+                                    {getTodoProgress(task)!.completed}/{getTodoProgress(task)!.total} zadania do wykonania
+                                  </div>
+                                )}
+
+                                {/* Time tracking info */}
+                                <div className="flex items-center space-x-1 text-sm text-muted-foreground">
+                                  <Clock className="h-4 w-4" />
+                                  <span>{formatHours(getTotalTimeSpent(task))}</span>
+                                  {task.estimatedHours && (
+                                    <span className="text-muted-foreground/70">
+                                      / {formatHours(task.estimatedHours)} planowane
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
+                ))
+              })()}
             </div>
           )}
         </TabsContent>
