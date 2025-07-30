@@ -5,6 +5,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -25,13 +26,18 @@ import {
   Trash2,
   FileText,
   MessageSquare,
-  ListTodo
+  ListTodo,
+  Lock,
+  Unlock,
+  Shield
 } from "lucide-react"
 import { ImageGallery } from "@/components/ui/image-gallery"
 import { TaskComments } from "@/components/tasks/task-comments"
 import { TaskTodos } from "@/components/tasks/task-todos"
+import { TaskBlockDialog } from "@/components/tasks/task-block-dialog"
 import type { Task, Todo } from "@/types"
 import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
+import { getTaskBlockedDurationInfo, canUserBlockTask } from "@/lib/task-utils"
 import { ClickableAvatar } from "../ui/clickable-avatar"
 
 interface TaskStatus {
@@ -63,9 +69,11 @@ export function TaskDetailsSheet({
   onTaskUpdated,
   canEdit = false
 }: TaskDetailsSheetProps) {
+  const { data: session } = useSession()
   const [comments, setComments] = useState(task?.comments || [])
   const [todos, setTodos] = useState(task?.todos || [])
   const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
+  const [blockDialogOpen, setBlockDialogOpen] = useState(false)
 
   // Fetch fresh task data when sheet opens
   useEffect(() => {
@@ -423,6 +431,130 @@ export function TaskDetailsSheet({
                 </CardContent>
               </Card>
 
+              {/* Task Blocking Section */}
+              {(() => {
+                const blockingInfo = getTaskBlockedDurationInfo(task)
+                if (!blockingInfo && !task.isBlocked) return null
+
+                return (
+                  <Card className={task.isBlocked ? "border-red-500 bg-red-50/50" : "border-orange-500 bg-orange-50/50"}>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        {task.isBlocked ? (
+                          <>
+                            <Lock className="h-5 w-5 text-red-600" />
+                            Zadanie zablokowane
+                          </>
+                        ) : (
+                          <>
+                            <Unlock className="h-5 w-5 text-orange-600" />
+                            Historia blokowania
+                          </>
+                        )}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {task.isBlocked && task.blockReason && (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                            <Shield className="h-4 w-4" />
+                            Powód blokady
+                          </div>
+                          <div className="p-3 bg-red-100 border border-red-200 rounded-lg">
+                            <p className="text-sm text-red-800">{task.blockReason}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {task.blockedAt && (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                              <Clock className="h-4 w-4" />
+                              Data blokowania
+                            </div>
+                            <span className="text-sm font-medium">
+                              {formatTaskDueDateWithRelative(task.blockedAt)}
+                            </span>
+                          </div>
+                        )}
+
+                        {task.unblockedAt && (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                              <CheckCircle2 className="h-4 w-4" />
+                              Data odblokowania
+                            </div>
+                            <span className="text-sm font-medium">
+                              {formatTaskDueDateWithRelative(task.unblockedAt)}
+                            </span>
+                          </div>
+                        )}
+
+                        {blockingInfo && (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                              <Timer className="h-4 w-4" />
+                              Czas blokowania
+                            </div>
+                            <span className="text-sm font-medium">
+                              {blockingInfo.formattedDuration}
+                            </span>
+                          </div>
+                        )}
+
+                        {task.blockedBy && (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                              <UserIcon className="h-4 w-4" />
+                              Zablokowane przez
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <ClickableAvatar
+                                userId={task.blockedBy.id}
+                                avatarUrl={task.blockedBy.avatarUrl}
+                                name={task.blockedBy.name}
+                                size="sm"
+                              />
+                              <span className="text-sm font-medium">{task.blockedBy.name}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Block/Unblock Button */}
+                      {(() => {
+                        const canBlock = canUserBlockTask(task, (session?.user as any)?.id)
+                        if (!canBlock) return null
+
+                        return (
+                          <div className="pt-4 border-t">
+                            <Button
+                              variant={task.isBlocked ? "default" : "destructive"}
+                              size="sm"
+                              onClick={() => setBlockDialogOpen(true)}
+                              className={task.isBlocked ? "bg-green-600 hover:bg-green-700" : ""}
+                            >
+                              {task.isBlocked ? (
+                                <>
+                                  <Unlock className="h-4 w-4 mr-2" />
+                                  Odblokuj zadanie
+                                </>
+                              ) : (
+                                <>
+                                  <Lock className="h-4 w-4 mr-2" />
+                                  Zablokuj zadanie
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        )
+                      })()}
+                    </CardContent>
+                  </Card>
+                )
+              })()}
+
               {/* Subtasks */}
               {task.subtasks.length > 0 && (
                 <Card>
@@ -520,6 +652,14 @@ export function TaskDetailsSheet({
           </div>
         </Tabs>
       </SheetContent>
+
+      {/* Task Block Dialog */}
+      <TaskBlockDialog
+        open={blockDialogOpen}
+        onOpenChange={setBlockDialogOpen}
+        task={task}
+        onTaskUpdated={onTaskUpdated}
+      />
     </Sheet>
   )
 }

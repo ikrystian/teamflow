@@ -5,7 +5,6 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -85,6 +84,7 @@ model Task {
   isBlocked      Boolean     @default(false)
   blockReason    String?
   blockedAt      DateTime?
+  unblockedAt    DateTime?
   blockedById    String?
   comments       Comment[]
   subtasks       Subtask[]

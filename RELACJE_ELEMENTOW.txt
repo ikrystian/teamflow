@@ -16,12 +16,13 @@
 - **isBlocked**: Boolean - czy zadanie jest zablokowane
 - **blockReason**: String - powód blokady
 - **blockedAt**: DateTime - kiedy zadanie zostało zablokowane
+- **unblockedAt**: DateTime - kiedy zadanie zostało odblokowane (NOWE)
 - **blockedById**: String - ID użytkownika który zablokował zadanie
 - **blockedBy**: User relation - relacja do użytkownika który zablokował
 
 ### API endpoints:
 - **POST /api/tasks/[taskId]/block** - blokowanie zadania z powodem
-- **DELETE /api/tasks/[taskId]/block** - odblokowywanie zadania
+- **DELETE /api/tasks/[taskId]/block** - odblokowywanie zadania (ZAKTUALIZOWANE: zapisuje unblockedAt)
 - Aktualizacja istniejących endpoints o include blockedBy
 
 ### Wizualne oznaczenia zablokowanych zadań:
@@ -34,12 +35,16 @@
 - **isTaskBlocked()** - sprawdza czy zadanie jest zablokowane
 - **canUserBlockTask()** - sprawdza czy użytkownik może blokować/odblokować zadanie
 - **getBlockedTaskStyles()** - zwraca style dla zablokowanych zadań
+- **calculateBlockedDuration()** - oblicza czas blokowania w milisekundach (NOWE)
+- **formatBlockedDuration()** - formatuje czas blokowania do czytelnej formy (NOWE)
+- **getTaskBlockedDurationInfo()** - zwraca pełne informacje o blokowaniu zadania (NOWE)
 
 ### Integracja z istniejącymi komponentami:
 - **TasksKanbanBoard**: dodano opcję blokowania w menu dropdown kart zadań
 - **TasksContent**: dodano obsługę dialogu blokowania i przekazywanie do TasksKanbanBoard
 - **TasksTable**: dodano ikonę blokady i czerwone oznaczenie w kolumnie nazwy
 - **KanbanBoard** (projekty): dodano wizualne oznaczenia zablokowanych zadań
+- **TaskDetailsSheet**: dodano sekcję blokowania z informacjami i przyciskiem blokowania/odblokowania (NOWE)
 
 ## Nowe komponenty dodane w tej sesji:
 
@@ -306,3 +311,75 @@ interface TaskFormDialogProps {
 
 **Efekt:** Gdy użytkownik jest w widoku "Moje zadania" (filter === "assigned"), nowe zadania są zawsze przypisywane do niego, niezależnie od wybranego projektu.
 - Pole color jest opcjonalne dla kompatybilności wstecznej
+
+## ROZSZERZONA FUNKCJONALNOŚĆ BLOKOWANIA ZADAŃ (2025-01-30):
+
+### Nowe funkcjonalności w szczegółach zadania:
+
+#### Sekcja blokowania w TaskDetailsSheet:
+- **Lokalizacja**: src/components/tasks/task-details-sheet.tsx
+- **Wyświetlanie**: Sekcja pojawia się tylko gdy zadanie jest zablokowane lub ma historię blokowania
+- **Kolorowe oznaczenia**:
+  - Czerwone obramowanie i tło dla aktualnie zablokowanych zadań
+  - Pomarańczowe obramowanie i tło dla zadań z historią blokowania
+
+#### Informacje wyświetlane w sekcji blokowania:
+1. **Powód blokady** - wyświetlany w czerwonym polu dla aktualnie zablokowanych zadań
+2. **Data blokowania** - sformatowana z relatywnym czasem (np. "2 dni temu")
+3. **Data odblokowania** - wyświetlana dla zadań które były zablokowane
+4. **Czas blokowania** - obliczony i sformatowany czas przez który zadanie było zablokowane
+5. **Osoba blokująca** - avatar i nazwa użytkownika który zablokował zadanie
+
+#### Przycisk blokowania/odblokowania:
+- **Widoczność**: Tylko dla osób uprawnionych (autor lub przypisana osoba)
+- **Funkcjonalność**: Otwiera TaskBlockDialog z odpowiednim trybem
+- **Styling**: Czerwony przycisk dla blokowania, zielony dla odblokowania
+- **Ikony**: Lock/Unlock z lucide-react
+
+### Rozszerzone funkcje utility:
+
+#### calculateBlockedDuration(blockedAt, unblockedAt):
+- **Cel**: Oblicza czas blokowania w milisekundach
+- **Parametry**:
+  - blockedAt (string) - data blokowania
+  - unblockedAt (string, opcjonalny) - data odblokowania (domyślnie: teraz)
+- **Zwraca**: number | null - czas w milisekundach lub null
+
+#### formatBlockedDuration(durationMs):
+- **Cel**: Formatuje czas blokowania do czytelnej formy
+- **Logika**:
+  - Dni i godziny dla długich okresów
+  - Godziny i minuty dla średnich okresów
+  - Minuty dla krótkich okresów
+  - Sekundy dla bardzo krótkich okresów
+- **Przykłady**: "2 dni, 3 godz.", "5 godz., 30 min.", "15 min.", "30 sek."
+
+#### getTaskBlockedDurationInfo(task):
+- **Cel**: Zwraca pełne informacje o blokowaniu zadania
+- **Zwraca**: Obiekt z polami:
+  - duration: czas w milisekundach
+  - formattedDuration: sformatowany czas
+  - isCurrentlyBlocked: czy zadanie jest aktualnie zablokowane
+  - blockedAt: data blokowania
+  - unblockedAt: data odblokowania
+
+### Zmiany w API:
+
+#### Endpoint DELETE /api/tasks/[taskId]/block:
+- **Zmiana**: Zamiast usuwania danych blokowania, zapisuje datę odblokowania
+- **Nowe zachowanie**:
+  - isBlocked = false
+  - unblockedAt = new Date()
+  - Zachowuje blockReason, blockedAt, blockedById dla historii
+
+#### Pole unblockedAt w bazie danych:
+- **Typ**: DateTime (opcjonalne)
+- **Cel**: Przechowywanie daty odblokowania zadania
+- **Migracja**: Dodane do schematu Prisma i zsynchronizowane z bazą danych
+
+### Korzyści z rozszerzonej funkcjonalności:
+1. **Historia blokowania** - użytkownicy widzą pełną historię blokowania zadań
+2. **Metryki czasu** - możliwość analizy jak długo zadania były zablokowane
+3. **Lepsze UX** - wszystkie informacje o blokowaniu w jednym miejscu
+4. **Audyt** - zachowanie informacji o tym kto i kiedy blokował zadania
+5. **Analityka** - możliwość tworzenia raportów o blokowanych zadaniach

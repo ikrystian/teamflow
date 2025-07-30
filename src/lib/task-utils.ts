@@ -125,3 +125,67 @@ export const canUserBlockTask = (
   if (!userId) return false
   return task.createdBy?.id === userId || task.assignee?.id === userId
 }
+
+/**
+ * Calculate blocked duration for a task
+ * Returns duration in milliseconds, or null if task is not blocked or missing dates
+ */
+export const calculateBlockedDuration = (
+  blockedAt?: string,
+  unblockedAt?: string
+): number | null => {
+  if (!blockedAt) return null
+
+  const startDate = new Date(blockedAt)
+  const endDate = unblockedAt ? new Date(unblockedAt) : new Date()
+
+  return endDate.getTime() - startDate.getTime()
+}
+
+/**
+ * Format blocked duration to human readable string
+ */
+export const formatBlockedDuration = (durationMs: number | null): string => {
+  if (!durationMs) return "Nieznany czas"
+
+  const seconds = Math.floor(durationMs / 1000)
+  const minutes = Math.floor(seconds / 60)
+  const hours = Math.floor(minutes / 60)
+  const days = Math.floor(hours / 24)
+
+  if (days > 0) {
+    const remainingHours = hours % 24
+    return `${days} dni${remainingHours > 0 ? `, ${remainingHours} godz.` : ""}`
+  } else if (hours > 0) {
+    const remainingMinutes = minutes % 60
+    return `${hours} godz.${remainingMinutes > 0 ? `, ${remainingMinutes} min.` : ""}`
+  } else if (minutes > 0) {
+    return `${minutes} min.`
+  } else {
+    return `${seconds} sek.`
+  }
+}
+
+/**
+ * Get blocked duration info for a task
+ */
+export const getTaskBlockedDurationInfo = (task: {
+  isBlocked?: boolean
+  blockedAt?: string
+  unblockedAt?: string
+}) => {
+  if (!task.isBlocked && !task.unblockedAt) {
+    return null
+  }
+
+  const duration = calculateBlockedDuration(task.blockedAt, task.unblockedAt)
+  const formattedDuration = formatBlockedDuration(duration)
+
+  return {
+    duration,
+    formattedDuration,
+    isCurrentlyBlocked: task.isBlocked || false,
+    blockedAt: task.blockedAt,
+    unblockedAt: task.unblockedAt
+  }
+}

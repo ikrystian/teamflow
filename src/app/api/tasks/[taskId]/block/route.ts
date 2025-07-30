@@ -54,8 +54,8 @@ export async function POST(
     }
 
     // Check if user can block the task (creator or assignee)
-    const canBlock = 
-      existingTask.createdById === session.user.id || 
+    const canBlock =
+      existingTask.createdById === session.user.id ||
       existingTask.assigneeId === session.user.id
 
     if (!canBlock) {
@@ -66,7 +66,7 @@ export async function POST(
     }
 
     // Check if task is already blocked
-    if (existingTask.isBlocked) {
+    if ((existingTask as any).isBlocked) {
       return NextResponse.json(
         { error: "Task is already blocked" },
         { status: 400 }
@@ -81,7 +81,7 @@ export async function POST(
         blockReason: reason.trim(),
         blockedAt: new Date(),
         blockedById: session.user.id
-      },
+      } as any,
       include: {
         project: {
           select: {
@@ -120,7 +120,7 @@ export async function POST(
             avatarUrl: true
           }
         }
-      }
+      } as any
     })
 
     return NextResponse.json({ task: updatedTask })
@@ -135,7 +135,7 @@ export async function POST(
 
 // DELETE /api/tasks/[taskId]/block - Unblock a task
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ taskId: string }> }
 ) {
   try {
@@ -175,8 +175,8 @@ export async function DELETE(
     }
 
     // Check if user can unblock the task (creator or assignee)
-    const canUnblock = 
-      existingTask.createdById === session.user.id || 
+    const canUnblock =
+      existingTask.createdById === session.user.id ||
       existingTask.assigneeId === session.user.id
 
     if (!canUnblock) {
@@ -187,7 +187,7 @@ export async function DELETE(
     }
 
     // Check if task is actually blocked
-    if (!existingTask.isBlocked) {
+    if (!(existingTask as any).isBlocked) {
       return NextResponse.json(
         { error: "Task is not blocked" },
         { status: 400 }
@@ -199,10 +199,8 @@ export async function DELETE(
       where: { id: taskId },
       data: {
         isBlocked: false,
-        blockReason: null,
-        blockedAt: null,
-        blockedById: null
-      },
+        unblockedAt: new Date()
+      } as any,
       include: {
         project: {
           select: {
