@@ -8,7 +8,7 @@ interface TasksTablePreferences {
   columnOrder: string[]
 }
 
-const STORAGE_KEY = "teamflow-tasks-table-preferences"
+const STORAGE_KEY = "Nexus-tasks-table-preferences"
 
 // Domyślne ustawienia widoczności kolumn
 const DEFAULT_COLUMN_VISIBILITY: VisibilityState = {

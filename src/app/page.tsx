@@ -22,7 +22,7 @@ export default async function Home() {
               <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
                 <Zap className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-slate-900">TeamFlow</span>
+              <span className="text-xl font-bold text-slate-900">Nexus</span>
             </div>
             <div className="hidden md:flex items-center space-x-8">
               <a href="#features" className="text-slate-600 hover:text-slate-900 transition-colors">Funkcje</a>
@@ -54,7 +54,7 @@ export default async function Home() {
               </span>
             </h1>
             <p className="text-xl text-slate-600 mb-8 max-w-3xl mx-auto">
-              Od śledzenia zadań po współpracę zespołową - TeamFlow łączy wszystko
+              Od śledzenia zadań po współpracę zespołową - Nexus łączy wszystko
               w jednej intuicyjnej platformie stworzonej dla nowoczesnych zespołów.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -223,7 +223,7 @@ export default async function Home() {
             Gotowy, aby przekształcić produktywność swojego zespołu?
           </h2>
           <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-            Dołącz do tysięcy zespołów, które już korzystają z TeamFlow, aby realizować projekty szybciej i bardziej efektywnie.
+            Dołącz do tysięcy zespołów, które już korzystają z Nexus, aby realizować projekty szybciej i bardziej efektywnie.
           </p>
           <Link href="/auth/signup">
             <Button size="lg" variant="secondary" className="text-lg px-8 py-3">
@@ -246,7 +246,7 @@ export default async function Home() {
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
                   <Zap className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-xl font-bold text-white">TeamFlow</span>
+                <span className="text-xl font-bold text-white">Nexus</span>
               </div>
               <p className="text-slate-400">
                 Nowoczesne zarządzanie projektami dla nowoczesnych zespołów.
@@ -278,7 +278,7 @@ export default async function Home() {
             </div>
           </div>
           <div className="border-t border-slate-800 mt-8 pt-8 text-center text-slate-400">
-            <p>&copy; 2025 TeamFlow. Wszystkie prawa zastrzeżone.</p>
+            <p>&copy; 2025 Nexus. Wszystkie prawa zastrzeżone.</p>
           </div>
         </div>
       </footer>

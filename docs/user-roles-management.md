@@ -1,8 +1,8 @@
-# System ról i zarządzanie użytkownikami - TeamFlow
+# System ról i zarządzanie użytkownikami - Nexus
 
 ## Przegląd
 
-TeamFlow implementuje system ról użytkowników z dwoma poziomami uprawnień:
+Nexus implementuje system ról użytkowników z dwoma poziomami uprawnień:
 - **user** - standardowy użytkownik (domyślna rola)
 - **admin** - administrator z pełnymi uprawnieniami
 

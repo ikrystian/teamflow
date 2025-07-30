@@ -4,7 +4,7 @@ Funkcjonalność zapisywania preferencji widoku (lista/tablica) dla każdego pro
 
 === STRUKTURA DANYCH ===
 
-Klucz localStorage: "teamflow-project-view-preferences"
+Klucz localStorage: "Nexus-project-view-preferences"
 
 Struktura danych:
 {
@@ -86,4 +86,4 @@ Sprawdzenie localStorage:
 1. Otwórz DevTools (F12)
 2. Zakładka Application/Storage
 3. Local Storage -> localhost:3000
-4. Klucz: teamflow-project-view-preferences
+4. Klucz: Nexus-project-view-preferences

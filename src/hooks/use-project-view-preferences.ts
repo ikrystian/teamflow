@@ -8,7 +8,7 @@ interface ProjectViewPreferences {
   [projectId: string]: ViewMode
 }
 
-const STORAGE_KEY = "teamflow-project-view-preferences"
+const STORAGE_KEY = "Nexus-project-view-preferences"
 
 export function useProjectViewPreferences(projectId: string) {
   const [viewMode, setViewMode] = useState<ViewMode>("list")
@@ -35,13 +35,13 @@ export function useProjectViewPreferences(projectId: string) {
   // Funkcja do zmiany widoku i zapisania w localStorage
   const updateViewMode = (newViewMode: ViewMode) => {
     setViewMode(newViewMode)
-    
+
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
       const preferences: ProjectViewPreferences = stored ? JSON.parse(stored) : {}
-      
+
       preferences[projectId] = newViewMode
-      
+
       localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences))
     } catch (error) {
       console.warn("Błąd podczas zapisywania preferencji widoku projektu:", error)

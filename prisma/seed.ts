@@ -62,7 +62,7 @@ async function main() {
     update: {},
     create: {
       id: 'project-1',
-      name: 'TeamFlow Application',
+      name: 'Nexus Application',
       description: 'Main project management application',
 
       teamId: team.id,

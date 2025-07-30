@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TeamFlow - Team Project Management",
+  title: "Nexus - Team Project Management",
   description: "Modern team collaboration and project management platform",
 };
 

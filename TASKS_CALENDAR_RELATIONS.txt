@@ -122,7 +122,7 @@
 ## Nowa struktura sidebara
 
 ### Komponenty sidebara
-- **SidebarHeader**: Logo TeamFlow (bez TopBarUser)
+- **SidebarHeader**: Logo Nexus (bez TopBarUser)
 - **SidebarContent**:
   - Menu nawigacyjne (Panel, Moje zadania, Zespoły, Raporty, Kalendarz)
   - **NOWY**: NavProjects - lista projektów w stylu shadcn/ui

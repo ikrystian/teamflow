@@ -16,7 +16,7 @@ function SignInPage() {
             <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
               <Zap className="size-4" />
             </div>
-            TeamFlow
+            Nexus
           </Link>
         </div>
         <div className="flex flex-1 items-center justify-center">

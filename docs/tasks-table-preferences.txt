@@ -24,7 +24,7 @@ Funkcjonalność zapisywania preferencji widoczności kolumn w tabeli zadań w l
 
 === STRUKTURA DANYCH ===
 
-Klucz localStorage: "teamflow-tasks-table-preferences"
+Klucz localStorage: "Nexus-tasks-table-preferences"
 
 Struktura danych:
 {
@@ -154,7 +154,7 @@ Sprawdzenie localStorage:
 1. Otwórz DevTools (F12)
 2. Zakładka Application/Storage
 3. Local Storage -> localhost:3001
-4. Klucz: teamflow-tasks-table-preferences
+4. Klucz: Nexus-tasks-table-preferences
 
 === MIGRACJA DANYCH ===
 

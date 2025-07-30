@@ -141,7 +141,7 @@ export function NavProjects({ projects, onEditProject }: NavProjectsProps) {
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Lista projektów</SidebarGroupLabel>
+      {projects.length > 0 && <SidebarGroupLabel>Lista projektów</SidebarGroupLabel>}
       <SidebarMenu>
         {/* Aktywne projekty */}
         {activeProjects.map((project) => (

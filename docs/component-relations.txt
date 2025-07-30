@@ -36,7 +36,7 @@ RELACJE MIĘDZY KOMPONENTAMI - ADAPTACYJNA NAZWA APLIKACJI
    - Tooltip automatycznie pokazuje się w trybie ikon
 
 5. STAN I DANE:
-   - activeTeam: domyślnie "TeamFlow" z ikoną Zap i planem "Pro"
+   - activeTeam: domyślnie "Nexus" z ikoną Zap i planem "Pro"
    - teams: tablica zespołów przekazywana z DashboardLayout
    - isMobile: wykrywanie urządzeń mobilnych dla pozycjonowania dropdown
 

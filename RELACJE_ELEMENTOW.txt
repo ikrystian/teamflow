@@ -1,4 +1,4 @@
-# Relacje między elementami w TeamFlow
+# Relacje między elementami w Nexus
 
 ## Funkcjonalność blokowania zadań (2025-01-30):
 

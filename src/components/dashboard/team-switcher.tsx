@@ -32,7 +32,7 @@ interface TeamSwitcherProps {
 export function TeamSwitcher({ teams }: TeamSwitcherProps) {
   const { isMobile, state } = useSidebar()
   const [activeTeam, setActiveTeam] = React.useState<Team>({
-    name: "TeamFlow",
+    name: "Nexus",
     logo: Zap,
     plan: "Pro"
   })

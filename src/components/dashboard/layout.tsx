@@ -98,7 +98,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
         <SidebarHeader>
           <TeamSwitcher teams={[
             {
-              name: "TeamFlow Pro",
+              name: "Nexus Pro",
               logo: () => <div className="w-4 h-4 bg-blue-500 rounded" />,
               plan: "Pro"
             }
