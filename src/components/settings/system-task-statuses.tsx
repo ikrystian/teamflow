@@ -13,6 +13,8 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
+  DragStartEvent,
+  DragOverlay,
 } from "@dnd-kit/core"
 import {
   arrayMove,
@@ -25,6 +27,7 @@ import {
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { SystemTaskStatusDialog } from "./system-task-status-dialog"
+import { toast } from "sonner"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -62,23 +65,27 @@ function SortableTaskStatus({ status, onEdit, onDelete }: SortableTaskStatusProp
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
+    transition: isDragging ? 'none' : transition,
+    opacity: isDragging ? 0.3 : 1,
+    zIndex: isDragging ? 1000 : 'auto',
   }
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center justify-between p-4 bg-white border rounded-lg shadow-sm"
+      className={`flex items-center justify-between p-4 bg-white border rounded-lg shadow-sm transition-all duration-200 ${
+        isDragging ? 'shadow-lg scale-105' : 'hover:shadow-md'
+      }`}
     >
       <div className="flex items-center space-x-3">
         <div
           {...attributes}
           {...listeners}
-          className="cursor-grab active:cursor-grabbing"
+          className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-gray-100 transition-colors"
+          title="Przeciągnij, aby zmienić kolejność"
         >
-          <GripVertical className="h-5 w-5 text-gray-400" />
+          <GripVertical className="h-5 w-5 text-gray-400 hover:text-gray-600" />
         </div>
 
         <div>
@@ -98,6 +105,7 @@ function SortableTaskStatus({ status, onEdit, onDelete }: SortableTaskStatusProp
           variant="ghost"
           size="sm"
           onClick={() => onEdit(status)}
+          title="Edytuj status"
         >
           <Edit className="h-4 w-4" />
         </Button>
@@ -105,6 +113,7 @@ function SortableTaskStatus({ status, onEdit, onDelete }: SortableTaskStatusProp
           variant="ghost"
           size="sm"
           onClick={() => onDelete(status.id)}
+          title="Usuń status"
         >
           <Trash2 className="h-4 w-4" />
         </Button>
@@ -120,9 +129,15 @@ export function SystemTaskStatuses() {
   const [editingStatus, setEditingStatus] = useState<TaskStatus | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [statusToDelete, setStatusToDelete] = useState<string | null>(null)
+  const [activeStatus, setActiveStatus] = useState<TaskStatus | null>(null)
+  const [isReordering, setIsReordering] = useState(false)
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -146,31 +161,64 @@ export function SystemTaskStatuses() {
     fetchTaskStatuses()
   }, [])
 
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event
+    const status = taskStatuses.find(s => s.id === active.id)
+    setActiveStatus(status || null)
+  }
+
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
+    setActiveStatus(null)
 
-    if (active.id !== over?.id) {
-      const oldIndex = taskStatuses.findIndex((status) => status.id === active.id)
-      const newIndex = taskStatuses.findIndex((status) => status.id === over?.id)
+    if (!over || active.id === over.id) {
+      return
+    }
 
-      const newTaskStatuses = arrayMove(taskStatuses, oldIndex, newIndex)
-      setTaskStatuses(newTaskStatuses)
+    const oldIndex = taskStatuses.findIndex((status) => status.id === active.id)
+    const newIndex = taskStatuses.findIndex((status) => status.id === over.id)
 
-      // Update order on server
-      try {
-        const statusIds = newTaskStatuses.map(status => status.id)
-        await fetch("/api/system/task-statuses/reorder", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ statusIds }),
-        })
-      } catch (error) {
-        console.error("Error reordering task statuses:", error)
-        // Revert on error
-        fetchTaskStatuses()
+    if (oldIndex === -1 || newIndex === -1) {
+      console.error("Invalid drag operation: status not found")
+      return
+    }
+
+    const newTaskStatuses = arrayMove(taskStatuses, oldIndex, newIndex)
+
+    // Optimistic update
+    setTaskStatuses(newTaskStatuses)
+    setIsReordering(true)
+
+    // Update order on server
+    try {
+      const statusIds = newTaskStatuses.map(status => status.id)
+      const response = await fetch("/api/system/task-statuses/reorder", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ statusIds }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to reorder statuses")
       }
+
+      // Update the order values in the local state to match server
+      const updatedStatuses = newTaskStatuses.map((status, index) => ({
+        ...status,
+        order: index
+      }))
+      setTaskStatuses(updatedStatuses)
+      toast.success("Kolejność statusów została zaktualizowana")
+    } catch (error) {
+      console.error("Error reordering task statuses:", error)
+      toast.error("Nie udało się zaktualizować kolejności statusów")
+      // Revert on error
+      fetchTaskStatuses()
+    } finally {
+      setIsReordering(false)
     }
   }
 
@@ -240,6 +288,9 @@ export function SystemTaskStatuses() {
               </CardTitle>
               <CardDescription>
                 Zarządzaj globalnymi statusami zadań używanymi we wszystkich projektach. Przeciągnij, aby zmienić kolejność.
+                {isReordering && (
+                  <span className="text-blue-600 ml-2">Zapisywanie nowej kolejności...</span>
+                )}
               </CardDescription>
             </div>
             <Button onClick={handleCreateStatus}>
@@ -252,31 +303,55 @@ export function SystemTaskStatuses() {
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
           >
             <SortableContext
               items={taskStatuses.map(status => status.id)}
               strategy={verticalListSortingStrategy}
             >
-              <div className="space-y-3">
-                {taskStatuses.map((status) => (
-                  <SortableTaskStatus
-                    key={status.id}
-                    status={status}
-                    onEdit={handleEditStatus}
-                    onDelete={handleDeleteStatus}
-                  />
-                ))}
+              <div className={`space-y-3 transition-all duration-200 ${
+                activeStatus ? 'bg-blue-50 border-2 border-dashed border-blue-300 rounded-lg p-4' : ''
+              }`}>
+                {taskStatuses.length > 0 ? (
+                  taskStatuses.map((status) => (
+                    <SortableTaskStatus
+                      key={status.id}
+                      status={status}
+                      onEdit={handleEditStatus}
+                      onDelete={handleDeleteStatus}
+                    />
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Settings className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                    <p>Brak statusów zadań. Dodaj pierwszy status.</p>
+                  </div>
+                )}
               </div>
             </SortableContext>
-          </DndContext>
 
-          {taskStatuses.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              <Settings className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-              <p>Brak statusów zadań. Dodaj pierwszy status.</p>
-            </div>
-          )}
+            <DragOverlay>
+              {activeStatus ? (
+                <div className="flex items-center justify-between p-4 bg-white border rounded-lg shadow-lg opacity-90 rotate-2">
+                  <div className="flex items-center space-x-3">
+                    <GripVertical className="h-5 w-5 text-gray-400" />
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-medium">{activeStatus.name}</span>
+                        {activeStatus.isDefault && (
+                          <Badge variant="secondary" className="text-xs">
+                            Domyślny
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-500">Kolejność: {activeStatus.order}</p>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </DragOverlay>
+          </DndContext>
         </CardContent>
       </Card>
 

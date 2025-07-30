@@ -1,0 +1,145 @@
+=== RELACJE DRAG AND DROP DLA STATUSÓW ZADAŃ ===
+
+=== KOMPONENTY ===
+
+1. SystemTaskStatuses (src/components/settings/system-task-statuses.tsx)
+   - Główny komponent zarządzania statusami zadań
+   - Implementuje drag and drop dla zmiany kolejności
+   - Używa @dnd-kit/core i @dnd-kit/sortable
+
+2. SortableTaskStatus (wewnętrzny komponent)
+   - Pojedynczy element statusu z możliwością przeciągania
+   - Używa useSortable hook z @dnd-kit/sortable
+
+=== API ENDPOINTS ===
+
+1. GET /api/system/task-statuses
+   - Pobiera wszystkie statusy zadań uporządkowane według pola 'order'
+   - Używane przy ładowaniu komponentu
+
+2. POST /api/system/task-statuses/reorder
+   - Aktualizuje kolejność statusów zadań
+   - Przyjmuje tablicę statusIds w nowej kolejności
+   - Waliduje czy wszystkie ID istnieją
+   - Aktualizuje pole 'order' dla każdego statusu
+
+=== FUNKCJONALNOŚĆ DRAG AND DROP ===
+
+1. Biblioteki:
+   - @dnd-kit/core: DndContext, sensors, collision detection
+   - @dnd-kit/sortable: SortableContext, useSortable, arrayMove
+   - @dnd-kit/utilities: CSS transforms
+
+2. Sensors:
+   - PointerSensor z activationConstraint (distance: 8px)
+   - KeyboardSensor z sortableKeyboardCoordinates
+
+3. Collision Detection:
+   - closestCenter strategy
+
+4. Sortable Strategy:
+   - verticalListSortingStrategy
+
+=== PRZEPŁYW DRAG AND DROP ===
+
+1. handleDragStart:
+   - Ustawia activeStatus na przeciągany element
+   - Używane do wizualnego feedbacku
+
+2. handleDragEnd:
+   - Sprawdza czy element został przeniesiony
+   - Waliduje indeksy (oldIndex, newIndex)
+   - Wykonuje optimistic update (arrayMove)
+   - Wysyła żądanie do API
+   - W przypadku błędu przywraca poprzedni stan
+
+=== WIZUALNY FEEDBACK ===
+
+1. Podczas przeciągania:
+   - Aktywny element ma opacity: 0.3
+   - Kontener ma niebieskie tło i ramkę
+   - DragOverlay pokazuje kopię przeciąganego elementu
+
+2. Hover effects:
+   - Grip handle zmienia kolor przy hover
+   - Cały element ma hover:shadow-md
+
+3. Toast notifications:
+   - Sukces: "Kolejność statusów została zaktualizowana"
+   - Błąd: "Nie udało się zaktualizować kolejności statusów"
+
+=== OBSŁUGA BŁĘDÓW ===
+
+1. Walidacja indeksów:
+   - Sprawdza czy oldIndex i newIndex są prawidłowe
+   - Loguje błędy do konsoli
+
+2. API errors:
+   - Catch block przywraca poprzedni stan
+   - Pokazuje toast error
+   - Wywołuje fetchTaskStatuses() dla pełnego odświeżenia
+
+3. Loading states:
+   - isReordering flag pokazuje status zapisywania
+   - Wyłącza interakcje podczas zapisywania
+
+=== STYLE I ANIMACJE ===
+
+1. Transitions:
+   - transition: 'none' podczas przeciągania
+   - transition-all duration-200 dla normalnych stanów
+
+2. Transform effects:
+   - CSS.Transform.toString() dla pozycjonowania
+   - scale-105 dla przeciąganego elementu
+   - rotate-2 dla DragOverlay
+
+3. Z-index management:
+   - isDragging ? 1000 : 'auto'
+   - Zapewnia poprawne nakładanie się elementów
+
+=== ZALEŻNOŚCI ===
+
+- @dnd-kit/core: ^6.1.0
+- @dnd-kit/sortable: ^8.0.0
+- @dnd-kit/utilities: ^3.2.2
+- sonner: Toast notifications
+- lucide-react: Ikony (GripVertical, Settings, Edit, Trash2)
+
+=== PLIKI POWIĄZANE ===
+
+- src/components/settings/system-task-statuses.tsx
+- src/components/settings/system-task-status-dialog.tsx
+- src/app/api/system/task-statuses/route.ts
+- src/app/api/system/task-statuses/reorder/route.ts
+- src/app/api/system/task-statuses/[statusId]/route.ts
+
+=== BAZA DANYCH ===
+
+TaskStatus model:
+- id: String (Primary Key)
+- name: String
+- color: String
+- order: Int (używane do sortowania)
+- isDefault: Boolean
+- createdAt: DateTime
+- updatedAt: DateTime
+
+=== AKTUALIZACJE (2025-07-30) ===
+
+1. Poprawiono drag and drop functionality:
+   - Dodano activationConstraint dla lepszej kontroli
+   - Poprawiono obsługę błędów
+   - Dodano wizualny feedback z DragOverlay
+   - Dodano toast notifications
+   - Poprawiono style i animacje
+
+2. Dodano loading states:
+   - isReordering flag
+   - Wizualny wskaźnik podczas zapisywania
+
+3. Poprawiono UX:
+   - Lepsze tooltips
+   - Hover effects
+   - Smooth transitions
+   - Error handling z revert functionality
