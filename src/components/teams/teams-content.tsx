@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 
 import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
+import { usePageHeader } from "@/contexts/header-context"
 import { Plus, Users, Settings } from "lucide-react"
 import { CreateTeamDialog } from "./create-team-dialog"
 import { EditTeamDialog } from "./edit-team-dialog"
@@ -34,6 +35,20 @@ export function TeamsContent() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null)
+
+  // Set page header content
+  usePageHeader(
+    <div className="flex justify-between items-center w-full">
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Zarządzaj swoimi zespołami i współpracuj z innymi</h1>
+      </div>
+      <Button onClick={() => setCreateDialogOpen(true)}>
+        <Plus className="mr-2 h-4 w-4" />
+        Utwórz zespół
+      </Button>
+    </div>,
+    [] // Static content, no dependencies
+  )
 
   const fetchTeams = async () => {
     try {
@@ -74,29 +89,7 @@ export function TeamsContent() {
   }
 
   return (
-        <div>
-              {/* Top bar */}
-        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b bg-background px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
-          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-            <div id="dynamic-header" className="flex flex-1" >
-      <div id="page-header"  className="flex justify-between items-center  w-full">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Zespoły</h1>
-          <p className="text-muted-foreground">Zarządzaj swoimi zespołami i współpracuj z innymi</p>
-        </div>
-        <Button onClick={() => setCreateDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Utwórz zespół
-        </Button>
-      </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Page content */}
-        <main className="py-10">
-          <div className="px-4 sm:px-6 lg:px-8">
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-8 pt-6">
 
 
       {teams.length === 0 ? (
@@ -207,9 +200,6 @@ export function TeamsContent() {
         onTeamUpdated={handleTeamUpdated}
         team={selectedTeam}
       />
-    </div>
-    </div>
-    </main>
     </div>
   )
 }

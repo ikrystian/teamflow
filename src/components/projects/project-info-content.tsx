@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
+import { usePageHeader } from "@/contexts/header-context"
 import {
   ArrowLeft,
   Users,
@@ -113,6 +114,34 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
   const [documents, setDocuments] = useState<ProjectDetails['documents']>([])
   const [showCredentials, setShowCredentials] = useState<Record<string, boolean>>({})
   const router = useRouter()
+
+  // Set page header content
+  usePageHeader(
+    project ? (
+      <div className="flex items-center justify-between w-full">
+        <div className="flex items-center space-x-4">
+          <Link href={`/dashboard/projects/${projectId}`}>
+            <Button variant="ghost" size="sm">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Informacje o {project.name}</h1>
+          </div>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Badge>
+            {project.status}
+          </Badge>
+        </div>
+      </div>
+    ) : (
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Ładowanie informacji o projekcie...</h1>
+      </div>
+    ),
+    [project, projectId] // Re-render when project or projectId changes
+  )
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -232,38 +261,7 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
   const stats = getTaskStats(project.tasks)
 
   return (
-        <div>
-              {/* Top bar */}
-        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8 bg-white">
-          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-            <div id="dynamic-header" className="flex flex-1" >
-      <div id="page-header"  className="flex items-center justify-between w-full">
-        <div className="flex items-center space-x-4">
-          <Link href={`/dashboard/projects/${projectId}`}>
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Informacje o projekcie</h1>
-            <p className="text-gray-500">{project.name}</p>
-          </div>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Badge>
-            {project.status}
-          </Badge>
-        </div>
-      </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Page content */}
-        <main className="py-10">
-          <div className="px-4 sm:px-6 lg:px-8">
-
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-8 pt-6">
       {/* Header */}
 
 
@@ -611,9 +609,6 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
           />
         </CardContent>
       </Card>
-    </div>
-    </div>
-    </main>
     </div>
   )
 }

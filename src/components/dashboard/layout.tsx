@@ -31,6 +31,7 @@ import { NavUser } from "@/components/dashboard/nav-user"
 import { NavProjects } from "@/components/dashboard/nav-projects"
 import { TeamSwitcher } from "@/components/dashboard/team-switcher"
 import { EditProjectSheet } from "@/components/projects/edit-project-sheet"
+import { HeaderProvider, useHeader } from "@/contexts/header-context"
 
 interface Project {
   id: string
@@ -50,7 +51,8 @@ interface DashboardLayoutProps {
   children: React.ReactNode
 }
 
-export function DashboardLayout({ children }: DashboardLayoutProps) {
+function DashboardLayoutInner({ children }: DashboardLayoutProps) {
+  const { headerContent } = useHeader()
   const pathname = usePathname()
   const [projects, setProjects] = useState<Project[]>([])
   const [editDialogOpen, setEditDialogOpen] = useState(false)
@@ -146,10 +148,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </Sidebar>
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 border-b">
-          <div className="flex items-center gap-2 px-4">
+          <div className="flex items-center gap-2 px-4 flex-1">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
-            <h2 className="text-lg font-semibold">Dashboard</h2>
+            <div className="flex-1">
+              {headerContent}
+            </div>
           </div>
         </header>
         <main className="flex-1">
@@ -165,5 +169,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         teams={[]}
       />
     </SidebarProvider>
+  )
+}
+
+export function DashboardLayout({ children }: DashboardLayoutProps) {
+  return (
+    <HeaderProvider>
+      <DashboardLayoutInner>{children}</DashboardLayoutInner>
+    </HeaderProvider>
   )
 }

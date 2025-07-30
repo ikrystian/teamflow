@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ArrowLeft, Key, Save, Eye, EyeOff, X, Plus, Edit, Trash2 } from "lucide-react"
 import { RichTextEditor } from "@/components/ui/rich-text-editor"
+import { usePageHeader } from "@/contexts/header-context"
 
 
 
@@ -55,6 +56,27 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
   const [savingCredentials, setSavingCredentials] = useState(false)
   const [showCredentials, setShowCredentials] = useState<Record<string, boolean>>({})
   const router = useRouter()
+
+  // Set page header content
+  usePageHeader(
+    project ? (
+      <div className="flex items-center space-x-4">
+        <Link href={`/dashboard/projects/${projectId}`}>
+          <Button variant="ghost" size="sm">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        </Link>
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Ustawienia projektu {project.name}</h1>
+        </div>
+      </div>
+    ) : (
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Ładowanie ustawień projektu...</h1>
+      </div>
+    ),
+    [project, projectId] // Re-render when project or projectId changes
+  )
 
   const fetchProject = useCallback(async () => {
     try {
@@ -188,32 +210,7 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
   }
 
   return (
-            <div>
-              {/* Top bar */}
-        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
-          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-            <div id="dynamic-header" className="flex flex-1" >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Link href={`/dashboard/projects/${projectId}`}>
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Ustawienia projektu</h1>
-            <p className="text-gray-500">{project.name}</p>
-          </div>
-        </div>
-      </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Page content */}
-        <main className="py-10">
-          <div className="px-4 sm:px-6 lg:px-8">
-    <div id="page-header" className="space-y-6">
+    <div className="space-y-6 p-4 md:p-8 pt-6">
       {/* Header */}
 
       {/* Access Credentials Configuration */}
@@ -286,11 +283,6 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
           </div>
         </CardContent>
       </Card>
-
-
-    </div>
-    </div>
-    </main>
     </div>
   )
 }

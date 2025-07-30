@@ -19,6 +19,7 @@ import {
 import { TimeTrackingReport, type TimeTrackingData } from "./time-tracking-report"
 import { ProjectProgressReport, type ProjectProgressData } from "./project-progress-report"
 import { exportTimeTrackingToPDF, exportProjectProgressToPDF } from "@/lib/pdf-export"
+import { usePageHeader } from "@/contexts/header-context"
 
 interface Team {
   id: string
@@ -58,6 +59,56 @@ export function ReportsContent() {
     userId: "",
     teamId: ""
   })
+
+  // Set page header content
+  usePageHeader(
+    <div className="flex items-center justify-between w-full">
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Generuj szczegółowe raporty i analizy dla swoich projektów</h1>
+      </div>
+      <div className="flex gap-2">
+        <Button
+          variant={activeReport === "time-tracking" ? "default" : "outline"}
+          onClick={() => setActiveReport("time-tracking")}
+        >
+          <Clock className="mr-2 h-4 w-4" />
+          Czas pracy
+        </Button>
+        <Button
+          variant={activeReport === "project-progress" ? "default" : "outline"}
+          onClick={() => setActiveReport("project-progress")}
+        >
+          <TrendingUp className="mr-2 h-4 w-4" />
+          Postęp projektów
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => exportReport("csv")}
+          disabled={loading}
+        >
+          <Download className="mr-2 h-4 w-4" />
+          Eksportuj CSV
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => exportReport("excel")}
+          disabled={loading}
+        >
+          <Download className="mr-2 h-4 w-4" />
+          Eksportuj Excel
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => exportReport("pdf")}
+          disabled={loading}
+        >
+          <FileText className="mr-2 h-4 w-4" />
+          Eksportuj PDF
+        </Button>
+      </div>
+    </div>,
+    [activeReport] // Re-render when active report changes
+  )
 
   useEffect(() => {
     fetchFilterData()
@@ -195,52 +246,8 @@ export function ReportsContent() {
   ]
 
   return (
-        <div>
-              {/* Top bar */}
-        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
-          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-            <div id="dynamic-header" className="flex flex-1" >
-      <div id="page-header"  className="flex items-center justify-between w-full">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Raporty</h1>
-          <p className="text-gray-600">Generuj szczegółowe raporty i analizy dla swoich projektów</p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => exportReport("csv")}
-            disabled={loading}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Eksportuj CSV
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => exportReport("excel")}
-            disabled={loading}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Eksportuj Excel
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => exportReport("pdf")}
-            disabled={loading}
-          >
-            <FileText className="mr-2 h-4 w-4" />
-            Eksportuj PDF
-          </Button>
-        </div>
-      </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Page content */}
-        <main className="py-10">
-          <div className="px-4 sm:px-6 lg:px-8">
-
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-8 pt-6">
       {/* Header */}
 
 
@@ -370,9 +377,6 @@ export function ReportsContent() {
       {activeReport === "project-progress" && (
         <ProjectProgressReport filters={filters} onDataLoaded={setReportData} />
       )}
-    </div>
-    </div>
-    </main>
     </div>
   )
 }

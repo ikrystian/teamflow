@@ -8,6 +8,7 @@ import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { Plus, FolderOpen, Calendar, Users, ImageIcon, Edit, MoreVertical, Archive, ArchiveX } from "lucide-react"
 import { CreateProjectSheet } from "./create-project-sheet"
 import { EditProjectSheet } from "./edit-project-sheet"
+import { usePageHeader } from "@/contexts/header-context"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -147,6 +148,32 @@ export function ProjectsContent() {
     fetchProjects(filter)
   }
 
+  // Set page header content
+  usePageHeader(
+    <div className="flex justify-between items-center w-full">
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Zarządzaj swoimi projektami i śledź postępy</h1>
+      </div>
+      <div className="flex items-center gap-4">
+        <Select value={projectFilter} onValueChange={handleFilterChange}>
+          <SelectTrigger className="w-48">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="active">Aktywne projekty</SelectItem>
+            <SelectItem value="archived">Zarchiwizowane projekty</SelectItem>
+            <SelectItem value="all">Wszystkie projekty</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button onClick={() => setCreateDialogOpen(true)} disabled={teams.length === 0}>
+          <Plus className="mr-2 h-4 w-4" />
+          Utwórz projekt
+        </Button>
+      </div>
+    </div>,
+    [projectFilter, teams.length] // Only re-render when filter or teams count changes
+  )
+
   const getFilteredProjects = () => {
     switch (projectFilter) {
       case "active":
@@ -186,42 +213,7 @@ export function ProjectsContent() {
   }
 
   return (
-        <div>
-              {/* Top bar */}
-        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-border bg-background px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
-          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-            <div id="dynamic-header" className="flex flex-1" >
-      <div id="page-header"className="flex justify-between items-center w-full">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Projekty</h1>
-          <p className="text-muted-foreground">Zarządzaj swoimi projektami i śledź postępy</p>
-        </div>
-        <div className="flex items-center gap-4">
-          <Select value={projectFilter} onValueChange={handleFilterChange}>
-            <SelectTrigger className="w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="active">Aktywne projekty</SelectItem>
-              <SelectItem value="archived">Zarchiwizowane projekty</SelectItem>
-              <SelectItem value="all">Wszystkie projekty</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button onClick={() => setCreateDialogOpen(true)} disabled={teams.length === 0}>
-            <Plus className="mr-2 h-4 w-4" />
-            Utwórz projekt
-          </Button>
-        </div>
-      </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Page content */}
-        <main className="py-10">
-          <div className="px-4 sm:px-6 lg:px-8">
-
-    <div  className="space-y-6">
+    <div className="space-y-6 p-4 md:p-8 pt-6">
 
 
       {teams.length === 0 ? (
@@ -395,9 +387,6 @@ export function ProjectsContent() {
         project={selectedProject}
         teams={teams}
       />
-    </div>
-    </div>
-    </main>
     </div>
   )
 }

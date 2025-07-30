@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { useProjectViewPreferences } from "@/hooks/use-project-view-preferences"
+import { usePageHeader } from "@/contexts/header-context"
 
 import {
   ArrowLeft,
@@ -99,6 +100,73 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   useEffect(() => {
     fetchProject()
   }, [fetchProject])
+
+  // Set page header content
+  usePageHeader(
+    project ? (
+      <div className="flex items-center justify-between w-full">
+        <div className="flex items-center space-x-4">
+          <Link href="/dashboard/projects">
+            <Button variant="ghost" size="sm">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">{project.name}</h1>
+          </div>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Badge>
+            {project.status}
+          </Badge>
+
+          {/* View Toggle */}
+          <div className="flex items-center border rounded-lg">
+            <Button
+              variant={viewMode === "list" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => updateViewMode("list")}
+              className="rounded-r-none"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "board" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => updateViewMode("board")}
+              className="rounded-l-none"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <Link href={`/dashboard/projects/${projectId}/settings`}>
+            <Button variant="outline" size="sm">
+              <Settings className="mr-2 h-4 w-4" />
+              Ustawienia
+            </Button>
+          </Link>
+
+          <Link href={`/dashboard/projects/${projectId}/info`}>
+            <Button variant="outline" size="sm">
+              <Info className="mr-2 h-4 w-4" />
+              Informacje o projekcie
+            </Button>
+          </Link>
+
+          <Button onClick={() => setCreateTaskDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Dodaj zadanie
+          </Button>
+        </div>
+      </div>
+    ) : (
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Ładowanie projektu...</h1>
+      </div>
+    ),
+    [project, viewMode, projectId] // Re-render when project, viewMode or projectId changes
+  )
 
   const handleTaskCreated = () => {
     fetchProject()
@@ -281,76 +349,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
 
 
   return (
-        <div>
-              {/* Top bar */}
-        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
-          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-            <div id="dynamic-header" className="flex flex-1" >
-      <div id="page-header" className="flex items-center justify-between w-full">
-        <div className="flex items-center space-x-4">
-          <Link href="/dashboard/projects">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
-            <p className="text-gray-500">{project.description || "Brak opisu"}</p>
-          </div>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Badge>
-            {project.status}
-          </Badge>
-
-          {/* View Toggle */}
-          <div className="flex items-center border rounded-lg">
-            <Button
-              variant={viewMode === "list" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => updateViewMode("list")}
-              className="rounded-r-none"
-            >
-              <List className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === "board" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => updateViewMode("board")}
-              className="rounded-l-none"
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </Button>
-          </div>
-
-          <Link href={`/dashboard/projects/${projectId}/settings`}>
-            <Button variant="outline" size="sm">
-              <Settings className="mr-2 h-4 w-4" />
-              Ustawienia
-            </Button>
-          </Link>
-
-          <Link href={`/dashboard/projects/${projectId}/info`}>
-            <Button variant="outline" size="sm">
-              <Info className="mr-2 h-4 w-4" />
-              Informacje o projekcie
-            </Button>
-          </Link>
-
-          <Button onClick={() => setCreateTaskDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Dodaj zadanie
-          </Button>
-        </div>
-      </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Page content */}
-        <main className="py-10">
-          <div className="px-4 sm:px-6 lg:px-8">
-    <div  className="space-y-6">
+    <div className="space-y-6 p-4 md:p-8 pt-6">
 
       {/* Tasks */}
       {viewMode === "list" ? (
@@ -563,9 +562,6 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
-    </div>
-    </main>
     </div>
   )
 }

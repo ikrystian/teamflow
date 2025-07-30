@@ -116,3 +116,76 @@ RELACJE MIĘDZY KOMPONENTAMI - EDYCJA PROJEKTÓW
     - handleEditProject(project) - otwiera sheet edycji z wybranym projektem
     - handleProjectUpdated() - zamyka sheet i odświeża listę projektów
     - fetchProjects() - wyodrębniona funkcja do pobierania projektów
+
+17. NOWA ARCHITEKTURA NAGŁÓWKÓW (HEADER CONTEXT):
+    - Stworzono HeaderContext do globalnego zarządzania zawartością nagłówka
+    - HeaderProvider owijają DashboardLayout i zapewnia kontekst dla całej aplikacji
+    - useHeader() - hook do dostępu do kontekstu nagłówka
+    - usePageHeader(content, deps) - hook do ustawiania zawartości nagłówka z komponentów
+    - Nagłówek w DashboardLayout jest teraz dynamiczny zamiast statycznego "Dashboard"
+
+18. MIGRACJA ZAWARTOŚCI NAGŁÓWKÓW:
+    - Usunięto wszystkie top bar z #page-header z komponentów content
+    - Przeniesiono zawartość nagłówków do głównego nagłówka w DashboardLayout
+    - DashboardContent: Powitanie użytkownika z imieniem
+    - ProjectsContent: Tytuł + filtry + przycisk "Utwórz projekt"
+    - TeamsContent: Tytuł + przycisk "Utwórz zespół"
+    - TasksContent: Tytuł dynamiczny + filtry + przycisk "Utwórz zadanie"
+    - ReportsContent: Tytuł + przyciski typu raportu + przyciski eksportu
+
+19. OPTYMALIZACJA WYDAJNOŚCI:
+    - usePageHeader używa useMemo do stabilizacji content
+    - Dependency array w usePageHeader zapobiega niepotrzebnym re-renderom
+    - useCallback w HeaderProvider stabilizuje setHeaderContent
+    - Każdy komponent określa własne zależności dla usePageHeader
+
+20. STRUKTURA PLIKÓW:
+    - src/contexts/header-context.tsx - nowy kontekst do zarządzania nagłówkami
+    - Wszystkie komponenty content zaktualizowane do nowej architektury
+    - Usunięto duplikację kodu nagłówków między komponentami
+    - Jednolity wygląd i zachowanie nagłówków w całej aplikacji
+
+21. KORZYŚCI NOWEJ ARCHITEKTURY:
+    - Jeden nagłówek dla całej aplikacji zamiast duplikacji w każdym komponencie
+    - Dynamiczna zawartość nagłówka zależna od aktualnej strony
+    - Lepsze UX - nagłówek zawsze widoczny i spójny
+    - Łatwiejsze zarządzanie i modyfikacja nagłówków
+    - Mniejszy kod i lepsza maintainability
+
+22. DODATKOWE STRONY ZAKTUALIZOWANE (DRUGA FAZA):
+    - CalendarContent (/dashboard/calendar): Tytuł "Kalendarz" + opis
+    - ProjectDetailsContent (/dashboard/projects/[id]): Nazwa projektu + status + przyciski nawigacji + toggle widoku + przycisk "Dodaj zadanie"
+    - ProjectInfoContent (/dashboard/projects/[id]/info): "Informacje o projekcie" + nazwa projektu + status + przycisk powrotu
+    - ProjectSettingsContent (/dashboard/projects/[id]/settings): "Ustawienia projektu" + nazwa projektu + przycisk powrotu
+    - SettingsContent (/dashboard/settings): "Ustawienia" + opis zarządzania profilem
+
+23. SPECJALNE FUNKCJONALNOŚCI W NAGŁÓWKACH PROJEKTÓW:
+    - ProjectDetailsContent: Pełny toolbar z przyciskami nawigacji, toggle widoku (lista/tablica), linki do ustawień i informacji
+    - Dynamiczne ładowanie - nagłówek pokazuje "Ładowanie..." gdy projekt się ładuje
+    - Przycisk powrotu do listy projektów we wszystkich widokach szczegółów projektu
+    - Status projektu wyświetlany jako Badge w nagłówku
+
+24. OBSŁUGA STANÓW ŁADOWANIA:
+    - Wszystkie komponenty projektów pokazują "Ładowanie..." w nagłówku podczas pobierania danych
+    - usePageHeader reaguje na zmiany stanu project/loading
+    - Dependency arrays zapewniają prawidłowe re-renderowanie przy zmianie danych
+
+25. PEŁNA LISTA ZAKTUALIZOWANYCH KOMPONENTÓW:
+    - DashboardContent ✅
+    - ProjectsContent ✅
+    - TeamsContent ✅
+    - TasksContent ✅
+    - ReportsContent ✅
+    - CalendarContent ✅ (nowe)
+    - ProjectDetailsContent ✅ (nowe)
+    - ProjectInfoContent ✅ (nowe)
+    - ProjectSettingsContent ✅ (nowe)
+    - SettingsContent ✅ (nowe)
+
+26. ROUTING I NAWIGACJA:
+    - /dashboard/calendar - kalendarz zadań
+    - /dashboard/projects/[id] - szczegóły projektu
+    - /dashboard/projects/[id]/info - informacje o projekcie
+    - /dashboard/projects/[id]/settings - ustawienia projektu
+    - /dashboard/settings - ogólne ustawienia
+    - Wszystkie strony mają spójne nagłówki w głównym header aplikacji

@@ -26,6 +26,7 @@ import {
 } from "lucide-react"
 import { useSession } from "next-auth/react"
 import type { Session } from "next-auth"
+import { usePageHeader } from "@/contexts/header-context"
 import { SystemTaskStatuses } from "./system-task-statuses"
 import { PasswordChangeForm } from "./password-change-form"
 import { ActiveSessions } from "./active-sessions"
@@ -52,6 +53,15 @@ export function SettingsContent() {
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+
+  // Set page header content
+  usePageHeader(
+    <div>
+      <h1 className="text-2xl font-bold text-foreground">Ustawienia</h1>
+      <p className="text-muted-foreground">Zarządzaj swoim profilem i preferencjami aplikacji</p>
+    </div>,
+    [] // Static content, no dependencies
+  )
 
   // Check if user is admin
   const isAdmin = session?.user?.role === 'admin' || session?.user?.email === 'krystian@bpcoders.pl'
@@ -201,25 +211,7 @@ export function SettingsContent() {
   }
 
   return (
-    <div>
-      {/* Top bar */}
-      <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8 bg-white">
-        <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-          <div id="dynamic-header" className="flex flex-1" >
-            {/* Welcome section */}
-            <div id="page-header">
-              <h1 className="text-2xl font-bold text-gray-900">
-                Ustawienia
-              </h1>
-              <p className="text-sm text-gray-500">
-                Zarządzaj swoim profilem i preferencjami aplikacji
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="container mx-auto py-6 px-4">
+    <div className="container mx-auto py-6 px-4">
 
         <Tabs defaultValue="profile" className="space-y-6">
           <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-7' : 'grid-cols-6'}`}>

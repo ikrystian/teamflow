@@ -15,6 +15,7 @@ import { TimeTrackingSheet } from "./time-tracking-sheet"
 import { TaskDetailsSheet } from "./task-details-sheet"
 import { TasksKanbanBoard } from "./tasks-kanban-board"
 import { TasksWeeklyCalendar } from "./tasks-weekly-calendar"
+import { usePageHeader } from "@/contexts/header-context"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,6 +68,42 @@ export function TasksContent() {
   const [filter, setFilter] = useState<"all" | "assigned">("assigned")
   const [deletingTask, setDeletingTask] = useState(false)
   const [activeTab, setActiveTab] = useState("board")
+
+  // Set page header content
+  usePageHeader(
+    <div className="flex items-center justify-between w-full">
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">
+          {filter === "assigned"
+            ? "Zadania przypisane do Ciebie we wszystkich projektach"
+            : "Wszystkie zadania do których masz dostęp"
+          }        </h1>
+      </div>
+      <div className="flex items-center space-x-2">
+        <Button
+          variant={filter === "assigned" ? "default" : "outline"}
+          onClick={() => setFilter("assigned")}
+          size="sm"
+        >
+          <UserIcon className="mr-2 h-4 w-4" />
+          Moje zadania
+        </Button>
+        <Button
+          variant={filter === "all" ? "default" : "outline"}
+          onClick={() => setFilter("all")}
+          size="sm"
+        >
+          <Filter className="mr-2 h-4 w-4" />
+          Wszystkie zadania
+        </Button>
+        <Button onClick={() => setCreateDialogOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Utwórz zadanie
+        </Button>
+      </div>
+    </div>,
+    [filter] // Re-render when filter changes
+  )
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -339,42 +376,6 @@ export function TasksContent() {
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      {/* Header */}
-      <div className="flex items-center justify-between space-y-2">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">
-            {filter === "assigned" ? "Moje zadania" : "Wszystkie zadania"}
-          </h2>
-          <p className="text-muted-foreground">
-            {filter === "assigned"
-              ? "Zadania przypisane do Ciebie we wszystkich projektach"
-              : "Wszystkie zadania do których masz dostęp"
-            }
-          </p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant={filter === "assigned" ? "default" : "outline"}
-            onClick={() => setFilter("assigned")}
-            size="sm"
-          >
-            <UserIcon className="mr-2 h-4 w-4" />
-            Moje zadania
-          </Button>
-          <Button
-            variant={filter === "all" ? "default" : "outline"}
-            onClick={() => setFilter("all")}
-            size="sm"
-          >
-            <Filter className="mr-2 h-4 w-4" />
-            Wszystkie
-          </Button>
-          <Button onClick={() => setCreateDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Utwórz zadanie
-          </Button>
-        </div>
-      </div>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">

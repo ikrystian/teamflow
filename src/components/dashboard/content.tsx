@@ -12,6 +12,7 @@ import Link from "next/link"
 import { TaskDetailsSheet } from "@/components/tasks/task-details-sheet"
 import { TaskFormSheet } from "@/components/shared/task-form-sheet"
 import { TimeTrackingSheet } from "@/components/tasks/time-tracking-sheet"
+import { usePageHeader } from "@/contexts/header-context"
 import type { Task, User } from "@/types"
 
 interface DashboardStats {
@@ -23,6 +24,17 @@ interface DashboardStats {
 
 export function DashboardContent() {
   const { data: session } = useSession() as { data: Session | null }
+
+  // Set page header content
+  usePageHeader(
+    <div>
+      <h1 className="text-2xl font-bold text-foreground">
+        {session?.user?.name?.split(" ")[0] || "Użytkowniku"}, oto, co dzieje się z Twoimi projektami dzisiaj.
+      </h1>
+    </div>,
+    [session?.user?.name] // Only re-render when user name changes
+  )
+
   const [stats, setStats] = useState<DashboardStats>({
     myTasks: 0,
     teams: 0,
@@ -182,28 +194,7 @@ export function DashboardContent() {
 
   return (
     <>
-    <div>
-              {/* Top bar */}
-        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-border bg-background px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
-          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-            <div id="dynamic-header" className="flex flex-1" >
-      {/* Welcome section */}
-      <div id="page-header">
-        <h1 className="text-2xl font-bold text-foreground">
-          Witaj ponownie, {session?.user?.name?.split(" ")[0] || "Użytkowniku"}!
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Oto, co dzieje się z Twoimi projektami dzisiaj.
-        </p>
-      </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Page content */}
-        <main className="py-10">
-          <div className="px-4 sm:px-6 lg:px-8">
-    <div className="space-y-8">
+      <div className="space-y-8 p-4 md:p-8 pt-6">
 
 
       {/* Stats grid */}
@@ -345,9 +336,6 @@ export function DashboardContent() {
           )}
         </CardContent>
       </Card>
-    </div>
-    </div>
-    </main>
     </div>
 
     {/* Task Details Sheet */}
