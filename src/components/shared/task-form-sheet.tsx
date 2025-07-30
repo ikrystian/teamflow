@@ -114,6 +114,11 @@ export function TaskFormSheet({
         if (response.ok) {
           const data = await response.json()
           setTaskStatuses(data.taskStatuses)
+          
+          // Set first status as default for create mode
+          if (isCreateMode && data.taskStatuses.length > 0 && !defaultStatusId && !statusId) {
+            setStatusId(data.taskStatuses[0].id)
+          }
         }
       } catch (error) {
         console.error("Error fetching task statuses:", error)
@@ -123,7 +128,7 @@ export function TaskFormSheet({
     if (open) {
       fetchTaskStatuses()
     }
-  }, [open])
+  }, [open, isCreateMode, defaultStatusId, statusId])
 
   // Initialize form for create mode
   useEffect(() => {
