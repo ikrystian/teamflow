@@ -1,5 +1,59 @@
 # Relacje między elementami w Nexus
 
+## Naprawa liczenia zadań w TasksTable (2025-07-30):
+
+### Problem:
+W komponencie TasksTable występowały problemy z liczeniem zadań - footer pokazywał nieprawidłową liczbę zadań (np. "0 z 5 zadań wybranych" gdy było 4 zadania w bazie).
+
+### Przyczyny:
+1. Funkcja `table.getFilteredRowModel().rows.length` liczyła wszystkie wiersze włącznie z nagłówkami grup statusów
+2. Nagłówki grup mogły być zaznaczane jako wiersze
+3. Mylący tekst "zadań wybranych"
+
+### Rozwiązanie:
+1. **Funkcje pomocnicze do liczenia rzeczywistych zadań**:
+   - `getActualTasksCount()` - liczy tylko zadania (bez nagłówków grup)
+   - `getSelectedTasksCount()` - liczy tylko zaznaczone zadania (bez nagłówków grup)
+
+2. **Zapobieganie selekcji nagłówków grup**:
+   - Dodano `enableRowSelection: (row) => !('isGroupHeader' in row.original)`
+
+3. **Poprawa footer tabeli**:
+   - Użycie nowych funkcji pomocniczych zamiast domyślnych z react-table
+   - Zmiana tekstu na "zadań zaznaczonych" dla lepszej jasności
+
+### Pliki zmodyfikowane:
+- `src/components/dashboard/tasks-table.tsx` - główne poprawki liczenia i selekcji
+
+## Naprawa przeglądu zadań w dashboard (2025-07-30):
+
+### Problem:
+Dashboard miał tytuł "Przegląd wszystkich zadań z całego systemu", ale API endpoint `/api/tasks` pobierał tylko zadania, do których użytkownik miał dostęp. To było mylące dla użytkowników, szczególnie administratorów.
+
+### Rozwiązanie:
+1. **Modyfikacja API endpoint `/api/tasks`**:
+   - Dodano sprawdzanie uprawnień administratora za pomocą funkcji `isAdmin()`
+   - Administrator widzi wszystkie zadania z systemu (z projektów niearchiwalnych + zadania bez projektów)
+   - Zwykły użytkownik widzi tylko zadania do których ma dostęp (jak wcześniej)
+
+2. **Nowy endpoint `/api/user/admin-status`**:
+   - Endpoint do sprawdzania statusu administratora po stronie klienta
+   - Zwraca informacje o uprawnieniach użytkownika
+
+3. **Dynamiczny tytuł dashboard**:
+   - Administrator: "Przegląd wszystkich zadań z całego systemu"
+   - Zwykły użytkownik: "Przegląd moich zadań"
+   - Tytuł zmienia się automatycznie w zależności od uprawnień
+
+### Pliki zmodyfikowane:
+- `src/app/api/tasks/route.ts` - logika pobierania zadań z uwzględnieniem uprawnień
+- `src/components/dashboard/content.tsx` - dynamiczny tytuł i sprawdzanie statusu administratora
+- `src/app/api/user/admin-status/route.ts` - nowy endpoint (utworzony)
+
+### Konta testowe:
+- Administrator: `krystian@bpcoders.pl` / `admin123`
+- Zwykły użytkownik: `john@example.com` / `password123`
+
 ## Poprawka breadcrumbs w szczegółach projektu (2025-01-30):
 
 ### Problem:

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { isAdmin } from "@/lib/admin"
 import type { Session } from "next-auth"
 
 export async function GET(request: NextRequest) {
@@ -16,6 +17,9 @@ export async function GET(request: NextRequest) {
     const projectId = searchParams.get("projectId")
     const assigneeId = searchParams.get("assigneeId")
     const dueDate = searchParams.get("dueDate")
+
+    // Check if user is admin
+    const userIsAdmin = await isAdmin()
 
     let dueDateFilter = {}
     if (dueDate === "tomorrow") {
@@ -33,37 +37,60 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const tasks = await prisma.task.findMany({
-      where: {
-        ...(projectId && { projectId }),
-        ...(assigneeId && { assigneeId }),
-        ...dueDateFilter,
-        OR: [
-          // Tasks with projects where user is a team member and project is not archived
-          {
-            project: {
-              archived: false,
-              team: {
-                members: {
-                  some: {
-                    id: session.user.id
-                  }
+    // Build where clause based on user permissions
+    const baseFilters = {
+      ...(projectId && { projectId }),
+      ...(assigneeId && { assigneeId }),
+      ...dueDateFilter,
+    }
+
+    // If user is admin, show all tasks (except from archived projects)
+    // If user is not admin, show only tasks they have access to
+    const whereClause = userIsAdmin ? {
+      ...baseFilters,
+      OR: [
+        // Tasks without projects
+        {
+          projectId: null
+        },
+        // Tasks with non-archived projects
+        {
+          project: {
+            archived: false
+          }
+        }
+      ]
+    } : {
+      ...baseFilters,
+      OR: [
+        // Tasks with projects where user is a team member and project is not archived
+        {
+          project: {
+            archived: false,
+            team: {
+              members: {
+                some: {
+                  id: session.user.id
                 }
               }
             }
-          },
-          // Tasks without projects created by the user
-          {
-            projectId: undefined,
-            createdById: session.user.id
-          },
-          // Tasks without projects assigned to the user
-          {
-            projectId: undefined,
-            assigneeId: session.user.id
           }
-        ]
-      },
+        },
+        // Tasks without projects created by the user
+        {
+          projectId: undefined,
+          createdById: session.user.id
+        },
+        // Tasks without projects assigned to the user
+        {
+          projectId: undefined,
+          assigneeId: session.user.id
+        }
+      ]
+    }
+
+    const tasks = await prisma.task.findMany({
+      where: whereClause,
       include: {
         project: {
           select: {

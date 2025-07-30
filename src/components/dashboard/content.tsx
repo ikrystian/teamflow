@@ -1,33 +1,62 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useSession } from "next-auth/react"
 import { MyTasks } from "./my-tasks"
 import { TasksTable } from "./tasks-table"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { TaskDetailsSheet } from "@/components/tasks/task-details-sheet"
 import type { Task, User, TaskStatus } from "@/types"
+import type { Session } from "next-auth"
 import { usePageHeader } from "@/contexts/header-context"
 
 export function DashboardContent() {
+  const { data: session } = useSession() as { data: Session | null }
   const [tasks, setTasks] = useState<Task[]>([])
   const [users, setUsers] = useState<User[]>([])
   const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
   const [loading, setLoading] = useState(true)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   // Dialog states
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
 
+  // Check if user is admin
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (session?.user) {
+        try {
+          const response = await fetch('/api/user/admin-status')
+          if (response.ok) {
+            const data = await response.json()
+            setIsAdmin(data.isAdmin)
+          }
+        } catch (error) {
+          console.error('Error checking admin status:', error)
+        }
+      }
+    }
+    checkAdminStatus()
+  }, [session])
+
+  const getPageTitle = () => {
+    if (isAdmin) {
+      return "Przegląd wszystkich zadań z całego systemu"
+    }
+    return "Przegląd moich zadań"
+  }
+
   usePageHeader(
     <div className="flex items-center justify-between w-full">
       <div>
         <h1 className="text-2xl font-bold text-foreground">
-          Przegląd wszystkich zadań z całego systemu
+          {getPageTitle()}
         </h1>
       </div>
 
     </div>,
-    [] // Re-render when filter changes
+    [isAdmin] // Re-render when admin status changes
   )
 
   const fetchTasks = useCallback(async () => {

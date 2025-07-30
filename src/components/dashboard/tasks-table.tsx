@@ -156,6 +156,15 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate, onTaskDet
     return task.timeEntries?.reduce((total, entry) => total + entry.hours, 0) || 0
   }
 
+  // Helper functions to count actual tasks (excluding group headers)
+  const getActualTasksCount = (rows: { original: TableRow }[]) => {
+    return rows.filter(row => !('isGroupHeader' in row.original)).length
+  }
+
+  const getSelectedTasksCount = (rows: { original: TableRow }[]) => {
+    return rows.filter(row => !('isGroupHeader' in row.original)).length
+  }
+
   // Create flat data with group headers for single table
   const tableData = useMemo(() => {
     const groups: { [key: string]: Task[] } = {}
@@ -721,9 +730,13 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate, onTaskDet
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: updateColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    enableRowSelection: (row) => {
+      // Disable selection for group headers
+      return !('isGroupHeader' in row.original)
+    },
     initialState: {
       pagination: {
-        pageSize: -1
+        pageSize: 70
       }
     },
     state: {
@@ -903,8 +916,8 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate, onTaskDet
 
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} z{" "}
-          {table.getFilteredRowModel().rows.length} zadań wybranych.
+          {getSelectedTasksCount(table.getFilteredSelectedRowModel().rows)} z{" "}
+          {getActualTasksCount(table.getFilteredRowModel().rows)} zadań zaznaczonych.
         </div>
         <div className="space-x-2">
           <Button
