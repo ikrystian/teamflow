@@ -421,7 +421,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                           )}
                         </div>
                         {task.description && (
-                          <p className="text-sm text-gray-600 mb-2">{task.description}</p>
+                          <div className="text-sm text-gray-600 mb-2" dangerouslySetInnerHTML={{ __html: task.description }} />
                         )}
                         <div className="flex items-center space-x-4 text-xs text-gray-500">
                           {task.assignee && (

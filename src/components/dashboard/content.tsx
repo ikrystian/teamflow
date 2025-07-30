@@ -14,6 +14,7 @@ import { TaskFormSheet } from "@/components/shared/task-form-sheet"
 import { TimeTrackingSheet } from "@/components/tasks/time-tracking-sheet"
 import { usePageHeader } from "@/contexts/header-context"
 import type { Task, User } from "@/types"
+import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
 
 interface DashboardStats {
   myTasks: number
@@ -158,18 +159,7 @@ export function DashboardContent() {
 
   const formatDueDate = (dueDate?: string) => {
     if (!dueDate) return "Brak terminu"
-    const date = new Date(dueDate)
-    const today = new Date()
-    const tomorrow = new Date(today)
-    tomorrow.setDate(tomorrow.getDate() + 1)
-
-    if (date.toDateString() === today.toDateString()) {
-      return "Dzisiaj"
-    } else if (date.toDateString() === tomorrow.toDateString()) {
-      return "Jutro"
-    } else {
-      return date.toLocaleDateString()
-    }
+    return formatTaskDueDateWithRelative(dueDate)
   }
 
   if (loading) {

@@ -45,6 +45,7 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 - **Bezpieczeństwo konta** - Zmiana hasła i zarządzanie aktywnymi sesjami w ustawieniach użytkownika
 - **Zaktualizowany kalendarz** - Najnowsza wersja komponentu Calendar z shadcn/ui z poprawionymi stylami i lepszym układem
 - **Archiwizowanie projektów** - Możliwość archiwizowania projektów z automatycznym ukrywaniem zadań z zarchiwizowanych projektów w dashboard i sekcji zadań
+- **Ulepszone formatowanie dat** - Daty zadań w obecnym roku wyświetlane jako dzień i pełna polska nazwa miesiąca (np. "15 stycznia"), daty z innych lat w pełnym formacie
 
 ### 🔄 Planowane funkcjonalności
 - Zaproszenia do zespołów przez email

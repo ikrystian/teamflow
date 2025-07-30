@@ -38,6 +38,7 @@ import { CSS } from "@dnd-kit/utilities"
 import { TaskDetailsSheet } from "../tasks/task-details-sheet"
 import type { Task, TaskStatus } from "@/types"
 import { toast } from "sonner"
+import { formatTaskDueDate } from "@/lib/date-utils"
 
 interface KanbanBoardProps {
   projectId: string
@@ -185,7 +186,7 @@ function SortableTaskCard({
                   isOverdue(task.dueDate) ? 'text-red-600' : 'text-muted-foreground'
                 }`}>
                   <Calendar className="h-3 w-3" />
-                  {new Date(task.dueDate).toLocaleDateString('pl-PL')}
+                  {formatTaskDueDate(task.dueDate)}
                   {isOverdue(task.dueDate) && <AlertCircle className="h-3 w-3 text-red-600" />}
                 </div>
               )}

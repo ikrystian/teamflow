@@ -17,6 +17,7 @@ import {
   Timer
 } from "lucide-react"
 import type { Task } from "@/types"
+import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
 
 interface TaskStatus {
   id: string
@@ -102,20 +103,7 @@ export function TaskPopover({
     return new Date(dueDate) < new Date()
   }
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    const today = new Date()
-    const tomorrow = new Date(today)
-    tomorrow.setDate(tomorrow.getDate() + 1)
 
-    if (date.toDateString() === today.toDateString()) {
-      return "Dzisiaj"
-    } else if (date.toDateString() === tomorrow.toDateString()) {
-      return "Jutro"
-    } else {
-      return date.toLocaleDateString()
-    }
-  }
 
   const totalLoggedHours = task.timeEntries?.reduce((sum, entry) => sum + entry.hours, 0) || 0
   const completedSubtasks = task.subtasks?.filter(subtask => subtask.isCompleted).length || 0
@@ -220,7 +208,7 @@ export function TaskPopover({
                 }`}>
                   {isOverdue(task.dueDate) && <AlertCircle className="h-3 w-3" />}
                   <span className="font-medium">
-                    {formatDate(task.dueDate)}
+                    {formatTaskDueDateWithRelative(task.dueDate)}
                   </span>
                 </div>
               </div>

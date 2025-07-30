@@ -386,3 +386,51 @@ REZULTAT:
 - Wszystkie kolory statusów zadań pochodzą teraz z bazy danych
 - Brak hardcoded kolorów w komponentach
 - Spójna kolorystyka statusów w całej aplikacji
+
+=== ULEPSZONE FORMATOWANIE DAT ZADAŃ ===
+
+Data: 2025-01-30
+Cel: Zmiana formatowania dat zadań - w obecnym roku wyświetlanie dnia i pełnej polskiej nazwy miesiąca
+
+FUNKCJONALNOŚĆ:
+1. Daty w obecnym roku: "15 stycznia", "3 marca"
+2. Daty z innych lat: pełny format "15.01.2024"
+3. Zachowanie względnych opisów: "Dzisiaj", "Jutro"
+
+NOWE PLIKI:
+- src/lib/date-utils.ts: wspólne funkcje formatowania dat
+  * formatTaskDueDate() - podstawowe formatowanie
+  * formatTaskDueDateWithRelative() - z względnymi opisami
+
+ZAKTUALIZOWANE KOMPONENTY:
+- src/components/tasks/tasks-kanban-board.tsx
+- src/components/tasks/task-details-dialog.tsx
+- src/components/tasks/task-details-sheet.tsx
+- src/components/tasks/task-popover.tsx
+- src/components/dashboard/content.tsx
+- src/components/calendar/calendar-content.tsx
+- src/components/tasks/tasks-content.tsx (formatDateForCalendarView)
+- src/components/projects/kanban-board.tsx
+
+ZMIANY:
+- Usunięto lokalne funkcje formatDate() z komponentów
+- Zastąpiono importami z src/lib/date-utils.ts
+- Zachowano specjalną logikę dla widoku kalendarza w tasks-content.tsx
+- Wszystkie daty zadań używają teraz spójnego formatowania
+
+LOGIKA FORMATOWANIA:
+1. formatTaskDueDate(dateString):
+   - Sprawdza czy data jest w obecnym roku
+   - Jeśli tak: formatuje jako "dzień miesiąc" (np. "15 stycznia")
+   - Jeśli nie: formatuje jako pełną datę (np. "15.01.2024")
+
+2. formatTaskDueDateWithRelative(dateString):
+   - Sprawdza czy data to dzisiaj → "Dzisiaj"
+   - Sprawdza czy data to jutro → "Jutro"
+   - W przeciwnym razie używa formatTaskDueDate()
+
+REZULTAT:
+- Spójne formatowanie dat we wszystkich komponentach
+- Lepsze UX - krótsze daty dla obecnego roku
+- Zachowane względne opisy dla najbliższych dat
+- Centralne zarządzanie logiką formatowania dat

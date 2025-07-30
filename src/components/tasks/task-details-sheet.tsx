@@ -28,6 +28,7 @@ import { ImageGallery } from "@/components/ui/image-gallery"
 import { TaskComments } from "@/components/tasks/task-comments"
 import { TaskTodos } from "@/components/tasks/task-todos"
 import type { Task, Todo } from "@/types"
+import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
 
 interface TaskStatus {
   id: string
@@ -151,20 +152,7 @@ export function TaskDetailsSheet({
     return new Date(dueDate) < new Date()
   }
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    const today = new Date()
-    const tomorrow = new Date(today)
-    tomorrow.setDate(tomorrow.getDate() + 1)
 
-    if (date.toDateString() === today.toDateString()) {
-      return "Dzisiaj"
-    } else if (date.toDateString() === tomorrow.toDateString()) {
-      return "Jutro"
-    } else {
-      return date.toLocaleDateString()
-    }
-  }
 
   const totalLoggedHours = task.timeEntries?.reduce((sum, entry) => sum + entry.hours, 0) || 0
   const completedSubtasks = task.subtasks.filter(subtask => subtask.isCompleted).length
@@ -368,7 +356,7 @@ export function TaskDetailsSheet({
                         }`}>
                           {isOverdue(task.dueDate) && <AlertCircle className="h-4 w-4" />}
                           <span className="font-medium">
-                            {formatDate(task.dueDate)}
+                            {formatTaskDueDateWithRelative(task.dueDate)}
                           </span>
                         </div>
                       ) : (
@@ -403,7 +391,7 @@ export function TaskDetailsSheet({
                         Data utworzenia
                       </div>
                       <span className="font-medium">
-                        {formatDate(task.createdAt)}
+                        {formatTaskDueDateWithRelative(task.createdAt)}
                       </span>
                     </div>
                   </div>
@@ -484,7 +472,7 @@ export function TaskDetailsSheet({
                     <div className="flex items-center gap-3 text-sm">
                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                       <span className="text-muted-foreground">
-                        Zadanie utworzone {formatDate(task.createdAt)}
+                        Zadanie utworzone {formatTaskDueDateWithRelative(task.createdAt)}
                       </span>
                     </div>
                     {task.timeEntries && task.timeEntries.length > 0 && (

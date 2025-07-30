@@ -40,6 +40,7 @@ import { TaskDetailsSheet } from "./task-details-sheet"
 import type { Task, TaskStatus } from "@/types"
 import type { Session } from "next-auth"
 import { toast } from "sonner"
+import { formatTaskDueDate } from "@/lib/date-utils"
 
 interface TasksKanbanBoardProps {
   tasks: Task[]
@@ -76,6 +77,8 @@ const getPriorityColor = (priority?: string) => {
       return "bg-muted text-muted-foreground border-border"
   }
 }
+
+
 
 function SortableTaskCard({
   task,
@@ -224,7 +227,7 @@ function SortableTaskCard({
                   isOverdue(task.dueDate) ? 'text-red-600' : 'text-muted-foreground'
                 }`}>
                   <Calendar className="h-3 w-3" />
-                  {new Date(task.dueDate).toLocaleDateString('pl-PL')}
+                  {formatTaskDueDate(task.dueDate)}
                   {isOverdue(task.dueDate) && <AlertCircle className="h-3 w-3 text-red-600" />}
                 </div>
               )}

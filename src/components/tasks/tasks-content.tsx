@@ -34,6 +34,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import type { Task, User } from "@/types"
+import { formatTaskDueDate } from "@/lib/date-utils"
 
 interface Project {
   id: string
@@ -337,7 +338,18 @@ export function TasksContent() {
       }
     } else {
       const dayName = date.toLocaleDateString('pl-PL', { weekday: 'short' })
-      const dayMonth = date.toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })
+      const currentYear = new Date().getFullYear()
+      const dateYear = date.getFullYear()
+
+      let dayMonth
+      if (dateYear === currentYear) {
+        // Jeśli data jest w obecnym roku, użyj nowego formatowania
+        dayMonth = formatTaskDueDate(dueDate)
+      } else {
+        // Jeśli data jest w innym roku, użyj krótkiego formatu
+        dayMonth = date.toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })
+      }
+
       return {
         primary: dayName,
         secondary: dayMonth
