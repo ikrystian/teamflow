@@ -859,6 +859,16 @@ Projekt jest otwarty na współpracę. Aby dodać nowe funkcjonalności:
 - **Responsywność**: Wbudowana obsługa mobile z tooltipami i collapsible behavior
 - **Layout**: Flex-based layout z `SidebarProvider` dla lepszej kontroli stanu
 - **TopBarUser**: Przeniesiony do `SidebarHeader` dla lepszej organizacji
+
+### Migracja z dialogów na panele boczne (Sheet) - styl Asana
+- **TaskDetailsSheet**: Zastąpił TaskDetailsDialog - panel 800px z prawej strony
+- **TaskFormSheet**: Zastąpił TaskFormDialog - panel 600px dla tworzenia/edycji zadań
+- **TimeTrackingSheet**: Zastąpił TimeTrackingDialog - panel 600px do logowania czasu
+- **CreateProjectSheet**: Zastąpił CreateProjectDialog - panel 500px do tworzenia projektów
+- **Lepsze UX**: Panele nie blokują całego ekranu, podobnie jak w Asana.com
+- **Więcej miejsca**: Szersze panele pozwalają na lepsze wyświetlanie treści
+- **Responsywność**: Automatyczna obsługa mobile przez shadcn/ui Sheet
+- **Animacje**: Płynne wysuwanie z prawej strony z overlay
 - **Styling**: Automatyczne active states z `data-[active=true]` attributes
 - **Avatar Fix**: Naprawiono wyświetlanie avatara w menu użytkownika - teraz używa `avatarUrl` z bazy danych
 - **Wielokrotne dane dostępowe**: Rozszerzono system do obsługi wielu rekordów z możliwością dodawania, edycji i usuwania

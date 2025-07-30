@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
-import { TaskDetailsDialog } from "@/components/tasks/task-details-dialog"
+import { TaskDetailsSheet } from "@/components/tasks/task-details-sheet"
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react"
 
 interface Task {
@@ -313,9 +313,9 @@ export function CalendarContent() {
         </main>
       </div>
 
-      {/* Task Details Dialog */}
+      {/* Task Details Sheet */}
       {selectedTask && (
-        <TaskDetailsDialog
+        <TaskDetailsSheet
           task={selectedTask as Task}
           open={taskDetailsDialogOpen}
           onOpenChange={setTaskDetailsDialogOpen}

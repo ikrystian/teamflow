@@ -51,16 +51,52 @@
 - **Dodano**: Obsługę empty state gdy brak zadań
 - **Przekazywane props**: tasks, projects, funkcje obsługi zdarzeń
 
-### Wykorzystywane istniejące komponenty:
-- TaskDetailsDialog - szczegóły zadania
-- TaskFormDialog - zunifikowany komponent do tworzenia i edycji zadań (zastąpił CreateTaskDialog i EditTaskDialog)
-- TimeTrackingDialog - logowanie czasu (przez TasksContent)
+### Wykorzystywane komponenty (zaktualizowane na Sheet):
+- TaskDetailsSheet - szczegóły zadania (panel boczny)
+- TaskFormSheet - zunifikowany komponent do tworzenia i edycji zadań (zastąpił TaskFormDialog)
+- TimeTrackingSheet - logowanie czasu (panel boczny)
 
-## Zunifikowany komponent TaskFormDialog
+## Zunifikowany komponent TaskFormSheet (poprzednio TaskFormDialog)
 
-### Lokalizacja: src/components/shared/task-form-dialog.tsx
+### Lokalizacja: src/components/shared/task-form-sheet.tsx
 
 **Cel:** Zastąpienie 4 różnych komponentów (CreateTaskDialog i EditTaskDialog w różnych lokalizacjach) jednym zunifikowanym komponentem.
+
+## Migracja z dialogów na panele boczne (Sheet):
+Zamiana wszystkich dialogów na panele boczne wysuwane z prawej strony, podobnie jak w Asana:
+
+### Utworzone nowe komponenty Sheet:
+- **TaskDetailsSheet** (src/components/tasks/task-details-sheet.tsx) - zastąpił TaskDetailsDialog
+  - Panel boczny 800px szerokości
+  - Wszystkie funkcjonalności z oryginalnego dialogu
+  - Lepsze wykorzystanie przestrzeni ekranu
+
+- **TaskFormSheet** (src/components/shared/task-form-sheet.tsx) - zastąpił TaskFormDialog
+  - Panel boczny 600px szerokości
+  - Tryby create/edit zachowane
+  - Formularz z przewijaniem dla długich treści
+
+- **TimeTrackingSheet** (src/components/tasks/time-tracking-sheet.tsx) - zastąpił TimeTrackingDialog
+  - Panel boczny 600px szerokości
+  - Lista wpisów czasu z możliwością usuwania
+  - Pasek postępu dla szacowanego czasu
+
+- **CreateProjectSheet** (src/components/projects/create-project-sheet.tsx) - zastąpił CreateProjectDialog
+  - Panel boczny 500px szerokości
+  - Formularz tworzenia projektu z selekcją kolorów i obrazów
+
+### Zaktualizowane komponenty:
+- **TasksContent** - używa nowych Sheet komponentów
+- **ProjectDetailsContent** - używa nowych Sheet komponentów
+- **DashboardContent** - używa nowych Sheet komponentów
+- **ProjectsContent** - używa CreateProjectSheet
+
+### Korzyści z migracji:
+1. **Lepsze UX** - panele nie blokują całego ekranu
+2. **Więcej miejsca** - szersze panele pozwalają na lepsze wyświetlanie treści
+3. **Spójność z Asana** - podobny interfejs do znanego narzędzia
+4. **Responsywność** - shadcn/ui Sheet automatycznie obsługuje mobile
+5. **Animacje** - płynne wysuwanie z prawej strony
 
 **Funkcjonalności:**
 - Tryb tworzenia zadań (mode="create")

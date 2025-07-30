@@ -23,10 +23,10 @@ import {
   Info
 } from "lucide-react"
 import Link from "next/link"
-import { TaskFormDialog } from "../shared/task-form-dialog"
+import { TaskFormSheet } from "../shared/task-form-sheet"
 import { KanbanBoard } from "./kanban-board"
-import { TaskDetailsDialog } from "../tasks/task-details-dialog"
-import { TimeTrackingDialog } from "../tasks/time-tracking-dialog"
+import { TaskDetailsSheet } from "../tasks/task-details-sheet"
+import { TimeTrackingSheet } from "../tasks/time-tracking-sheet"
 import { TaskBoardFilters } from "./task-board-filters"
 import {
   AlertDialog,
@@ -506,7 +506,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         </div>
       )}
 
-      <TaskFormDialog
+      <TaskFormSheet
         mode="create"
         open={createTaskDialogOpen}
         onOpenChange={setCreateTaskDialogOpen}
@@ -515,7 +515,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         teamMembers={project.team.members}
       />
 
-      <TaskDetailsDialog
+      <TaskDetailsSheet
         open={taskDetailsDialogOpen}
         onOpenChange={setTaskDetailsDialogOpen}
         task={transformTaskForDialog(selectedTask)}
@@ -526,7 +526,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         canEdit={selectedTask ? canEditTask() : false}
       />
 
-      <TaskFormDialog
+      <TaskFormSheet
         mode="edit"
         open={editTaskDialogOpen}
         onOpenChange={setEditTaskDialogOpen}
@@ -535,7 +535,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         teamMembers={project.team.members}
       />
 
-      <TimeTrackingDialog
+      <TimeTrackingSheet
         open={timeTrackingDialogOpen}
         onOpenChange={setTimeTrackingDialogOpen}
         onTimeLogged={handleTaskUpdated}

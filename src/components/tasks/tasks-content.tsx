@@ -10,9 +10,9 @@ import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, CheckSquare, Calendar, User as UserIcon, Filter, Edit, Clock, MoreHorizontal, Trash2, LayoutGrid, List } from "lucide-react"
-import { TaskFormDialog } from "../shared/task-form-dialog"
-import { TimeTrackingDialog } from "./time-tracking-dialog"
-import { TaskDetailsDialog } from "./task-details-dialog"
+import { TaskFormSheet } from "../shared/task-form-sheet"
+import { TimeTrackingSheet } from "./time-tracking-sheet"
+import { TaskDetailsSheet } from "./task-details-sheet"
 import { TasksKanbanBoard } from "./tasks-kanban-board"
 import { TasksWeeklyCalendar } from "./tasks-weekly-calendar"
 import {
@@ -563,8 +563,8 @@ export function TasksContent() {
         </TabsContent>
       </Tabs>
 
-      {/* Dialogs */}
-      <TaskFormDialog
+      {/* Sheets */}
+      <TaskFormSheet
         mode="create"
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
@@ -572,7 +572,7 @@ export function TasksContent() {
         projects={projects}
       />
 
-      <TaskFormDialog
+      <TaskFormSheet
         mode="edit"
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
@@ -581,14 +581,14 @@ export function TasksContent() {
         teamMembers={teamMembers}
       />
 
-      <TimeTrackingDialog
+      <TimeTrackingSheet
         open={timeTrackingDialogOpen}
         onOpenChange={setTimeTrackingDialogOpen}
         onTimeLogged={handleTimeLogged}
         task={selectedTask}
       />
 
-      <TaskDetailsDialog
+      <TaskDetailsSheet
         open={detailsDialogOpen}
         onOpenChange={setDetailsDialogOpen}
         task={selectedTask as Task | null}

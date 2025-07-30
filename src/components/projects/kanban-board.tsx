@@ -35,7 +35,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { TaskDetailsDialog } from "../tasks/task-details-dialog"
+import { TaskDetailsSheet } from "../tasks/task-details-sheet"
 import type { Task, TaskStatus } from "@/types"
 import { toast } from "sonner"
 
@@ -610,7 +610,7 @@ export function KanbanBoard({
         </DragOverlay>
       </DndContext>
 
-      <TaskDetailsDialog
+      <TaskDetailsSheet
         open={taskDetailsDialogOpen}
         onOpenChange={setTaskDetailsDialogOpen}
         task={selectedTask}

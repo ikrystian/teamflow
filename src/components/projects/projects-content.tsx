@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { Plus, FolderOpen, Calendar, Users, ImageIcon, Edit, MoreVertical, Archive, ArchiveX } from "lucide-react"
-import { CreateProjectDialog } from "./create-project-dialog"
+import { CreateProjectSheet } from "./create-project-sheet"
 import { EditProjectDialog } from "./edit-project-dialog"
 import {
   DropdownMenu,
@@ -381,7 +381,7 @@ export function ProjectsContent() {
         </div>
       )}
 
-      <CreateProjectDialog
+      <CreateProjectSheet
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onProjectCreated={handleProjectCreated}

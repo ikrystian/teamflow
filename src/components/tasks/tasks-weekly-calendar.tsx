@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, User } from "lucide-react"
-import { TaskDetailsDialog } from "./task-details-dialog"
+import { TaskDetailsSheet } from "./task-details-sheet"
 import type { Task, TaskStatus } from "@/types"
 
 interface TasksWeeklyCalendarProps {
@@ -242,9 +242,9 @@ export function TasksWeeklyCalendar({ tasks, onTaskUpdated }: TasksWeeklyCalenda
         </CardContent>
       </Card>
 
-      {/* Dialog szczegółów zadania */}
+      {/* Sheet szczegółów zadania */}
       {selectedTask && (
-        <TaskDetailsDialog
+        <TaskDetailsSheet
           task={selectedTask}
           open={taskDetailsDialogOpen}
           onOpenChange={setTaskDetailsDialogOpen}

@@ -9,9 +9,9 @@ import { Badge } from "@/components/ui/badge"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { Plus, Users, FolderOpen, CheckSquare, Calendar } from "lucide-react"
 import Link from "next/link"
-import { TaskDetailsDialog } from "@/components/tasks/task-details-dialog"
-import { TaskFormDialog } from "@/components/shared/task-form-dialog"
-import { TimeTrackingDialog } from "@/components/tasks/time-tracking-dialog"
+import { TaskDetailsSheet } from "@/components/tasks/task-details-sheet"
+import { TaskFormSheet } from "@/components/shared/task-form-sheet"
+import { TimeTrackingSheet } from "@/components/tasks/time-tracking-sheet"
 import type { Task, User } from "@/types"
 
 interface DashboardStats {
@@ -350,8 +350,8 @@ export function DashboardContent() {
     </main>
     </div>
 
-    {/* Task Details Dialog */}
-    <TaskDetailsDialog
+    {/* Task Details Sheet */}
+    <TaskDetailsSheet
       open={taskDetailsDialogOpen}
       onOpenChange={setTaskDetailsDialogOpen}
       task={selectedTask as Task}
@@ -360,8 +360,8 @@ export function DashboardContent() {
       canEdit={selectedTask ? canEditTask(selectedTask) : false}
     />
 
-    {/* Edit Task Dialog */}
-    <TaskFormDialog
+    {/* Edit Task Sheet */}
+    <TaskFormSheet
       mode="edit"
       open={editTaskDialogOpen}
       onOpenChange={setEditTaskDialogOpen}
@@ -370,8 +370,8 @@ export function DashboardContent() {
       teamMembers={teamMembers}
     />
 
-    {/* Time Tracking Dialog */}
-    <TimeTrackingDialog
+    {/* Time Tracking Sheet */}
+    <TimeTrackingSheet
       open={timeTrackingDialogOpen}
       onOpenChange={setTimeTrackingDialogOpen}
       task={selectedTask as Task}

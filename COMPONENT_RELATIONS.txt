@@ -49,7 +49,7 @@ RELACJE MIĘDZY KOMPONENTAMI TABLICY ZADAŃ
 - @dnd-kit/core - drag & drop
 - @dnd-kit/sortable - sortowanie
 - shadcn/ui komponenty (Card, Badge, Button, etc.)
-- TaskDetailsDialog - szczegóły zadania
+- TaskDetailsSheet - szczegóły zadania (panel boczny)
 - ClickableAvatar - awatary użytkowników
 
 ## Korzyści z unifikacji:
