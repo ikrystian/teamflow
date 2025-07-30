@@ -111,14 +111,14 @@ export function QuickAddTaskCalendar({
   }
 
   return (
-    <Card className="mb-2">
+    <Card className="mb-2 p-0">
       <CardContent className="p-2">
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="flex items-center gap-2">
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Wpisz nazwę zadania..."
-            className="mb-2 text-xs h-7"
+            className="text-xs h-7"
             autoFocus
             disabled={loading}
           />
@@ -149,8 +149,7 @@ export function QuickAddTaskCalendar({
               type="submit"
               size="sm"
               disabled={!title.trim() || (!hideProjectSelect && !selectedProjectId) || loading}
-              className="h-6 px-2"
-            >
+              className="w-6 h-6"            >
               <Check className="h-3 w-3" />
             </Button>
             <Button
@@ -159,8 +158,7 @@ export function QuickAddTaskCalendar({
               size="sm"
               onClick={handleCancel}
               disabled={loading}
-              className="h-6 px-2"
-            >
+              className="w-6 h-6"            >
               <X className="h-3 w-3" />
             </Button>
           </div>

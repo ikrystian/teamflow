@@ -101,7 +101,7 @@ export function TaskTodos({ taskId, todos: initialTodos, onTodosChange }: TaskTo
           </div>
         ))}
       </div>
-      <div className="mt-4 flex items-center space-x-2">
+      <div className="flex items-center space-x-2 p-2">
         <Input
           placeholder="Dodaj nowy element..."
           value={newTodoTitle}

@@ -64,6 +64,7 @@ export function DashboardContent() {
     const fetchData = async () => {
       await Promise.all([fetchTasks(), fetchUsers(), fetchTaskStatuses()])
       setLoading(false)
+
     }
     fetchData()
   }, [fetchTasks])
@@ -82,7 +83,12 @@ export function DashboardContent() {
         // Refresh tasks after update
         await fetchTasks()
       } else {
-        console.error("Failed to update task")
+        const errorData = await response.text()
+        console.error("Failed to update task:", {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData
+        })
       }
     } catch (error) {
       console.error("Error updating task:", error)

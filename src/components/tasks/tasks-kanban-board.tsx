@@ -395,6 +395,7 @@ function QuickAddTask({
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Wpisz nazwę zadania..."
             autoFocus
+            className="text-xs h-7"
             disabled={loading}
           />
           {!hideProjectSelect && projects.length > 0 && (
@@ -421,6 +422,7 @@ function QuickAddTask({
           )}
           <div className="flex gap-2 items-center">
             <Button
+              className="w-6 h-6"
               type="submit"
               size="sm"
               disabled={!title.trim() || !selectedProjectId || loading}
@@ -429,6 +431,7 @@ function QuickAddTask({
             </Button>
             <Button
               type="button"
+               className="w-6 h-6"
               variant="ghost"
               size="sm"
               onClick={handleCancel}

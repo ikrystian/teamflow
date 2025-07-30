@@ -687,6 +687,11 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: updateColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    initialState: {
+      pagination: {
+        pageSize: -1
+      }
+    },
     state: {
       sorting,
       columnFilters,

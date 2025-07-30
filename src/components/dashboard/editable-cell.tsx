@@ -203,9 +203,9 @@ export function EditableCell({
       case "priority":
         return (
           <Select
-            value={String(editValue || "")}
+            value={String(editValue || "none")}
             onValueChange={(value) => {
-              const finalValue = value === "" ? "" : value
+              const finalValue = value === "none" ? "" : value
               setEditValue(finalValue)
               onSave(finalValue)
               setIsEditing(false)
@@ -215,7 +215,7 @@ export function EditableCell({
               <SelectValue placeholder="Wybierz priorytet" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Brak priorytetu</SelectItem>
+              <SelectItem value="none">Brak priorytetu</SelectItem>
               {getPriorityOptions().map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   <div className="flex items-center gap-2">

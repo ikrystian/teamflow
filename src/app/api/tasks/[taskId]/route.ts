@@ -159,29 +159,46 @@ export async function PATCH(
     const { title, description, statusId, priority, dueDate, assigneeId, estimatedHours } = await request.json()
 
     // Fetch task to check permissions
-    const existingTask = await prisma.task.findFirst({
+    const existingTask = await prisma.task.findUnique({
       where: {
-        id: taskId,
+        id: taskId
+      },
+      include: {
+        createdBy: true,
+        assignee: true,
         project: {
-          team: {
-            members: {
-              some: {
-                id: session.user.id
+          include: {
+            team: {
+              include: {
+                members: true
               }
             }
           }
         }
-      },
-      include: {
-        createdBy: true,
-        assignee: true
       }
     })
 
     if (!existingTask) {
       return NextResponse.json(
-        { error: "Task not found or access denied" },
+        { error: "Task not found" },
         { status: 404 }
+      )
+    }
+
+    // Check permissions:
+    // 1. If task has a project, user must be a team member
+    // 2. User must be either the creator or assignee of the task
+    let hasProjectAccess = true
+    if (existingTask.project) {
+      hasProjectAccess = existingTask.project.team.members.some(
+        member => member.id === session.user.id
+      )
+    }
+
+    if (!hasProjectAccess) {
+      return NextResponse.json(
+        { error: "Access denied - you are not a member of the project team" },
+        { status: 403 }
       )
     }
 
