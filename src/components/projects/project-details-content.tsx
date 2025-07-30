@@ -40,6 +40,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { type Task } from "@/types"
+import { formatTaskDueDate } from "@/lib/date-utils"
 
 interface ProjectDetails {
   id: string
@@ -438,13 +439,15 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                           {task.dueDate && (
                             <div className="flex items-center space-x-1">
                               <Calendar className="h-3 w-3" />
-                              <span>Termin {new Date(task.dueDate).toLocaleDateString()}</span>
+                              <span>Termin {formatTaskDueDate(task.dueDate)}</span>
                             </div>
                           )}
-                          <div className="flex items-center space-x-1">
-                            <CheckCircle className="h-3 w-3" />
-                            <span>{task.subtasks.filter((st: { isCompleted: boolean }) => st.isCompleted).length}/{task.subtasks.length} podzadań</span>
-                          </div>
+                          {task.subtasks.length > 0 && (
+                            <div className="flex items-center space-x-1">
+                              <CheckCircle className="h-3 w-3" />
+                              <span>{task.subtasks.filter((st: { isCompleted: boolean }) => st.isCompleted).length}/{task.subtasks.length} podzadań</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
