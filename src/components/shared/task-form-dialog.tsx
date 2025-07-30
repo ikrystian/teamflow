@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dialog"
 import { Upload, X } from "lucide-react"
 import { DatePicker } from "@/components/ui/date-picker"
+import { dateToLocalDateString } from "@/lib/date-utils"
 import type { Task, User, TaskStatus, TaskImage } from "@/types"
 
 interface Project {
@@ -530,7 +531,7 @@ export function TaskFormDialog({
                 <Label htmlFor="dueDate" className="text-sm font-medium">Termin wykonania</Label>
                 <DatePicker
                   value={dueDate ? new Date(dueDate) : undefined}
-                  onChange={(date) => setDueDate(date ? date.toISOString().split('T')[0] : '')}
+                  onChange={(date) => setDueDate(date ? dateToLocalDateString(date) : '')}
                   className="rounded-lg border shadow-sm"
                 />
               </div>

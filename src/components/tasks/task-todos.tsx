@@ -80,9 +80,9 @@ export function TaskTodos({ taskId, todos: initialTodos, onTodosChange }: TaskTo
         </span>
       </div>
       <Progress value={todoProgress} className="mb-3" />
-      <div className="space-y-2">
+      <div className="space-y-2 ">
         {todos.map(todo => (
-          <div key={todo.id} className="flex items-center space-x-2">
+          <div key={todo.id} className="flex items-center space-x-2 px-2">
             <Checkbox
               id={`todo-${todo.id}`}
               checked={todo.isCompleted}
@@ -90,7 +90,7 @@ export function TaskTodos({ taskId, todos: initialTodos, onTodosChange }: TaskTo
             />
             <label
               htmlFor={`todo-${todo.id}`}
-              className={`flex-1 text-sm ${todo.isCompleted ? "line-through text-gray-500" : "text-gray-900"
+              className={`flex-1 text-sm cursor-pointer ${todo.isCompleted ? "line-through text-gray-500" : "text-gray-900"
                 }`}
             >
               {todo.title}

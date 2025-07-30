@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { getPriorityColor, getPriorityDisplayName, getPriorityOptions } from "@/lib/task-utils"
-import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
+import { formatTaskDueDateWithRelative, dateToLocalDateString } from "@/lib/date-utils"
 import type { User, TaskStatus } from "@/types"
 import { UserPlus } from "lucide-react"
 
@@ -177,7 +177,7 @@ export function EditableCell({
           <DatePicker
             value={editValue ? new Date(editValue) : undefined}
             onChange={(date) => {
-              const dateValue = date ? date.toISOString().split('T')[0] : ""
+              const dateValue = date ? dateToLocalDateString(date) : ""
               setEditValue(dateValue)
               onSave(dateValue)
               setIsEditing(false)

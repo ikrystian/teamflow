@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/sheet"
 import { Upload, X } from "lucide-react"
 import { DatePicker } from "@/components/ui/date-picker"
+import { dateToLocalDateString } from "@/lib/date-utils"
 import type { Task, User, TaskStatus, TaskImage } from "@/types"
 
 // Extended User type with teams information
@@ -478,7 +479,7 @@ export function TaskFormSheet({
             <Label htmlFor="dueDate">Termin wykonania</Label>
             <DatePicker
               value={dueDate ? new Date(dueDate) : undefined}
-              onChange={(date) => setDueDate(date ? date.toISOString().split('T')[0] : "")}
+              onChange={(date) => setDueDate(date ? dateToLocalDateString(date) : "")}
               className="rounded-md border shadow-sm"
             />
           </div>

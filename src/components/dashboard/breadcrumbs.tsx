@@ -135,8 +135,10 @@ export function DashboardBreadcrumbs() {
           label = 'Informacje'
           break
         default:
+
+        console.log(segment)
           // Check if it's a dynamic segment (UUID-like)
-          if (segment.length > 10 && segment.includes('-')) {
+          if (segment.length > 10) {
             // Try to find the name for this ID
             const project = projects.find(p => p.id === segment)
             if (project) {
