@@ -37,7 +37,7 @@ export function usePageHeader(content: ReactNode, deps: React.DependencyList = [
   const { setHeaderContent } = useHeader()
 
   // Memoize content to prevent unnecessary re-renders
-  const memoizedContent = useMemo(() => content, deps)
+  const memoizedContent = useMemo(() => content, [content, ...deps])
 
   useEffect(() => {
     setHeaderContent(memoizedContent)

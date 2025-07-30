@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react"
 import { TasksTable } from "./tasks-table"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import type { Task, User, TaskStatus } from "@/types"
 import { usePageHeader } from "@/contexts/header-context"
 

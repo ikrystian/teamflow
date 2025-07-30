@@ -1,22 +1,16 @@
 "use client"
 
 import * as React from "react"
-import { ChevronsUpDown, Plus, Zap } from "lucide-react"
+import {  Zap } from "lucide-react"
 
 import {
   DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/components/ui/sidebar"
 
 interface Team {
@@ -29,9 +23,8 @@ interface TeamSwitcherProps {
   teams: Team[]
 }
 
-export function TeamSwitcher({ teams }: TeamSwitcherProps) {
-  const { isMobile, state } = useSidebar()
-  const [activeTeam, setActiveTeam] = React.useState<Team>({
+export function TeamSwitcher({  }: TeamSwitcherProps) {
+  const [activeTeam] = React.useState<Team>({
     name: "Nexus",
     logo: Zap,
     plan: "Pro"

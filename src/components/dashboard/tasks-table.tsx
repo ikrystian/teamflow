@@ -1,11 +1,10 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useCallback } from "react"
 import {
   ColumnDef,
   ColumnFiltersState,
   SortingState,
-  VisibilityState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
@@ -39,8 +38,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { EditableCell } from "./editable-cell"
 import { ColumnOrderDialog } from "./column-order-dialog"
-import { getPriorityColor, getPriorityDisplayName, getTaskStatus, isTaskOverdue, isTaskBlocked } from "@/lib/task-utils"
-import { formatTaskDueDateWithRelative, formatCreatedDate } from "@/lib/date-utils"
+import { getTaskStatus, isTaskOverdue, isTaskBlocked } from "@/lib/task-utils"
+import { formatCreatedDate } from "@/lib/date-utils"
 import { useTasksTablePreferences } from "@/hooks/use-tasks-table-preferences"
 import type { Task, User, TaskStatus } from "@/types"
 import Link from "next/link"
@@ -69,7 +68,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
   const { columnVisibility, columnOrder, updateColumnVisibility, updateColumnOrder, isLoaded } = useTasksTablePreferences()
 
   // Funkcja do sortowania kolumn według zapisanej kolejności
-  const sortColumnsByOrder = (columns: ColumnDef<TableRow>[]) => {
+  const sortColumnsByOrder = useCallback((columns: ColumnDef<TableRow>[]) => {
     return columns.sort((a, b) => {
       // Używamy id kolumny zamiast accessorKey
       const aKey = (a as ColumnDef<TableRow> & { accessorKey?: string; id?: string }).accessorKey ||
@@ -87,7 +86,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
 
       return aIndex - bIndex
     })
-  }
+  }, [columnOrder])
 
   // Function to toggle group collapse state
   const toggleGroupCollapse = (statusName: string) => {
@@ -675,7 +674,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
   ]
 
   // Sortuj kolumny według zapisanej kolejności
-  const sortedColumns = useMemo(() => sortColumnsByOrder(columns), [columns, columnOrder])
+  const sortedColumns = useMemo(() => sortColumnsByOrder(columns), [columns, sortColumnsByOrder])
 
   const table = useReactTable({
     data: tableData,

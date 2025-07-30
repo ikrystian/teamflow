@@ -5,7 +5,7 @@ import { useState } from "react"
 import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { MessageSquare, Send, MoreHorizontal, Trash2 } from "lucide-react"
+import { Send, MoreHorizontal, Trash2 } from "lucide-react"
 import { useSession } from "next-auth/react"
 import {
   DropdownMenu,
