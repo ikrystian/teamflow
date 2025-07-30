@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { TopBarUser } from "@/components/dashboard/top-bar-user"
+
 import {
   Home,
   Users,
@@ -15,6 +15,7 @@ import {
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
@@ -26,6 +27,7 @@ import {
   SidebarMenuSubItem,
   SidebarProvider,
 } from "@/components/ui/sidebar"
+import { NavUser } from "@/components/dashboard/nav-user"
 
 interface Project {
   id: string
@@ -85,9 +87,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <SidebarHeader className="border-b">
             <div className="flex h-16 items-center px-4">
               <h1 className="text-xl font-bold text-foreground">TeamFlow</h1>
-              <div className="ml-auto">
-                <TopBarUser />
-              </div>
             </div>
           </SidebarHeader>
           <SidebarContent>
@@ -147,6 +146,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>
+          <SidebarFooter>
+            <NavUser />
+          </SidebarFooter>
         </Sidebar>
 
         {/* Main content */}

@@ -25,6 +25,8 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 - **Dashboard** - Przegląd statystyk i ostatnich aktywności
 - **Widok kalendarza** - Wyświetlanie zadań według terminów wykonania
 - **Kalendarz tygodniowy** - Widok kalendarza na tydzień roboczy (Pn-Pt) z zadaniami w zakładce Kalendarz w sekcji Zadania
+- **Popover szczegółów zadań** - Hover na zadaniach w kalendarzach pokazuje popover ze szczegółami zadania (tytuł, projekt, priorytet, status, opis, assignee, termin, postęp)
+- **Footer w sidebarze** - Dodano footer w sidebarze z informacjami o użytkowniku (avatar, nazwa, email) i menu kontekstowym (profil, ustawienia, wylogowanie)
 - **Dark mode** - Tryb ciemny jako domyślny z możliwością przełączania (jasny/ciemny/systemowy)
 - **Mono theme** - Monochromatyczny motyw z wykorzystaniem najnowszej wersji shadcn/ui
 - **Responsywny interfejs** - Zbudowany z shadcn/ui i Tailwind CSS

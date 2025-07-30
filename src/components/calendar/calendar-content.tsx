@@ -6,81 +6,9 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { TaskDetailsSheet } from "@/components/tasks/task-details-sheet"
+import { TaskPopover } from "@/components/tasks/task-popover"
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react"
-
-interface Task {
-  id: string
-  title: string
-  description?: string
-  statusId?: string
-  priority?: string
-  dueDate: string
-  estimatedHours?: number
-  createdAt: string
-  updatedAt: string
-  project: {
-    id: string
-    name: string
-    team: {
-      id: string
-      name: string
-      members: Array<{
-        id: string
-        name: string
-        email: string
-        avatarUrl?: string
-      }>
-    }
-  }
-  assignee?: {
-    id: string
-    name: string
-    email: string
-    avatarUrl?: string
-  }
-  createdBy?: {
-    id: string
-    name: string
-    email: string
-    avatarUrl?: string
-  }
-  subtasks: Array<{
-    id: string
-    title: string
-    isCompleted: boolean
-  }>
-  comments: Array<{
-    id: string
-    content: string
-    createdAt: string
-    author: {
-      id: string
-      name: string
-      email: string
-      avatarUrl?: string
-    }
-  }>
-  timeEntries: Array<{
-    id: string
-    hours: number
-    description?: string
-    date: string
-    user: {
-      id: string
-      name: string
-      email: string
-      avatarUrl?: string
-    }
-  }>
-  images: Array<{
-    id: string
-    filename: string
-    url: string
-    mimeType: string
-    size: number
-    createdAt: string
-  }>
-}
+import type { Task } from "@/types"
 
 export function CalendarContent() {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -120,6 +48,7 @@ export function CalendarContent() {
   const getTasksForDate = (date: Date) => {
     const dateString = date.toISOString().split('T')[0]
     return tasks.filter(task => {
+      if (!task.dueDate) return false
       const taskDate = new Date(task.dueDate).toISOString().split('T')[0]
       return taskDate === dateString
     })
@@ -243,13 +172,20 @@ export function CalendarContent() {
                           </div>
                           <div className="space-y-1">
                             {tasksForDay.slice(0, 2).map(task => (
-                              <div
+                              <TaskPopover
                                 key={task.id}
-                                className="text-xs p-1 rounded bg-blue-100 text-blue-800 truncate"
-                                title={`${task?.title} - ${task?.project?.name}`}
+                                task={task}
+                                onTaskClick={handleTaskDetails}
+                                side="bottom"
+                                align="start"
                               >
-                                {task.title}
-                              </div>
+                                <div
+                                  className="text-xs p-1 rounded bg-blue-100 text-blue-800 truncate cursor-pointer hover:bg-blue-200 transition-colors"
+                                  onClick={() => handleTaskDetails(task)}
+                                >
+                                  {task.title}
+                                </div>
+                              </TaskPopover>
                             ))}
                             {tasksForDay.length > 2 && (
                               <div className="text-xs text-gray-500">
@@ -278,7 +214,8 @@ export function CalendarContent() {
                   ) : (
                     <div className="space-y-3">
                       {tasks
-                        .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+                        .filter(task => task.dueDate)
+                        .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
                         .slice(0, 10)
                         .map(task => (
                           <div
@@ -299,7 +236,7 @@ export function CalendarContent() {
                                 </Badge>
                               )}
                               <span className="text-sm text-gray-500">
-                                {new Date(task.dueDate).toLocaleDateString()}
+                                {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'Brak terminu'}
                               </span>
                             </div>
                           </div>

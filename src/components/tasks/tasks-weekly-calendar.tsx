@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, User } from "lucide-react"
 import { TaskDetailsSheet } from "./task-details-sheet"
+import { TaskPopover } from "./task-popover"
 import type { Task, TaskStatus } from "@/types"
 
 interface TasksWeeklyCalendarProps {
@@ -183,49 +184,56 @@ export function TasksWeeklyCalendar({ tasks, onTaskUpdated }: TasksWeeklyCalenda
 
                   <div className="space-y-2">
                     {tasksForDay.map(task => (
-                      <div
+                      <TaskPopover
                         key={task.id}
-                        className={`p-2 rounded-md border cursor-pointer hover:shadow-sm transition-shadow ${
-                          isOverdue(task.dueDate!, task) ? 'bg-red-50 border-red-200' : 'bg-white border-gray-200'
-                        }`}
-                        onClick={() => handleTaskClick(task)}
+                        task={task}
+                        onTaskClick={handleTaskClick}
+                        side="right"
+                        align="start"
                       >
-                        <div className="space-y-1">
-                          <h4 className="text-xs font-medium text-gray-900 line-clamp-2">
-                            {task.title}
-                          </h4>
+                        <div
+                          className={`p-2 rounded-md border cursor-pointer hover:shadow-sm transition-shadow ${
+                            isOverdue(task.dueDate!, task) ? 'bg-red-50 border-red-200' : 'bg-white border-gray-200'
+                          }`}
+                          onClick={() => handleTaskClick(task)}
+                        >
+                          <div className="space-y-1">
+                            <h4 className="text-xs font-medium text-gray-900 line-clamp-2">
+                              {task.title}
+                            </h4>
 
-                          {task.project && (
-                            <p className="text-xs text-gray-500 truncate">
-                              {task.project.name}
-                            </p>
-                          )}
-
-                          <div className="flex items-center justify-between">
-                            {task.priority && (
-                              <Badge variant="outline" className={`text-xs ${getPriorityColor(task.priority)}`}>
-                                {task.priority === "Low" ? "N" : task.priority === "Medium" ? "Ś" : "W"}
-                              </Badge>
+                            {task.project && (
+                              <p className="text-xs text-gray-500 truncate">
+                                {task.project.name}
+                              </p>
                             )}
 
-                            {task.assignee && (
+                            <div className="flex items-center justify-between">
+                              {task.priority && (
+                                <Badge variant="outline" className={`text-xs ${getPriorityColor(task.priority)}`}>
+                                  {task.priority === "Low" ? "N" : task.priority === "Medium" ? "Ś" : "W"}
+                                </Badge>
+                              )}
+
+                              {task.assignee && (
+                                <div className="flex items-center space-x-1">
+                                  <User className="h-3 w-3 text-gray-400" />
+                                  <span className="text-xs text-gray-500 truncate max-w-[60px]">
+                                    {task.assignee.name?.split(' ')[0]}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+
+                            {isOverdue(task.dueDate!, task) && (
                               <div className="flex items-center space-x-1">
-                                <User className="h-3 w-3 text-gray-400" />
-                                <span className="text-xs text-gray-500 truncate max-w-[60px]">
-                                  {task.assignee.name?.split(' ')[0]}
-                                </span>
+                                <Clock className="h-3 w-3 text-red-500" />
+                                <span className="text-xs text-red-600">Przeterminowane</span>
                               </div>
                             )}
                           </div>
-
-                          {isOverdue(task.dueDate!, task) && (
-                            <div className="flex items-center space-x-1">
-                              <Clock className="h-3 w-3 text-red-500" />
-                              <span className="text-xs text-red-600">Przeterminowane</span>
-                            </div>
-                          )}
                         </div>
-                      </div>
+                      </TaskPopover>
                     ))}
 
                     {tasksForDay.length === 0 && (

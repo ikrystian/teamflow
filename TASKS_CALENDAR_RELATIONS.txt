@@ -13,10 +13,23 @@
    - Nowy komponent kalendarza tygodniowego
    - Wyświetla zadania w widoku tygodnia roboczego (Pn-Pt)
    - Obsługuje nawigację tygodniową
+   - **NOWA FUNKCJONALNOŚĆ**: Popover ze szczegółami zadania przy hover
 
 3. **TaskDetailsDialog** (`src/components/tasks/task-details-dialog.tsx`)
    - Dialog szczegółów zadania
    - Używany przez kalendarz do wyświetlania szczegółów po kliknięciu
+
+4. **TaskPopover** (`src/components/tasks/task-popover.tsx`)
+   - **NOWY KOMPONENT**: Popover ze szczegółami zadania
+   - Wyświetla się przy najechaniu kursorem na zadanie
+   - Zawiera podstawowe informacje: tytuł, projekt, priorytet, status, opis, assignee, termin, postęp
+   - Przyciski akcji: Zobacz, Edytuj, Loguj czas
+
+5. **NavUser** (`src/components/dashboard/nav-user.tsx`)
+   - **NOWY KOMPONENT**: Footer użytkownika w sidebarze
+   - Wyświetla avatar, nazwę i email użytkownika
+   - Menu kontekstowe z opcjami: Profil, Ustawienia, Powiadomienia, Płatności, Wyloguj się
+   - Responsywny design z obsługą mobile i desktop
 
 ## Relacje między komponentami
 
@@ -31,6 +44,25 @@
   - `open`: boolean - stan otwarcia dialogu
   - `onOpenChange`: (open: boolean) => void - callback zmiany stanu
   - `onTaskUpdated`: () => void - callback do odświeżenia zadań
+
+### TasksWeeklyCalendar → TaskPopover
+- **Props przekazywane:**
+  - `task`: Task - zadanie do wyświetlenia w popover
+  - `onTaskClick`: (task: Task) => void - callback kliknięcia zadania
+  - `side`: "right" - pozycja popover względem elementu
+  - `align`: "start" - wyrównanie popover
+
+### CalendarContent → TaskPopover
+- **Props przekazywane:**
+  - `task`: Task - zadanie do wyświetlenia w popover
+  - `onTaskClick`: (task: Task) => void - callback kliknięcia zadania
+  - `side`: "bottom" - pozycja popover względem elementu
+  - `align`: "start" - wyrównanie popover
+
+### DashboardLayout → NavUser
+- **Relacja:** NavUser jest umieszczony w SidebarFooter
+- **Funkcjonalność:** Wyświetla informacje o aktualnie zalogowanym użytkowniku
+- **Integracja:** Używa useSession z NextAuth do pobierania danych użytkownika
 
 ## Funkcjonalności kalendarza tygodniowego
 
@@ -56,9 +88,40 @@
   - Status przeterminowania
 
 ### Interakcje
+- **NOWE**: Hover na zadaniu pokazuje TaskPopover ze szczegółami
 - Kliknięcie w zadanie otwiera dialog szczegółów
 - Hover efekty na kartach zadań
 - Responsywny design
+
+## Funkcjonalności kalendarza miesięcznego (dashboard/calendar)
+
+### Wyświetlanie
+- Widok miesięczny z siatką dni
+- **NOWE**: Hover na zadaniu pokazuje TaskPopover ze szczegółami
+- Wyświetlanie do 2 zadań na dzień + licznik pozostałych
+- Lista nadchodzących zadań
+
+### Interakcje
+- **NOWE**: Hover na zadaniu pokazuje TaskPopover ze szczegółami
+- Kliknięcie w zadanie otwiera dialog szczegółów
+
+## Nowa struktura sidebara
+
+### Komponenty sidebara
+- **SidebarHeader**: Logo TeamFlow (bez TopBarUser)
+- **SidebarContent**: Menu nawigacyjne i lista projektów
+- **SidebarFooter**: **NOWY** - NavUser z informacjami o użytkowniku
+
+### NavUser w SidebarFooter
+- **Wyświetlanie**: Avatar, nazwa użytkownika, email
+- **Menu kontekstowe**:
+  - Profil (/dashboard/profile)
+  - Ustawienia (/dashboard/settings)
+  - Powiadomienia (disabled)
+  - Płatności (disabled)
+  - Wyloguj się
+- **Responsywność**: Różne pozycje menu na mobile i desktop
+- **Integracja**: Pobiera dane z NextAuth session i API profilu użytkownika
 
 ## Struktura danych
 
