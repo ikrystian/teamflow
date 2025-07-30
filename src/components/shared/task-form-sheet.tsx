@@ -465,9 +465,9 @@ export function TaskFormSheet({
           <div className="space-y-2">
             <Label htmlFor="dueDate">Termin wykonania</Label>
             <DatePicker
-              date={dueDate ? new Date(dueDate) : undefined}
-              onDateChange={(date) => setDueDate(date ? date.toISOString().split('T')[0] : "")}
-              disabled={loading}
+              value={dueDate ? new Date(dueDate) : undefined}
+              onChange={(date) => setDueDate(date ? date.toISOString().split('T')[0] : "")}
+              className="rounded-md border shadow-sm"
             />
           </div>
 

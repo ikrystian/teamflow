@@ -174,24 +174,24 @@ function SortableTaskCard({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onViewDetails(task)}>
+                <DropdownMenuItem onClick={(event) => {onViewDetails(task); event.stopPropagation(); }}>
                   Szczegóły
                 </DropdownMenuItem>
                 {canEdit && (
                   <>
                     {!isTaskCompleted() && (
-                      <DropdownMenuItem onClick={handleMarkComplete}>
+                      <DropdownMenuItem onClick={event => {handleMarkComplete(); event.stopPropagation()}}>
                         <Check className="mr-2 h-4 w-4" />
                         Oznacz jako zakończone
                       </DropdownMenuItem>
                     )}
-                    <DropdownMenuItem onClick={() => onTimeTracking(task)}>
+                    <DropdownMenuItem onClick={(event) => { onTimeTracking(task); event.stopPropagation();}}>
                       <Clock className="mr-2 h-4 w-4" />
                       Loguj czas
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      onClick={() => onDelete(task)}
+                      onClick={(event) => {event.stopPropagation(); onDelete(task)}}
                       className="text-destructive"
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
