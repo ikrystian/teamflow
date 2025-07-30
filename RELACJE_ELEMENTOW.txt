@@ -1,5 +1,46 @@
 # Relacje między elementami w TeamFlow
 
+## Funkcjonalność blokowania zadań (2025-01-30):
+
+### TaskBlockDialog (src/components/tasks/task-block-dialog.tsx)
+- **Cel**: Dialog do blokowania/odblokowywania zadań z formularzem powodu blokady
+- **Funkcjonalności**:
+  - Formularz z polem tekstowym do opisu powodu blokady
+  - Walidacja uprawnień (tylko autor lub przypisana osoba może blokować/odblokować)
+  - Wyświetlanie informacji o zablokowanym zadaniu (powód, kto zablokował)
+  - Potwierdzenie odblokowywania zadania
+  - Toast notifications dla sukcesu/błędów
+  - Obsługa stanów ładowania
+
+### Rozszerzenia modelu Task:
+- **isBlocked**: Boolean - czy zadanie jest zablokowane
+- **blockReason**: String - powód blokady
+- **blockedAt**: DateTime - kiedy zadanie zostało zablokowane
+- **blockedById**: String - ID użytkownika który zablokował zadanie
+- **blockedBy**: User relation - relacja do użytkownika który zablokował
+
+### API endpoints:
+- **POST /api/tasks/[taskId]/block** - blokowanie zadania z powodem
+- **DELETE /api/tasks/[taskId]/block** - odblokowywanie zadania
+- Aktualizacja istniejących endpoints o include blockedBy
+
+### Wizualne oznaczenia zablokowanych zadań:
+- **Czerwone obramowanie** i tło (bg-red-50/50, border-red-500) we wszystkich widokach
+- **Ikona blokady** (Lock) obok tytułu zadania
+- **Czerwony kolor** paska projektu w tabeli zadań
+- Oznaczenia w: TasksKanbanBoard, KanbanBoard (projekty), TasksContent (lista), TasksTable (dashboard)
+
+### Funkcje pomocnicze (src/lib/task-utils.ts):
+- **isTaskBlocked()** - sprawdza czy zadanie jest zablokowane
+- **canUserBlockTask()** - sprawdza czy użytkownik może blokować/odblokować zadanie
+- **getBlockedTaskStyles()** - zwraca style dla zablokowanych zadań
+
+### Integracja z istniejącymi komponentami:
+- **TasksKanbanBoard**: dodano opcję blokowania w menu dropdown kart zadań
+- **TasksContent**: dodano obsługę dialogu blokowania i przekazywanie do TasksKanbanBoard
+- **TasksTable**: dodano ikonę blokady i czerwone oznaczenie w kolumnie nazwy
+- **KanbanBoard** (projekty): dodano wizualne oznaczenia zablokowanych zadań
+
 ## Nowe komponenty dodane w tej sesji:
 
 ### TasksKanbanBoard (src/components/tasks/tasks-kanban-board.tsx)

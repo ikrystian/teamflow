@@ -17,7 +17,7 @@ export function DashboardContent() {
     <div className="flex items-center justify-between w-full">
       <div>
         <h1 className="text-2xl font-bold text-foreground">
-          Przegląd wszystkich zadań z całego systemu ({tasks.length} zadań)
+          Przegląd wszystkich zadań z całego systemu
         </h1>
       </div>
 
@@ -96,24 +96,12 @@ export function DashboardContent() {
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Wszystkie zadania</CardTitle>
-          <CardDescription>
-            Tabelka zadań w stylu Asana z możliwością edycji inline
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
           <TasksTable
             tasks={tasks}
             users={users}
             taskStatuses={taskStatuses}
             onTaskUpdate={handleTaskUpdate}
           />
-        </CardContent>
-      </Card>
     </div>
   )
 }

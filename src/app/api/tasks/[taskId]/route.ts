@@ -85,6 +85,14 @@ export async function GET(
             avatarUrl: true
           }
         },
+        blockedBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatarUrl: true
+          }
+        },
         subtasks: true,
         todos: true,
         comments: {
@@ -248,6 +256,14 @@ export async function PATCH(
           }
         },
         createdBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatarUrl: true
+          }
+        },
+        blockedBy: {
           select: {
             id: true,
             name: true,

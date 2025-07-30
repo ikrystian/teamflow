@@ -90,3 +90,38 @@ export const getPriorityOptions = () => [
   { value: "Medium", label: "Średni", color: "bg-yellow-100 text-yellow-800" },
   { value: "High", label: "Wysoki", color: "bg-red-100 text-red-800" }
 ]
+
+/**
+ * Check if task is blocked
+ */
+export const isTaskBlocked = (task: { isBlocked?: boolean }) => {
+  return task.isBlocked === true
+}
+
+/**
+ * Get blocked task styles
+ */
+export const getBlockedTaskStyles = (isBlocked?: boolean) => {
+  if (isBlocked) {
+    return {
+      cardClass: "border-red-500 bg-red-50/50",
+      borderColor: "#EF4444"
+    }
+  }
+  return {
+    cardClass: "",
+    borderColor: undefined
+  }
+}
+
+/**
+ * Check if user can block/unblock a task
+ * Only task creator or assignee can block/unblock tasks
+ */
+export const canUserBlockTask = (
+  task: { createdBy?: { id: string }, assignee?: { id: string } },
+  userId?: string
+) => {
+  if (!userId) return false
+  return task.createdBy?.id === userId || task.assignee?.id === userId
+}

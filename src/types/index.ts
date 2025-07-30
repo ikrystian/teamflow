@@ -37,6 +37,10 @@ export interface Task {
   dueDate?: string;
   estimatedHours?: number;
   createdAt: string;
+  isBlocked?: boolean;
+  blockReason?: string;
+  blockedAt?: string;
+  blockedBy?: User;
   project: {
     id: string;
     name: string;

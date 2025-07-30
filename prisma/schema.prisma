@@ -29,6 +29,7 @@ model User {
   sessions          Session[]
   assignedTasks     Task[]
   createdTasks      Task[]            @relation("TaskCreator")
+  blockedTasks      Task[]            @relation("TaskBlocker")
   timeEntries       TimeEntry[]
   teams             Team[]            @relation("TeamMembers")
 }
@@ -81,6 +82,10 @@ model Task {
   projectId      String?
   assigneeId     String?
   createdById    String?
+  isBlocked      Boolean     @default(false)
+  blockReason    String?
+  blockedAt      DateTime?
+  blockedById    String?
   comments       Comment[]
   subtasks       Subtask[]
   assignee       User?       @relation(fields: [assigneeId], references: [id])
@@ -90,6 +95,7 @@ model Task {
   images         TaskImage[]
   timeEntries    TimeEntry[]
   todos          Todo[]
+  blockedBy      User?       @relation("TaskBlocker", fields: [blockedById], references: [id])
 }
 
 model Todo {

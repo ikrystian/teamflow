@@ -77,7 +77,14 @@ export async function GET(request: NextRequest) {
             avatarUrl: true
           }
         },
-
+        blockedBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatarUrl: true
+          }
+        },
         subtasks: true,
         todos: true,
         comments: {

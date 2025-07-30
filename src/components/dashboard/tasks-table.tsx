@@ -13,7 +13,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { ArrowUpDown, ChevronDown, ChevronRight, MoreHorizontal, Clock, Eye, EyeOff } from "lucide-react"
+import { ArrowUpDown, ChevronDown, ChevronRight, MoreHorizontal, Clock, Eye, EyeOff, Lock } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -39,7 +39,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { EditableCell } from "./editable-cell"
 import { ColumnOrderDialog } from "./column-order-dialog"
-import { getPriorityColor, getPriorityDisplayName, getTaskStatus, isTaskOverdue } from "@/lib/task-utils"
+import { getPriorityColor, getPriorityDisplayName, getTaskStatus, isTaskOverdue, isTaskBlocked } from "@/lib/task-utils"
 import { formatTaskDueDateWithRelative, formatCreatedDate } from "@/lib/date-utils"
 import { useTasksTablePreferences } from "@/hooks/use-tasks-table-preferences"
 import type { Task, User, TaskStatus } from "@/types"
@@ -201,12 +201,16 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
 
         // Regular task row
         const task = rowData as Task
+        const blocked = isTaskBlocked(task)
         return (
           <div className="flex items-center gap-3">
             <div
               className="w-1 h-8 rounded-full"
-              style={{ backgroundColor: task.project?.color || '#3B82F6' }}
+              style={{ backgroundColor: blocked ? '#EF4444' : (task.project?.color || '#3B82F6') }}
             />
+            {blocked && (
+              <Lock className="h-4 w-4 text-red-600 flex-shrink-0" />
+            )}
             <EditableCell
               value={task.title}
               type="text"
