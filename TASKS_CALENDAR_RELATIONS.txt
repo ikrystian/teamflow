@@ -31,6 +31,13 @@
    - Menu kontekstowe z opcjami: Profil, Ustawienia, Powiadomienia, Płatności, Wyloguj się
    - Responsywny design z obsługą mobile i desktop
 
+6. **NavProjects** (`src/components/dashboard/nav-projects.tsx`)
+   - **NOWY KOMPONENT**: Lista projektów w stylu shadcn/ui sidebar-07
+   - Wyświetla projekty z kolorowymi ikonami i nazwami
+   - Menu akcji dla każdego projektu (MoreHorizontal)
+   - Opcje menu: Zobacz projekt, Ustawienia, Udostępnij, Archiwizuj, Usuń
+   - Responsywny design z obsługą mobile i desktop
+
 ## Relacje między komponentami
 
 ### TasksContent → TasksWeeklyCalendar
@@ -63,6 +70,13 @@
 - **Relacja:** NavUser jest umieszczony w SidebarFooter
 - **Funkcjonalność:** Wyświetla informacje o aktualnie zalogowanym użytkowniku
 - **Integracja:** Używa useSession z NextAuth do pobierania danych użytkownika
+
+### DashboardLayout → NavProjects
+- **Relacja:** NavProjects jest umieszczony w SidebarContent jako osobna grupa
+- **Props przekazywane:**
+  - `projects`: Project[] - lista projektów pobrana z API
+- **Funkcjonalność:** Wyświetla listę projektów z menu akcji
+- **Integracja:** Każdy projekt ma link do szczegółów i ustawień
 
 ## Funkcjonalności kalendarza tygodniowego
 
@@ -109,7 +123,9 @@
 
 ### Komponenty sidebara
 - **SidebarHeader**: Logo TeamFlow (bez TopBarUser)
-- **SidebarContent**: Menu nawigacyjne i lista projektów
+- **SidebarContent**:
+  - Menu nawigacyjne (Panel, Moje zadania, Zespoły, Raporty, Kalendarz)
+  - **NOWY**: NavProjects - lista projektów w stylu shadcn/ui
 - **SidebarFooter**: **NOWY** - NavUser z informacjami o użytkowniku
 
 ### NavUser w SidebarFooter
@@ -122,6 +138,17 @@
   - Wyloguj się
 - **Responsywność**: Różne pozycje menu na mobile i desktop
 - **Integracja**: Pobiera dane z NextAuth session i API profilu użytkownika
+
+### NavProjects w SidebarContent
+- **Wyświetlanie**: Lista projektów z kolorowymi ikonami (kwadraty w kolorze projektu)
+- **Menu akcji**:
+  - Zobacz projekt (/dashboard/projects/{id})
+  - Ustawienia (/dashboard/projects/{id}/settings)
+  - Udostępnij projekt (disabled)
+  - Archiwizuj projekt (disabled)
+  - Usuń projekt (disabled, destructive)
+- **Responsywność**: Menu po prawej stronie na desktop, na dole na mobile
+- **Integracja**: Pobiera listę projektów z API, filtruje nieaktywne
 
 ## Struktura danych
 

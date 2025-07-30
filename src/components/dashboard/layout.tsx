@@ -7,10 +7,10 @@ import { useEffect, useState } from "react"
 import {
   Home,
   Users,
-  FolderOpen,
   CheckSquare,
   Calendar,
   BarChart3,
+  FolderOpen,
 } from "lucide-react"
 import {
   Sidebar,
@@ -22,12 +22,10 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   SidebarProvider,
 } from "@/components/ui/sidebar"
 import { NavUser } from "@/components/dashboard/nav-user"
+import { NavProjects } from "@/components/dashboard/nav-projects"
 
 interface Project {
   id: string
@@ -53,6 +51,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { name: "Zespoły", href: "/dashboard/teams", icon: Users },
     { name: "Raporty", href: "/dashboard/reports", icon: BarChart3 },
     { name: "Kalendarz", href: "/dashboard/calendar", icon: Calendar },
+    { name: "Projekty", href: "/dashboard/projects", icon: FolderOpen },
   ]
 
   // Function to check if a navigation item is active
@@ -108,43 +107,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     </SidebarMenuItem>
                   ))}
 
-                  {/* Projects with always visible submenu */}
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive("/dashboard/projects")}
-                      tooltip="Projekty"
-                    >
-                      <Link href="/dashboard/projects">
-                        <FolderOpen />
-                        <span>Projekty</span>
-                      </Link>
-                    </SidebarMenuButton>
 
-                    <SidebarMenuSub>
-                      {projects.map((project) => (
-                        <SidebarMenuSubItem key={project.id}>
-                          <SidebarMenuSubButton
-                            asChild
-                            isActive={pathname === `/dashboard/projects/${project.id}`}
-                          >
-                            <Link href={`/dashboard/projects/${project.id}`}>
-                              <div className="flex items-center gap-2">
-                                <div
-                                  className="w-3 h-3 rounded-sm flex-shrink-0"
-                                  style={{ backgroundColor: project.color || '#3B82F6' }}
-                                />
-                                <span className="truncate">{project.name}</span>
-                              </div>
-                            </Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
-                    </SidebarMenuSub>
-                  </SidebarMenuItem>
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
+
+            <NavProjects projects={projects} />
+
           </SidebarContent>
           <SidebarFooter>
             <NavUser />
