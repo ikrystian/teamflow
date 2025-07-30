@@ -1,7 +1,6 @@
 "use client"
 
 import {
-  FolderOpen,
   MoreHorizontal,
   Eye,
   Share,
@@ -9,6 +8,7 @@ import {
   Archive,
   Trash2,
   Info,
+  Plus,
 } from "lucide-react"
 import Link from "next/link"
 import {
@@ -51,15 +51,13 @@ export function NavProjects({ projects }: NavProjectsProps) {
       <SidebarMenu>
         {projects.map((project) => (
           <SidebarMenuItem key={project.id}>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton asChild tooltip={project.name}>
               <Link href={`/dashboard/projects/${project.id}`}>
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-3 h-3 rounded-sm flex-shrink-0"
-                    style={{ backgroundColor: project.color || '#3B82F6' }}
-                  />
-                  <span className="truncate">{project.name}</span>
-                </div>
+                <div
+                  className="w-4 h-4 rounded-sm flex-shrink-0"
+                  style={{ backgroundColor: project.color || '#3B82F6' }}
+                />
+                <span className="truncate">{project.name}</span>
               </Link>
             </SidebarMenuButton>
             <DropdownMenu>
@@ -112,6 +110,14 @@ export function NavProjects({ projects }: NavProjectsProps) {
             </DropdownMenu>
           </SidebarMenuItem>
         ))}
+        <SidebarMenuItem>
+          <SidebarMenuButton asChild tooltip="Więcej projektów">
+            <Link href="/dashboard/projects">
+              <Plus />
+              <span>Więcej</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
       </SidebarMenu>
     </SidebarGroup>
   )

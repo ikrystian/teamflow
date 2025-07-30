@@ -19,11 +19,14 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
+  SidebarInset,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
+  SidebarTrigger,
 } from "@/components/ui/sidebar"
+import { Separator } from "@/components/ui/separator"
 import { NavUser } from "@/components/dashboard/nav-user"
 import { NavProjects } from "@/components/dashboard/nav-projects"
 
@@ -81,50 +84,52 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
-        <Sidebar className="border-r">
-          <SidebarHeader className="border-b">
-            <div className="flex h-16 items-center px-4">
-              <h1 className="text-xl font-bold text-foreground">TeamFlow</h1>
-            </div>
-          </SidebarHeader>
-          <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {navigation.map((item) => (
-                    <SidebarMenuItem key={item.name}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isActive(item.href)}
-                        tooltip={item.name}
-                      >
-                        <Link href={item.href}>
-                          <item.icon />
-                          <span>{item.name}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
+      <Sidebar collapsible="icon" className="border-r">
+        <SidebarHeader className="border-b">
+          <div className="flex h-16 items-center px-4">
+            <h1 className="text-xl font-bold text-foreground">TeamFlow</h1>
+          </div>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {navigation.map((item) => (
+                  <SidebarMenuItem key={item.name}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive(item.href)}
+                      tooltip={item.name}
+                    >
+                      <Link href={item.href}>
+                        <item.icon />
+                        <span>{item.name}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
 
-
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-
-            <NavProjects projects={projects} />
-
-          </SidebarContent>
-          <SidebarFooter>
-            <NavUser />
-          </SidebarFooter>
-        </Sidebar>
-
-        {/* Main content */}
+          <NavProjects projects={projects} />
+        </SidebarContent>
+        <SidebarFooter>
+          <NavUser />
+        </SidebarFooter>
+      </Sidebar>
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 border-b">
+          <div className="flex items-center gap-2 px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            <h2 className="text-lg font-semibold">Dashboard</h2>
+          </div>
+        </header>
         <main className="flex-1">
           {children}
         </main>
-      </div>
+      </SidebarInset>
     </SidebarProvider>
   )
 }

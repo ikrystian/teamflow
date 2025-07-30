@@ -127,6 +127,7 @@
   - Menu nawigacyjne (Panel, Moje zadania, Zespoły, Raporty, Kalendarz)
   - **NOWY**: NavProjects - lista projektów w stylu shadcn/ui
 - **SidebarFooter**: **NOWY** - NavUser z informacjami o użytkowniku
+- **Zwijanie sidebara**: Sidebar można zwijać do widoku tylko ikon z przyciskiem SidebarTrigger w headerze
 
 ### NavUser w SidebarFooter
 - **Wyświetlanie**: Avatar, nazwa użytkownika, email
@@ -138,6 +139,22 @@
   - Wyloguj się
 - **Responsywność**: Różne pozycje menu na mobile i desktop
 - **Integracja**: Pobiera dane z NextAuth session i API profilu użytkownika
+
+### Nowa struktura layoutu z zwijaniem
+- **SidebarProvider**: Główny kontener z obsługą zwijania
+- **Sidebar**: `collapsible="icon"` - umożliwia zwijanie do widoku ikon
+- **SidebarInset**: Kontener dla głównej zawartości
+- **Header z SidebarTrigger**: Przycisk do przełączania stanu sidebara
+- **Tooltips**: Wszystkie elementy menu mają tooltips widoczne w trybie zwinięcia
+- **Responsywność**: Automatyczne ukrywanie na mobile z sheet overlay
+
+### Nowe ekrany uwierzytelniania (login-02)
+- **Dwukolumnowy layout**: Formularz po lewej, obraz po prawej (ukryty na mobile)
+- **LoginForm**: Komponent formularza logowania z obsługą komunikatów o rejestracji
+- **SignupForm**: Komponent formularza rejestracji z walidacją haseł
+- **Responsywność**: Na mobile pokazuje tylko formularz, na desktop pełny layout
+- **Obrazy**: Różne obrazy dla logowania (współpraca zespołowa) i rejestracji (workspace)
+- **Spójny design**: Zgodny z najnowszymi wzorcami shadcn/ui
 
 ### NavProjects w SidebarContent
 - **Wyświetlanie**: Lista projektów z kolorowymi ikonami (kwadraty w kolorze projektu)
