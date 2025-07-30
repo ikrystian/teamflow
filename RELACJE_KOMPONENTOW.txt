@@ -217,6 +217,36 @@ Logika:
 - W widoku "Moje zadania" select projektu jest ukryty
 - Zadania w "Moje zadania" są automatycznie przypisywane do użytkownika bez wyboru projektu
 
+=== PRZENIESIENIE KOMENTARZY DO ZAKŁADKI PRZEGLĄD ===
+
+Data: 2025-01-30
+Cel: Przeniesienie komentarzy z osobnej zakładki do sekcji "Szczegóły zadania" w zakładce "Przegląd"
+
+Zmiany w task-details-sheet.tsx:
+- Zmieniono liczbę kolumn w TabsList z grid-cols-4 na grid-cols-3
+- Usunięto zakładkę "Komentarze" z TabsList
+- Dodano sekcję komentarzy do zakładki "Przegląd" po sekcji "Szczegóły zadania"
+- Sekcja komentarzy zawiera Card z nagłówkiem i komponentem TaskComments
+- Usunięto TabsContent dla zakładki "comments"
+
+Zmiany w task-details-dialog.tsx:
+- Identyczne zmiany jak w task-details-sheet.tsx
+- Zmieniono liczbę kolumn w TabsList z grid-cols-4 na grid-cols-3
+- Usunięto zakładkę "Komentarze" z TabsList
+- Dodano sekcję komentarzy do zakładki "Przegląd" po sekcji "Szczegóły zadania"
+- Usunięto TabsContent dla zakładki "comments"
+
+Struktura nowej sekcji komentarzy:
+- Card z nagłówkiem zawierającym ikonę MessageSquare i liczbę komentarzy
+- CardContent z komponentem TaskComments
+- Zachowana pełna funkcjonalność dodawania i usuwania komentarzy
+
+Logika:
+- Komentarze są teraz częścią zakładki "Przegląd" zamiast osobnej zakładki
+- Wszystkie funkcjonalności komentarzy pozostają niezmienione
+- Lepsza organizacja informacji - wszystkie szczegóły zadania w jednym miejscu
+- Zmniejszona liczba zakładek z 4 do 3 (Przegląd, Zadania, Aktywność)
+
 === DOMYŚLNY STATUS "TO DO" W OKIENKU TWORZENIA ZADANIA ===
 
 Data: 2025-01-28

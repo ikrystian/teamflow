@@ -174,9 +174,9 @@ function SortableTaskCard({
 
           <div className="space-y-2">
             <div className="flex items-center  gap-2 flex-wrap">
-              {task.priority && (
-                <Badge variant="outline" className={`text-xs ${getPriorityColor(task.priority)}`}>
-                  {task.priority}
+            {task.priority && (
+                <Badge variant="outline" className={`text-xs ${getPriorityColor(task.priority)}`} title={task.priority === "Low" ? "Niski" : task.priority === "Medium" ? "Średni" : "Wysoki"}>
+                  {(task.priority === "Low" ? "N" : task.priority === "Medium" ? "Ś" : "W")}
                 </Badge>
               )}
 

@@ -256,7 +256,7 @@ export function TaskDetailsSheet({
         </SheetHeader>
 
         <Tabs defaultValue="overview" className="flex-1 overflow-hidden flex flex-col px-4">
-          <TabsList className="grid w-full grid-cols-4 mb-4">
+          <TabsList className="grid w-full grid-cols-3 mb-4">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               Przegląd
@@ -264,10 +264,6 @@ export function TaskDetailsSheet({
             <TabsTrigger value="todos" className="flex items-center gap-2">
               <ListTodo className="h-4 w-4" />
               Zadania
-            </TabsTrigger>
-            <TabsTrigger value="comments" className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4" />
-              Komentarze
             </TabsTrigger>
             <TabsTrigger value="activity" className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
@@ -448,6 +444,24 @@ export function TaskDetailsSheet({
                   </CardContent>
                 </Card>
               )}
+
+              {/* Comments */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5" />
+                    Komentarze ({comments.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <TaskComments
+                    taskId={task.id}
+                    comments={comments}
+                    onCommentAdded={handleCommentAdded}
+                    onCommentDeleted={handleCommentDeleted}
+                  />
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="todos" className="mt-0">
@@ -458,14 +472,7 @@ export function TaskDetailsSheet({
               />
             </TabsContent>
 
-            <TabsContent value="comments" className="mt-0">
-              <TaskComments
-                taskId={task.id}
-                comments={comments}
-                onCommentAdded={handleCommentAdded}
-                onCommentDeleted={handleCommentDeleted}
-              />
-            </TabsContent>
+
 
             <TabsContent value="activity" className="mt-0">
               <Card>

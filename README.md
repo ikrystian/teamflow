@@ -831,7 +831,8 @@ Projekt jest otwarty na współpracę. Aby dodać nowe funkcjonalności:
 - **Dokumentacja**: Utworzono `TASKS_PAGE_SHADCN_STYLING.txt` z szczegółowym opisem wzorców
 
 ### Redesign podglądu zadania według najnowszych wzorców shadcn/ui
-- **Struktura z Tabs**: Podział na 4 sekcje - Przegląd, Zadania, Komentarze, Aktywność
+- **Struktura z Tabs**: Podział na 3 sekcje - Przegląd, Zadania, Aktywność
+- **Komentarze w Przeglądzie**: Komentarze przeniesione do zakładki "Przegląd" pod sekcję "Szczegóły zadania"
 - **Card-based Layout**: Każda sekcja w osobnej karcie dla lepszej organizacji
 - **Semantic Color System**: `text-muted-foreground`, `text-destructive` zamiast hardcoded colors
 - **Enhanced Typography**: `text-2xl font-bold` dla tytułów, lepsze hierarchie
@@ -953,6 +954,17 @@ Projekt jest otwarty na współpracę. Aby dodać nowe funkcjonalności:
   - `src/components/dashboard/layout.tsx` - zaktualizowany interfejs Project
   - `src/app/api/projects/route.ts` - obsługa parametru archivedOnly
   - `project-archive-relations.txt` - dokumentacja relacji
+
+### Przeniesienie komentarzy do zakładki Przegląd (2025-01-30)
+- **Reorganizacja UI**: Komentarze przeniesione z osobnej zakładki do sekcji "Szczegóły zadania" w zakładce "Przegląd"
+- **Uproszczenie nawigacji**: Zmniejszenie liczby zakładek z 4 do 3 (Przegląd, Zadania, Aktywność)
+- **Lepsza organizacja**: Wszystkie szczegóły zadania w jednym miejscu dla lepszego UX
+- **Zachowana funkcjonalność**: Pełna funkcjonalność komentarzy (dodawanie, usuwanie) bez zmian
+- **Komponenty zaktualizowane**:
+  - `src/components/tasks/task-details-sheet.tsx` - główny komponent szczegółów zadania
+  - `src/components/tasks/task-details-dialog.tsx` - dialog szczegółów zadania
+  - Sekcja komentarzy w Card z nagłówkiem i licznikiem komentarzy
+- **Dokumentacja**: Zaktualizowano `RELACJE_KOMPONENTOW.txt` z opisem zmian
 
 ## 📄 Licencja
 

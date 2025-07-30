@@ -131,9 +131,9 @@ export function TaskPopover({
           {children}
         </div>
       </PopoverTrigger>
-      <PopoverContent 
-        className="w-80 p-0" 
-        side={side} 
+      <PopoverContent
+        className="w-80 p-0"
+        side={side}
         align={align}
         onMouseEnter={() => setIsOpen(true)}
         onMouseLeave={() => setIsOpen(false)}
@@ -144,7 +144,7 @@ export function TaskPopover({
             <h3 className="font-semibold text-sm line-clamp-2 leading-tight">
               {task.title}
             </h3>
-            
+
             <div className="flex items-center gap-2 flex-wrap">
               {task.project ? (
                 <>
@@ -160,13 +160,13 @@ export function TaskPopover({
                   Brak projektu
                 </Badge>
               )}
-              
+
               {task.priority && (
                 <Badge variant="secondary" className={`text-xs ${getPriorityColor(task.priority)}`}>
                   {task.priority === "Low" ? "Niski" : task.priority === "Medium" ? "Średni" : "Wysoki"}
                 </Badge>
               )}
-              
+
               {(() => {
                 const taskStatus = getTaskStatus(task)
                 return (
@@ -186,7 +186,7 @@ export function TaskPopover({
           {task.description && (
             <div className="space-y-2">
               <h4 className="text-xs font-medium text-muted-foreground">Opis</h4>
-              <div 
+              <div
                 className="text-xs text-muted-foreground line-clamp-3"
                 dangerouslySetInnerHTML={{ __html: task.description }}
               />
@@ -275,7 +275,7 @@ export function TaskPopover({
                 Zobacz
               </Button>
             )}
-            
+
             {canEdit && onEdit && (
               <Button
                 variant="outline"
@@ -290,7 +290,7 @@ export function TaskPopover({
                 <Edit className="h-3 w-3" />
               </Button>
             )}
-            
+
             {onTimeTracking && (
               <Button
                 variant="outline"
