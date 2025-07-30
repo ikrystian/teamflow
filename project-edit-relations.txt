@@ -2,26 +2,29 @@ RELACJE MIĘDZY KOMPONENTAMI - EDYCJA PROJEKTÓW
 
 1. KOMPONENTY GŁÓWNE:
    - src/components/projects/projects-content.tsx - główny komponent listy projektów
-   - src/components/projects/edit-project-dialog.tsx - dialog edycji projektu (NOWY)
+   - src/components/projects/edit-project-sheet.tsx - sheet edycji projektu - panel po prawej
+   - src/components/projects/create-project-sheet.tsx - sheet tworzenia projektu - panel po prawej
    - src/components/projects/create-project-dialog.tsx - dialog tworzenia projektu (istniejący)
    - src/components/projects/project-image-selector.tsx - selektor zdjęć (współdzielony)
+   - src/components/projects/project-icon-selector.tsx - selektor ikon projektów (NOWY)
+   - src/components/dashboard/nav-projects.tsx - wyświetlanie projektów w sidebarze z ikonami
 
 2. INTERFEJSY I TYPY:
    - Project interface w projects-content.tsx:
      * id, name, description, status, imageUrl, createdAt
      * team: { id, name }
      * tasks: array z zadaniami
-   
-   - Project interface w edit-project-dialog.tsx:
-     * id, name, description, imageUrl, color
+
+   - Project interface w edit-project-sheet.tsx:
+     * id, name, description, imageUrl, color, icon
      * team: { id, name }
      * Brak teamId - zespół nie może być zmieniany po utworzeniu
 
 3. STAN KOMPONENTU projects-content.tsx:
-   - editDialogOpen: boolean - kontroluje widoczność dialogu edycji
+   - editDialogOpen: boolean - kontroluje widoczność sheet edycji (nazwa zostaje dla kompatybilności)
    - selectedProject: Project | null - przechowuje wybrany projekt do edycji
-   - handleEditProject(project) - otwiera dialog edycji z wybranym projektem
-   - handleProjectUpdated() - zamyka dialog i odświeża listę projektów
+   - handleEditProject(project) - otwiera sheet edycji z wybranym projektem
+   - handleProjectUpdated() - zamyka sheet i odświeża listę projektów
 
 4. STRUKTURA KARTY PROJEKTU:
    - Card z relative positioning
@@ -37,6 +40,7 @@ RELACJE MIĘDZY KOMPONENTAMI - EDYCJA PROJEKTÓW
 6. POLA EDYTOWALNE:
    - Nazwa projektu (wymagane)
    - Opis projektu (opcjonalne)
+   - Ikona projektu (opcjonalne) - używa ProjectIconSelector (NOWE)
    - Zdjęcie projektu (opcjonalne) - używa ProjectImageSelector
    - Kolor projektu (opcjonalne) - paleta kolorów + custom color picker
    - Zespół - TYLKO DO ODCZYTU (wyświetlany jako disabled field)
@@ -54,12 +58,36 @@ RELACJE MIĘDZY KOMPONENTAMI - EDYCJA PROJEKTÓW
 9. FLOW EDYCJI:
    1. Użytkownik klika przycisk "..." na karcie projektu
    2. Wybiera "Edytuj projekt" z dropdown menu
-   3. Otwiera się EditProjectDialog z danymi projektu
+   3. Otwiera się EditProjectSheet (panel po prawej) z danymi projektu
    4. Użytkownik modyfikuje pola (oprócz zespołu)
    5. Kliknięcie "Zapisz zmiany" wysyła PATCH request
-   6. Po sukcesie dialog się zamyka i lista projektów odświeża
+   6. Po sukcesie sheet się zamyka i lista projektów odświeża
 
-10. BEZPIECZEŃSTWO:
+10. ZMIANY IMPLEMENTACYJNE (NOWE):
+    - Zastąpiono EditProjectDialog komponentem EditProjectSheet
+    - Zmieniono z Dialog na Sheet dla spójności z create-project-sheet
+    - Zachowano wszystkie funkcjonalności i API
+    - Panel wyświetla się po prawej stronie (500px szerokości)
+    - Identyczny layout jak tworzenie projektu
+
+11. FUNKCJONALNOŚĆ IKON PROJEKTÓW (NOWA):
+    - ProjectIconSelector - komponent do wyboru ikon z kategorii
+    - 100+ ikon z lucide-react podzielonych na kategorie:
+      * Popular, Business, Creative, Technology, Team, Nature, Places, Transport, Time, Status, Shapes
+    - Siatka 8x8 ikon z przewijaniem
+    - Podgląd wybranej ikony z możliwością usunięcia
+    - Fallback do kolorowego kwadratu jeśli ikona nie jest wybrana
+    - Ikony wyświetlane w sidebarze z odpowiednimi kolorami
+    - Pole icon w bazie danych (nullable string)
+
+12. WYŚWIETLANIE W SIDEBARZE:
+    - NavProjects używa funkcji ProjectIcon do renderowania
+    - Jeśli projekt ma ikonę - wyświetla ikonę w kolorze projektu
+    - Jeśli brak ikony - fallback do kolorowego kwadratu (jak wcześniej)
+    - Ikony archiwizowanych projektów mają opacity 60%
+    - Dynamiczne ładowanie ikon z lucide-react
+
+13. BEZPIECZEŃSTWO:
     - API weryfikuje czy użytkownik ma dostęp do projektu
     - Tylko członkowie zespołu mogą edytować projekt
     - Zespół nie może być zmieniany (zabezpieczenie przed przypadkową zmianą)

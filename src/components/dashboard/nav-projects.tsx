@@ -8,7 +8,6 @@ import {
   Archive,
   Trash2,
   Info,
-  Plus,
   ChevronDown,
   ChevronRight,
 } from "lucide-react"
@@ -36,10 +35,14 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 
+// Import all possible project icons
+import * as LucideIcons from "lucide-react"
+
 interface Project {
   id: string
   name: string
   color?: string
+  icon?: string
   archived?: boolean
   team: {
     id: string
@@ -49,6 +52,43 @@ interface Project {
 
 interface NavProjectsProps {
   projects: Project[]
+}
+
+// Helper function to render project icon
+function ProjectIcon({ iconName, color, className = "w-4 h-4" }: {
+  iconName?: string | null,
+  color?: string,
+  className?: string
+}) {
+  if (!iconName) {
+    // Fallback to colored square if no icon
+    return (
+      <div
+        className={`${className} rounded-sm flex-shrink-0`}
+        style={{ backgroundColor: color || '#3B82F6' }}
+      />
+    )
+  }
+
+  // Get the icon component from lucide-react
+  const IconComponent = (LucideIcons as any)[iconName]
+
+  if (!IconComponent) {
+    // Fallback to colored square if icon not found
+    return (
+      <div
+        className={`${className} rounded-sm flex-shrink-0`}
+        style={{ backgroundColor: color || '#3B82F6' }}
+      />
+    )
+  }
+
+  return (
+    <IconComponent
+      className={className}
+      style={{ color: color || '#3B82F6' }}
+    />
+  )
 }
 
 export function NavProjects({ projects }: NavProjectsProps) {
@@ -99,9 +139,10 @@ export function NavProjects({ projects }: NavProjectsProps) {
           <SidebarMenuItem key={project.id}>
             <SidebarMenuButton asChild tooltip={project.name}>
               <Link href={`/dashboard/projects/${project.id}`}>
-                <div
-                  className="w-4 h-4 rounded-sm flex-shrink-0"
-                  style={{ backgroundColor: project.color || '#3B82F6' }}
+                <ProjectIcon
+                  iconName={project.icon}
+                  color={project.color}
+                  className="w-4 h-4 flex-shrink-0"
                 />
                 <span className="truncate">{project.name}</span>
               </Link>
@@ -183,10 +224,13 @@ export function NavProjects({ projects }: NavProjectsProps) {
           <SidebarMenuItem key={`archived-${project.id}`}>
             <SidebarMenuButton asChild tooltip={`${project.name} (zarchiwizowany)`}>
               <Link href={`/dashboard/projects/${project.id}`}>
-                <div
-                  className="w-4 h-4 rounded-sm flex-shrink-0 opacity-60"
-                  style={{ backgroundColor: project.color || '#3B82F6' }}
-                />
+                <div className="opacity-60">
+                  <ProjectIcon
+                    iconName={project.icon}
+                    color={project.color}
+                    className="w-4 h-4 flex-shrink-0"
+                  />
+                </div>
                 <span className="truncate opacity-60">{project.name}</span>
                 <Archive className="h-3 w-3 ml-auto opacity-60" />
               </Link>

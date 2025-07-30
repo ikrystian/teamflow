@@ -40,7 +40,8 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 - **Ujednolicone komponenty tablicy** - Tablica zadań w projektach używa tego samego komponentu co w sekcji zadań dla spójności UX
 - **Oznaczanie zadań jako zakończone** - Możliwość szybkiego oznaczania zadań jako zakończone z menu dropdown z wizualnym oznaczeniem zielonym kolorem
 - **Kolorowe oznaczenia projektów** - Kolorowe kwadraty przed nazwami projektów w lewym menu i kolorowe obramowania kart zadań we wszystkich widokach odpowiadające kolorom wybranym podczas tworzenia
-- **Edycja projektów** - Możliwość edycji nazwy, opisu, zdjęcia i koloru projektu z poziomu listy projektów (zespół nie może być zmieniany po utworzeniu)
+- **Edycja projektów** - Możliwość edycji nazwy, opisu, ikony, zdjęcia i koloru projektu z poziomu listy projektów (zespół nie może być zmieniany po utworzeniu) - panel edycji wyświetla się po prawej stronie tak samo jak tworzenie projektu
+- **Ikony projektów** - Wybór ikon projektów z ponad 100 ikon lucide-react podzielonych na kategorie (Business, Creative, Technology, Team, Nature, itp.) - ikony wyświetlane w sidebarze z odpowiednimi kolorami
 - **Bezpieczeństwo konta** - Zmiana hasła i zarządzanie aktywnymi sesjami w ustawieniach użytkownika
 - **Zaktualizowany kalendarz** - Najnowsza wersja komponentu Calendar z shadcn/ui z poprawionymi stylami i lepszym układem
 

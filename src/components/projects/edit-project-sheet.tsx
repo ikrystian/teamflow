@@ -1,17 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import {
   Sheet,
   SheetContent,
@@ -28,43 +21,69 @@ interface Team {
   name: string
 }
 
-interface CreateProjectSheetProps {
+interface Project {
+  id: string
+  name: string
+  description?: string
+  imageUrl?: string
+  color?: string
+  icon?: string
+  team: {
+    id: string
+    name: string
+  }
+}
+
+interface EditProjectSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onProjectCreated: () => void
+  onProjectUpdated: () => void
+  project: Project | null
   teams: Team[]
 }
 
-export function CreateProjectSheet({
+export function EditProjectSheet({
   open,
   onOpenChange,
-  onProjectCreated,
-  teams
-}: CreateProjectSheetProps) {
+  onProjectUpdated,
+  project
+}: EditProjectSheetProps) {
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
-  const [teamId, setTeamId] = useState("")
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [color, setColor] = useState("#3B82F6")
   const [icon, setIcon] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
+  // Reset form when project changes
+  useEffect(() => {
+    if (project) {
+      setName(project.name)
+      setDescription(project.description || "")
+      setImageUrl(project.imageUrl || null)
+      setColor(project.color || "#3B82F6")
+      setIcon(project.icon || null)
+      setError("")
+    }
+  }, [project])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!project) return
+
     setLoading(true)
     setError("")
 
     try {
-      const response = await fetch("/api/projects", {
-        method: "POST",
+      const response = await fetch(`/api/projects/${project.id}`, {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           name,
           description: description || undefined,
-          teamId,
           imageUrl,
           color,
           icon
@@ -72,65 +91,41 @@ export function CreateProjectSheet({
       })
 
       if (response.ok) {
-        setName("")
-        setDescription("")
-        setTeamId("")
-        setImageUrl(null)
-        setColor("#3B82F6")
-        setIcon(null)
-        onProjectCreated()
+        onProjectUpdated()
         handleClose()
       } else {
         const data = await response.json()
-        setError(data.error || "Nie udało się utworzyć projektu")
+        setError(data.error || "Nie udało się zaktualizować projektu")
       }
     } catch {
-      setError("Failed to create project")
+      setError("Wystąpił błąd podczas aktualizacji projektu")
     } finally {
       setLoading(false)
     }
   }
 
   const handleClose = () => {
-    setName("")
-    setDescription("")
-    setTeamId("")
-    setImageUrl(null)
-    setColor("#3B82F6")
     setError("")
     onOpenChange(false)
   }
 
-  const predefinedColors = [
-    "#3B82F6", // Blue
-    "#EF4444", // Red
-    "#10B981", // Green
-    "#F59E0B", // Yellow
-    "#8B5CF6", // Purple
-    "#F97316", // Orange
-    "#06B6D4", // Cyan
-    "#84CC16", // Lime
-    "#EC4899", // Pink
-    "#6B7280", // Gray
-    "#14B8A6", // Teal
-    "#F43F5E", // Rose
-  ]
+  if (!project) return null
 
   return (
     <Sheet open={open} onOpenChange={handleClose}>
       <SheetContent className="w-[500px] sm:max-w-[500px] overflow-hidden flex flex-col">
         <SheetHeader className="pb-4 border-b">
-          <SheetTitle className="text-left">Utwórz nowy projekt</SheetTitle>
+          <SheetTitle className="text-left">Edytuj projekt</SheetTitle>
           <SheetDescription className="text-left">
-            Utwórz nowy projekt, aby organizować zadania i współpracować z zespołem.
+            Zaktualizuj informacje o projekcie. Zmiany będą widoczne dla wszystkich członków zespołu.
           </SheetDescription>
         </SheetHeader>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto space-y-6 py-4 px-4">
           <div className="grid gap-2">
-            <Label htmlFor="name">Nazwa projektu</Label>
+            <Label htmlFor="edit-name">Nazwa projektu</Label>
             <Input
-              id="name"
+              id="edit-name"
               placeholder="Wprowadź nazwę projektu"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -140,9 +135,9 @@ export function CreateProjectSheet({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="description">Opis (opcjonalnie)</Label>
+            <Label htmlFor="edit-description">Opis (opcjonalnie)</Label>
             <Textarea
-              id="description"
+              id="edit-description"
               placeholder="Wprowadź opis projektu"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -152,41 +147,48 @@ export function CreateProjectSheet({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="team">Zespół</Label>
-            <Select value={teamId} onValueChange={setTeamId} required disabled={loading}>
-              <SelectTrigger>
-                <SelectValue placeholder="Wybierz zespół" />
-              </SelectTrigger>
-              <SelectContent>
-                {teams.map((team) => (
-                  <SelectItem key={team.id} value={team.id}>
-                    {team.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Zespół</Label>
+            <div className="px-3 py-2 border rounded-md bg-muted text-muted-foreground">
+              {project?.team.name}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Zespół nie może być zmieniony po utworzeniu projektu
+            </p>
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="color">Kolor projektu</Label>
+            <Label htmlFor="edit-color">Kolor projektu</Label>
             <div className="grid grid-cols-6 gap-2">
-              {predefinedColors.map((predefinedColor) => (
+              {[
+                "#3B82F6", // Blue
+                "#10B981", // Emerald
+                "#F59E0B", // Amber
+                "#EF4444", // Red
+                "#8B5CF6", // Violet
+                "#EC4899", // Pink
+                "#06B6D4", // Cyan
+                "#84CC16", // Lime
+                "#F97316", // Orange
+                "#6366F1", // Indigo
+                "#14B8A6", // Teal
+                "#A855F7", // Purple
+              ].map((colorOption) => (
                 <button
-                  key={predefinedColor}
+                  key={colorOption}
                   type="button"
-                  className={`w-8 h-8 rounded-full border-2 ${
-                    color === predefinedColor ? "border-gray-900" : "border-gray-300"
+                  className={`w-8 h-8 rounded-full border-2 transition-all ${
+                    color === colorOption ? "border-gray-900 scale-110" : "border-gray-300 hover:border-gray-400"
                   }`}
-                  style={{ backgroundColor: predefinedColor }}
-                  onClick={() => setColor(predefinedColor)}
+                  style={{ backgroundColor: colorOption }}
+                  onClick={() => setColor(colorOption)}
                   disabled={loading}
                 />
               ))}
             </div>
             <div className="flex items-center space-x-2 mt-2">
-              <Label htmlFor="custom-color" className="text-sm">Własny kolor:</Label>
+              <Label htmlFor="edit-custom-color" className="text-sm">Własny kolor:</Label>
               <input
-                id="custom-color"
+                id="edit-custom-color"
                 type="color"
                 value={color}
                 onChange={(e) => setColor(e.target.value)}
@@ -217,10 +219,10 @@ export function CreateProjectSheet({
           </Button>
           <Button
             type="submit"
-            disabled={loading || !name.trim() || !teamId}
+            disabled={loading || !name.trim()}
             onClick={handleSubmit}
           >
-            {loading ? "Tworzenie..." : "Utwórz projekt"}
+            {loading ? "Zapisywanie..." : "Zapisz zmiany"}
           </Button>
         </SheetFooter>
       </SheetContent>

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { Plus, FolderOpen, Calendar, Users, ImageIcon, Edit, MoreVertical, Archive, ArchiveX } from "lucide-react"
 import { CreateProjectSheet } from "./create-project-sheet"
-import { EditProjectDialog } from "./edit-project-dialog"
+import { EditProjectSheet } from "./edit-project-sheet"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -388,7 +388,7 @@ export function ProjectsContent() {
         teams={teams}
       />
 
-      <EditProjectDialog
+      <EditProjectSheet
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
         onProjectUpdated={handleProjectUpdated}
