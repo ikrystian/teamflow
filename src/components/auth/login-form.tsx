@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
+import { loginSchema, type LoginFormData } from "@/lib/auth-validations"
 
 export function LoginForm({
   className,
@@ -18,6 +19,7 @@ export function LoginForm({
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  const [fieldErrors, setFieldErrors] = useState<Partial<LoginFormData>>({})
   const router = useRouter()
   const searchParams = useSearchParams()
   const toastShownRef = useRef(false)
@@ -39,6 +41,22 @@ export function LoginForm({
     e.preventDefault()
     setIsLoading(true)
     setError("")
+    setFieldErrors({})
+
+    // Validate form data
+    const validation = loginSchema.safeParse({ email, password })
+
+    if (!validation.success) {
+      const errors: Partial<LoginFormData> = {}
+      validation.error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          errors[issue.path[0] as keyof LoginFormData] = issue.message
+        }
+      })
+      setFieldErrors(errors)
+      setIsLoading(false)
+      return
+    }
 
     try {
       const result = await signIn("credentials", {
@@ -85,9 +103,13 @@ export function LoginForm({
             placeholder="m@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            required
+
             autoComplete="email"
+            className={fieldErrors.email ? "border-destructive" : ""}
           />
+          {fieldErrors.email && (
+            <p className="text-sm text-destructive">{fieldErrors.email}</p>
+          )}
         </div>
         <div className="grid gap-2">
           <div className="flex items-center">
@@ -104,9 +126,13 @@ export function LoginForm({
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            required
+
             autoComplete="current-password"
+            className={fieldErrors.password ? "border-destructive" : ""}
           />
+          {fieldErrors.password && (
+            <p className="text-sm text-destructive">{fieldErrors.password}</p>
+          )}
         </div>
         {error && (
           <div className="text-sm text-destructive text-center bg-destructive/10 p-3 rounded-md">
