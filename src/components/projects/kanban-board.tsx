@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Calendar, Clock, MoreHorizontal, Plus, AlertCircle, Trash2, X, Check, Loader2 } from "lucide-react"
+import { Calendar, Clock, MoreHorizontal, Plus, AlertCircle, Trash2, X, Loader2 } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,

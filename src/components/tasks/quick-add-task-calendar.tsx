@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Check, X } from "lucide-react"
+import { Plus, X } from "lucide-react"
 import { toast } from "sonner"
 import type { Session } from "next-auth"
 

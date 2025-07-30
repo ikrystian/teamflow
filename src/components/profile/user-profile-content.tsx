@@ -197,14 +197,6 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
     }
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Done': return 'bg-green-100 text-green-800'
-      case 'In Progress': return 'bg-blue-100 text-blue-800'
-      case 'To Do': return 'bg-gray-100 text-gray-800'
-      default: return 'bg-gray-100 text-gray-800'
-    }
-  }
 
   if (loading) {
     return (
@@ -395,9 +387,7 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
                             <div className="flex-1">
                               <h4 className="font-medium text-sm">{task.title}</h4>
                               <div className="flex items-center gap-2 mt-1">
-                                <Badge variant="outline" className={getStatusColor(task.status)}>
-                                  {task.status}
-                                </Badge>
+
                                 {task.priority && (
                                   <Badge variant="outline" className={getPriorityColor(task.priority)}>
                                     {task.priority}
