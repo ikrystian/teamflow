@@ -74,3 +74,17 @@ export interface Task {
   images?: TaskImage[];
   todos?: Todo[];
 }
+
+export interface SystemChange {
+  id: string;
+  title: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: {
+    id: string;
+    name: string;
+    email: string;
+    avatarUrl?: string;
+  };
+}

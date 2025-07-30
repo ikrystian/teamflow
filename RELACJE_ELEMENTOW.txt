@@ -119,3 +119,54 @@ Zmodyfikowano komponent `ProjectInfoContent` (`src/components/projects/project-i
 - **Defensive Programming**: Bezpieczne sprawdzenia przed dostępem do danych
 - **Lepsze UX**: Graceful degradation zamiast crash aplikacji
 - **Kompatybilność**: Działa z projektami z i bez zadań/członków
+
+## Implementacja prawego sidebara z ostatnimi zmianami (2025-07-30):
+
+### Funkcjonalność:
+Dodano prawy sidebar o szerokości 400px z możliwością zwinięcia, który wyświetla ostatnie zmiany systemowe. Administratorzy mogą dodawać nowe zmiany bezpośrednio z interfejsu.
+
+### Komponenty dodane:
+1. **Model bazy danych SystemChange** (`prisma/schema.prisma`):
+   - Tabela do przechowywania zmian systemowych
+   - Pola: id, title, description, type, isVisible, createdAt, updatedAt, createdById
+   - Relacja z modelem User (createdBy)
+
+2. **API endpoints**:
+   - `GET /api/system-changes` - pobieranie widocznych zmian (dla wszystkich użytkowników)
+   - `GET /api/admin/system-changes` - zarządzanie zmianami (tylko admin)
+   - `POST /api/admin/system-changes` - dodawanie nowych zmian (tylko admin)
+   - `PATCH /api/admin/system-changes/[id]` - edycja zmian (tylko admin)
+   - `DELETE /api/admin/system-changes/[id]` - usuwanie zmian (tylko admin)
+
+3. **Komponenty UI**:
+   - `RightSidebar` - prawy sidebar z możliwością zwinięcia
+   - `RecentChanges` - lista ostatnich zmian z różnymi typami (info, warning, success, error)
+   - `SystemChangeForm` - formularz dodawania nowych zmian (tylko dla adminów)
+   - `NavAdmin` - sekcja administracyjna w lewym sidebarze (tylko dla adminów)
+
+4. **Integracja z layoutem**:
+   - Modyfikacja `DashboardLayout` do obsługi prawego sidebara
+   - Automatyczne dostosowanie szerokości głównej treści gdy sidebar jest widoczny
+   - Przycisk "Ostatnie zmiany" w sekcji administracyjnej lewego sidebara
+
+### Uproszczenie systemu zmian:
+- Usunięto pole "typ zmiany" - wszystkie zmiany mają domyślny typ "info"
+- Usunięto pole "widoczność" - wszystkie zmiany są zawsze widoczne dla użytkowników
+- Uproszczony formularz zawiera tylko tytuł i opis
+
+### Uprawnienia:
+- **Wszyscy użytkownicy**: mogą przeglądać wszystkie zmiany systemowe
+- **Administratorzy**: mogą dodawać, edytować i usuwać zmiany systemowe
+
+### Pliki dodane/zmodyfikowane:
+- `prisma/schema.prisma` - model SystemChange
+- `src/types/index.ts` - interfejs SystemChange
+- `src/app/api/system-changes/route.ts` - publiczny endpoint
+- `src/app/api/admin/system-changes/route.ts` - endpoint administracyjny
+- `src/app/api/admin/system-changes/[changeId]/route.ts` - CRUD dla pojedynczych zmian
+- `src/components/dashboard/right-sidebar.tsx` - prawy sidebar
+- `src/components/dashboard/recent-changes.tsx` - lista zmian
+- `src/components/dashboard/nav-admin.tsx` - nawigacja administracyjna
+- `src/components/admin/system-change-form.tsx` - formularz dodawania zmian
+- `src/components/dashboard/layout.tsx` - integracja z layoutem
+- `scripts/seed-system-changes.ts` - przykładowe dane

@@ -31,6 +31,7 @@ model User {
   blockedTasks      Task[]            @relation("TaskBlocker")
   timeEntries       TimeEntry[]
   teams             Team[]            @relation("TeamMembers")
+  systemChanges     SystemChange[]    @relation("SystemChangeCreator")
 }
 
 model Team {
@@ -215,4 +216,16 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model SystemChange {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  type        String   @default("info") // info, warning, success, error
+  isVisible   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String
+  createdBy   User     @relation("SystemChangeCreator", fields: [createdById], references: [id])
 }

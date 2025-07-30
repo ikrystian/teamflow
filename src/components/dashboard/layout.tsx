@@ -29,9 +29,12 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { NavUser } from "@/components/dashboard/nav-user"
 import { NavProjects } from "@/components/dashboard/nav-projects"
+import { NavAdmin } from "@/components/dashboard/nav-admin"
 import { TeamSwitcher } from "@/components/dashboard/team-switcher"
 import { DashboardBreadcrumbs } from "@/components/dashboard/breadcrumbs"
 import { EditProjectSheet } from "@/components/projects/edit-project-sheet"
+import { RightSidebar } from "@/components/dashboard/right-sidebar"
+import { RecentChanges } from "@/components/dashboard/recent-changes"
 import { HeaderProvider, useHeader } from "@/contexts/header-context"
 import { useProjects } from "@/contexts/projects-context"
 
@@ -59,6 +62,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
   const { projects, refreshProjects } = useProjects()
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
+  const [rightSidebarVisible, setRightSidebarVisible] = useState(true)
 
   const navigation = [
     { name: "Panel", href: "/dashboard", icon: Home },
@@ -90,6 +94,10 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
     refreshProjects()
   }
 
+  const handleRecentChangesClick = () => {
+    setRightSidebarVisible(!rightSidebarVisible)
+  }
+
 
 
   return (
@@ -105,6 +113,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
           ]} />
         </SidebarHeader>
         <SidebarContent>
+          <NavAdmin onRecentChangesClick={handleRecentChangesClick} />
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>
@@ -143,7 +152,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
           </div>
         </header>
         <DashboardBreadcrumbs />
-        <main className="flex-1">
+        <main className={`flex-1 transition-all duration-300 ${rightSidebarVisible ? 'pr-[400px]' : ''}`}>
           {children}
         </main>
       </SidebarInset>
@@ -155,6 +164,13 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
         project={selectedProject}
         teams={[]}
       />
+
+      {/* Right Sidebar for Recent Changes */}
+      {rightSidebarVisible && (
+        <RightSidebar>
+          <RecentChanges limit={15} />
+        </RightSidebar>
+      )}
     </SidebarProvider>
   )
 }
