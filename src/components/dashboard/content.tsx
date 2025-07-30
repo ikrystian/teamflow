@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react"
 import { TasksTable } from "./tasks-table"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { TaskDetailsSheet } from "@/components/tasks/task-details-sheet"
-import { TaskFormSheet } from "@/components/shared/task-form-sheet"
 import type { Task, User, TaskStatus } from "@/types"
 import { usePageHeader } from "@/contexts/header-context"
 
@@ -17,7 +16,6 @@ export function DashboardContent() {
   // Dialog states
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
-  const [editDialogOpen, setEditDialogOpen] = useState(false)
 
   usePageHeader(
     <div className="flex items-center justify-between w-full">
@@ -111,14 +109,8 @@ export function DashboardContent() {
     setDetailsDialogOpen(true)
   }
 
-  const handleTaskEdit = (task: Task) => {
-    setSelectedTask(task)
-    setEditDialogOpen(true)
-  }
-
   const handleTaskUpdated = () => {
     fetchTasks()
-    setEditDialogOpen(false)
     setSelectedTask(null)
   }
 
@@ -134,7 +126,6 @@ export function DashboardContent() {
         taskStatuses={taskStatuses}
         onTaskUpdate={handleTaskUpdate}
         onTaskDetails={handleTaskDetails}
-        onTaskEdit={handleTaskEdit}
       />
 
       {/* Task Details Sheet */}
@@ -142,21 +133,8 @@ export function DashboardContent() {
         open={detailsDialogOpen}
         onOpenChange={setDetailsDialogOpen}
         task={selectedTask}
-        onEdit={(task, e) => {
-          e?.stopPropagation?.()
-          handleTaskEdit(task)
-        }}
         onTaskUpdated={handleTaskUpdated}
-        canEdit={true}
-      />
-
-      {/* Task Edit Sheet */}
-      <TaskFormSheet
-        mode="edit"
-        open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
-        onTaskUpdated={handleTaskUpdated}
-        task={selectedTask}
+        canEdit={false}
       />
     </div>
   )

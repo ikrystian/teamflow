@@ -1,0 +1,124 @@
+=== USUNIĘCIE OPCJI "EDYTUJ ZADANIE" Z TABELI DASHBOARD ===
+
+Data: 2025-07-30
+Autor: Krystian
+Opis: Usunięto opcję "Edytuj zadanie" z menu kontekstowego w tabeli "Przegląd wszystkich zadań z całego systemu" w Dashboard
+
+=== WPROWADZONE ZMIANY ===
+
+1. **Usunięto opcję z menu dropdown**
+   - Usunięto DropdownMenuItem "Edytuj zadanie" z menu akcji
+   - Pozostawiono tylko "Zobacz szczegóły" w menu kontekstowym
+
+2. **Usunięto prop onTaskEdit z TasksTable**
+   - Usunięto onTaskEdit z interfejsu TasksTableProps
+   - Usunięto parametr z funkcji TasksTable
+   - Usunięto z dependency array w useMemo
+
+3. **Uproszczono DashboardContent**
+   - Usunięto import TaskFormSheet
+   - Usunięto stan editDialogOpen
+   - Usunięto funkcję handleTaskEdit
+   - Uproszczono handleTaskUpdated (usunięto setEditDialogOpen)
+   - Usunięto prop onTaskEdit z TasksTable
+   - Usunięto prop onEdit z TaskDetailsSheet
+   - Usunięto cały komponent TaskFormSheet
+   - Ustawiono canEdit={false} w TaskDetailsSheet
+
+=== PLIKI ZMODYFIKOWANE ===
+
+- src/components/dashboard/tasks-table.tsx
+- src/components/dashboard/content.tsx
+- README.md (dodano wpis o zmianie)
+- docs/remove-edit-task-from-dashboard.txt (ten plik)
+
+=== SZCZEGÓŁY ZMIAN ===
+
+**TasksTable - usunięte elementy:**
+```typescript
+// Usunięto z interfejsu
+onTaskEdit?: (task: Task) => void
+
+// Usunięto z parametrów funkcji
+onTaskEdit
+
+// Usunięto z menu dropdown
+<DropdownMenuItem onClick={() => onTaskEdit?.(task)}>
+  Edytuj zadanie
+</DropdownMenuItem>
+
+// Usunięto z dependency array
+[users, taskStatuses, handleOptimisticTaskUpdate, onTaskDetails] // bez onTaskEdit
+```
+
+**DashboardContent - usunięte elementy:**
+```typescript
+// Usunięto import
+import { TaskFormSheet } from "@/components/shared/task-form-sheet"
+
+// Usunięto stan
+const [editDialogOpen, setEditDialogOpen] = useState(false)
+
+// Usunięto funkcję
+const handleTaskEdit = (task: Task) => {
+  setSelectedTask(task)
+  setEditDialogOpen(true)
+}
+
+// Usunięto prop
+onTaskEdit={handleTaskEdit}
+
+// Usunięto prop
+onEdit={(task, e) => {
+  e?.stopPropagation?.()
+  handleTaskEdit(task)
+}}
+
+// Usunięto cały komponent
+<TaskFormSheet
+  mode="edit"
+  open={editDialogOpen}
+  onOpenChange={setEditDialogOpen}
+  onTaskUpdated={handleTaskUpdated}
+  task={selectedTask}
+/>
+```
+
+=== UZASADNIENIE ZMIANY ===
+
+1. **Uproszczenie interfejsu** - Mniej opcji w menu kontekstowym
+2. **Spójność z celem Dashboard** - Dashboard służy do przeglądu, nie edycji
+3. **Redukcja złożoności** - Mniej stanów i funkcji do zarządzania
+4. **Lepszy UX** - Jasne rozdzielenie funkcji przeglądu i edycji
+
+=== ZACHOWANE FUNKCJONALNOŚCI ===
+
+- Opcja "Zobacz szczegóły" w menu kontekstowym
+- Inline editing wszystkich pól w tabeli (nazwa, assignee, priorytet, data, status, szacowany czas)
+- Kopiowanie ID zadania do schowka
+- Wszystkie funkcje filtrowania, sortowania i zarządzania kolumnami
+- TaskDetailsSheet z możliwością przeglądania szczegółów
+
+=== ALTERNATYWNE SPOSOBY EDYCJI ZADAŃ ===
+
+Użytkownicy nadal mogą edytować zadania przez:
+1. **Inline editing** - bezpośrednia edycja pól w tabeli
+2. **Sekcja Zadania** - pełna funkcjonalność edycji w /dashboard/tasks
+3. **Szczegóły projektów** - edycja zadań w kontekście projektu
+4. **TaskDetailsSheet** - jeśli canEdit zostanie ustawione na true w przyszłości
+
+=== WPŁYW NA UŻYTKOWNIKÓW ===
+
+- **Pozytywny**: Prostszy interfejs, mniej zagmatwania
+- **Pozytywny**: Szybsza nawigacja w menu kontekstowym
+- **Neutralny**: Inline editing nadal dostępne dla podstawowych zmian
+- **Neutralny**: Pełna edycja dostępna w innych sekcjach aplikacji
+
+=== TESTY ===
+
+- Aplikacja kompiluje się bez błędów
+- Dashboard ładuje się poprawnie
+- Menu kontekstowe zawiera tylko "Zobacz szczegóły"
+- Inline editing wszystkich pól działa prawidłowo
+- TaskDetailsSheet otwiera się poprawnie z canEdit={false}
+- Brak nieużywanych importów i zmiennych

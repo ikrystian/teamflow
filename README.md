@@ -50,6 +50,7 @@ Nexus to nowoczesna aplikacja internetowa do zarządzania zadaniami i projektami
 - **Preferencje tabeli zadań** - Automatyczne zapisywanie wybranych kolumn w localStorage dla każdego użytkownika, domyślnie wszystkie kolumny widoczne z możliwością ukrywania niepotrzebnych
 - **Zawsze rozwinięte grupy zadań** - Usunięto możliwość zwijania grup zadań w tabeli Dashboard dla lepszej przejrzystości i dostępności wszystkich zadań
 - **Numeryczny input dla szacowanego czasu** - Pole szacowanego czasu w tabeli zadań używa teraz input typu number z min="0" i step="0.1" dla lepszej walidacji i UX
+- **Uproszczone menu akcji w tabeli zadań** - Usunięto opcję "Edytuj zadanie" z menu kontekstowego w tabeli Dashboard, pozostawiając tylko "Zobacz szczegóły" dla lepszej przejrzystości
 - **Synchronizacja projektów** - Automatyczne odświeżanie listy projektów w sidebarze po dodaniu, edycji lub archiwizacji projektu dzięki globalnemu kontekstowi React
 - **Kolumna autora zadania** - Nowa kolumna "Autor zadania" wyświetlająca użytkownika który utworzył zadanie tylko z avatarem i tooltipem (analogicznie do osoby przypisanej), umieszczona zaraz po kolumnie "Osoba przypisana"
 - **Zarządzanie kolejnością kolumn** - Możliwość ustawiania kolejności kolumn przez użytkownika z drag & drop interface, zapisywanie kolejności w localStorage

@@ -165,9 +165,10 @@ export function EditableCell({
             onChange={(e) => setEditValue(e.target.value)}
             onBlur={handleSave}
             onKeyDown={handleKeyDown}
-            className="h-8"
+            className="h-8 max-w-[60px]"
             min="0"
-            step="0.1"
+
+            step="0.5"
           />
         )
 

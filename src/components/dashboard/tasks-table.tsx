@@ -57,10 +57,9 @@ interface TasksTableProps {
   taskStatuses: TaskStatus[]
   onTaskUpdate: (taskId: string, updates: TaskUpdateData) => Promise<void>
   onTaskDetails?: (task: Task) => void
-  onTaskEdit?: (task: Task) => void
 }
 
-export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate, onTaskDetails, onTaskEdit }: TasksTableProps) {
+export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate, onTaskDetails }: TasksTableProps) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [rowSelection, setRowSelection] = useState({})
@@ -529,7 +528,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate, onTaskDet
           <div className="flex items-center gap-2">
             <Link
               href={`/dashboard/projects/${task.project?.id}`}
-              className="text-sm truncate font-medium underline hover:no-underline"
+              className="text-sm truncate font-medium underline hover:no-underline line-height-9 block"
             >
               {task.project?.name}
             </Link>
@@ -705,15 +704,12 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate, onTaskDet
               <DropdownMenuItem onClick={() => onTaskDetails?.(task)}>
                 Zobacz szczegóły
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onTaskEdit?.(task)}>
-                Edytuj zadanie
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         )
       },
     },
-  ], [users, taskStatuses, handleOptimisticTaskUpdate, onTaskDetails, onTaskEdit])
+  ], [users, taskStatuses, handleOptimisticTaskUpdate, onTaskDetails])
 
   // Sortuj kolumny według zapisanej kolejności
   const sortedColumns = useMemo(() => sortColumnsByOrder(columns), [columns, sortColumnsByOrder])
