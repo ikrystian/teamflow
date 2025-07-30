@@ -456,6 +456,9 @@ export function TasksContent() {
           <TasksWeeklyCalendar
             tasks={tasks.filter(task => task.dueDate)}
             onTaskUpdated={fetchTasks}
+            projects={projects}
+            session={session}
+            hideProjectSelect={filter === "assigned"}
           />
         </TabsContent>
 

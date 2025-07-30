@@ -24,7 +24,7 @@ Nexus to nowoczesna aplikacja internetowa do zarządzania zadaniami i projektami
 - **Lista todos** - Funkcjonalność checklist w zadaniach z możliwością dodawania, edycji i usuwania elementów
 - **Dashboard** - Przegląd statystyk i ostatnich aktywności
 - **Widok kalendarza** - Wyświetlanie zadań według terminów wykonania
-- **Kalendarz tygodniowy** - Widok kalendarza na tydzień roboczy (Pn-Pt) z zadaniami w zakładce Kalendarz w sekcji Zadania
+- **Kalendarz tygodniowy** - Widok kalendarza na tydzień roboczy (Pn-Pt) z zadaniami w zakładce Kalendarz w sekcji Zadania, z możliwością szybkiego dodawania zadań w każdym dniu
 - **Popover szczegółów zadań** - Hover na zadaniach w kalendarzach pokazuje popover ze szczegółami zadania (tytuł, projekt, priorytet, status, opis, assignee, termin, postęp)
 - **Footer w sidebarze** - Dodano footer w sidebarze z informacjami o użytkowniku (avatar, nazwa, email) i menu kontekstowym (profil, ustawienia, wylogowanie)
 - **Lista projektów w stylu shadcn/ui** - Przeprojektowano listę projektów w sidebarze zgodnie z wzorcem sidebar-07 z shadcn/ui, z menu akcji dla każdego projektu
@@ -993,6 +993,18 @@ Projekt jest otwarty na współpracę. Aby dodać nowe funkcjonalności:
   - `src/components/tasks/task-details-dialog.tsx` - dialog szczegółów zadania
   - Sekcja komentarzy w Card z nagłówkiem i licznikiem komentarzy
 - **Dokumentacja**: Zaktualizowano `RELACJE_KOMPONENTOW.txt` z opisem zmian
+
+### Pole "Dodaj zadanie" w kalendarzu tygodniowym (2025-01-30)
+- **Nowa funkcjonalność**: Dodano pole "Dodaj zadanie" w każdym dniu kalendarza tygodniowego
+- **Komponent QuickAddTaskCalendar**: Nowy komponent do szybkiego dodawania zadań w widoku kalendarza
+- **Automatyczne ustawienie daty**: Zadania automatycznie otrzymują datę deadline odpowiadającą wybranemu dniu
+- **Kompaktowy design**: Dostosowany do ograniczonej przestrzeni w kalendarzu z mniejszymi przyciskami i polami
+- **Integracja z systemem**: Używa tego samego API i respektuje filtry zadań (assigned/all)
+- **Komponenty zaktualizowane**:
+  - `src/components/tasks/quick-add-task-calendar.tsx` - nowy komponent do dodawania zadań
+  - `src/components/tasks/tasks-weekly-calendar.tsx` - dodano pole dodawania zadań do każdego dnia
+  - `src/components/tasks/tasks-content.tsx` - przekazywanie props do kalendarza
+- **Dokumentacja**: Zaktualizowano `TASKS_CALENDAR_RELATIONS.txt` z opisem implementacji
 
 ## 📄 Licencja
 

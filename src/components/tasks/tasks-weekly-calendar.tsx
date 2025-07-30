@@ -7,14 +7,32 @@ import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, User } from "lucide-react"
 import { TaskDetailsSheet } from "./task-details-sheet"
 import { TaskPopover } from "./task-popover"
+import { QuickAddTaskCalendar } from "./quick-add-task-calendar"
 import type { Task, TaskStatus } from "@/types"
+import type { Session } from "next-auth"
 
 interface TasksWeeklyCalendarProps {
   tasks: Task[]
   onTaskUpdated: () => void
+  projects?: Array<{
+    id: string
+    name: string
+    team: {
+      id: string
+      name: string
+    }
+  }>
+  session?: Session | null
+  hideProjectSelect?: boolean
 }
 
-export function TasksWeeklyCalendar({ tasks, onTaskUpdated }: TasksWeeklyCalendarProps) {
+export function TasksWeeklyCalendar({
+  tasks,
+  onTaskUpdated,
+  projects = [],
+  session = null,
+  hideProjectSelect = false
+}: TasksWeeklyCalendarProps) {
   const [currentWeek, setCurrentWeek] = useState(new Date())
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [taskDetailsDialogOpen, setTaskDetailsDialogOpen] = useState(false)
@@ -172,7 +190,7 @@ export function TasksWeeklyCalendar({ tasks, onTaskUpdated }: TasksWeeklyCalenda
               const todayClass = isToday(day) ? 'bg-blue-50 border-blue-200' : 'border-gray-200'
 
               return (
-                <div key={day.toISOString()} className={`border rounded-lg p-3 min-h-[200px] ${todayClass}`}>
+                <div key={day.toISOString()} className={`border rounded-lg p-3 min-h-[280px] flex flex-col ${todayClass}`}>
                   <div className="mb-3">
                     <h3 className={`font-medium text-sm ${isToday(day) ? 'text-blue-600' : 'text-gray-900'}`}>
                       {dayNames[index]}
@@ -182,7 +200,7 @@ export function TasksWeeklyCalendar({ tasks, onTaskUpdated }: TasksWeeklyCalenda
                     </p>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-2 flex-1">
                     {tasksForDay.map(task => (
                       <TaskPopover
                         key={task.id}
@@ -242,6 +260,17 @@ export function TasksWeeklyCalendar({ tasks, onTaskUpdated }: TasksWeeklyCalenda
                         <p className="text-xs text-gray-400">Brak zadań</p>
                       </div>
                     )}
+
+                    {/* Pole dodawania zadania */}
+                    <div className="mt-auto pt-2">
+                      <QuickAddTaskCalendar
+                        date={day}
+                        onTaskCreated={onTaskUpdated}
+                        projects={projects}
+                        session={session}
+                        hideProjectSelect={hideProjectSelect}
+                      />
+                    </div>
                   </div>
                 </div>
               )

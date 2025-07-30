@@ -387,14 +387,13 @@ function QuickAddTask({
   }
 
   return (
-    <Card className="mb-2">
-      <CardContent className="p-3">
-        <form onSubmit={handleSubmit}>
+    <Card className="mb-2 p-2">
+      <CardContent className="p-0">
+        <form onSubmit={handleSubmit} className="flex items-center gap-2">
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Wpisz nazwę zadania..."
-            className="mb-2"
             autoFocus
             disabled={loading}
           />
@@ -420,7 +419,7 @@ function QuickAddTask({
               {error}
             </div>
           )}
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
             <Button
               type="submit"
               size="sm"

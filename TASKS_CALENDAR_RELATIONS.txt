@@ -14,6 +14,13 @@
    - Wyświetla zadania w widoku tygodnia roboczego (Pn-Pt)
    - Obsługuje nawigację tygodniową
    - **NOWA FUNKCJONALNOŚĆ**: Popover ze szczegółami zadania przy hover
+   - **NOWA FUNKCJONALNOŚĆ**: Pole "Dodaj zadanie" w każdym dniu kalendarza
+
+3. **QuickAddTaskCalendar** (`src/components/tasks/quick-add-task-calendar.tsx`)
+   - Komponent do szybkiego dodawania zadań w widoku kalendarza
+   - Podobny do QuickAddTask z widoku tablicy, ale dostosowany do kalendarza
+   - Automatycznie ustawia datę deadline na wybrany dzień
+   - Kompaktowy design dostosowany do mniejszej przestrzeni w kalendarzu
 
 3. **TaskDetailsDialog** (`src/components/tasks/task-details-dialog.tsx`)
    - Dialog szczegółów zadania
@@ -238,6 +245,30 @@ interface Task {
 1. **Grupowanie zadań według daty deadline**:
    - Zadania sortowane chronologicznie według dueDate
    - Zadania bez daty deadline wyświetlane na końcu
+
+## Nowa funkcjonalność - Pole "Dodaj zadanie" w kalendarzu
+
+### Opis implementacji
+- **Lokalizacja**: W każdym dniu kalendarza tygodniowego
+- **Komponent**: QuickAddTaskCalendar
+- **Pozycja**: Na dole każdego dnia, zawsze widoczne
+
+### Funkcjonalności
+1. **Szybkie dodawanie zadań**:
+   - Kompaktowy formularz z polem tytułu
+   - Automatyczne ustawienie daty deadline na wybrany dzień
+   - Opcjonalny wybór projektu (jeśli dostępne)
+   - Automatyczne przypisanie do aktualnego użytkownika
+
+2. **Responsywny design**:
+   - Mniejsze rozmiary przycisków i pól (text-xs, h-6, h-7)
+   - Kompaktowy padding i marginesy
+   - Dostosowany do ograniczonej przestrzeni w kalendarzu
+
+3. **Integracja z istniejącym systemem**:
+   - Używa tego samego API endpoint (/api/tasks)
+   - Respektuje filtry zadań (assigned/all)
+   - Odświeża listę zadań po utworzeniu nowego
 
 2. **Wyświetlanie dat**:
    - Data pokazana tylko przy pierwszym zadaniu w grupie
