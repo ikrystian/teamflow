@@ -27,7 +27,7 @@ export default function SignUp() {
           src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=1920&q=80"
           alt="Team workspace"
           fill
-          className="object-cover dark:brightness-[0.2] dark:grayscale"
+          className="object-cover"
         />
       </div>
     </div>

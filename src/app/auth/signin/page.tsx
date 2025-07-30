@@ -30,7 +30,7 @@ function SignInPage() {
           src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1920&q=80"
           alt="Team collaboration"
           fill
-          className="object-cover dark:brightness-[0.2] dark:grayscale"
+          className="object-cover"
         />
       </div>
     </div>

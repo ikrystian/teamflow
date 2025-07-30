@@ -275,9 +275,9 @@ export function TasksContent() {
       case "High":
         return "bg-destructive/10 text-destructive"
       case "Medium":
-        return "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400"
-      case "Low":
-        return "bg-green-500/10 text-green-600 dark:text-green-400"
+        return "bg-yellow-500/10 text-yellow-600"
+      case "done":
+        return "bg-green-500/10 text-green-600"
       default:
         return "bg-muted text-muted-foreground"
     }

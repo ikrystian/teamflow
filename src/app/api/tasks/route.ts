@@ -15,11 +15,29 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const projectId = searchParams.get("projectId")
     const assigneeId = searchParams.get("assigneeId")
+    const dueDate = searchParams.get("dueDate")
+
+    let dueDateFilter = {}
+    if (dueDate === "tomorrow") {
+      const today = new Date()
+      const tomorrow = new Date(today)
+      tomorrow.setDate(tomorrow.getDate() + 1)
+      today.setHours(0, 0, 0, 0)
+      tomorrow.setHours(23, 59, 59, 999)
+
+      dueDateFilter = {
+        dueDate: {
+          gte: today,
+          lte: tomorrow,
+        },
+      }
+    }
 
     const tasks = await prisma.task.findMany({
       where: {
         ...(projectId && { projectId }),
         ...(assigneeId && { assigneeId }),
+        ...dueDateFilter,
         OR: [
           // Tasks with projects where user is a team member and project is not archived
           {

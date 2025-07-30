@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useTheme } from "next-themes"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -49,7 +48,6 @@ interface UserProfile {
 
 export function SettingsContent() {
   const { data: session } = useSession() as { data: Session | null }
-  const { theme, setTheme } = useTheme()
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
@@ -566,33 +564,6 @@ export function SettingsContent() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Motyw</Label>
-                    <div className="flex gap-2">
-                      <Button
-                        variant={theme === "light" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setTheme("light")}
-                      >
-                        Jasny
-                      </Button>
-                      <Button
-                        variant={theme === "dark" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setTheme("dark")}
-                      >
-                        Ciemny
-                      </Button>
-                      <Button
-                        variant={theme === "system" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setTheme("system")}
-                      >
-                        Systemowy
-                      </Button>
-                    </div>
-                  </div>
-
                   <div className="space-y-2">
                     <Label>Język</Label>
                     <div className="flex gap-2">

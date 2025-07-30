@@ -232,28 +232,28 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
       value: userProfile.stats.totalAssignedTasks.toString(),
       description: `${userProfile.stats.completedTasks} ukończonych`,
       icon: CheckSquare,
-      color: "text-blue-600 dark:text-blue-400"
+      color: "text-blue-600"
     },
     {
       name: "Zespoły",
       value: userProfile.stats.teamsCount.toString(),
       description: "Członkostwo w zespołach",
       icon: Users,
-      color: "text-green-600 dark:text-green-400"
+      color: "text-green-600"
     },
     {
       name: "Czas pracy",
       value: `${userProfile.stats.totalHours}h`,
       description: "Łączny czas",
       icon: Clock,
-      color: "text-purple-600 dark:text-purple-400"
+      color: "text-purple-600"
     },
     {
       name: "Komentarze",
       value: userProfile.stats.totalComments.toString(),
       description: "Aktywność w zadaniach",
       icon: MessageSquare,
-      color: "text-orange-600 dark:text-orange-400"
+      color: "text-orange-600"
     }
   ]
 

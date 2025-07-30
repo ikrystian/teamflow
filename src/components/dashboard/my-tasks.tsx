@@ -1,38 +1,25 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { MyTasks } from "./my-tasks"
+import { Task, User, TaskStatus } from "@/types"
+import { useSession } from "next-auth/react"
+import type { Session } from "next-auth"
 import { TasksTable } from "./tasks-table"
-import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { TaskDetailsSheet } from "@/components/tasks/task-details-sheet"
-import type { Task, User, TaskStatus } from "@/types"
-import { usePageHeader } from "@/contexts/header-context"
 
-export function DashboardContent() {
+export function MyTasks() {
+  const { data: session } = useSession() as { data: Session | null }
   const [tasks, setTasks] = useState<Task[]>([])
   const [users, setUsers] = useState<User[]>([])
   const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
   const [loading, setLoading] = useState(true)
-
-  // Dialog states
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
 
-  usePageHeader(
-    <div className="flex items-center justify-between w-full">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">
-          Przegląd wszystkich zadań z całego systemu
-        </h1>
-      </div>
-
-    </div>,
-    [] // Re-render when filter changes
-  )
-
-  const fetchTasks = useCallback(async () => {
+  const fetchMyTasks = useCallback(async () => {
+    if (!session?.user?.id) return
     try {
-      const response = await fetch("/api/tasks")
+      const response = await fetch(`/api/tasks?assigneeId=${session.user.id}&dueDate=tomorrow`)
       if (response.ok) {
         const data = await response.json()
         setTasks(data.tasks)
@@ -40,7 +27,7 @@ export function DashboardContent() {
     } catch (error) {
       console.error("Error fetching tasks:", error)
     }
-  }, [])
+  }, [session])
 
   const fetchUsers = async () => {
     try {
@@ -68,12 +55,12 @@ export function DashboardContent() {
 
   useEffect(() => {
     const fetchData = async () => {
-      await Promise.all([fetchTasks(), fetchUsers(), fetchTaskStatuses()])
+      setLoading(true)
+      await Promise.all([fetchMyTasks(), fetchUsers(), fetchTaskStatuses()])
       setLoading(false)
-
     }
     fetchData()
-  }, [fetchTasks])
+  }, [fetchMyTasks])
 
   const handleTaskUpdate = async (taskId: string, updates: Partial<Task> & { assigneeId?: string }) => {
     try {
@@ -86,8 +73,7 @@ export function DashboardContent() {
       })
 
       if (response.ok) {
-        // Refresh tasks after update (in background for optimistic updates)
-        await fetchTasks()
+        await fetchMyTasks()
       } else {
         const errorData = await response.text()
         console.error("Failed to update task:", {
@@ -95,12 +81,10 @@ export function DashboardContent() {
           statusText: response.statusText,
           error: errorData
         })
-        // Throw error so optimistic update can handle it
         throw new Error(`Failed to update task: ${response.status} ${response.statusText}`)
       }
     } catch (error) {
       console.error("Error updating task:", error)
-      // Re-throw error so optimistic update can handle it
       throw error
     }
   }
@@ -111,17 +95,17 @@ export function DashboardContent() {
   }
 
   const handleTaskUpdated = () => {
-    fetchTasks()
+    fetchMyTasks()
     setSelectedTask(null)
   }
 
   if (loading) {
-    return <PageLoadingLayout variant="list" showTopBar={false} />
+    return <div>Loading...</div>
   }
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <MyTasks />
+    <div className="mb-8">
+      <h2 className="text-xl font-bold mb-4">Zadania przypisane do Ciebie (do jutra)</h2>
       <TasksTable
         tasks={tasks}
         users={users}
@@ -129,8 +113,6 @@ export function DashboardContent() {
         onTaskUpdate={handleTaskUpdate}
         onTaskDetails={handleTaskDetails}
       />
-
-      {/* Task Details Sheet */}
       <TaskDetailsSheet
         open={detailsDialogOpen}
         onOpenChange={setDetailsDialogOpen}
