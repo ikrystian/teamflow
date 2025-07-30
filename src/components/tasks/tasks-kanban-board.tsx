@@ -88,8 +88,7 @@ function SortableTaskCard({
   canEdit,
   isUpdating = false,
   onMarkComplete,
-  taskStatuses,
-  session
+  taskStatuses
 }: {
   task: Task
   onEdit: (task: Task) => void
@@ -505,7 +504,6 @@ function KanbanColumn({
                 onTimeTracking={onTimeTracking}
                 onViewDetails={onViewDetails}
                 onDelete={onDelete}
-                onTaskBlock={onTaskBlock}
                 canEdit={canEdit(task)}
                 isUpdating={updatingTasks.has(task.id)}
                 onMarkComplete={onMarkComplete}

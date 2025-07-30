@@ -65,7 +65,6 @@ export function TaskDetailsSheet({
   onTaskUpdated,
   canEdit = false
 }: TaskDetailsSheetProps) {
-  const { data: session } = useSession() as { data: Session | null }
   const [comments, setComments] = useState(task?.comments || [])
   const [todos, setTodos] = useState(task?.todos || [])
   const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
@@ -166,11 +165,11 @@ export function TaskDetailsSheet({
     const due = new Date(dueDate)
     today.setHours(0, 0, 0, 0)
     due.setHours(0, 0, 0, 0)
-    
+
     // Task is overdue one day after the due date
     const overdueDate = new Date(due)
     overdueDate.setDate(due.getDate() + 1)
-    
+
     return today >= overdueDate
   }
 
