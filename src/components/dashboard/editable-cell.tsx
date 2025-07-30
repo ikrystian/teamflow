@@ -290,7 +290,7 @@ export function EditableCell({
   return (
     <div
       className={cn(
-        "cursor-pointer hover:bg-muted/50 rounded px-2 py-1 min-h-[32px] flex items-center",
+        "cursor-pointer hover:bg-muted/50 rounded pl-2 pr-0 py-1 min-h-[32px] flex items-center",
         className
       )}
       onClick={() => setIsEditing(true)}

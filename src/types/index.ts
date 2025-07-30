@@ -40,6 +40,7 @@ export interface Task {
   isBlocked?: boolean;
   blockReason?: string;
   blockedAt?: string;
+  unblockedAt?: string;
   blockedBy?: User;
   project: {
     id: string;

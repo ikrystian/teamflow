@@ -235,6 +235,14 @@ export async function POST(request: NextRequest) {
             email: true,
             avatarUrl: true
           }
+        },
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatarUrl: true
+          }
         }
       }
     })

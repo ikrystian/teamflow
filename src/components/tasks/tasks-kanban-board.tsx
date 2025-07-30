@@ -168,7 +168,7 @@ function SortableTaskCard({
           paddingBottom: 0
         }}
       >
-        <CardContent className="p-3 select-none"
+        <CardContent className="py-2 px-3 select-none"
                  onClick={() => onViewDetails(task)}
 >
           <div className="flex items-start justify-between mb-2">

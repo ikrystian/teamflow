@@ -59,6 +59,13 @@ export async function GET(
                 avatarUrl: true
               }
             },
+            createdBy: {
+              select: {
+                id: true,
+                name: true,
+                avatarUrl: true
+              }
+            },
             subtasks: true,
             todos: true,
             comments: {

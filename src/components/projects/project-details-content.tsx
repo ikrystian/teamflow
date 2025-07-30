@@ -292,9 +292,9 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         ...task.assignee,
         email: project.team.members.find(m => m.id === task.assignee?.id)?.email || ''
       } : undefined,
-      createdBy: task.assignee ? {
-        ...task.assignee,
-        email: project.team.members.find(m => m.id === task.assignee?.id)?.email || ''
+      createdBy: task.createdBy ? {
+        ...task.createdBy,
+        email: project.team.members.find(m => m.id === task.createdBy?.id)?.email || ''
       } : undefined,
       timeEntries: []
     }))
@@ -318,9 +318,9 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         ...task.assignee,
         email: project.team.members.find(m => m.id === task.assignee?.id)?.email || ''
       } : undefined,
-      createdBy: task.assignee ? {
-        ...task.assignee,
-        email: project.team.members.find(m => m.id === task.assignee?.id)?.email || ''
+      createdBy: task.createdBy ? {
+        ...task.createdBy,
+        email: project.team.members.find(m => m.id === task.createdBy?.id)?.email || ''
       } : undefined,
       timeEntries: task.timeEntries || [],
       images: task.images || []
