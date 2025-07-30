@@ -36,15 +36,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Update the order of each status
-    const updatePromises = statusIds.map((statusId: string, index: number) =>
-      prisma.taskStatus.update({
-        where: { id: statusId },
-        data: { order: index }
-      })
-    )
+    // Use a transaction to avoid unique constraint conflicts
+    // First, temporarily set all orders to negative values to avoid conflicts
+    await prisma.$transaction(async (tx) => {
+      // Step 1: Set all orders to negative values to avoid conflicts
+      for (let i = 0; i < statusIds.length; i++) {
+        await tx.taskStatus.update({
+          where: { id: statusIds[i] },
+          data: { order: -(i + 1) }
+        })
+      }
 
-    await Promise.all(updatePromises)
+      // Step 2: Set the final order values
+      for (let i = 0; i < statusIds.length; i++) {
+        await tx.taskStatus.update({
+          where: { id: statusIds[i] },
+          data: { order: i }
+        })
+      }
+    })
 
     // Return updated statuses
     const updatedStatuses = await prisma.taskStatus.findMany({

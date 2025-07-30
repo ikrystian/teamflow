@@ -143,3 +143,12 @@ TaskStatus model:
    - Hover effects
    - Smooth transitions
    - Error handling z revert functionality
+
+4. NAPRAWIONO BŁĄD UNIQUE CONSTRAINT (2025-07-30):
+   - Problem: Błąd "Unique constraint failed on the fields: (`order`)" podczas reorderowania
+   - Przyczyna: Jednoczesne aktualizacje wielu rekordów z tym samym order powodowały konflikty
+   - Rozwiązanie: Użycie transakcji z dwuetapowym procesem:
+     * Krok 1: Ustawienie wszystkich order na wartości ujemne (-1, -2, -3...)
+     * Krok 2: Ustawienie docelowych wartości order (0, 1, 2...)
+   - Plik: src/app/api/system/task-statuses/reorder/route.ts
+   - Status: ✅ NAPRAWIONE - reorderowanie działa poprawnie
