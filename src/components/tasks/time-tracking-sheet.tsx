@@ -137,7 +137,7 @@ export function TimeTrackingSheet({
     if (!task) return
 
     try {
-      const response = await fetch(`/api/tasks/${task.id}/time-entries/${entryId}`, {
+      const response = await fetch(`/api/tasks/${task.id}/time-entries?entryId=${entryId}`, {
         method: "DELETE",
       })
 
