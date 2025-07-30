@@ -36,8 +36,11 @@ export function useHeader() {
 export function usePageHeader(content: ReactNode, deps: React.DependencyList = []) {
   const { setHeaderContent } = useHeader()
 
-  // Memoize content to prevent unnecessary re-renders
-  const memoizedContent = useMemo(() => content, [content, ...deps])
+  const memoizedContent = useMemo(
+    () => content,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    deps
+  )
 
   useEffect(() => {
     setHeaderContent(memoizedContent)

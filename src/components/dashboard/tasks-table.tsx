@@ -159,7 +159,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
     return flatData
   }, [tasks, taskStatuses, hideEmptyGroups, collapsedGroups])
 
-  const columns: ColumnDef<TableRow>[] = [
+  const columns: ColumnDef<TableRow>[] = useMemo(() => [
     {
       accessorKey: "title",
       header: ({ column }) => {
@@ -671,7 +671,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
         )
       },
     },
-  ]
+  ], [users, taskStatuses, collapsedGroups, onTaskUpdate])
 
   // Sortuj kolumny według zapisanej kolejności
   const sortedColumns = useMemo(() => sortColumnsByOrder(columns), [columns, sortColumnsByOrder])
