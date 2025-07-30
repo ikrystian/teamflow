@@ -29,6 +29,7 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 - **Footer w sidebarze** - Dodano footer w sidebarze z informacjami o użytkowniku (avatar, nazwa, email) i menu kontekstowym (profil, ustawienia, wylogowanie)
 - **Lista projektów w stylu shadcn/ui** - Przeprojektowano listę projektów w sidebarze zgodnie z wzorcem sidebar-07 z shadcn/ui, z menu akcji dla każdego projektu
 - **Zwijany sidebar** - Sidebar można zwijać do widoku tylko ikon (jak w shadcn/ui sidebar-07) z przyciskiem toggle w headerze
+- **Adaptacyjna nazwa aplikacji** - Nazwa aplikacji "TeamFlow" dostosowuje się do zwiniętego sidebara - w pełnym widoku pokazuje nazwę i plan, w zwiniętym tylko ikonę z tooltipem
 - **Nowoczesne ekrany uwierzytelniania** - Ekrany logowania i rejestracji w stylu shadcn/ui login-02 z dwukolumnowym layoutem i obrazami
 - **Dark mode** - Tryb ciemny jako domyślny z możliwością przełączania (jasny/ciemny/systemowy)
 - **Mono theme** - Monochromatyczny motyw z wykorzystaniem najnowszej wersji shadcn/ui

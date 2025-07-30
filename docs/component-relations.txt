@@ -1,0 +1,61 @@
+RELACJE MIĘDZY KOMPONENTAMI - ADAPTACYJNA NAZWA APLIKACJI
+
+1. GŁÓWNE KOMPONENTY:
+   - TeamSwitcher (src/components/dashboard/team-switcher.tsx)
+   - DashboardLayout (src/components/dashboard/layout.tsx)
+   - Sidebar (src/components/ui/sidebar.tsx)
+
+2. HIERARCHIA KOMPONENTÓW:
+   DashboardLayout
+   └── SidebarProvider
+       └── Sidebar (collapsible="icon")
+           └── SidebarHeader
+               └── TeamSwitcher
+                   └── SidebarMenu
+                       └── SidebarMenuItem
+                           └── DropdownMenu
+                               ├── DropdownMenuTrigger
+                               │   └── SidebarMenuButton (size="lg", tooltip)
+                               │       ├── Logo (ikona Zap w gradiencie)
+                               │       ├── Tekst (nazwa + plan) - ukrywany w trybie ikon
+                               │       └── ChevronsUpDown - ukrywany w trybie ikon
+                               └── DropdownMenuContent
+                                   ├── Lista zespołów
+                                   └── Opcja "Dodaj zespół"
+
+3. MECHANIZM ADAPTACJI:
+   - useSidebar() hook dostarcza stan sidebara (expanded/collapsed)
+   - Klasa "group-data-[collapsible=icon]:hidden" ukrywa tekst w trybie ikon
+   - SidebarMenuButton automatycznie obsługuje tooltip w trybie ikon
+   - Rozmiar przycisku zmienia się automatycznie (group-data-[collapsible=icon]:size-8!)
+
+4. STYLE I KLASY CSS:
+   - "group-data-[collapsible=icon]:hidden" - ukrywa elementy w trybie ikon
+   - "group-data-[collapsible=icon]:size-8!" - zmienia rozmiar przycisku
+   - "group-data-[collapsible=icon]:p-2!" - zmienia padding
+   - Tooltip automatycznie pokazuje się w trybie ikon
+
+5. STAN I DANE:
+   - activeTeam: domyślnie "TeamFlow" z ikoną Zap i planem "Pro"
+   - teams: tablica zespołów przekazywana z DashboardLayout
+   - isMobile: wykrywanie urządzeń mobilnych dla pozycjonowania dropdown
+
+6. INTEGRACJA Z SHADCN/UI:
+   - Bazuje na wzorcu sidebar-07 z shadcn/ui
+   - Używa komponentów: SidebarMenu, SidebarMenuButton, DropdownMenu
+   - Automatyczna obsługa tooltipów i responsywności
+   - Spójny design z resztą aplikacji
+
+7. FUNKCJONALNOŚCI:
+   - Przełączanie między zespołami przez dropdown
+   - Tooltip z nazwą zespołu w trybie ikon
+   - Skróty klawiszowe (⌘1, ⌘2, etc.)
+   - Opcja dodawania nowych zespołów
+   - Responsywne pozycjonowanie dropdown (bottom na mobile, right na desktop)
+
+8. PLIKI POWIĄZANE:
+   - src/components/dashboard/team-switcher.tsx - główny komponent
+   - src/components/dashboard/layout.tsx - integracja z layoutem
+   - src/components/ui/sidebar.tsx - bazowy komponent sidebar
+   - src/components/ui/dropdown-menu.tsx - menu dropdown
+   - README.md - dokumentacja funkcjonalności

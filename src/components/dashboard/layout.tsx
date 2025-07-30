@@ -29,6 +29,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { NavUser } from "@/components/dashboard/nav-user"
 import { NavProjects } from "@/components/dashboard/nav-projects"
+import { TeamSwitcher } from "@/components/dashboard/team-switcher"
 
 interface Project {
   id: string
@@ -85,10 +86,19 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <SidebarProvider>
       <Sidebar collapsible="icon" className="border-r">
-        <SidebarHeader className="border-b">
-          <div className="flex h-16 items-center px-4">
-            <h1 className="text-xl font-bold text-foreground">TeamFlow</h1>
-          </div>
+        <SidebarHeader>
+          <TeamSwitcher teams={[
+            {
+              name: "TeamFlow Pro",
+              logo: () => <div className="w-4 h-4 bg-blue-500 rounded" />,
+              plan: "Pro"
+            },
+            {
+              name: "TeamFlow Enterprise",
+              logo: () => <div className="w-4 h-4 bg-purple-500 rounded" />,
+              plan: "Enterprise"
+            }
+          ]} />
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>

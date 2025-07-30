@@ -265,7 +265,7 @@ export function ProjectsContent() {
           {getFilteredProjects().map((project) => {
             const stats = getTaskStats(project.tasks)
             return (
-              <Card key={project.id} className={`hover:shadow-md transition-shadow overflow-hidden relative ${
+              <Card key={project.id} className={`hover:shadow-md transition-shadow overflow-hidden relative pt-0 ${
                 project.archived ? 'opacity-60 bg-muted/30' : ''
               }`}>
                 {/* Edit Button */}
@@ -321,7 +321,7 @@ export function ProjectsContent() {
                     )}
                   </div>
 
-                  <CardHeader>
+                  <CardHeader className="pt-4">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg truncate">{project.name}</CardTitle>
                       <div className="flex items-center gap-2">
