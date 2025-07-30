@@ -475,6 +475,7 @@ export function TaskFormSheet({
               value={dueDate ? new Date(dueDate) : undefined}
               onChange={(date) => setDueDate(date ? date.toISOString().split('T')[0] : "")}
               className="rounded-md border shadow-sm"
+              locale="pl"
             />
           </div>
 

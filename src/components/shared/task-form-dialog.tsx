@@ -531,6 +531,8 @@ export function TaskFormDialog({
                 <DatePicker
                   value={dueDate ? new Date(dueDate) : undefined}
                   onChange={(date) => setDueDate(date ? date.toISOString().split('T')[0] : '')}
+                  className="rounded-lg border shadow-sm"
+                  locale="pl"
                 />
               </div>
 

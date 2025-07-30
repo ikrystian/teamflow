@@ -255,7 +255,7 @@ export function TaskDetailsSheet({
           </div>
         </SheetHeader>
 
-        <Tabs defaultValue="overview" className="flex-1 overflow-hidden flex flex-col">
+        <Tabs defaultValue="overview" className="flex-1 overflow-hidden flex flex-col px-4">
           <TabsList className="grid w-full grid-cols-4 mb-4">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
