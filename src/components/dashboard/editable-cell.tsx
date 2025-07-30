@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DatePicker } from "@/components/ui/date-picker"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { getPriorityColor, getPriorityDisplayName, getPriorityOptions } from "@/lib/task-utils"
 import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
@@ -78,27 +79,35 @@ export function EditableCell({
           const user = users.find(u => u.id === value)
           if (user) {
             return (
-              <div className="flex items-center gap-2">
-                <Avatar className="h-6 w-6">
-                  <AvatarImage src={user.avatarUrl || ""} alt={user.name} />
-                  <AvatarFallback className="text-xs">
-                    {user.name?.charAt(0) || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-sm">{user.name}</span>
-              </div>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Avatar className="h-6 w-6 cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all duration-200">
+                    <AvatarImage src={user.avatarUrl || ""} alt={user.name} />
+                    <AvatarFallback className="text-xs">
+                      {user.name?.charAt(0) || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <span className="font-medium">{user.name}</span>
+                </TooltipContent>
+              </Tooltip>
             )
           }
         }
         return (
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Avatar className="h-6 w-6">
-              <AvatarFallback className="text-xs">
-                <UserPlus className="h-3 w-3" />
-              </AvatarFallback>
-            </Avatar>
-            <span className="text-sm">{placeholder || "Przypisz osobę"}</span>
-          </div>
+          <Tooltip>
+            <TooltipTrigger>
+              <Avatar className="h-6 w-6 cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all duration-200">
+                <AvatarFallback className="text-xs">
+                  <UserPlus className="h-3 w-3" />
+                </AvatarFallback>
+              </Avatar>
+            </TooltipTrigger>
+            <TooltipContent>
+              <span>{placeholder || "Przypisz osobę"}</span>
+            </TooltipContent>
+          </Tooltip>
         )
 
       case "priority":

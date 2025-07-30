@@ -549,23 +549,6 @@ export function SettingsContent() {
                     />
                   </div>
                 </div>
-
-                <Separator />
-
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Bezpieczeństwo konta</h3>
-                  <div className="space-y-3">
-                    <Button variant="outline" className="w-full justify-start">
-                      Zmień hasło
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start">
-                      Uwierzytelnianie dwuskładnikowe
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start">
-                      Aktywne sesje
-                    </Button>
-                  </div>
-                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -587,7 +570,6 @@ export function SettingsContent() {
                     <Label>Motyw</Label>
                     <div className="flex gap-2">
                       <Button
-                      disabled
                         variant={theme === "light" ? "default" : "outline"}
                         size="sm"
                         onClick={() => setTheme("light")}
@@ -595,7 +577,6 @@ export function SettingsContent() {
                         Jasny
                       </Button>
                       <Button
-                      disabled
                         variant={theme === "dark" ? "default" : "outline"}
                         size="sm"
                         onClick={() => setTheme("dark")}
@@ -603,7 +584,6 @@ export function SettingsContent() {
                         Ciemny
                       </Button>
                       <Button
-                      disabled
                         variant={theme === "system" ? "default" : "outline"}
                         size="sm"
                         onClick={() => setTheme("system")}

@@ -54,11 +54,13 @@ RELACJE MIĘDZY KOMPONENTAMI TABLICY ZADAŃ
 - src/components/dashboard/tasks-table.tsx
   - Główny komponent tabelki zadań w stylu Asana
   - Używa TanStack Table do sortowania, filtrowania, paginacji
+  - JEDNA TABELA z wierszami nagłówków grup dla spójnych szerokości kolumn
   - Grupuje zadania według statusów (bez kolorów statusów)
   - Obsługuje inline editing przez EditableCell
   - Kolumny: nazwa, osoba przypisana, priorytet, data, status, projekt (z kolorami), data utworzenia, szacowany czas
   - Nazwy projektów wyświetlane w kolorach projektów
   - Kolumna daty utworzenia domyślnie ukryta
+  - Wiersze nagłówków grup z tłem bg-muted/30
 
 - src/components/dashboard/editable-cell.tsx
   - Komponent do edycji inline różnych typów danych
@@ -66,6 +68,7 @@ RELACJE MIĘDZY KOMPONENTAMI TABLICY ZADAŃ
   - Automatyczne zapisywanie po stracie focusa lub Enter
   - Placeholdery dla pustych wartości
   - Statusy wyświetlane bez kolorów (tylko tekst)
+  - Użytkownicy wyświetlani jako avatar z tooltip (imię po najechaniu)
 
 ## Wspólne zależności:
 - @dnd-kit/core - drag & drop
@@ -171,15 +174,23 @@ Wszystkie karty zadań mają teraz obramowanie w kolorze projektu (border-left-4
 ### ZAKTUALIZOWANE KOMPONENTY:
 
 #### src/components/dashboard/tasks-table.tsx:
+- **PRZEPROJEKTOWANIE**: Jedna tabela zamiast wielu osobnych tabel dla grup
 - Dodana kolumna "Data utworzenia" z formatCreatedDate()
 - Nazwy projektów w kolorach projektów (font-medium + color style)
 - Usunięte kolory ze statusów w nagłówkach grup
 - Kolumna daty utworzenia domyślnie ukryta
 - Zaktualizowane mapowanie nazw kolumn
+- Nowy typ TableRow = Task | GroupHeader
+- Wiersze nagłówków grup z colSpan i tłem bg-muted/30
+- Wszystkie funkcje sortowania obsługują wiersze nagłówków grup
+- Spójne szerokości kolumn między grupami
 
 #### src/components/dashboard/editable-cell.tsx:
 - Usunięte kolory ze statusów w wyświetlaniu i edycji
 - Statusy pokazywane tylko jako tekst
+- **NOWY UX dla użytkowników**: Tylko avatar z tooltip zawierającym imię
+- Dodany import Tooltip z shadcn/ui
+- Hover efekty na avatarach (ring-2 ring-primary/20)
 
 #### src/components/dashboard/content.tsx:
 - Poprawiony loading layout - variant="list" showTopBar={false}
@@ -200,3 +211,8 @@ Wszystkie karty zadań mają teraz obramowanie w kolorze projektu (border-left-4
 - Nazwy projektów wyróżnione kolorami projektów
 - Dodatkowa informacja o dacie utworzenia zadania
 - Lepsza organizacja kolumn z możliwością ukrywania
+- **SPÓJNE SZEROKOŚCI KOLUMN**: Jedna tabela zapewnia wyrównane kolumny między grupami
+- Lepsze UX - dane są teraz czytelnie wyrównane w kolumnach
+- Zachowane grupowanie według statusów z wyraźnymi nagłówkami grup
+- **KOMPAKTOWE WYŚWIETLANIE UŻYTKOWNIKÓW**: Tylko avatar z tooltip, oszczędza miejsce w tabeli
+- Spójny UX z innymi częściami aplikacji (szczegóły zadania, kanban)

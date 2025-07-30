@@ -41,6 +41,8 @@ import { getPriorityColor, getPriorityDisplayName, getTaskStatus, isTaskOverdue 
 import { formatTaskDueDateWithRelative, formatCreatedDate } from "@/lib/date-utils"
 import type { Task, User, TaskStatus } from "@/types"
 
+type TableRow = Task | { isGroupHeader: true; statusName: string; count: number }
+
 interface TasksTableProps {
   tasks: Task[]
   users: User[]
@@ -58,8 +60,8 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
   const [rowSelection, setRowSelection] = useState({})
   const [hideEmptyGroups, setHideEmptyGroups] = useState(false)
 
-  // Group tasks by status
-  const groupedTasks = useMemo(() => {
+  // Create flat data with group headers for single table
+  const tableData = useMemo(() => {
     const groups: { [key: string]: Task[] } = {}
 
     tasks.forEach(task => {
@@ -73,25 +75,37 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
     })
 
     // Sort groups by status order
-    const sortedGroups: { [key: string]: Task[] } = {}
     const sortedStatuses = [...taskStatuses].sort((a, b) => a.order - b.order)
+    const flatData: (Task | { isGroupHeader: true; statusName: string; count: number })[] = []
 
     // Add groups in status order
     sortedStatuses.forEach(status => {
-      if (groups[status.name]) {
-        sortedGroups[status.name] = groups[status.name]
+      if (groups[status.name] && (!hideEmptyGroups || groups[status.name].length > 0)) {
+        // Add group header
+        flatData.push({
+          isGroupHeader: true,
+          statusName: status.name,
+          count: groups[status.name].length
+        })
+        // Add tasks
+        flatData.push(...groups[status.name])
       }
     })
 
     // Add "Bez statusu" group at the end if it exists
-    if (groups["Bez statusu"]) {
-      sortedGroups["Bez statusu"] = groups["Bez statusu"]
+    if (groups["Bez statusu"] && (!hideEmptyGroups || groups["Bez statusu"].length > 0)) {
+      flatData.push({
+        isGroupHeader: true,
+        statusName: "Bez statusu",
+        count: groups["Bez statusu"].length
+      })
+      flatData.push(...groups["Bez statusu"])
     }
 
-    return sortedGroups
-  }, [tasks, taskStatuses])
+    return flatData
+  }, [tasks, taskStatuses, hideEmptyGroups])
 
-  const columns: ColumnDef<Task>[] = [
+  const columns: ColumnDef<TableRow>[] = [
     {
       accessorKey: "title",
       header: ({ column }) => {
@@ -107,7 +121,22 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
         )
       },
       cell: ({ row }) => {
-        const task = row.original
+        const rowData = row.original
+
+        // Check if this is a group header row
+        if ('isGroupHeader' in rowData) {
+          return (
+            <div className="flex items-center gap-2 py-2">
+              <h3 className="font-semibold text-lg">{rowData.statusName}</h3>
+              <Badge variant="secondary" className="ml-2">
+                {rowData.count}
+              </Badge>
+            </div>
+          )
+        }
+
+        // Regular task row
+        const task = rowData as Task
         return (
           <div className="flex items-center gap-3">
             <div
@@ -139,7 +168,14 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
         )
       },
       cell: ({ row }) => {
-        const task = row.original
+        const rowData = row.original
+
+        // Return empty cell for group headers
+        if ('isGroupHeader' in rowData) {
+          return null
+        }
+
+        const task = rowData as Task
         return (
           <EditableCell
             value={task.assignee?.id || ""}
@@ -151,8 +187,14 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
         )
       },
       sortingFn: (rowA, rowB) => {
-        const nameA = rowA.original.assignee?.name || ""
-        const nameB = rowB.original.assignee?.name || ""
+        // Group headers should stay at the top
+        if ('isGroupHeader' in rowA.original) return -1
+        if ('isGroupHeader' in rowB.original) return 1
+
+        const taskA = rowA.original as Task
+        const taskB = rowB.original as Task
+        const nameA = taskA.assignee?.name || ""
+        const nameB = taskB.assignee?.name || ""
         return nameA.localeCompare(nameB)
       },
     },
@@ -171,7 +213,14 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
         )
       },
       cell: ({ row }) => {
-        const task = row.original
+        const rowData = row.original
+
+        // Return empty cell for group headers
+        if ('isGroupHeader' in rowData) {
+          return null
+        }
+
+        const task = rowData as Task
         return (
           <EditableCell
             value={task.priority || ""}
@@ -182,9 +231,15 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
         )
       },
       sortingFn: (rowA, rowB) => {
+        // Group headers should stay at the top
+        if ('isGroupHeader' in rowA.original) return -1
+        if ('isGroupHeader' in rowB.original) return 1
+
+        const taskA = rowA.original as Task
+        const taskB = rowB.original as Task
         const priorityOrder = { "High": 3, "Medium": 2, "Low": 1 }
-        const priorityA = priorityOrder[rowA.original.priority as keyof typeof priorityOrder] || 0
-        const priorityB = priorityOrder[rowB.original.priority as keyof typeof priorityOrder] || 0
+        const priorityA = priorityOrder[taskA.priority as keyof typeof priorityOrder] || 0
+        const priorityB = priorityOrder[taskB.priority as keyof typeof priorityOrder] || 0
         return priorityA - priorityB
       },
     },
@@ -203,7 +258,14 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
         )
       },
       cell: ({ row }) => {
-        const task = row.original
+        const rowData = row.original
+
+        // Return empty cell for group headers
+        if ('isGroupHeader' in rowData) {
+          return null
+        }
+
+        const task = rowData as Task
         const isOverdue = task.dueDate && isTaskOverdue(task.dueDate)
         return (
           <div className={`${isOverdue ? 'text-red-600' : ''}`}>
@@ -233,7 +295,14 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
         )
       },
       cell: ({ row }) => {
-        const task = row.original
+        const rowData = row.original
+
+        // Return empty cell for group headers
+        if ('isGroupHeader' in rowData) {
+          return null
+        }
+
+        const task = rowData as Task
         return (
           <EditableCell
             value={task.statusId || ""}
@@ -245,8 +314,14 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
         )
       },
       sortingFn: (rowA, rowB) => {
-        const statusA = getTaskStatus(rowA.original, taskStatuses)
-        const statusB = getTaskStatus(rowB.original, taskStatuses)
+        // Group headers should stay at the top
+        if ('isGroupHeader' in rowA.original) return -1
+        if ('isGroupHeader' in rowB.original) return 1
+
+        const taskA = rowA.original as Task
+        const taskB = rowB.original as Task
+        const statusA = getTaskStatus(taskA, taskStatuses)
+        const statusB = getTaskStatus(taskB, taskStatuses)
         const orderA = statusA?.order ?? 999
         const orderB = statusB?.order ?? 999
         return orderA - orderB
@@ -267,7 +342,14 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
         )
       },
       cell: ({ row }) => {
-        const task = row.original
+        const rowData = row.original
+
+        // Return empty cell for group headers
+        if ('isGroupHeader' in rowData) {
+          return null
+        }
+
+        const task = rowData as Task
         return (
           <div className="flex items-center gap-2">
             <div
@@ -284,8 +366,14 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
         )
       },
       sortingFn: (rowA, rowB) => {
-        const nameA = rowA.original.project?.name || ""
-        const nameB = rowB.original.project?.name || ""
+        // Group headers should stay at the top
+        if ('isGroupHeader' in rowA.original) return -1
+        if ('isGroupHeader' in rowB.original) return 1
+
+        const taskA = rowA.original as Task
+        const taskB = rowB.original as Task
+        const nameA = taskA.project?.name || ""
+        const nameB = taskB.project?.name || ""
         return nameA.localeCompare(nameB)
       },
     },
@@ -304,7 +392,14 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
         )
       },
       cell: ({ row }) => {
-        const task = row.original
+        const rowData = row.original
+
+        // Return empty cell for group headers
+        if ('isGroupHeader' in rowData) {
+          return null
+        }
+
+        const task = rowData as Task
         return (
           <span className="text-sm text-muted-foreground">
             {formatCreatedDate(task.createdAt)}
@@ -312,8 +407,14 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
         )
       },
       sortingFn: (rowA, rowB) => {
-        const dateA = new Date(rowA.original.createdAt).getTime()
-        const dateB = new Date(rowB.original.createdAt).getTime()
+        // Group headers should stay at the top
+        if ('isGroupHeader' in rowA.original) return -1
+        if ('isGroupHeader' in rowB.original) return 1
+
+        const taskA = rowA.original as Task
+        const taskB = rowB.original as Task
+        const dateA = new Date(taskA.createdAt).getTime()
+        const dateB = new Date(taskB.createdAt).getTime()
         return dateA - dateB
       },
     },
@@ -332,7 +433,14 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
         )
       },
       cell: ({ row }) => {
-        const task = row.original
+        const rowData = row.original
+
+        // Return empty cell for group headers
+        if ('isGroupHeader' in rowData) {
+          return null
+        }
+
+        const task = rowData as Task
         return (
           <div className="flex items-center gap-2">
             {task.estimatedHours && <Clock className="h-3 w-3 text-muted-foreground" />}
@@ -354,8 +462,14 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
       id: "actions",
       enableHiding: false,
       cell: ({ row }) => {
-        const task = row.original
+        const rowData = row.original
 
+        // Return empty cell for group headers
+        if ('isGroupHeader' in rowData) {
+          return null
+        }
+
+        const task = rowData as Task
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -382,7 +496,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
   ]
 
   const table = useReactTable({
-    data: tasks,
+    data: tableData,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -461,9 +575,9 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
         </DropdownMenu>
       </div>
 
-      {/* Render grouped tables */}
-      <div className="space-y-6">
-        {Object.keys(groupedTasks).length === 0 ? (
+      {/* Single table with grouped rows */}
+      <div className="rounded-md border">
+        {tableData.length === 0 ? (
           <div className="text-center py-12">
             <h3 className="text-lg font-semibold text-muted-foreground mb-2">
               Brak zadań
@@ -473,81 +587,68 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
             </p>
           </div>
         ) : (
-          Object.entries(groupedTasks)
-            .filter(([statusName, statusTasks]) => !hideEmptyGroups || statusTasks.length > 0)
-            .map(([statusName, statusTasks]) => {
-          const status = taskStatuses.find(s => s.name === statusName)
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    return (
+                      <TableHead key={header.id}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                      </TableHead>
+                    )
+                  })}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => {
+                  const rowData = row.original
+                  const isGroupHeader = 'isGroupHeader' in rowData
 
-          // Create a separate table for each status group
-          const statusTable = useReactTable({
-            data: statusTasks,
-            columns,
-            getCoreRowModel: getCoreRowModel(),
-            getSortedRowModel: getSortedRowModel(),
-            state: {
-              sorting,
-            },
-          })
-
-          return (
-            <div key={statusName} className="space-y-2">
-              <div className="flex items-center gap-2 px-2">
-                <h3 className="font-semibold text-lg">{statusName}</h3>
-                <Badge variant="secondary" className="ml-2">
-                  {statusTasks.length}
-                </Badge>
-              </div>
-
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    {statusTable.getHeaderGroups().map((headerGroup) => (
-                      <TableRow key={headerGroup.id}>
-                        {headerGroup.headers.map((header) => {
-                          return (
-                            <TableHead key={header.id}>
-                              {header.isPlaceholder
-                                ? null
-                                : flexRender(
-                                    header.column.columnDef.header,
-                                    header.getContext()
-                                  )}
-                            </TableHead>
-                          )
-                        })}
-                      </TableRow>
-                    ))}
-                  </TableHeader>
-                  <TableBody>
-                    {statusTable.getRowModel().rows?.length ? (
-                      statusTable.getRowModel().rows.map((row) => (
-                        <TableRow key={row.id}>
-                          {row.getVisibleCells().map((cell) => (
-                            <TableCell key={cell.id}>
-                              {flexRender(
-                                cell.column.columnDef.cell,
-                                cell.getContext()
-                              )}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell
-                          colSpan={columns.length}
-                          className="h-16 text-center text-muted-foreground"
-                        >
-                          Brak zadań w tym statusie
+                  return (
+                    <TableRow
+                      key={row.id}
+                      className={isGroupHeader ? "bg-muted/30 hover:bg-muted/40" : ""}
+                    >
+                      {isGroupHeader ? (
+                        <TableCell colSpan={columns.length} className="py-3">
+                          {flexRender(
+                            row.getVisibleCells()[0].column.columnDef.cell,
+                            row.getVisibleCells()[0].getContext()
+                          )}
                         </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          )
-        })
+                      ) : (
+                        row.getVisibleCells().map((cell) => (
+                          <TableCell key={cell.id}>
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </TableCell>
+                        ))
+                      )}
+                    </TableRow>
+                  )
+                })
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-16 text-center text-muted-foreground"
+                  >
+                    Brak zadań
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         )}
       </div>
 
