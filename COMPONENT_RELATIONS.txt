@@ -149,7 +149,7 @@ Wszystkie karty zadań mają teraz obramowanie w kolorze projektu (border-left-4
 1. Automatyczne wykrywanie ścieżki na podstawie pathname
 2. Tłumaczenie segmentów na polskie nazwy
 3. Pobieranie rzeczywistych nazw dla dynamicznych segmentów
-4. Ukrywanie breadcrumbs na głównej stronie dashboardu
+4. Zawsze widoczne breadcrumbs (również na głównej stronie dashboardu)
 5. Responsywny design z ikoną Home dla pierwszego elementu
 
 ## ULEPSZENIA DASHBOARD TASKS TABLE
@@ -159,7 +159,7 @@ Wszystkie karty zadań mają teraz obramowanie w kolorze projektu (border-left-4
 **Cel**: Ulepszenie dashboard'u - breadcrumbs, loading layout, usunięcie kolorów statusów, kolory projektów, kolumna daty utworzenia
 
 ### FUNKCJONALNOŚĆ:
-1. **Breadcrumbs**: Już zaimplementowane w DashboardLayout
+1. **Breadcrumbs**: Już zaimplementowane w DashboardLayout + poprawka widoczności
 2. **Loading layout**: Poprawiony - używa wariantu "list" bez top bar
 3. **Statusy**: Usunięte kolory ze statusów w całej tabeli
 4. **Projekty**: Nazwy projektów wyświetlane w kolorach projektów
@@ -184,13 +184,17 @@ Wszystkie karty zadań mają teraz obramowanie w kolorze projektu (border-left-4
 #### src/components/dashboard/content.tsx:
 - Poprawiony loading layout - variant="list" showTopBar={false}
 
+#### src/components/dashboard/breadcrumbs.tsx:
+- Usunięta logika ukrywania breadcrumbs na głównej stronie dashboard
+- Breadcrumbs są teraz zawsze widoczne
+
 ### LOGIKA FORMATOWANIA DAT UTWORZENIA:
 - **formatCreatedDate(dateString)**:
   * Jeśli data w obecnym roku: "15 sty"
   * Jeśli data w innym roku: "15.01.2023"
 
 ### REZULTAT:
-- Breadcrumbs działają poprawnie w dashboard layout
+- Breadcrumbs działają poprawnie w dashboard layout i są zawsze widoczne
 - Lepszy loading layout bez niepotrzebnego top bar
 - Czytelniejsze statusy bez kolorów
 - Nazwy projektów wyróżnione kolorami projektów
