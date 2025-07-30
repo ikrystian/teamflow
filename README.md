@@ -872,6 +872,15 @@ Projekt jest otwarty na współpracę. Aby dodać nowe funkcjonalności:
 - **Layout**: Flex-based layout z `SidebarProvider` dla lepszej kontroli stanu
 - **TopBarUser**: Przeniesiony do `SidebarHeader` dla lepszej organizacji
 
+### System breadcrumbs dla wszystkich podstron
+- **Automatyczne breadcrumbs**: Komponent `DashboardBreadcrumbs` automatycznie generuje ścieżkę nawigacji na podstawie URL
+- **Inteligentne mapowanie**: Automatyczne tłumaczenie segmentów URL na polskie nazwy (tasks → Moje zadania, projects → Projekty, etc.)
+- **Dynamiczne nazwy**: Pobieranie rzeczywistych nazw projektów, zespołów i użytkowników dla dynamicznych segmentów URL
+- **Shadcn/ui Breadcrumb**: Wykorzystanie najnowszego komponentu breadcrumb z shadcn/ui
+- **Responsywny design**: Breadcrumbs dostosowują się do różnych rozmiarów ekranu
+- **Ikona Home**: Pierwszy element breadcrumbs zawiera ikonę domu dla lepszej orientacji
+- **Integracja z layout**: Breadcrumbs umieszczone pod headerem we wszystkich podstronach dashboardu
+
 ### Migracja z dialogów na panele boczne (Sheet) - styl Asana
 - **TaskDetailsSheet**: Zastąpił TaskDetailsDialog - panel 800px z prawej strony
 - **TaskFormSheet**: Zastąpił TaskFormDialog - panel 600px dla tworzenia/edycji zadań

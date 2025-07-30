@@ -30,6 +30,7 @@ import { Separator } from "@/components/ui/separator"
 import { NavUser } from "@/components/dashboard/nav-user"
 import { NavProjects } from "@/components/dashboard/nav-projects"
 import { TeamSwitcher } from "@/components/dashboard/team-switcher"
+import { DashboardBreadcrumbs } from "@/components/dashboard/breadcrumbs"
 import { EditProjectSheet } from "@/components/projects/edit-project-sheet"
 import { HeaderProvider, useHeader } from "@/contexts/header-context"
 
@@ -156,6 +157,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
             </div>
           </div>
         </header>
+        <DashboardBreadcrumbs />
         <main className="flex-1">
           {children}
         </main>
