@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import {
@@ -14,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Clock, Trash2 } from "lucide-react"
+import { DatePicker } from "@/components/ui/date-picker"
 import type { Task } from "@/types"
 
 interface TimeEntry {
@@ -44,7 +44,7 @@ export function TimeTrackingSheet({
 }: TimeTrackingSheetProps) {
   const [hours, setHours] = useState("")
   const [description, setDescription] = useState("")
-  const [date, setDate] = useState("")
+  const [date, setDate] = useState<Date | undefined>()
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([])
   const [totalHours, setTotalHours] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -53,8 +53,7 @@ export function TimeTrackingSheet({
 
   // Set default date to today
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0]
-    setDate(today)
+    setDate(new Date())
   }, [])
 
   // Fetch time entries when dialog opens
@@ -114,7 +113,7 @@ export function TimeTrackingSheet({
         body: JSON.stringify({
           hours: parseFloat(hours),
           description: description.trim() || undefined,
-          date: date,
+          date: date ? date.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         }),
       })
 
@@ -256,13 +255,10 @@ export function TimeTrackingSheet({
 
               <div className="grid gap-2">
                 <Label htmlFor="date">Data</Label>
-                <Input
-                  id="date"
-                  type="date"
+                <DatePicker
                   value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  required
-                  disabled={loading}
+                  onChange={setDate}
+                  className={loading ? "pointer-events-none opacity-50" : ""}
                 />
               </div>
             </div>

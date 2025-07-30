@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
@@ -23,6 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Clock, Trash2, Plus } from "lucide-react"
+import { DatePicker } from "@/components/ui/date-picker"
 
 interface User {
   id: string
@@ -60,7 +60,7 @@ export function TimeTrackingDialog({
 }: TimeTrackingDialogProps) {
   const [hours, setHours] = useState("")
   const [description, setDescription] = useState("")
-  const [date, setDate] = useState("")
+  const [date, setDate] = useState<Date | undefined>()
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([])
   const [totalHours, setTotalHours] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -69,8 +69,7 @@ export function TimeTrackingDialog({
 
   // Set default date to today
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0]
-    setDate(today)
+    setDate(new Date())
   }, [])
 
   const fetchTimeEntries = useCallback(async () => {
@@ -114,7 +113,7 @@ export function TimeTrackingDialog({
         body: JSON.stringify({
           hours: parseFloat(hours),
           description: description.trim() || undefined,
-          date: date,
+          date: date ? date.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         }),
       })
 
@@ -242,12 +241,9 @@ export function TimeTrackingDialog({
 
             <div className="grid gap-2">
               <Label htmlFor="date">Data</Label>
-              <Input
-                id="date"
-                type="date"
+              <DatePicker
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
+                onChange={setDate}
               />
             </div>
           </div>

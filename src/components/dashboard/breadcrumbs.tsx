@@ -84,7 +84,7 @@ export function DashboardBreadcrumbs() {
     }
   }, [missingProjects, projectsLoading])
 
-  const generateBreadcrumbs = (): BreadcrumbSegment[] => {
+  const generateBreadcrumbs = useCallback((): BreadcrumbSegment[] => {
     const segments = pathname.split('/').filter(Boolean)
     const breadcrumbs: BreadcrumbSegment[] = []
 
@@ -152,7 +152,7 @@ export function DashboardBreadcrumbs() {
 
             // If it's a project segment and we don't have the name, try to fetch it
             const previousSegment = segments[i - 1]
-            if (previousSegment === 'projects' && !projectsLoading) {
+            if (previousSegment === 'projects') {
               fetchMissingProject(segment)
             }
 
@@ -172,9 +172,9 @@ export function DashboardBreadcrumbs() {
             if (projectsLoading || dataLoading) {
               label = 'Ładowanie...'
             } else {
-              // For project segments, try to show a more specific label
+              // For project segments, show a more user-friendly label while fetching
               if (previousSegment === 'projects') {
-                label = 'Projekt'
+                label = missingProjects[segment] || 'Ładowanie projektu...'
               } else {
                 label = 'Szczegóły'
               }
@@ -191,7 +191,7 @@ export function DashboardBreadcrumbs() {
     }
 
     return breadcrumbs
-  }
+  }, [pathname, projects, teams, users, missingProjects, projectsLoading, dataLoading, fetchMissingProject])
 
   const breadcrumbs = generateBreadcrumbs()
 
