@@ -8,8 +8,19 @@ RELACJE MIĘDZY KOMPONENTAMI - EDYCJA PROJEKTÓW
    - src/components/projects/project-image-selector.tsx - selektor zdjęć (współdzielony)
    - src/components/projects/project-icon-selector.tsx - selektor ikon projektów (NOWY)
    - src/components/dashboard/nav-projects.tsx - wyświetlanie projektów w sidebarze z ikonami
+   - src/components/projects/project-info-content.tsx - informacje o projekcie z README edytorem
 
-2. INTERFEJSY I TYPY:
+2. NOWA FUNKCJONALNOŚĆ - README PROJEKTU (2025-07-30):
+   - Dodano pole 'readme' do modelu Project w bazie danych (prisma/schema.prisma)
+   - Utworzono migrację: 20250730061801_add_project_readme_field
+   - Zaktualizowano API endpoint PATCH /api/projects/[projectId] aby obsługiwał pole readme
+   - Dodano sekcję README w project-info-content.tsx z edytorem WYSIWYG
+   - Używa komponentu RichTextEditor z pełnym formatowaniem tekstu
+   - Tryb edycji/podglądu z przyciskami Edytuj/Zapisz/Anuluj
+   - Wyświetlanie HTML z dangerouslySetInnerHTML w trybie podglądu
+   - Stan pustego README z instrukcją dla użytkownika
+
+3. INTERFEJSY I TYPY:
    - Project interface w projects-content.tsx:
      * id, name, description, status, imageUrl, createdAt
      * team: { id, name }

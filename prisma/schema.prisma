@@ -45,6 +45,7 @@ model Project {
   id            String            @id @default(cuid())
   name          String
   description   String?
+  readme        String?           // README content with WYSIWYG editor
   status        String            @default("In Progress")
   imageUrl      String?
   repositoryUrl String?

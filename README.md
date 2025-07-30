@@ -147,6 +147,12 @@ Aplikacja będzie dostępna pod adresem [http://localhost:3000](http://localhost
   - Przegląd danych dostępowych z linkami
   - Galeria dokumentów z możliwością pobierania
   - Edycja danych dostępowych w ustawieniach projektu
+- **README projektu** ✅ - Edytor WYSIWYG dla dokumentacji projektu:
+  - Rich text editor z pełnym formatowaniem (pogrubienie, kursywa, listy, linki)
+  - Tryb edycji/podglądu z przyciskami Edytuj/Zapisz/Anuluj
+  - Wyświetlanie sformatowanego HTML w trybie podglądu
+  - Instrukcje dla użytkownika w przypadku pustego README
+  - Integracja z sekcją dokumentacji projektu
 
 ### Archiwizowanie projektów ✅
 - **Archiwizowanie projektów** - Możliwość archiwizowania nieaktywnych projektów:
@@ -354,6 +360,7 @@ model Project {
   id          String @id @default(cuid())
   name        String
   description String?
+  readme      String?  // README content with WYSIWYG editor
   status      String @default("In Progress")
   archived    Boolean @default(false)  // Czy projekt jest zarchiwizowany
 

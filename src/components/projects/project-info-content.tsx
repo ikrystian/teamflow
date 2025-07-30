@@ -22,11 +22,13 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { FileUpload } from "@/components/ui/file-upload"
+import { RichTextEditor } from "@/components/ui/rich-text-editor"
 
 interface ProjectDetails {
   id: string
   name: string
   description?: string
+  readme?: string
   status: string
   color?: string
   createdAt: string
@@ -113,6 +115,9 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
   const [loading, setLoading] = useState(true)
   const [documents, setDocuments] = useState<ProjectDetails['documents']>([])
   const [showCredentials, setShowCredentials] = useState<Record<string, boolean>>({})
+  const [isEditingReadme, setIsEditingReadme] = useState(false)
+  const [readmeContent, setReadmeContent] = useState("")
+  const [readmeLoading, setReadmeLoading] = useState(false)
   const router = useRouter()
 
   // Set page header content
@@ -150,6 +155,7 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
         if (response.ok) {
           const data = await response.json()
           setProject(data.project)
+          setReadmeContent(data.project.readme || "")
         } else if (response.status === 404) {
           router.push("/dashboard/projects")
         }
@@ -225,6 +231,47 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
+  }
+
+  const handleReadmeEdit = () => {
+    setReadmeContent(project?.readme || "")
+    setIsEditingReadme(true)
+  }
+
+  const handleReadmeSave = async () => {
+    if (!project) return
+
+    setReadmeLoading(true)
+    try {
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          readme: readmeContent
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setProject(data.project)
+        setIsEditingReadme(false)
+      } else {
+        console.error('Failed to update README')
+        alert('Nie udało się zaktualizować README')
+      }
+    } catch (error) {
+      console.error('Error updating README:', error)
+      alert('Wystąpił błąd podczas aktualizacji README')
+    } finally {
+      setReadmeLoading(false)
+    }
+  }
+
+  const handleReadmeCancel = () => {
+    setReadmeContent(project?.readme || "")
+    setIsEditingReadme(false)
   }
 
   const getTaskStats = (tasks: ProjectDetails['tasks']) => {
@@ -571,6 +618,80 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
               </Button>
             </Link>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Project README */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <FileText className="h-5 w-5" />
+              <span>README projektu</span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={isEditingReadme ? handleReadmeCancel : handleReadmeEdit}
+              disabled={readmeLoading}
+            >
+              {isEditingReadme ? (
+                <>
+                  <Eye className="h-4 w-4 mr-2" />
+                  Anuluj
+                </>
+              ) : (
+                <>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edytuj
+                </>
+              )}
+            </Button>
+          </CardTitle>
+          <CardDescription>
+            Opis projektu w formacie README z możliwością formatowania
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isEditingReadme ? (
+            <div className="space-y-4">
+              <RichTextEditor
+                content={readmeContent}
+                onChange={setReadmeContent}
+                placeholder="Wprowadź opis projektu w formacie README..."
+              />
+              <div className="flex justify-end space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={handleReadmeCancel}
+                  disabled={readmeLoading}
+                >
+                  Anuluj
+                </Button>
+                <Button
+                  onClick={handleReadmeSave}
+                  disabled={readmeLoading}
+                >
+                  {readmeLoading ? "Zapisywanie..." : "Zapisz"}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="min-h-[120px]">
+              {project.readme ? (
+                <div
+                  className="prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: project.readme }}
+                />
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-sm">Brak README dla tego projektu</p>
+                  <p className="text-xs">Kliknij &quot;Edytuj&quot; aby dodać opis projektu</p>
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 

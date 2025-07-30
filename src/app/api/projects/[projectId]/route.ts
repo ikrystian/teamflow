@@ -115,6 +115,7 @@ export async function PATCH(
     const {
       name,
       description,
+      readme,
       status,
       archived,
       imageUrl,
@@ -158,6 +159,7 @@ export async function PATCH(
       data: {
         ...(name && { name }),
         ...(description !== undefined && { description }),
+        ...(readme !== undefined && { readme }),
         ...(status && { status }),
         ...(archived !== undefined && { archived }),
         ...(imageUrl !== undefined && { imageUrl }),
