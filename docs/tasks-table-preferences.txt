@@ -6,7 +6,8 @@ Funkcjonalność zapisywania preferencji widoczności kolumn w tabeli zadań w l
 
 1. **Kolumna "Autor zadania"**
    - Wyświetla użytkownika, który utworzył zadanie (createdBy)
-   - Pokazuje avatar i nazwę użytkownika
+   - Pokazuje tylko avatar z tooltipem (analogicznie do osoby przypisanej)
+   - Umieszczona zaraz po kolumnie "Osoba przypisana"
    - Domyślnie widoczna
    - Sortowalna alfabetycznie po nazwie autora
 
@@ -14,6 +15,12 @@ Funkcjonalność zapisywania preferencji widoczności kolumn w tabeli zadań w l
    - Automatyczne zapisywanie wybranych kolumn dla każdego użytkownika
    - Przywracanie preferencji po odświeżeniu strony
    - Domyślnie wszystkie kolumny widoczne (oprócz niektórych)
+
+3. **Zarządzanie kolejnością kolumn**
+   - Możliwość ustawiania kolejności kolumn przez użytkownika
+   - Dialog z drag & drop do zmiany kolejności
+   - Zapisywanie kolejności w localStorage
+   - Przycisk "Kolejność kolumn" obok dropdown "Kolumny"
 
 === STRUKTURA DANYCH ===
 
@@ -24,15 +31,27 @@ Struktura danych:
   "columnVisibility": {
     "title": true,
     "assignee": true,
+    "createdBy": true,
     "priority": true,
     "dueDate": true,
     "status": true,
     "project": true,
-    "createdBy": true,
     "createdAt": false,
     "estimatedHours": false,
     "reportedHours": false
-  }
+  },
+  "columnOrder": [
+    "title",
+    "assignee",
+    "createdBy",
+    "priority",
+    "dueDate",
+    "status",
+    "project",
+    "createdAt",
+    "estimatedHours",
+    "reportedHours"
+  ]
 }
 
 === DOMYŚLNE USTAWIENIA WIDOCZNOŚCI ===
@@ -56,16 +75,25 @@ Kolumny ukryte domyślnie:
 1. src/hooks/use-tasks-table-preferences.ts
    - Hook do zarządzania preferencjami tabeli zadań
    - Automatyczne wczytywanie z localStorage przy inicjalizacji
-   - Funkcja updateColumnVisibility do zmiany i zapisywania preferencji
+   - Funkcja updateColumnVisibility do zmiany i zapisywania preferencji widoczności
+   - Funkcja updateColumnOrder do zmiany i zapisywania kolejności kolumn
    - Obsługa błędów przy problemach z localStorage
    - Kompatybilność z typami @tanstack/react-table
 
 2. src/components/dashboard/tasks-table.tsx
    - Zaktualizowany komponent tabeli zadań
-   - Nowa kolumna "Autor zadania" z avatarem i nazwą
+   - Nowa kolumna "Autor zadania" tylko z avatarem i tooltipem
+   - Kolumna autora umieszczona zaraz po osobie przypisanej
    - Integracja z hookiem use-tasks-table-preferences
+   - Sortowanie kolumn według zapisanej kolejności
    - Loading state podczas ładowania preferencji
    - Zaktualizowana mapa nazw kolumn w dropdown
+
+3. src/components/dashboard/column-order-dialog.tsx
+   - Dialog do zarządzania kolejnością kolumn
+   - Drag & drop interface z @dnd-kit
+   - Podgląd widoczności kolumn
+   - Zapisywanie i anulowanie zmian
 
 === PRZEPŁYW DZIAŁANIA ===
 

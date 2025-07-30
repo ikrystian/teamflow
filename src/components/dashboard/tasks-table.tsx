@@ -36,7 +36,9 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { EditableCell } from "./editable-cell"
+import { ColumnOrderDialog } from "./column-order-dialog"
 import { getPriorityColor, getPriorityDisplayName, getTaskStatus, isTaskOverdue } from "@/lib/task-utils"
 import { formatTaskDueDateWithRelative, formatCreatedDate } from "@/lib/date-utils"
 import { useTasksTablePreferences } from "@/hooks/use-tasks-table-preferences"
@@ -63,8 +65,27 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
   const [hideEmptyGroups, setHideEmptyGroups] = useState(false)
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
 
-  // Używamy hooka do zarządzania preferencjami widoczności kolumn
-  const { columnVisibility, updateColumnVisibility, isLoaded } = useTasksTablePreferences()
+  // Używamy hooka do zarządzania preferencjami widoczności i kolejności kolumn
+  const { columnVisibility, columnOrder, updateColumnVisibility, updateColumnOrder, isLoaded } = useTasksTablePreferences()
+
+  // Funkcja do sortowania kolumn według zapisanej kolejności
+  const sortColumnsByOrder = (columns: ColumnDef<TableRow>[]) => {
+    return columns.sort((a, b) => {
+      // Używamy id kolumny zamiast accessorKey
+      const aKey = (a as any).accessorKey || (a as any).id || ''
+      const bKey = (b as any).accessorKey || (b as any).id || ''
+
+      const aIndex = columnOrder.indexOf(aKey)
+      const bIndex = columnOrder.indexOf(bKey)
+
+      // Jeśli kolumna nie ma klucza lub nie jest w kolejności, umieść na końcu
+      if (aIndex === -1 && bIndex === -1) return 0
+      if (aIndex === -1) return 1
+      if (bIndex === -1) return -1
+
+      return aIndex - bIndex
+    })
+  }
 
   // Function to toggle group collapse state
   const toggleGroupCollapse = (statusName: string) => {
@@ -236,6 +257,76 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
         const taskB = rowB.original as Task
         const nameA = taskA.assignee?.name || ""
         const nameB = taskB.assignee?.name || ""
+        return nameA.localeCompare(nameB)
+      },
+    },
+    {
+      accessorKey: "createdBy",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2"
+          >
+            Autor zadania
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
+      cell: ({ row }) => {
+        const rowData = row.original
+
+        // Return empty cell for group headers
+        if ('isGroupHeader' in rowData) {
+          return null
+        }
+
+        const task = rowData as Task
+
+        // Wyświetlaj autora analogicznie do osoby przypisanej - tylko avatar z tooltipem
+        if (task.createdBy) {
+          return (
+            <Tooltip>
+              <TooltipTrigger>
+                <Avatar className="h-6 w-6 cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all duration-200">
+                  <AvatarImage src={task.createdBy.avatarUrl || ""} alt={task.createdBy.name} />
+                  <AvatarFallback className="text-xs">
+                    {task.createdBy.name?.charAt(0) || "?"}
+                  </AvatarFallback>
+                </Avatar>
+              </TooltipTrigger>
+              <TooltipContent>
+                <span className="font-medium">{task.createdBy.name}</span>
+              </TooltipContent>
+            </Tooltip>
+          )
+        }
+
+        return (
+          <Tooltip>
+            <TooltipTrigger>
+              <Avatar className="h-6 w-6 cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all duration-200">
+                <AvatarFallback className="text-xs">
+                  ?
+                </AvatarFallback>
+              </Avatar>
+            </TooltipTrigger>
+            <TooltipContent>
+              <span>Nieznany autor</span>
+            </TooltipContent>
+          </Tooltip>
+        )
+      },
+      sortingFn: (rowA, rowB) => {
+        // Group headers should stay at the top
+        if ('isGroupHeader' in rowA.original) return -1
+        if ('isGroupHeader' in rowB.original) return 1
+
+        const taskA = rowA.original as Task
+        const taskB = rowB.original as Task
+        const nameA = taskA.createdBy?.name || ""
+        const nameB = taskB.createdBy?.name || ""
         return nameA.localeCompare(nameB)
       },
     },
@@ -415,59 +506,6 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
       },
     },
     {
-      accessorKey: "createdBy",
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="h-8 px-2"
-          >
-            Autor zadania
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        )
-      },
-      cell: ({ row }) => {
-        const rowData = row.original
-
-        // Return empty cell for group headers
-        if ('isGroupHeader' in rowData) {
-          return null
-        }
-
-        const task = rowData as Task
-        return (
-          <div className="flex items-center gap-2">
-            {task.createdBy && (
-              <>
-                <Avatar className="h-6 w-6">
-                  <AvatarImage src={task.createdBy.avatarUrl} />
-                  <AvatarFallback className="text-xs">
-                    {task.createdBy.name?.charAt(0)?.toUpperCase() || '?'}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-sm truncate">
-                  {task.createdBy.name}
-                </span>
-              </>
-            )}
-          </div>
-        )
-      },
-      sortingFn: (rowA, rowB) => {
-        // Group headers should stay at the top
-        if ('isGroupHeader' in rowA.original) return -1
-        if ('isGroupHeader' in rowB.original) return 1
-
-        const taskA = rowA.original as Task
-        const taskB = rowB.original as Task
-        const nameA = taskA.createdBy?.name || ""
-        const nameB = taskB.createdBy?.name || ""
-        return nameA.localeCompare(nameB)
-      },
-    },
-    {
       accessorKey: "createdAt",
       header: ({ column }) => {
         return (
@@ -630,9 +668,12 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
     },
   ]
 
+  // Sortuj kolumny według zapisanej kolejności
+  const sortedColumns = useMemo(() => sortColumnsByOrder(columns), [columns, columnOrder])
+
   const table = useReactTable({
     data: tableData,
-    columns,
+    columns: sortedColumns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -686,12 +727,18 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
             {hideEmptyGroups ? "Pokaż puste" : "Ukryj puste"}
           </Button>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Kolumny <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
+        <div className="flex items-center space-x-2">
+          <ColumnOrderDialog
+            columnOrder={columnOrder}
+            columnVisibility={columnVisibility}
+            onColumnOrderChange={updateColumnOrder}
+          />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                Kolumny <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {table
               .getAllColumns()
@@ -725,6 +772,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
               })}
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       </div>
 
       {/* Single table with grouped rows */}
