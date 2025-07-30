@@ -305,8 +305,8 @@ function QuickAddTask({
   }
 
   return (
-    <Card className="border-dashed border-2 border-gray-300">
-      <CardContent className="p-3">
+    <Card className="border-dashed border-2 border-gray-300 p-0">
+      <CardContent className="p-2">
         <form onSubmit={handleSubmit} className="space-y-2 flex alitems-center gap-1">
           <Input
             placeholder="Wprowadź tytuł zadania..."
@@ -314,7 +314,7 @@ function QuickAddTask({
             onChange={(e) => setTitle(e.target.value)}
             disabled={loading}
             autoFocus
-            className="pb-0"
+            className="pb-0 mb-0"
           />
           {error && (
             <p className="text-sm text-red-600">{error}</p>
@@ -325,7 +325,7 @@ function QuickAddTask({
               size="sm"
               disabled={!title.trim() || loading}
             >
-              <Check className="h-4 w-4" />
+              <Check />
             </Button>
             <Button
               type="button"
@@ -334,7 +334,7 @@ function QuickAddTask({
               onClick={handleCancel}
               disabled={loading}
             >
-              <X className="h-4 w-4" />
+              <X className="h-3 w-3" />
             </Button>
           </div>
         </form>
