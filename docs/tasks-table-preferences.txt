@@ -1,0 +1,134 @@
+=== PREFERENCJE TABELI ZADAŃ ===
+
+Funkcjonalność zapisywania preferencji widoczności kolumn w tabeli zadań w localStorage.
+
+=== NOWE FUNKCJONALNOŚCI ===
+
+1. **Kolumna "Autor zadania"**
+   - Wyświetla użytkownika, który utworzył zadanie (createdBy)
+   - Pokazuje avatar i nazwę użytkownika
+   - Domyślnie widoczna
+   - Sortowalna alfabetycznie po nazwie autora
+
+2. **Zapisywanie preferencji kolumn w localStorage**
+   - Automatyczne zapisywanie wybranych kolumn dla każdego użytkownika
+   - Przywracanie preferencji po odświeżeniu strony
+   - Domyślnie wszystkie kolumny widoczne (oprócz niektórych)
+
+=== STRUKTURA DANYCH ===
+
+Klucz localStorage: "teamflow-tasks-table-preferences"
+
+Struktura danych:
+{
+  "columnVisibility": {
+    "title": true,
+    "assignee": true,
+    "priority": true,
+    "dueDate": true,
+    "status": true,
+    "project": true,
+    "createdBy": true,
+    "createdAt": false,
+    "estimatedHours": false,
+    "reportedHours": false
+  }
+}
+
+=== DOMYŚLNE USTAWIENIA WIDOCZNOŚCI ===
+
+Kolumny widoczne domyślnie:
+- Nazwa zadania (title)
+- Osoba przypisana (assignee)
+- Priorytet (priority)
+- Data wykonania (dueDate)
+- Status (status)
+- Projekt (project)
+- Autor zadania (createdBy) - NOWA KOLUMNA
+
+Kolumny ukryte domyślnie:
+- Data utworzenia (createdAt)
+- Szacowany czas (estimatedHours)
+- Zaraportowany czas (reportedHours)
+
+=== PLIKI ZWIĄZANE Z FUNKCJONALNOŚCIĄ ===
+
+1. src/hooks/use-tasks-table-preferences.ts
+   - Hook do zarządzania preferencjami tabeli zadań
+   - Automatyczne wczytywanie z localStorage przy inicjalizacji
+   - Funkcja updateColumnVisibility do zmiany i zapisywania preferencji
+   - Obsługa błędów przy problemach z localStorage
+   - Kompatybilność z typami @tanstack/react-table
+
+2. src/components/dashboard/tasks-table.tsx
+   - Zaktualizowany komponent tabeli zadań
+   - Nowa kolumna "Autor zadania" z avatarem i nazwą
+   - Integracja z hookiem use-tasks-table-preferences
+   - Loading state podczas ładowania preferencji
+   - Zaktualizowana mapa nazw kolumn w dropdown
+
+=== PRZEPŁYW DZIAŁANIA ===
+
+1. Użytkownik wchodzi na stronę z tabelą zadań
+2. Hook useTasksTablePreferences:
+   - Wczytuje preferencje z localStorage
+   - Łączy z domyślnymi ustawieniami (dla nowych kolumn)
+   - Ustawia stan isLoaded na true
+3. Komponent czeka na załadowanie preferencji (loading state)
+4. Tabela renderuje się z zapisanymi preferencjami
+5. Użytkownik zmienia widoczność kolumn przez dropdown "Kolumny"
+6. Hook automatycznie zapisuje nowe preferencje w localStorage
+7. Po odświeżeniu strony preferencje zostają przywrócone
+
+=== OBSŁUGA BŁĘDÓW ===
+
+- Try/catch przy wczytywaniu z localStorage
+- Try/catch przy zapisywaniu do localStorage
+- Fallback do domyślnych ustawień przy błędach
+- Console.warn dla błędów (nie blokuje działania aplikacji)
+- Graceful degradation przy wyłączonym localStorage
+
+=== KOMPATYBILNOŚĆ Z REACT-TABLE ===
+
+- Używa typu Updater<VisibilityState> dla kompatybilności
+- Obsługuje zarówno funkcje jak i bezpośrednie wartości
+- Integracja z onColumnVisibilityChange callback
+
+=== KORZYŚCI ===
+
+- Lepsze UX - użytkownik nie musi za każdym razem ukrywać/pokazywać kolumn
+- Personalizacja - każdy użytkownik może mieć własne preferencje
+- Wydajność - localStorage jest szybki i nie wymaga zapytań do serwera
+- Offline - działa bez połączenia z internetem
+- Nowa kolumna autora - lepsze śledzenie kto utworzył zadanie
+
+=== PRZYSZŁE ROZSZERZENIA ===
+
+Możliwe rozszerzenia funkcjonalności:
+- Synchronizacja preferencji z serwerem (dla użytkowników zalogowanych)
+- Preferencje sortowania kolumn
+- Preferencje filtrów zadań
+- Preferencje szerokości kolumn
+- Export/import preferencji
+- Preferencje dla różnych widoków (projekt vs globalna lista zadań)
+
+=== TESTOWANIE ===
+
+Aby przetestować funkcjonalność:
+1. Przejdź do tabeli zadań (/dashboard/tasks)
+2. Kliknij dropdown "Kolumny"
+3. Ukryj/pokaż różne kolumny
+4. Odśwież stronę - preferencje powinny zostać zachowane
+5. Sprawdź czy kolumna "Autor zadania" wyświetla się poprawnie
+6. Przetestuj sortowanie po autorze zadania
+
+Sprawdzenie localStorage:
+1. Otwórz DevTools (F12)
+2. Zakładka Application/Storage
+3. Local Storage -> localhost:3001
+4. Klucz: teamflow-tasks-table-preferences
+
+=== MIGRACJA DANYCH ===
+
+Hook automatycznie łączy stare preferencje z nowymi domyślnymi ustawieniami,
+więc dodanie nowych kolumn nie psuje istniejących preferencji użytkowników.

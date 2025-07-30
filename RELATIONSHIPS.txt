@@ -26,13 +26,17 @@ GŁÓWNE RELACJE:
 4. TASK (Zadanie) - ZAKTUALIZOWANE
    - OPCJONALNIE należy do PROJECT (projektu) - relacja many-to-one [OPCJONALNE]
    - OPCJONALNIE ma przypisanego USER (użytkownika) jako assignee - relacja many-to-one
-   - OPCJONALNIE ma USER (użytkownika) jako creator - relacja many-to-one
+   - OPCJONALNIE ma USER (użytkownika) jako creator (createdBy) - relacja many-to-one
    - Ma jeden TASK_STATUS (status zadania) - relacja many-to-one
    - Może mieć wiele SUBTASKS (podzadań) - relacja one-to-many
    - Może mieć wiele COMMENTS (komentarzy) - relacja one-to-many
    - Może mieć wiele TIME_ENTRIES (wpisów czasu) - relacja one-to-many
    - Może mieć wiele TASK_IMAGES (obrazków) - relacja one-to-many
    - Może mieć wiele TODOS (elementów listy do zrobienia) - relacja one-to-many
+
+   NOWA FUNKCJONALNOŚĆ:
+   - Kolumna "Autor zadania" w tabeli zadań wyświetla createdBy użytkownika
+   - Preferencje widoczności kolumn zapisywane w localStorage
 
 5. TASK_STATUS (Status zadania)
    - Może być przypisany do wielu TASKS (zadań) - relacja one-to-many

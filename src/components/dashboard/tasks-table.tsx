@@ -39,6 +39,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { EditableCell } from "./editable-cell"
 import { getPriorityColor, getPriorityDisplayName, getTaskStatus, isTaskOverdue } from "@/lib/task-utils"
 import { formatTaskDueDateWithRelative, formatCreatedDate } from "@/lib/date-utils"
+import { useTasksTablePreferences } from "@/hooks/use-tasks-table-preferences"
 import type { Task, User, TaskStatus } from "@/types"
 import Link from "next/link"
 
@@ -58,14 +59,12 @@ interface TasksTableProps {
 export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTableProps) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
-    estimatedHours: false, // Hide by default on smaller screens
-    createdAt: false, // Hide by default on smaller screens
-    reportedHours: false, // Hide by default on smaller screens
-  })
   const [rowSelection, setRowSelection] = useState({})
   const [hideEmptyGroups, setHideEmptyGroups] = useState(false)
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
+
+  // Używamy hooka do zarządzania preferencjami widoczności kolumn
+  const { columnVisibility, updateColumnVisibility, isLoaded } = useTasksTablePreferences()
 
   // Function to toggle group collapse state
   const toggleGroupCollapse = (statusName: string) => {
@@ -416,6 +415,59 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
       },
     },
     {
+      accessorKey: "createdBy",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2"
+          >
+            Autor zadania
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
+      cell: ({ row }) => {
+        const rowData = row.original
+
+        // Return empty cell for group headers
+        if ('isGroupHeader' in rowData) {
+          return null
+        }
+
+        const task = rowData as Task
+        return (
+          <div className="flex items-center gap-2">
+            {task.createdBy && (
+              <>
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={task.createdBy.avatarUrl} />
+                  <AvatarFallback className="text-xs">
+                    {task.createdBy.name?.charAt(0)?.toUpperCase() || '?'}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-sm truncate">
+                  {task.createdBy.name}
+                </span>
+              </>
+            )}
+          </div>
+        )
+      },
+      sortingFn: (rowA, rowB) => {
+        // Group headers should stay at the top
+        if ('isGroupHeader' in rowA.original) return -1
+        if ('isGroupHeader' in rowB.original) return 1
+
+        const taskA = rowA.original as Task
+        const taskB = rowB.original as Task
+        const nameA = taskA.createdBy?.name || ""
+        const nameB = taskB.createdBy?.name || ""
+        return nameA.localeCompare(nameB)
+      },
+    },
+    {
       accessorKey: "createdAt",
       header: ({ column }) => {
         return (
@@ -587,7 +639,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
+    onColumnVisibilityChange: updateColumnVisibility,
     onRowSelectionChange: setRowSelection,
     state: {
       sorting,
@@ -596,6 +648,21 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
       rowSelection,
     },
   })
+
+  // Nie renderuj tabeli dopóki preferencje nie zostaną załadowane
+  if (!isLoaded) {
+    return (
+      <div className="w-full space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="h-10 w-64 bg-muted animate-pulse rounded" />
+          <div className="h-10 w-32 bg-muted animate-pulse rounded" />
+        </div>
+        <div className="rounded-md border">
+          <div className="h-96 bg-muted animate-pulse" />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="w-full space-y-4">
@@ -637,6 +704,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
                   dueDate: "Data wykonania",
                   status: "Status",
                   project: "Projekt",
+                  createdBy: "Autor zadania",
                   createdAt: "Data utworzenia",
                   estimatedHours: "Szacowany czas",
                   reportedHours: "Zaraportowany czas"
