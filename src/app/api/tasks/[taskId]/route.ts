@@ -148,7 +148,7 @@ export async function PATCH(
     }
 
     const { taskId } = await params
-    const { title, description, statusId, priority, dueDate, assigneeId, estimatedHours } = await request.json()
+    const { title, description, statusId, priority, dueDate, assigneeId, estimatedHours, projectId } = await request.json()
 
     // Fetch task to check permissions
     const existingTask = await prisma.task.findUnique({
@@ -236,11 +236,12 @@ export async function PATCH(
         )
       }
 
-      // Verify assignee is a member of the project's team
-      const team = await prisma.team.findUnique({
-        where: {
-          id: existingTask.project.teamId
-        },
+      // Verify assignee is a member of the project's team (only if task has a project)
+      if (existingTask.project) {
+        const team = await prisma.team.findUnique({
+          where: {
+            id: existingTask.project.teamId
+          },
         include: {
           members: {
             where: {
@@ -250,11 +251,57 @@ export async function PATCH(
         }
       })
 
-      if (!team || team.members.length === 0) {
-        return NextResponse.json(
-          { error: "Assignee is not a member of the project team" },
-          { status: 400 }
-        )
+        if (!team || team.members.length === 0) {
+          return NextResponse.json(
+            { error: "Assignee is not a member of the project team" },
+            { status: 400 }
+          )
+        }
+      }
+    }
+
+    // If projectId is provided, verify it exists and user has access
+    if (projectId !== undefined) {
+      if (projectId === "no-project" || projectId === null || projectId === "") {
+        // Allow setting to no project
+      } else {
+        const project = await prisma.project.findFirst({
+          where: {
+            id: projectId,
+            team: {
+              members: {
+                some: {
+                  id: session.user.id
+                }
+              }
+            }
+          },
+          include: {
+            team: {
+              include: {
+                members: true
+              }
+            }
+          }
+        })
+
+        if (!project) {
+          return NextResponse.json(
+            { error: "Project not found or you don't have access to it" },
+            { status: 400 }
+          )
+        }
+
+        // If assigneeId is being set and project is being changed, verify assignee is member of new project team
+        if (assigneeId !== undefined && assigneeId !== null) {
+          const isAssigneeMember = project.team.members.some(member => member.id === assigneeId)
+          if (!isAssigneeMember) {
+            return NextResponse.json(
+              { error: "Assignee is not a member of the selected project team" },
+              { status: 400 }
+            )
+          }
+        }
       }
     }
 
@@ -267,6 +314,7 @@ export async function PATCH(
       dueDate?: Date | null;
       assigneeId?: string;
       estimatedHours?: number;
+      projectId?: string | null;
   } = {}
     if (title !== undefined) updateData.title = title
     if (description !== undefined) updateData.description = description
@@ -275,6 +323,9 @@ export async function PATCH(
     if (dueDate !== undefined) updateData.dueDate = dueDate ? new Date(dueDate) : null
     if (assigneeId !== undefined) updateData.assigneeId = assigneeId
     if (estimatedHours !== undefined) updateData.estimatedHours = estimatedHours
+    if (projectId !== undefined) {
+      updateData.projectId = (projectId === "no-project" || projectId === "") ? null : projectId
+    }
 
     const task = await prisma.task.update({
       where: { id: taskId },

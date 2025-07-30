@@ -61,6 +61,7 @@ Nexus to nowoczesna aplikacja internetowa do zarządzania zadaniami i projektami
 - **Kolumna zaraportowany czas** - Nowa kolumna w tabeli zadań pokazująca łączny czas zaraportowany dla każdego zadania na podstawie time entries
 - **Hover effects na rzędach** - Efekty hover na rzędach zadań z podświetleniem klikalnych elementów dla lepszego UX
 - **Inteligentne breadcrumbs** - Breadcrumbs wyświetlają nazwy projektów zamiast ID z automatycznym pobieraniem brakujących nazw i wykorzystaniem globalnego kontekstu projektów
+- **Wybór projektu w edycji zadania** - Możliwość zmiany projektu zadania podczas edycji, przenoszenia zadań między projektami lub usuwania z projektu z pełną walidacją uprawnień
 
 ### 🔄 Planowane funkcjonalności
 - Zaproszenia do zespołów przez email

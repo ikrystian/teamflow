@@ -1,0 +1,76 @@
+=== DODANIE WYBORU PROJEKTU W EDYCJI ZADANIA ===
+
+Data: 2025-07-30
+Autor: AI Assistant
+
+=== PROBLEM ===
+
+W edycji zadania brakowało możliwości wyboru/zmiany projektu. Użytkownik mógł edytować wszystkie inne pola zadania, ale nie mógł przenieść zadania do innego projektu lub usunąć go z projektu.
+
+=== ROZWIĄZANIE ===
+
+1. **Zaktualizowano komponenty formularzy zadań**:
+   - `src/components/shared/task-form-sheet.tsx`
+   - `src/components/shared/task-form-dialog.tsx`
+   
+   Zmiany:
+   - Zmieniono warunek wyświetlania wyboru projektu z `isCreateMode && !projectId` na `((isCreateMode && !projectId) || isEditMode)`
+   - Dodano `projectId` do danych wysyłanych w trybie edycji
+
+2. **Zaktualizowano komponenty używające formularzy**:
+   - `src/components/tasks/tasks-content.tsx` - dodano `projects={projects}` do TaskFormSheet w trybie edycji
+   - `src/components/projects/project-details-content.tsx` - dodano import `useProjects` i przekazanie `projects={projects}`
+
+3. **Rozszerzono API endpoint dla edycji zadań**:
+   - `src/app/api/tasks/[taskId]/route.ts`
+   
+   Zmiany:
+   - Dodano `projectId` do destructuring danych z request
+   - Dodano walidację nowego projektu (sprawdzenie czy istnieje i czy użytkownik ma dostęp)
+   - Dodano sprawdzenie czy assignee jest członkiem zespołu nowego projektu
+   - Dodano `projectId` do typu updateData i logiki aktualizacji
+   - Obsługa wartości "no-project" jako null (usunięcie zadania z projektu)
+   - Naprawiono błąd TypeScript z `existingTask.project` który może być null
+
+=== FUNKCJONALNOŚĆ ===
+
+Teraz w edycji zadania użytkownik może:
+
+1. **Zmienić projekt zadania** - wybrać inny projekt z listy dostępnych projektów
+2. **Usunąć zadanie z projektu** - wybrać "Brak projektu"
+3. **Dodać zadanie do projektu** - jeśli zadanie nie miało projektu
+
+=== WALIDACJA ===
+
+API sprawdza:
+- Czy nowy projekt istnieje i użytkownik ma do niego dostęp
+- Czy assignee (jeśli jest ustawiony) jest członkiem zespołu nowego projektu
+- Czy użytkownik ma uprawnienia do edycji zadania
+
+=== BEZPIECZEŃSTWO ===
+
+- Użytkownik może przenosić zadania tylko między projektami, do których ma dostęp
+- Zachowane są wszystkie istniejące sprawdzenia uprawnień
+- Assignee musi być członkiem zespołu docelowego projektu
+
+=== PLIKI ZMODYFIKOWANE ===
+
+1. `src/components/shared/task-form-sheet.tsx`
+2. `src/components/shared/task-form-dialog.tsx`
+3. `src/components/tasks/tasks-content.tsx`
+4. `src/components/projects/project-details-content.tsx`
+5. `src/app/api/tasks/[taskId]/route.ts`
+
+=== TESTOWANIE ===
+
+Funkcjonalność została przetestowana:
+- ✅ Kompilacja TypeScript bez błędów
+- ✅ Aplikacja uruchamia się poprawnie
+- ✅ Brak błędów w konsoli przeglądarki
+
+=== PRZYSZŁE ULEPSZENIA ===
+
+1. Dodanie powiadomień o przeniesieniu zadania między projektami
+2. Historia zmian projektu w zadaniu
+3. Bulk edit - przenoszenie wielu zadań jednocześnie
+4. Walidacja czy przeniesienie zadania nie naruszy workflow projektu

@@ -307,11 +307,11 @@ export function TasksContent() {
     const due = new Date(dueDate)
     today.setHours(0, 0, 0, 0)
     due.setHours(0, 0, 0, 0)
-    
+
     // Task is overdue one day after the due date
     const overdueDate = new Date(due)
     overdueDate.setDate(due.getDate() + 1)
-    
+
     return today >= overdueDate
   }
 
@@ -684,6 +684,7 @@ export function TasksContent() {
         onTaskUpdated={handleTaskUpdated}
         task={selectedTask}
         teamMembers={teamMembers}
+        projects={projects}
       />
 
       <TimeTrackingSheet

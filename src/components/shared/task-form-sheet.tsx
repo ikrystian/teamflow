@@ -115,7 +115,7 @@ export function TaskFormSheet({
         if (response.ok) {
           const data = await response.json()
           setTaskStatuses(data.taskStatuses)
-          
+
           // Set first status as default for create mode
           if (isCreateMode && data.taskStatuses.length > 0 && !defaultStatusId && !statusId) {
             setStatusId(data.taskStatuses[0].id)
@@ -297,12 +297,13 @@ export function TaskFormSheet({
             priority: priority || undefined,
             dueDate: dueDate || undefined,
             estimatedHours: estimatedHours === "none" ? undefined : parseFloat(estimatedHours),
+            projectId: selectedProjectId || undefined,
           }),
         })
 
         if (response.ok) {
           const data = await response.json()
-          
+
           // Upload new images if any
           if (pendingImages.length > 0) {
             await uploadImages(task.id)
@@ -376,8 +377,8 @@ export function TaskFormSheet({
             />
           </div>
 
-          {/* Project Selection (only in create mode and when not forced to specific project) */}
-          {isCreateMode && !projectId && projects.length > 0 && (
+          {/* Project Selection */}
+          {((isCreateMode && !projectId) || isEditMode) && projects.length > 0 && (
             <div className="space-y-2">
               <Label htmlFor="project">Projekt</Label>
               <Select

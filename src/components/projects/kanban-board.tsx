@@ -142,7 +142,7 @@ function SortableTaskCard({
           paddingBottom: 0
         }}
       >
-        <CardContent className="p-3" onClick={() => onViewDetails(task)}>
+        <CardContent className="p-3" onClick={(event) => {onViewDetails(task); event.stopPropagation()}}>
           <div className="flex items-start justify-between mb-2 select-none">
             <div className="flex items-start gap-2 flex-1 min-w-0">
               <div className="flex-1 min-w-0">
@@ -167,7 +167,7 @@ function SortableTaskCard({
               <DropdownMenuContent align="end">
                 {canEdit && (
                   <>
-                    <DropdownMenuItem onClick={() => onTimeTracking(task)}>
+                    <DropdownMenuItem onClick={(event) => { onTimeTracking(task); event.stopPropagation() }}>
                       <Clock className="mr-2 h-4 w-4" />
                       Loguj czas
                     </DropdownMenuItem>

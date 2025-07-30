@@ -99,8 +99,8 @@ export function TaskFormDialog({
   const isCreateMode = mode === "create"
   const isEditMode = mode === "edit"
 
-  // Determine if we should show project selector (only in create mode without fixed projectId)
-  const showProjectSelector = isCreateMode && !projectId && projects.length > 0
+  // Determine if we should show project selector
+  const showProjectSelector = ((isCreateMode && !projectId) || isEditMode) && projects.length > 0
 
   // Get current project for team member selection
   const currentProject = projectId
@@ -349,6 +349,7 @@ export function TaskFormDialog({
             priority: priority || undefined,
             dueDate: dueDate || undefined,
             estimatedHours: estimatedHours === "none" ? undefined : parseFloat(estimatedHours),
+            projectId: selectedProjectId && selectedProjectId !== "no-project" ? selectedProjectId : undefined,
           }),
         })
 
@@ -433,7 +434,7 @@ export function TaskFormDialog({
               </div>
             </div>
 
-            {/* Project selector - only in create mode without fixed projectId */}
+            {/* Project selector */}
             {showProjectSelector && (
               <div className="space-y-2">
                 <Label htmlFor="project" className="text-sm font-medium">

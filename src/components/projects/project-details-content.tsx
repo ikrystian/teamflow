@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { useProjectViewPreferences } from "@/hooks/use-project-view-preferences"
 import { usePageHeader } from "@/contexts/header-context"
+import { useProjects } from "@/contexts/projects-context"
 
 import {
   ArrowLeft,
@@ -83,6 +84,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   const [taskFilter, setTaskFilter] = useState<"all" | "mine" | string>("all")
   const [deletingTask, setDeletingTask] = useState(false)
   const router = useRouter()
+  const { projects } = useProjects()
 
   const fetchProject = useCallback(async () => {
     try {
@@ -559,6 +561,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         onTaskUpdated={handleTaskUpdated}
         task={selectedTask}
         teamMembers={project.team.members}
+        projects={projects}
       />
 
       <TimeTrackingSheet
