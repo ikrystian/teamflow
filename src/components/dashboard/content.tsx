@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
-import { Plus, Users, FolderOpen, CheckSquare, Calendar } from "lucide-react"
+import { Plus, CheckSquare, Calendar } from "lucide-react"
 import Link from "next/link"
 import { TaskDetailsSheet } from "@/components/tasks/task-details-sheet"
 import { TaskFormSheet } from "@/components/shared/task-form-sheet"
@@ -134,22 +134,6 @@ export function DashboardContent() {
       href: "/dashboard/tasks"
     },
     {
-      name: "Zespoły",
-      value: stats.teams.toString(),
-      description: "Zespoły, do których należysz",
-      icon: Users,
-      color: "text-green-600 dark:text-green-400",
-      href: "/dashboard/teams"
-    },
-    {
-      name: "Projekty",
-      value: stats.projects.toString(),
-      description: "Aktywne projekty",
-      icon: FolderOpen,
-      color: "text-purple-600 dark:text-purple-400",
-      href: "/dashboard/projects"
-    },
-    {
       name: "Termin dzisiaj",
       value: stats.dueToday.toString(),
       description: "Zadania z terminem na dziś",
@@ -228,38 +212,6 @@ export function DashboardContent() {
           </Link>
         ))}
       </div>
-
-      {/* Quick actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Szybkie działania</CardTitle>
-          <CardDescription>
-            Rozpocznij od typowych zadań
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-4">
-            <Button asChild>
-              <Link href="/dashboard/tasks">
-                <Plus className="mr-2 h-4 w-4" />
-                Utwórz zadanie
-              </Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href="/dashboard/teams">
-                <Users className="mr-2 h-4 w-4" />
-                Utwórz zespół
-              </Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href="/dashboard/projects">
-                <FolderOpen className="mr-2 h-4 w-4" />
-                Nowy projekt
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Recent tasks */}
       <Card>

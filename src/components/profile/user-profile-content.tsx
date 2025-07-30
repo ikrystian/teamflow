@@ -22,6 +22,7 @@ import {
   ArrowLeft
 } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { usePageHeader } from "@/contexts/header-context"
 
 interface UserProfile {
   id: string
@@ -179,70 +180,57 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
 
   if (loading) {
     return (
-      <div>
-        {/* Top bar */}
-        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-border bg-background px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
-          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-            <div className="flex flex-1 items-center">
-              <LoadingSkeleton className="h-8 w-48" />
-            </div>
-          </div>
+      <div className="space-y-6 p-4 md:p-8 pt-6">
+        <LoadingCard className="max-w-4xl" headerLines={3} contentLines={5} />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <LoadingCard key={i} headerLines={1} contentLines={2} />
+          ))}
         </div>
-
-        {/* Page content */}
-        <main className="py-10">
-          <div className="px-4 sm:px-6 lg:px-8">
-            <div className="space-y-6">
-              <LoadingCard className="max-w-4xl" headerLines={3} contentLines={5} />
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <LoadingCard key={i} headerLines={1} contentLines={2} />
-                ))}
-              </div>
-            </div>
-          </div>
-        </main>
       </div>
     )
   }
 
   if (error || !userProfile) {
     return (
-      <div>
-        {/* Top bar */}
-        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-border bg-background px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
-          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-            <div className="flex flex-1 items-center">
-              <Button
-                variant="ghost"
-                onClick={() => router.back()}
-                className="flex items-center gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Wróć
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Error content */}
-        <main className="py-10">
-          <div className="px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col items-center justify-center py-12">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Błąd</h3>
-              <p className="text-gray-500 mb-4">{error}</p>
-              <Button onClick={() => router.back()}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Wróć
-              </Button>
-            </div>
-          </div>
-        </main>
+      <div className="flex flex-col items-center justify-center py-12 p-4 md:p-8">
+        <h3 className="text-lg font-medium text-foreground mb-2">Błąd</h3>
+        <p className="text-muted-foreground mb-4">{error}</p>
+        <Button onClick={() => router.back()}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Wróć
+        </Button>
       </div>
     )
   }
 
   const isOwnProfile = session?.user?.id === userId
+
+  // Set page header content
+  usePageHeader(
+    userProfile ? (
+      <div className="flex items-center space-x-4">
+        <Button
+          variant="ghost"
+          onClick={() => router.back()}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Wróć
+        </Button>
+        <div>
+          <h1 className="text-xl font-bold text-foreground">
+            {isOwnProfile ? "Twój profil" : `Profil: ${userProfile.name}`}
+          </h1>
+        </div>
+      </div>
+    ) : (
+      <div>
+        <h1 className="text-xl font-bold text-foreground">Ładowanie profilu...</h1>
+      </div>
+    ),
+    [userProfile, isOwnProfile] // Re-render when userProfile or isOwnProfile changes
+  )
 
   const statsConfig = [
     {
@@ -276,35 +264,7 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
   ]
 
   return (
-    <div>
-      {/* Top bar */}
-      <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-border bg-background px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
-        <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-          <div className="flex flex-1 items-center">
-            <Button
-              variant="ghost"
-              onClick={() => router.back()}
-              className="flex items-center gap-2 mr-4"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Wróć
-            </Button>
-            <div>
-              <h1 className="text-xl font-bold text-foreground">
-                Profil użytkownika
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                {isOwnProfile ? "Twój profil" : `Profil: ${userProfile.name}`}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Page content */}
-      <main className="py-10">
-        <div className="px-4 sm:px-6 lg:px-8">
-          <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-8 pt-6">
             {/* Profile Header */}
             <Card>
               <CardContent className="p-6">
@@ -569,9 +529,6 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
                 </Card>
               </TabsContent>
             </Tabs>
-          </div>
-        </div>
-      </main>
     </div>
   )
 }

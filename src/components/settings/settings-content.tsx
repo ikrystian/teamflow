@@ -57,8 +57,7 @@ export function SettingsContent() {
   // Set page header content
   usePageHeader(
     <div>
-      <h1 className="text-2xl font-bold text-foreground">Ustawienia</h1>
-      <p className="text-muted-foreground">Zarządzaj swoim profilem i preferencjami aplikacji</p>
+      <h1 className="text-2xl font-bold text-foreground">Zarządzaj swoim profilem i preferencjami aplikacji</h1>
     </div>,
     [] // Static content, no dependencies
   )
@@ -685,6 +684,5 @@ export function SettingsContent() {
           )}
         </Tabs>
       </div>
-    </div>
   )
 }
