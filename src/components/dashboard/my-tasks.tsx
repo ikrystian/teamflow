@@ -4,14 +4,13 @@ import { useState, useEffect, useCallback } from "react"
 import { Task, User, TaskStatus } from "@/types"
 import { useSession } from "next-auth/react"
 import type { Session } from "next-auth"
-import { TasksTable } from "./tasks-table"
 import { TaskDetailsSheet } from "@/components/tasks/task-details-sheet"
 
 export function MyTasks() {
   const { data: session } = useSession() as { data: Session | null }
-  const [tasks, setTasks] = useState<Task[]>([])
-  const [users, setUsers] = useState<User[]>([])
-  const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
+  const [, setTasks] = useState<Task[]>([])
+  const [, setUsers] = useState<User[]>([])
+  const [, setTaskStatuses] = useState<TaskStatus[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
@@ -62,38 +61,6 @@ export function MyTasks() {
     fetchData()
   }, [fetchMyTasks])
 
-  const handleTaskUpdate = async (taskId: string, updates: Partial<Task> & { assigneeId?: string }) => {
-    try {
-      const response = await fetch(`/api/tasks/${taskId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updates),
-      })
-
-      if (response.ok) {
-        await fetchMyTasks()
-      } else {
-        const errorData = await response.text()
-        console.error("Failed to update task:", {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorData
-        })
-        throw new Error(`Failed to update task: ${response.status} ${response.statusText}`)
-      }
-    } catch (error) {
-      console.error("Error updating task:", error)
-      throw error
-    }
-  }
-
-  const handleTaskDetails = (task: Task) => {
-    setSelectedTask(task)
-    setDetailsDialogOpen(true)
-  }
-
   const handleTaskUpdated = () => {
     fetchMyTasks()
     setSelectedTask(null)
@@ -105,14 +72,6 @@ export function MyTasks() {
 
   return (
     <div className="mb-8">
-      <h2 className="text-xl font-bold mb-4">Zadania przypisane do Ciebie (do jutra)</h2>
-      <TasksTable
-        tasks={tasks}
-        users={users}
-        taskStatuses={taskStatuses}
-        onTaskUpdate={handleTaskUpdate}
-        onTaskDetails={handleTaskDetails}
-      />
       <TaskDetailsSheet
         open={detailsDialogOpen}
         onOpenChange={setDetailsDialogOpen}
