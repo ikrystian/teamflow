@@ -36,3 +36,32 @@ Zmodyfikowano komponent `DashboardBreadcrumbs` (`src/components/dashboard/breadc
 - **Fallback**: Automatyczne pobieranie brakujących nazw projektów
 - **Cache**: Unikanie wielokrotnych zapytań API dla tego samego projektu
 - **Responsywność**: Lepsze oznaczenia podczas ładowania danych
+
+## Naprawka błędu TypeError w ProjectInfoContent (2025-07-30):
+
+### Problem:
+TypeError: Cannot read properties of undefined (reading 'length') w komponencie ProjectInfoContent.
+
+### Przyczyna:
+Funkcja `getTaskStats` próbowała odczytać właściwość 'length' z undefined/null wartości gdy `project.tasks` było niezdefiniowane.
+
+### Rozwiązanie:
+Zmodyfikowano komponent `ProjectInfoContent` (`src/components/projects/project-info-content.tsx`):
+
+1. **Dodano sprawdzenie null/undefined w getTaskStats**:
+   - Funkcja teraz sprawdza czy tasks jest tablicą przed dostępem do właściwości
+   - Zwraca domyślne wartości (0) gdy tasks jest undefined/null
+
+2. **Zaktualizowano interfejs ProjectDetails**:
+   - Zmieniono `tasks` i `members` na opcjonalne właściwości (tasks?, members?)
+   - Lepsze odzwierciedlenie rzeczywistych danych z API
+
+3. **Dodano bezpieczne sprawdzenia dla team.members**:
+   - Użycie optional chaining (?.) w dostępie do members.length
+   - Dodano fallback UI gdy brak członków zespołu
+
+### Korzyści:
+- **Stabilność**: Eliminacja błędów runtime związanych z undefined properties
+- **Defensive Programming**: Bezpieczne sprawdzenia przed dostępem do danych
+- **Lepsze UX**: Graceful degradation zamiast crash aplikacji
+- **Kompatybilność**: Działa z projektami z i bez zadań/członków

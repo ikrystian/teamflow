@@ -47,14 +47,14 @@ interface ProjectDetails {
   team: {
     id: string
     name: string
-    members: {
+    members?: {
       id: string
       name: string
       email: string
       avatarUrl?: string
     }[]
   }
-  tasks: {
+  tasks?: {
     id: string
     title: string
     description?: string
@@ -275,6 +275,11 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
   }
 
   const getTaskStats = (tasks: ProjectDetails['tasks']) => {
+    // Handle case where tasks is undefined or null
+    if (!tasks || !Array.isArray(tasks)) {
+      return { total: 0, completed: 0, inProgress: 0, overdue: 0 }
+    }
+
     const total = tasks.length
     const completed = tasks.filter(task => task.taskStatus?.name.toLowerCase() === "done").length
     const inProgress = tasks.filter(task => task.taskStatus?.name.toLowerCase() === "in progress").length
@@ -351,7 +356,7 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
               </div>
               <p className="text-lg font-semibold text-foreground">{project.team.name}</p>
               <p className="text-xs text-muted-foreground">
-                {project.team.members.length} {project.team.members.length === 1 ? 'członek' : 'członków'}
+                {project.team.members?.length || 0} {(project.team.members?.length || 0) === 1 ? 'członek' : 'członków'}
               </p>
             </div>
 
@@ -437,7 +442,7 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
           <CardContent>
             <div className="text-2xl font-bold">{project.team.name}</div>
             <p className="text-xs text-muted-foreground">
-              {project.team.members.length} {project.team.members.length === 1 ? 'członek' : 'członków'}
+              {project.team.members?.length || 0} {(project.team.members?.length || 0) === 1 ? 'członek' : 'członków'}
             </p>
           </CardContent>
         </Card>
@@ -477,7 +482,7 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-4">
-            {project.team.members.map((member) => (
+            {project.team.members?.map((member) => (
               <div key={member.id} className="flex items-center space-x-3">
                 <ClickableAvatar
                   userId={member.id}
@@ -490,7 +495,9 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
                   <p className="text-xs text-gray-500">{member.email}</p>
                 </div>
               </div>
-            ))}
+            )) || (
+              <p className="text-sm text-muted-foreground">Brak członków zespołu</p>
+            )}
           </div>
         </CardContent>
       </Card>
