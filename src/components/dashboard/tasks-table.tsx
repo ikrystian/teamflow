@@ -40,6 +40,7 @@ import { EditableCell } from "./editable-cell"
 import { getPriorityColor, getPriorityDisplayName, getTaskStatus, isTaskOverdue } from "@/lib/task-utils"
 import { formatTaskDueDateWithRelative, formatCreatedDate } from "@/lib/date-utils"
 import type { Task, User, TaskStatus } from "@/types"
+import Link from "next/link"
 
 type TableRow = Task | { isGroupHeader: true; statusName: string; count: number }
 
@@ -126,7 +127,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
         // Check if this is a group header row
         if ('isGroupHeader' in rowData) {
           return (
-            <div className="flex items-center gap-2 py-2">
+            <div className="flex items-center gap-2">
               <h3 className="font-semibold text-lg">{rowData.statusName}</h3>
               <Badge variant="secondary" className="ml-2">
                 {rowData.count}
@@ -352,16 +353,12 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
         const task = rowData as Task
         return (
           <div className="flex items-center gap-2">
-            <div
-              className="w-3 h-3 rounded-full flex-shrink-0"
-              style={{ backgroundColor: task.project?.color || '#3B82F6' }}
-            />
-            <span
-              className="text-sm truncate font-medium"
-              style={{ color: task.project?.color || '#3B82F6' }}
+            <Link
+              href={`/dashboard/projects/${task.project?.id}`}
+              className="text-sm truncate font-medium underline hover:no-underline"
             >
               {task.project?.name}
-            </span>
+            </Link>
           </div>
         )
       },
