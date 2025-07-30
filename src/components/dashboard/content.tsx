@@ -5,12 +5,25 @@ import { TasksTable } from "./tasks-table"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import type { Task, User, TaskStatus } from "@/types"
+import { usePageHeader } from "@/contexts/header-context"
 
 export function DashboardContent() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [users, setUsers] = useState<User[]>([])
   const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
   const [loading, setLoading] = useState(true)
+
+  usePageHeader(
+    <div className="flex items-center justify-between w-full">
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">
+          Przegląd wszystkich zadań z całego systemu ({tasks.length} zadań)
+        </h1>
+      </div>
+
+    </div>,
+    [] // Re-render when filter changes
+  )
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -82,13 +95,8 @@ export function DashboardContent() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Przegląd wszystkich zadań z całego systemu ({tasks.length} zadań)
-        </p>
-      </div>
+    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+
 
       <Card>
         <CardHeader>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+
 import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -143,12 +143,12 @@ export function TaskComments({
       {session?.user && (
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="flex space-x-3">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={session.user.image || undefined} />
-              <AvatarFallback className="text-xs">
-                {session.user.name?.charAt(0) || "U"}
-              </AvatarFallback>
-            </Avatar>
+            <ClickableAvatar
+              userId={(session.user as { id: string })?.id || ""}
+              avatarUrl={session.user.image || undefined}
+              name={session.user.name || "User"}
+              size="sm"
+            />
             <div className="flex-1">
               <Textarea
                 value={newComment}
