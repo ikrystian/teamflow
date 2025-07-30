@@ -44,6 +44,7 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 - **Ikony projektów** - Wybór ikon projektów z ponad 100 ikon lucide-react podzielonych na kategorie (Business, Creative, Technology, Team, Nature, itp.) - ikony wyświetlane w sidebarze z odpowiednimi kolorami
 - **Bezpieczeństwo konta** - Zmiana hasła i zarządzanie aktywnymi sesjami w ustawieniach użytkownika
 - **Zaktualizowany kalendarz** - Najnowsza wersja komponentu Calendar z shadcn/ui z poprawionymi stylami i lepszym układem
+- **Archiwizowanie projektów** - Możliwość archiwizowania projektów z automatycznym ukrywaniem zadań z zarchiwizowanych projektów w dashboard i sekcji zadań
 
 ### 🔄 Planowane funkcjonalności
 - Zaproszenia do zespołów przez email

@@ -21,9 +21,10 @@ export async function GET(request: NextRequest) {
         ...(projectId && { projectId }),
         ...(assigneeId && { assigneeId }),
         OR: [
-          // Tasks with projects where user is a team member
+          // Tasks with projects where user is a team member and project is not archived
           {
             project: {
+              archived: false,
               team: {
                 members: {
                   some: {
@@ -51,6 +52,7 @@ export async function GET(request: NextRequest) {
             id: true,
             name: true,
             color: true,
+            archived: true,
             team: {
               select: {
                 id: true,
@@ -150,6 +152,7 @@ export async function POST(request: NextRequest) {
       const project = await prisma.project.findFirst({
         where: {
           id: projectId,
+          archived: false,
           team: {
             members: {
               some: {
@@ -162,7 +165,7 @@ export async function POST(request: NextRequest) {
 
       if (!project) {
         return NextResponse.json(
-          { error: "Project not found or access denied" },
+          { error: "Project not found, archived, or access denied" },
           { status: 404 }
         )
       }
@@ -214,7 +217,8 @@ export async function POST(request: NextRequest) {
           select: {
             id: true,
             name: true,
-            color: true
+            color: true,
+            archived: true
           }
         },
         assignee: {

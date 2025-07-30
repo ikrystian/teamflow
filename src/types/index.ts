@@ -41,6 +41,7 @@ export interface Task {
     id: string;
     name: string;
     color?: string;
+    archived?: boolean;
     team: {
       id: string;
       name: string;

@@ -1,8 +1,9 @@
 RELACJE MIĘDZY KOMPONENTAMI - ARCHIWIZOWANIE PROJEKTÓW
 ========================================================
 
-Data: 2025-07-29
+Data: 2025-07-29 (utworzenie), 2025-07-30 (ukrywanie zadań)
 Cel: Dodanie funkcjonalności archiwizowania projektów z możliwością filtrowania i przywracania
+Status: ✅ UKOŃCZONE - zadania z zarchiwizowanych projektów są ukryte
 
 ## STRUKTURA BAZY DANYCH
 
@@ -34,6 +35,19 @@ model Project {
 ### PATCH /api/projects/[projectId]
 - **Nowe pole**: `archived` w body request
 - **Obsługa**: Aktualizacja pola archived w bazie danych
+
+### GET /api/tasks (ZAKTUALIZOWANE 2025-07-30)
+- **Filtrowanie**: Automatycznie ukrywa zadania z zarchiwizowanych projektów
+- **Warunek**: `project.archived = false` w zapytaniu OR
+- **Wyjątek**: Zadania bez projektów (projectId = null) pozostają widoczne
+
+### GET /api/tasks/[taskId] (ZAKTUALIZOWANE 2025-07-30)
+- **Filtrowanie**: Automatycznie ukrywa zadania z zarchiwizowanych projektów
+- **Warunek**: `project.archived = false` w zapytaniu OR
+
+### POST /api/tasks (ZAKTUALIZOWANE 2025-07-30)
+- **Walidacja**: Nie pozwala tworzyć zadań w zarchiwizowanych projektach
+- **Błąd**: "Project not found, archived, or access denied" dla zarchiwizowanych projektów
 
 ### PATCH /api/projects/[projectId]/archive (NOWY ENDPOINT)
 - **Cel**: Dedykowany endpoint do archiwizowania/przywracania projektów
@@ -143,7 +157,7 @@ interface Project {
 
 ### Istniejące funkcjonalności:
 - **Status projektu**: Niezależny od archiwizowania (projekt może być "Completed" ale nie zarchiwizowany)
-- **Zadania**: Zadania w zarchiwizowanych projektach pozostają dostępne
+- **Zadania**: Zadania w zarchiwizowanych projektach są ukryte w dashboard i /tasks (ZAKTUALIZOWANE 2025-07-30)
 - **Zespoły**: Archiwizowanie nie wpływa na członkostwo w zespole
 - **Dokumenty**: Dokumenty projektów pozostają dostępne
 

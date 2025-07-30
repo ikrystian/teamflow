@@ -505,13 +505,13 @@ export function TasksContent() {
                     {/* Karta zadania */}
                     <div className="flex-1">
                       <Card
-                        className="transition-all hover:shadow-md cursor-pointer border-l-4 group-hover:shadow-sm"
+                        className="transition-all hover:shadow-md cursor-pointer border-l-4 group-hover:shadow-sm gap-0"
                         style={{
                           borderLeftColor: task.project?.color || '#3B82F6'
                         }}
                         onClick={() => handleTaskDetails(task)}
                       >
-                        <CardHeader className="pb-3">
+                        <CardHeader>
                           <div className="flex items-start justify-between">
                             <div className="flex-1 min-w-0">
                               <CardTitle className="text-lg font-semibold truncate">{task.title}</CardTitle>
@@ -587,9 +587,10 @@ export function TasksContent() {
                         <CardContent className="pt-0">
                           <div className="space-y-3">
                             {task.description && (
-                              <p className="text-muted-foreground text-sm line-clamp-2">
-                                {task.description}
-                              </p>
+                              <div
+                                className="text-muted-foreground text-sm line-clamp-2 prose prose-sm max-w-none"
+                                dangerouslySetInnerHTML={{ __html: task.description }}
+                              />
                             )}
 
                             <div className="flex items-center justify-between">

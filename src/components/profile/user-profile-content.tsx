@@ -110,6 +110,34 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const isOwnProfile = session?.user?.id === userId
+
+  // Set page header content - must be called before any conditional returns
+  usePageHeader(
+    userProfile ? (
+      <div className="flex items-center space-x-4">
+        <Button
+          variant="ghost"
+          onClick={() => router.back()}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Wróć
+        </Button>
+        <div>
+          <h1 className="text-xl font-bold text-foreground">
+            {isOwnProfile ? "Twój profil" : `Profil: ${userProfile.name}`}
+          </h1>
+        </div>
+      </div>
+    ) : (
+      <div>
+        <h1 className="text-xl font-bold text-foreground">Ładowanie profilu...</h1>
+      </div>
+    ),
+    [userProfile, isOwnProfile]
+  )
+
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
@@ -204,33 +232,7 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
     )
   }
 
-  const isOwnProfile = session?.user?.id === userId
 
-  // Set page header content
-  usePageHeader(
-    userProfile ? (
-      <div className="flex items-center space-x-4">
-        <Button
-          variant="ghost"
-          onClick={() => router.back()}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Wróć
-        </Button>
-        <div>
-          <h1 className="text-xl font-bold text-foreground">
-            {isOwnProfile ? "Twój profil" : `Profil: ${userProfile.name}`}
-          </h1>
-        </div>
-      </div>
-    ) : (
-      <div>
-        <h1 className="text-xl font-bold text-foreground">Ładowanie profilu...</h1>
-      </div>
-    ),
-    [userProfile, isOwnProfile] // Re-render when userProfile or isOwnProfile changes
-  )
 
   const statsConfig = [
     {

@@ -21,15 +21,31 @@ export async function GET(
     const task = await prisma.task.findFirst({
       where: {
         id: taskId,
-        project: {
-          team: {
-            members: {
-              some: {
-                id: session.user.id
+        OR: [
+          // Tasks with projects where user is a team member and project is not archived
+          {
+            project: {
+              archived: false,
+              team: {
+                members: {
+                  some: {
+                    id: session.user.id
+                  }
+                }
               }
             }
+          },
+          // Tasks without projects created by the user
+          {
+            projectId: null,
+            createdById: session.user.id
+          },
+          // Tasks without projects assigned to the user
+          {
+            projectId: null,
+            assigneeId: session.user.id
           }
-        }
+        ]
       },
       include: {
         taskStatus: {
@@ -44,6 +60,7 @@ export async function GET(
             id: true,
             name: true,
             color: true,
+            archived: true,
             team: {
               select: {
                 id: true,

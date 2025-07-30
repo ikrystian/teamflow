@@ -157,12 +157,20 @@ function SortableTaskCard({
         <CardContent className="p-3"                 onClick={() => onViewDetails(task)}
 >
           <div className="flex items-start justify-between mb-2">
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <h4
-                className="font-medium text-sm leading-tight cursor-pointer hover:text-primary truncate"
-              >
-                {task.title}
-              </h4>
+            <div className="flex items-start gap-2 flex-1 min-w-0">
+              <div className="flex-1 min-w-0">
+                <h4
+                  className="font-medium text-sm leading-tight cursor-pointer hover:text-primary truncate"
+                >
+                  {task.title}
+                </h4>
+                {task.description && (
+                  <div
+                    className="text-muted-foreground text-xs mt-1 line-clamp-2 prose prose-xs max-w-none"
+                    dangerouslySetInnerHTML={{ __html: task.description }}
+                  />
+                )}
+              </div>
               {isUpdating && (
                 <Loader2 className="h-3 w-3 animate-spin text-yellow-600 flex-shrink-0" />
               )}

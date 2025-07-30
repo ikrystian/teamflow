@@ -73,7 +73,7 @@ function ProjectIcon({ iconName, color, className = "w-4 h-4" }: {
   }
 
   // Get the icon component from lucide-react
-  const IconComponent = (LucideIcons as any)[iconName]
+  const IconComponent = (LucideIcons as unknown as Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>>)[iconName]
 
   if (!IconComponent) {
     // Fallback to colored square if icon not found
