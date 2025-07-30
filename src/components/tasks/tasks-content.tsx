@@ -100,10 +100,6 @@ export function TasksContent() {
           <Filter className="mr-2 h-4 w-4" />
           Wszystkie zadania
         </Button>
-        <Button onClick={() => setCreateDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Utwórz zadanie
-        </Button>
       </div>
     </div>,
     [filter] // Re-render when filter changes

@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -12,16 +12,12 @@ import {
   BreadcrumbPage,
 } from "@/components/ui/breadcrumb"
 import { Home } from "lucide-react"
+import { useProjects } from "@/contexts/projects-context"
 
 interface BreadcrumbSegment {
   label: string
   href: string
   isLast: boolean
-}
-
-interface Project {
-  id: string
-  name: string
 }
 
 interface Team {
@@ -36,24 +32,20 @@ interface User {
 
 export function DashboardBreadcrumbs() {
   const pathname = usePathname()
-  const [projects, setProjects] = useState<Project[]>([])
+  const { projects, loading: projectsLoading } = useProjects()
   const [teams, setTeams] = useState<Team[]>([])
   const [users, setUsers] = useState<User[]>([])
+  const [dataLoading, setDataLoading] = useState(true)
+  const [missingProjects, setMissingProjects] = useState<{[key: string]: string}>({})
 
-  // Fetch data for dynamic segments
+  // Fetch data for dynamic segments (teams and users only, projects come from context)
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [projectsRes, teamsRes, usersRes] = await Promise.all([
-          fetch('/api/projects?includeArchived=true'),
+        const [teamsRes, usersRes] = await Promise.all([
           fetch('/api/teams'),
           fetch('/api/users')
         ])
-
-        if (projectsRes.ok) {
-          const projectsData = await projectsRes.json()
-          setProjects(projectsData.projects || [])
-        }
 
         if (teamsRes.ok) {
           const teamsData = await teamsRes.json()
@@ -66,11 +58,31 @@ export function DashboardBreadcrumbs() {
         }
       } catch (error) {
         console.error('Error fetching breadcrumb data:', error)
+      } finally {
+        setDataLoading(false)
       }
     }
 
     fetchData()
   }, [])
+
+  // Function to fetch missing project names
+  const fetchMissingProject = useCallback(async (projectId: string) => {
+    if (missingProjects[projectId] || projectsLoading) return
+
+    try {
+      const response = await fetch(`/api/projects/${projectId}`)
+      if (response.ok) {
+        const data = await response.json()
+        setMissingProjects(prev => ({
+          ...prev,
+          [projectId]: data.project.name
+        }))
+      }
+    } catch (error) {
+      console.error('Error fetching project name:', error)
+    }
+  }, [missingProjects, projectsLoading])
 
   const generateBreadcrumbs = (): BreadcrumbSegment[] => {
     const segments = pathname.split('/').filter(Boolean)
@@ -132,6 +144,18 @@ export function DashboardBreadcrumbs() {
               break
             }
 
+            // Check if we have a cached name for this project
+            if (missingProjects[segment]) {
+              label = missingProjects[segment]
+              break
+            }
+
+            // If it's a project segment and we don't have the name, try to fetch it
+            const previousSegment = segments[i - 1]
+            if (previousSegment === 'projects' && !projectsLoading) {
+              fetchMissingProject(segment)
+            }
+
             const team = teams.find(t => t.id === segment)
             if (team) {
               label = team.name
@@ -144,8 +168,17 @@ export function DashboardBreadcrumbs() {
               break
             }
 
-            // If no match found, use a generic label
-            label = 'Szczegóły'
+            // If no match found, check if data is still loading
+            if (projectsLoading || dataLoading) {
+              label = 'Ładowanie...'
+            } else {
+              // For project segments, try to show a more specific label
+              if (previousSegment === 'projects') {
+                label = 'Projekt'
+              } else {
+                label = 'Szczegóły'
+              }
+            }
           }
           break
       }

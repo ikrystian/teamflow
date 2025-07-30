@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useCallback } from "react"
+import { useState, useMemo, useCallback, useEffect } from "react"
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -12,7 +12,8 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { ArrowUpDown, ChevronDown, ChevronRight, MoreHorizontal, Clock, Eye, EyeOff, Lock } from "lucide-react"
+import { ArrowUpDown, ChevronDown, MoreHorizontal, Clock, Eye, EyeOff, Lock } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -55,17 +56,78 @@ interface TasksTableProps {
   users: User[]
   taskStatuses: TaskStatus[]
   onTaskUpdate: (taskId: string, updates: TaskUpdateData) => Promise<void>
+  onTaskDetails?: (task: Task) => void
+  onTaskEdit?: (task: Task) => void
 }
 
-export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTableProps) {
+export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate, onTaskDetails, onTaskEdit }: TasksTableProps) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [rowSelection, setRowSelection] = useState({})
   const [hideEmptyGroups, setHideEmptyGroups] = useState(false)
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
+
+  // Optimistic updates state
+  const [optimisticTasks, setOptimisticTasks] = useState<Task[]>(tasks)
+  const [updatingTasks, setUpdatingTasks] = useState<Set<string>>(new Set())
 
   // Używamy hooka do zarządzania preferencjami widoczności i kolejności kolumn
   const { columnVisibility, columnOrder, updateColumnVisibility, updateColumnOrder, isLoaded } = useTasksTablePreferences()
+
+  // Sync optimistic tasks with props tasks when they change
+  useEffect(() => {
+    setOptimisticTasks(tasks)
+  }, [tasks])
+
+  // Optimistic update function
+  const handleOptimisticTaskUpdate = useCallback(async (taskId: string, updates: TaskUpdateData) => {
+    // Find the original task for potential rollback
+    const originalTask = optimisticTasks.find(t => t.id === taskId)
+    if (!originalTask) return
+
+    // Optimistic update - immediately update UI
+    setUpdatingTasks(prev => new Set(prev).add(taskId))
+    setOptimisticTasks(prev =>
+      prev.map(t => t.id === taskId ? {
+        ...t,
+        ...updates,
+        // Handle assignee update specially
+        ...(updates.assigneeId !== undefined && {
+          assignee: updates.assigneeId ? users.find(u => u.id === updates.assigneeId) : undefined
+        })
+      } : t)
+    )
+
+    // Show immediate feedback
+    toast.loading("Aktualizowanie zadania...", {
+      id: `update-task-${taskId}`,
+      duration: 2000
+    })
+
+    try {
+      // Call the original update function
+      await onTaskUpdate(taskId, updates)
+
+      // Success feedback
+      toast.success("Zadanie zostało zaktualizowane", {
+        id: `update-task-${taskId}`
+      })
+    } catch (error) {
+      // Revert optimistic update on error
+      setOptimisticTasks(prev =>
+        prev.map(t => t.id === taskId ? originalTask : t)
+      )
+      console.error("Error updating task:", error)
+      toast.error("Nie udało się zaktualizować zadania", {
+        id: `update-task-${taskId}`
+      })
+    } finally {
+      setUpdatingTasks(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(taskId)
+        return newSet
+      })
+    }
+  }, [optimisticTasks, users, onTaskUpdate])
 
   // Funkcja do sortowania kolumn według zapisanej kolejności
   const sortColumnsByOrder = useCallback((columns: ColumnDef<TableRow>[]) => {
@@ -88,18 +150,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
     })
   }, [columnOrder])
 
-  // Function to toggle group collapse state
-  const toggleGroupCollapse = (statusName: string) => {
-    setCollapsedGroups(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(statusName)) {
-        newSet.delete(statusName)
-      } else {
-        newSet.add(statusName)
-      }
-      return newSet
-    })
-  }
+
 
   // Function to calculate total reported hours for a task
   const getTotalReportedHours = (task: Task): number => {
@@ -110,8 +161,8 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
   const tableData = useMemo(() => {
     const groups: { [key: string]: Task[] } = {}
 
-    // Filter out tasks from archived projects
-    const activeTasks = tasks.filter(task => !task.project?.archived)
+    // Filter out tasks from archived projects - use optimistic tasks
+    const activeTasks = optimisticTasks.filter(task => !task.project?.archived)
 
     activeTasks.forEach(task => {
       const status = getTaskStatus(task, taskStatuses)
@@ -136,10 +187,8 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
           statusName: status.name,
           count: groups[status.name].length
         })
-        // Add tasks only if group is not collapsed
-        if (!collapsedGroups.has(status.name)) {
-          flatData.push(...groups[status.name])
-        }
+        // Always add all tasks (no collapsing)
+        flatData.push(...groups[status.name])
       }
     })
 
@@ -150,14 +199,12 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
         statusName: "Bez statusu",
         count: groups["Bez statusu"].length
       })
-      // Add tasks only if group is not collapsed
-      if (!collapsedGroups.has("Bez statusu")) {
-        flatData.push(...groups["Bez statusu"])
-      }
+      // Always add all tasks (no collapsing)
+      flatData.push(...groups["Bez statusu"])
     }
 
     return flatData
-  }, [tasks, taskStatuses, hideEmptyGroups, collapsedGroups])
+  }, [optimisticTasks, taskStatuses, hideEmptyGroups])
 
   const columns: ColumnDef<TableRow>[] = useMemo(() => [
     {
@@ -179,22 +226,13 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
 
         // Check if this is a group header row
         if ('isGroupHeader' in rowData) {
-          const isCollapsed = collapsedGroups.has(rowData.statusName)
           return (
-            <button
-              onClick={() => toggleGroupCollapse(rowData.statusName)}
-              className="flex items-center gap-2 w-full text-left hover:bg-muted/50 rounded p-1 -m-1 transition-colors"
-            >
-              {isCollapsed ? (
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              ) : (
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
-              )}
+            <div className="flex items-center gap-2 w-full text-left p-1 -m-1">
               <h3 className="font-semibold text-lg">{rowData.statusName}</h3>
               <Badge variant="secondary" className="ml-2">
                 {rowData.count}
               </Badge>
-            </button>
+            </div>
           )
         }
 
@@ -213,7 +251,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
             <EditableCell
               value={task.title}
               type="text"
-              onSave={(value) => onTaskUpdate(task.id, { title: value })}
+              onSave={(value) => handleOptimisticTaskUpdate(task.id, { title: value })}
               className="font-medium"
             />
           </div>
@@ -248,7 +286,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
             value={task.assignee?.id || ""}
             type="user"
             users={users}
-            onSave={(value) => onTaskUpdate(task.id, { assigneeId: value })}
+            onSave={(value) => handleOptimisticTaskUpdate(task.id, { assigneeId: value })}
             placeholder="Przypisz osobę"
           />
         )
@@ -362,7 +400,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
           <EditableCell
             value={task.priority || ""}
             type="priority"
-            onSave={(value) => onTaskUpdate(task.id, { priority: value })}
+            onSave={(value) => handleOptimisticTaskUpdate(task.id, { priority: value })}
             placeholder="Ustaw priorytet"
           />
         )
@@ -409,7 +447,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
             <EditableCell
               value={task.dueDate || ""}
               type="date"
-              onSave={(value) => onTaskUpdate(task.id, { dueDate: value })}
+              onSave={(value) => handleOptimisticTaskUpdate(task.id, { dueDate: value })}
               placeholder="Ustaw termin"
               className={isOverdue ? 'text-red-600' : ''}
             />
@@ -445,7 +483,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
             value={task.statusId || ""}
             type="status"
             taskStatuses={taskStatuses}
-            onSave={(value) => onTaskUpdate(task.id, { statusId: value })}
+            onSave={(value) => handleOptimisticTaskUpdate(task.id, { statusId: value })}
             placeholder="Ustaw status"
           />
         )
@@ -575,14 +613,14 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
 
         const task = rowData as Task
         return (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center">
             {task.estimatedHours && <Clock className="h-3 w-3 text-muted-foreground" />}
             <EditableCell
               value={task.estimatedHours?.toString() || ""}
-              type="text"
+              type="number"
               onSave={(value) => {
                 const hours = value ? parseFloat(value) : undefined
-                onTaskUpdate(task.id, { estimatedHours: hours })
+                handleOptimisticTaskUpdate(task.id, { estimatedHours: hours })
               }}
               placeholder="Szacowany czas (h)"
             />
@@ -664,14 +702,18 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
                 Kopiuj ID zadania
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Zobacz szczegóły</DropdownMenuItem>
-              <DropdownMenuItem>Edytuj zadanie</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onTaskDetails?.(task)}>
+                Zobacz szczegóły
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onTaskEdit?.(task)}>
+                Edytuj zadanie
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         )
       },
     },
-  ], [users, taskStatuses, collapsedGroups, onTaskUpdate])
+  ], [users, taskStatuses, handleOptimisticTaskUpdate, onTaskDetails, onTaskEdit])
 
   // Sortuj kolumny według zapisanej kolejności
   const sortedColumns = useMemo(() => sortColumnsByOrder(columns), [columns, sortColumnsByOrder])
@@ -822,10 +864,12 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
                   const rowData = row.original
                   const isGroupHeader = 'isGroupHeader' in rowData
 
+                  const isUpdating = !isGroupHeader && updatingTasks.has((rowData as Task).id)
+
                   return (
                     <TableRow
                       key={row.id}
-                      className={isGroupHeader ? "bg-muted/30 hover:bg-muted/40" : "hover:bg-muted/20 group"}
+                      className={`${isGroupHeader ? "bg-muted/30 hover:bg-muted/40" : "hover:bg-muted/20 group"} ${isUpdating ? "opacity-60 pointer-events-none" : ""}`}
                     >
                       {isGroupHeader ? (
                         <TableCell colSpan={columns.length} className="py-3">

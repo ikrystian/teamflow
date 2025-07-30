@@ -15,7 +15,7 @@ import { UserPlus } from "lucide-react"
 
 interface EditableCellProps {
   value: string | number | undefined
-  type: "text" | "select" | "date" | "user" | "priority" | "status"
+  type: "text" | "number" | "select" | "date" | "user" | "priority" | "status"
   options?: Array<{ value: string; label: string; color?: string }>
   users?: User[]
   taskStatuses?: TaskStatus[]
@@ -69,6 +69,9 @@ export function EditableCell({
   const renderDisplayValue = () => {
     switch (type) {
       case "text":
+        return value || placeholder || "Kliknij aby edytować"
+
+      case "number":
         return value || placeholder || "Kliknij aby edytować"
 
       case "date":
@@ -150,6 +153,21 @@ export function EditableCell({
             onBlur={handleSave}
             onKeyDown={handleKeyDown}
             className="h-8"
+          />
+        )
+
+      case "number":
+        return (
+          <Input
+            ref={inputRef}
+            type="number"
+            value={editValue || ""}
+            onChange={(e) => setEditValue(e.target.value)}
+            onBlur={handleSave}
+            onKeyDown={handleKeyDown}
+            className="h-8"
+            min="0"
+            step="0.1"
           />
         )
 

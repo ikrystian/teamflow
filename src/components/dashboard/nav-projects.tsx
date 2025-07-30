@@ -219,7 +219,6 @@ export function NavProjects({ projects, onEditProject }: NavProjectsProps) {
         ))}
 
         {/* Przycisk "Więcej" z tooltipem pokazującym liczbę archiwizowanych projektów */}
-        {archivedCount > 0 && (
         <SidebarMenuItem>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -239,7 +238,6 @@ export function NavProjects({ projects, onEditProject }: NavProjectsProps) {
             </TooltipContent>
           </Tooltip>
         </SidebarMenuItem>
-        )}
 
         {/* Archiwizowane projekty (pokazywane po kliknięciu "Więcej") */}
         {displayedArchivedProjects.map((project) => (

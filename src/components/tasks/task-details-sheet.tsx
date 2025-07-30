@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/tooltip"
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
+import type { Session } from "next-auth"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -69,7 +70,7 @@ export function TaskDetailsSheet({
   onTaskUpdated,
   canEdit = false
 }: TaskDetailsSheetProps) {
-  const { data: session } = useSession()
+  const { data: session } = useSession() as { data: Session | null }
   const [comments, setComments] = useState(task?.comments || [])
   const [todos, setTodos] = useState(task?.todos || [])
   const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
@@ -113,6 +114,14 @@ export function TaskDetailsSheet({
     }
   }, [open, task?.id, task?.comments, task?.todos])
 
+  // Function to handle task updates and refresh the view
+  const handleTaskUpdated = () => {
+    // Call the parent's onTaskUpdated to refresh the task data
+    if (onTaskUpdated) {
+      onTaskUpdated()
+    }
+  }
+
   const handleCommentAdded = (newComment: { id: string; content: string; createdAt: string; author: { id: string; name: string; avatarUrl?: string } }) => {
     setComments(prev => [newComment, ...prev])
   }
@@ -123,9 +132,7 @@ export function TaskDetailsSheet({
 
   const handleTodosChange = (updatedTodos: Todo[]) => {
     setTodos(updatedTodos)
-    if (onTaskUpdated) {
-      onTaskUpdated()
-    }
+    handleTaskUpdated()
   }
 
   if (!task) return null
@@ -524,7 +531,7 @@ export function TaskDetailsSheet({
 
                       {/* Block/Unblock Button */}
                       {(() => {
-                        const canBlock = canUserBlockTask(task, (session?.user as any)?.id)
+                        const canBlock = canUserBlockTask(task, session?.user?.id)
                         if (!canBlock) return null
 
                         return (
@@ -658,7 +665,7 @@ export function TaskDetailsSheet({
         open={blockDialogOpen}
         onOpenChange={setBlockDialogOpen}
         task={task}
-        onTaskUpdated={onTaskUpdated}
+        onTaskUpdated={handleTaskUpdated}
       />
     </Sheet>
   )

@@ -1,0 +1,97 @@
+=== DODANIE TYPU NUMBER DO KOMPONENTU EDITABLECELL ===
+
+Data: 2025-07-30
+Autor: Krystian
+Opis: Dodano obsługę typu "number" do komponentu EditableCell i zastosowano go dla pola szacowanego czasu w tabeli zadań
+
+=== WPROWADZONE ZMIANY ===
+
+1. **Rozszerzenie interfejsu EditableCellProps**
+   - Dodano typ "number" do union type w props.type
+   - Typ: "text" | "number" | "select" | "date" | "user" | "priority" | "status"
+
+2. **Obsługa wyświetlania wartości number**
+   - Dodano case "number" w funkcji renderDisplayValue()
+   - Identyczne zachowanie jak "text" - wyświetla wartość lub placeholder
+
+3. **Obsługa edycji wartości number**
+   - Dodano case "number" w funkcji renderEditor()
+   - Używa Input z type="number"
+   - Dodano atrybuty: min="0", step="0.1"
+   - Zachowuje wszystkie standardowe funkcje (onBlur, onKeyDown, focus)
+
+4. **Zastosowanie w tabeli zadań**
+   - Zmieniono type z "text" na "number" dla pola estimatedHours
+   - Zachowano istniejącą logikę parseFloat() w onSave
+
+=== PLIKI ZMODYFIKOWANE ===
+
+- src/components/dashboard/editable-cell.tsx
+- src/components/dashboard/tasks-table.tsx
+- README.md (dodano wpis o zmianie)
+- docs/editable-cell-number-type.txt (ten plik)
+
+=== SZCZEGÓŁY IMPLEMENTACJI ===
+
+**EditableCell - nowy case "number":**
+```typescript
+case "number":
+  return (
+    <Input
+      ref={inputRef}
+      type="number"
+      value={editValue || ""}
+      onChange={(e) => setEditValue(e.target.value)}
+      onBlur={handleSave}
+      onKeyDown={handleKeyDown}
+      className="h-8"
+      min="0"
+      step="0.1"
+    />
+  )
+```
+
+**Zastosowanie w tasks-table.tsx:**
+```typescript
+<EditableCell
+  value={task.estimatedHours?.toString() || ""}
+  type="number"  // zmieniono z "text"
+  onSave={(value) => {
+    const hours = value ? parseFloat(value) : undefined
+    handleOptimisticTaskUpdate(task.id, { estimatedHours: hours })
+  }}
+  placeholder="Szacowany czas (h)"
+/>
+```
+
+=== KORZYŚCI ===
+
+1. **Lepsza walidacja** - HTML5 number input automatycznie waliduje wartości
+2. **Lepszy UX** - Klawiatura numeryczna na urządzeniach mobilnych
+3. **Kontrola wartości** - min="0" zapobiega ujemnym wartościom
+4. **Precyzja** - step="0.1" pozwala na dziesiętne wartości godzin
+5. **Spójność** - Standardowe zachowanie number input w przeglądarkach
+
+=== ZACHOWANE FUNKCJONALNOŚCI ===
+
+- Wszystkie standardowe funkcje EditableCell (focus, blur, keyboard navigation)
+- Istniejąca logika parsowania w onSave
+- Placeholder i styling
+- Obsługa pustych wartości
+- Kompatybilność z resztą systemu
+
+=== MOŻLIWE ROZSZERZENIA ===
+
+- Dodanie max value dla ograniczenia maksymalnej liczby godzin
+- Dodanie custom step dla różnych pól numerycznych
+- Obsługa różnych formatów liczb (integer vs decimal)
+- Dodanie walidacji po stronie komponentu
+
+=== TESTY ===
+
+- Aplikacja kompiluje się bez błędów
+- Input number wyświetla się poprawnie w tabeli zadań
+- Walidacja HTML5 działa (nie można wprowadzić tekstu)
+- Klawisze strzałek zwiększają/zmniejszają wartość
+- Zachowane wszystkie funkcje edycji (Enter, Escape, blur)
+- Wartości są poprawnie zapisywane i wyświetlane
