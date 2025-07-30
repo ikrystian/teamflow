@@ -173,7 +173,7 @@ function SortableTaskCard({
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      onClick={() => onDelete(task)}
+                      onClick={(event) => { onDelete(task); event.stopPropagation() }}
                       className="text-destructive"
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
