@@ -28,6 +28,14 @@ import { Upload, X } from "lucide-react"
 import { DatePicker } from "@/components/ui/date-picker"
 import type { Task, User, TaskStatus, TaskImage } from "@/types"
 
+// Extended User type with teams information
+interface UserWithTeams extends User {
+  teams?: {
+    id: string
+    name: string
+  }[]
+}
+
 interface Project {
   id: string
   name: string
@@ -52,7 +60,7 @@ interface TaskFormSheetProps {
   // For create mode
   projects?: Project[]
   projectId?: string
-  teamMembers?: User[]
+  teamMembers?: UserWithTeams[]
   defaultStatusId?: string
   forceAssignToCurrentUser?: boolean // When true, always assign to current user regardless of project
 
@@ -194,7 +202,7 @@ export function TaskFormSheet({
     setPendingImages(prev => prev.filter(img => img.id !== imageId))
   }, [])
 
-  const handleRemoveExistingImage = useCallback((imageId: string) => {
+  const handleRemoveExistingImage = useCallback(async (imageId: string) => {
     setImages(prev => prev.filter(img => img.id !== imageId))
   }, [])
 
@@ -343,10 +351,9 @@ export function TaskFormSheet({
           <div className="space-y-2">
             <Label htmlFor="description">Opis</Label>
             <RichTextEditor
-              value={description}
+              content={description}
               onChange={setDescription}
               placeholder="Opisz zadanie..."
-              disabled={loading}
             />
           </div>
 
@@ -497,7 +504,7 @@ export function TaskFormSheet({
                 <ImageGallery
                   images={images}
                   editable={true}
-                  onImageRemove={handleRemoveExistingImage}
+                  onImageDelete={handleRemoveExistingImage}
                 />
               </div>
             )}

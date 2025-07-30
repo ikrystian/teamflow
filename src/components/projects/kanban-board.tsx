@@ -64,7 +64,6 @@ const getPriorityColor = (priority?: string) => {
 
 function SortableTaskCard({
   task,
-  onEdit,
   onTimeTracking,
   onViewDetails,
   onDelete,

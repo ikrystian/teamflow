@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -71,7 +71,7 @@ export function ProjectsContent() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
   const [projectFilter, setProjectFilter] = useState<ProjectFilter>("active")
 
-  const fetchProjects = async (filter: ProjectFilter = projectFilter) => {
+  const fetchProjects = useCallback(async (filter: ProjectFilter = projectFilter) => {
     try {
       const includeArchived = filter === "archived" || filter === "all"
       const response = await fetch(`/api/projects?includeArchived=${includeArchived}`)
@@ -82,9 +82,9 @@ export function ProjectsContent() {
     } catch (error) {
       console.error("Error fetching projects:", error)
     }
-  }
+  }, [projectFilter])
 
-  const fetchTeams = async () => {
+  const fetchTeams = useCallback(async () => {
     try {
       const response = await fetch("/api/teams")
       if (response.ok) {
@@ -94,7 +94,7 @@ export function ProjectsContent() {
     } catch (error) {
       console.error("Error fetching teams:", error)
     }
-  }
+  }, [])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -102,7 +102,7 @@ export function ProjectsContent() {
       setLoading(false)
     }
     fetchData()
-  }, [])
+  }, [fetchProjects, fetchTeams])
 
   const handleProjectCreated = () => {
     fetchProjects()

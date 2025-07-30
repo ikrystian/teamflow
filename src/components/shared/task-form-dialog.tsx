@@ -89,7 +89,7 @@ export function TaskFormDialog({
   const [estimatedHours, setEstimatedHours] = useState("")
 
   // Additional state
-  const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
+  const [, setTaskStatuses] = useState<TaskStatus[]>([])
   const [images, setImages] = useState<TaskImage[]>([])
   const [pendingImages, setPendingImages] = useState<PendingImage[]>([])
   const [loading, setLoading] = useState(false)

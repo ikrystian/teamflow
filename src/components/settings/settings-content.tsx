@@ -25,6 +25,7 @@ import {
   Users
 } from "lucide-react"
 import { useSession } from "next-auth/react"
+import type { Session } from "next-auth"
 import { SystemTaskStatuses } from "./system-task-statuses"
 import { PasswordChangeForm } from "./password-change-form"
 import { ActiveSessions } from "./active-sessions"
@@ -46,7 +47,7 @@ interface UserProfile {
 }
 
 export function SettingsContent() {
-  const { data: session } = useSession()
+  const { data: session } = useSession() as { data: Session | null }
   const { theme, setTheme } = useTheme()
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
