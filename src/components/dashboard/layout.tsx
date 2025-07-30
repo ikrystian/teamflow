@@ -30,11 +30,15 @@ import { Separator } from "@/components/ui/separator"
 import { NavUser } from "@/components/dashboard/nav-user"
 import { NavProjects } from "@/components/dashboard/nav-projects"
 import { TeamSwitcher } from "@/components/dashboard/team-switcher"
+import { EditProjectSheet } from "@/components/projects/edit-project-sheet"
 
 interface Project {
   id: string
   name: string
+  description?: string
   color?: string
+  icon?: string
+  imageUrl?: string
   archived?: boolean
   team: {
     id: string
@@ -49,6 +53,8 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname()
   const [projects, setProjects] = useState<Project[]>([])
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null)
 
   const navigation = [
     { name: "Panel", href: "/dashboard", icon: Home },
@@ -67,20 +73,34 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     return pathname.startsWith(href)
   }
 
+  // Handle project editing from sidebar
+  const handleEditProject = (project: Project) => {
+    setSelectedProject(project)
+    setEditDialogOpen(true)
+  }
+
+  // Fetch projects function
+  const fetchProjects = async () => {
+    try {
+      const response = await fetch('/api/projects?includeArchived=false')
+      if (response.ok) {
+        const data = await response.json()
+        setProjects(data.projects || [])
+      }
+    } catch (error) {
+      console.error('Error fetching projects:', error)
+    }
+  }
+
+  const handleProjectUpdated = () => {
+    setEditDialogOpen(false)
+    setSelectedProject(null)
+    // Refresh projects list
+    fetchProjects()
+  }
+
   // Fetch projects (exclude archived by default)
   useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const response = await fetch('/api/projects?includeArchived=false')
-        if (response.ok) {
-          const data = await response.json()
-          setProjects(data.projects || [])
-        }
-      } catch (error) {
-        console.error('Error fetching projects:', error)
-      }
-    }
-
     fetchProjects()
   }, [])
 
@@ -118,7 +138,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          <NavProjects projects={projects} />
+          <NavProjects projects={projects} onEditProject={handleEditProject} />
         </SidebarContent>
         <SidebarFooter>
           <NavUser />
@@ -136,6 +156,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           {children}
         </main>
       </SidebarInset>
+
+      <EditProjectSheet
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onProjectUpdated={handleProjectUpdated}
+        project={selectedProject}
+        teams={[]}
+      />
     </SidebarProvider>
   )
 }

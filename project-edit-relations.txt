@@ -91,3 +91,28 @@ RELACJE MIĘDZY KOMPONENTAMI - EDYCJA PROJEKTÓW
     - API weryfikuje czy użytkownik ma dostęp do projektu
     - Tylko członkowie zespołu mogą edytować projekt
     - Zespół nie może być zmieniany (zabezpieczenie przed przypadkową zmianą)
+
+14. EDYCJA Z SIDEBARA (NOWA FUNKCJONALNOŚĆ):
+    - Dodano opcję "Edytuj projekt" do dropdown menu w nav-projects.tsx
+    - Opcja dostępna zarówno dla aktywnych jak i archiwizowanych projektów
+    - Stan edycji zarządzany w DashboardLayout (globalnie dla całej aplikacji)
+    - EditProjectSheet renderowany w DashboardLayout, dostępny z każdej strony
+    - Funkcja handleEditProject przekazywana przez props do NavProjects
+    - Po edycji automatyczne odświeżanie listy projektów w sidebarze
+    - Ikona Edit z lucide-react dodana do importów nav-projects.tsx
+
+15. FLOW EDYCJI Z SIDEBARA:
+    1. Użytkownik klika przycisk "..." przy projekcie w sidebarze
+    2. Wybiera "Edytuj projekt" z dropdown menu
+    3. Wywołuje się handleEditProject w DashboardLayout
+    4. Otwiera się EditProjectSheet (panel po prawej) z danymi projektu
+    5. Użytkownik modyfikuje pola projektu
+    6. Kliknięcie "Zapisz zmiany" wysyła PATCH request
+    7. Po sukcesie sheet się zamyka i lista projektów w sidebarze odświeża
+
+16. STAN GLOBALNY W DASHBOARDLAYOUT:
+    - editDialogOpen: boolean - kontroluje widoczność EditProjectSheet
+    - selectedProject: Project | null - przechowuje wybrany projekt do edycji
+    - handleEditProject(project) - otwiera sheet edycji z wybranym projektem
+    - handleProjectUpdated() - zamyka sheet i odświeża listę projektów
+    - fetchProjects() - wyodrębniona funkcja do pobierania projektów

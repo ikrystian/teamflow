@@ -10,6 +10,7 @@ import {
   Info,
   ChevronDown,
   ChevronRight,
+  Edit,
 } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect } from "react"
@@ -52,6 +53,7 @@ interface Project {
 
 interface NavProjectsProps {
   projects: Project[]
+  onEditProject?: (project: Project) => void
 }
 
 // Helper function to render project icon
@@ -91,7 +93,7 @@ function ProjectIcon({ iconName, color, className = "w-4 h-4" }: {
   )
 }
 
-export function NavProjects({ projects }: NavProjectsProps) {
+export function NavProjects({ projects, onEditProject }: NavProjectsProps) {
   const { isMobile } = useSidebar()
   const [showArchived, setShowArchived] = useState(false)
   const [archivedProjects, setArchivedProjects] = useState<Project[]>([])
@@ -172,6 +174,13 @@ export function NavProjects({ projects }: NavProjectsProps) {
                     Informacje o projekcie
                   </Link>
                 </DropdownMenuItem>
+
+                {onEditProject && (
+                  <DropdownMenuItem onClick={() => onEditProject(project)}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edytuj projekt
+                  </DropdownMenuItem>
+                )}
 
                 <DropdownMenuItem asChild>
                   <Link href={`/dashboard/projects/${project.id}/settings`}>
@@ -260,6 +269,13 @@ export function NavProjects({ projects }: NavProjectsProps) {
                     Informacje o projekcie
                   </Link>
                 </DropdownMenuItem>
+
+                {onEditProject && (
+                  <DropdownMenuItem onClick={() => onEditProject(project)}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edytuj projekt
+                  </DropdownMenuItem>
+                )}
 
                 <DropdownMenuItem asChild>
                   <Link href={`/dashboard/projects/${project.id}/settings`}>
