@@ -9,11 +9,10 @@ import { Badge } from "@/components/ui/badge"
 import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus, CheckSquare, Calendar, User as UserIcon, Filter, Edit, Clock, MoreHorizontal, Trash2, LayoutGrid, List, Lock } from "lucide-react"
+import { Plus, CheckSquare, Calendar, User as UserIcon, Filter, Edit, Clock, MoreHorizontal, Trash2, LayoutGrid, List } from "lucide-react"
 import { TaskFormSheet } from "../shared/task-form-sheet"
 import { TimeTrackingSheet } from "./time-tracking-sheet"
 import { TaskDetailsSheet } from "./task-details-sheet"
-import { TaskBlockDialog } from "./task-block-dialog"
 import { TasksKanbanBoard } from "./tasks-kanban-board"
 import { TasksWeeklyCalendar } from "./tasks-weekly-calendar"
 import { usePageHeader } from "@/contexts/header-context"
@@ -36,7 +35,6 @@ import {
 } from "@/components/ui/alert-dialog"
 import type { Task, User } from "@/types"
 import { formatTaskDueDate } from "@/lib/date-utils"
-import { isTaskBlocked } from "@/lib/task-utils"
 
 interface Project {
   id: string
@@ -66,7 +64,6 @@ export function TasksContent() {
   const [timeTrackingDialogOpen, setTimeTrackingDialogOpen] = useState(false)
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [blockDialogOpen, setBlockDialogOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [teamMembers, setTeamMembers] = useState<User[]>([])
   const [filter, setFilter] = useState<"all" | "assigned">("assigned")
@@ -235,10 +232,6 @@ export function TasksContent() {
     setDetailsDialogOpen(true)
   }
 
-  const handleTaskBlock = (task: Task) => {
-    setSelectedTask(task)
-    setBlockDialogOpen(true)
-  }
 
   const canEditTask = (task: Task) => {
     if (!session?.user?.id) return false
@@ -310,7 +303,16 @@ export function TasksContent() {
       }
     }
 
-    return new Date(dueDate) < new Date()
+    const today = new Date()
+    const due = new Date(dueDate)
+    today.setHours(0, 0, 0, 0)
+    due.setHours(0, 0, 0, 0)
+    
+    // Task is overdue one day after the due date
+    const overdueDate = new Date(due)
+    overdueDate.setDate(due.getDate() + 1)
+    
+    return today >= overdueDate
   }
 
 
@@ -439,7 +441,6 @@ export function TasksContent() {
               onTaskEdit={(task) => handleEditTask(task, { stopPropagation: () => {} } as React.MouseEvent)}
               onTimeTracking={(task) => handleTimeTracking(task, { stopPropagation: () => {} } as React.MouseEvent)}
               onTaskDelete={(task) => handleDeleteTask(task, { stopPropagation: () => {} } as React.MouseEvent)}
-              onTaskBlock={handleTaskBlock}
               canEditTask={canEditTask}
               projects={projects}
               session={session}
@@ -506,7 +507,6 @@ export function TasksContent() {
                 })
 
                 return allGroupedTasks.map(({ dateKey, task, showDate }) => {
-                  const blocked = isTaskBlocked(task)
                   return (
                   <div key={task.id} className="flex items-start gap-4 group">
                     {/* Kolumna z datą (stała szerokość) */}
@@ -527,11 +527,9 @@ export function TasksContent() {
                     {/* Karta zadania */}
                     <div className="flex-1">
                       <Card
-                        className={`transition-all hover:shadow-md cursor-pointer border-l-4 group-hover:shadow-sm gap-0 ${
-                          blocked ? 'border-l-red-500 bg-red-50/50' : ''
-                        }`}
+                        className="transition-all hover:shadow-md cursor-pointer border-l-4 group-hover:shadow-sm gap-0"
                         style={{
-                          borderLeftColor: blocked ? '#EF4444' : (task.project?.color || '#3B82F6')
+                          borderLeftColor: (task.project?.color || '#3B82F6')
                         }}
                         onClick={() => handleTaskDetails(task)}
                       >
@@ -539,9 +537,6 @@ export function TasksContent() {
                           <div className="flex items-start justify-between">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
-                                {blocked && (
-                                  <Lock className="h-4 w-4 text-red-600 flex-shrink-0" />
-                                )}
                                 <CardTitle className="text-lg font-semibold truncate">{task.title}</CardTitle>
                               </div>
                               <CardDescription className="flex items-center gap-2 mt-1">
@@ -731,12 +726,6 @@ export function TasksContent() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <TaskBlockDialog
-        open={blockDialogOpen}
-        onOpenChange={setBlockDialogOpen}
-        task={selectedTask}
-        onTaskUpdated={fetchTasks}
-      />
     </div>
   )
 }

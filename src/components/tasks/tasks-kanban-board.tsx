@@ -7,7 +7,7 @@ import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar, Clock, MoreHorizontal, Plus, AlertCircle, Trash2, X, Check, Loader2, Lock, Unlock } from "lucide-react"
+import { Calendar, Clock, MoreHorizontal, Plus, AlertCircle, Trash2, X, Check, Loader2 } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,7 +41,6 @@ import type { Task, TaskStatus } from "@/types"
 import type { Session } from "next-auth"
 import { toast } from "sonner"
 import { formatTaskDueDate } from "@/lib/date-utils"
-import { isTaskBlocked, canUserBlockTask } from "@/lib/task-utils"
 
 interface TasksKanbanBoardProps {
   tasks: Task[]
@@ -49,7 +48,6 @@ interface TasksKanbanBoardProps {
   onTaskEdit: (task: Task) => void
   onTimeTracking: (task: Task) => void
   onTaskDelete: (task: Task) => void
-  onTaskBlock?: (task: Task) => void
   canEditTask: (task: Task) => boolean
   projects: Array<{
     id: string
@@ -87,7 +85,6 @@ function SortableTaskCard({
   onTimeTracking,
   onViewDetails,
   onDelete,
-  onTaskBlock,
   canEdit,
   isUpdating = false,
   onMarkComplete,
@@ -99,7 +96,6 @@ function SortableTaskCard({
   onTimeTracking: (task: Task) => void
   onViewDetails: (task: Task) => void
   onDelete: (task: Task) => void
-  onTaskBlock?: (task: Task) => void
   canEdit: boolean
   isUpdating?: boolean
   onMarkComplete?: (task: Task) => void
@@ -127,7 +123,17 @@ function SortableTaskCard({
     if (!dueDate) return false
     // Don't show completed tasks as overdue
     if (isTaskCompleted()) return false
-    return new Date(dueDate) < new Date()
+
+    const today = new Date()
+    const due = new Date(dueDate)
+    today.setHours(0, 0, 0, 0)
+    due.setHours(0, 0, 0, 0)
+
+    // Task is overdue one day after the due date
+    const overdueDate = new Date(due)
+    overdueDate.setDate(due.getDate() + 1)
+
+    return today >= overdueDate
   }
 
   const isTaskCompleted = () => {
@@ -141,8 +147,6 @@ function SortableTaskCard({
     }
   }
 
-  const blocked = isTaskBlocked(task)
-  const canBlock = canUserBlockTask(task, session?.user?.id)
 
   return (
     <div
@@ -154,16 +158,14 @@ function SortableTaskCard({
     >
       <Card
         className={`mb-2 cursor-pointer hover:shadow-md transition-all border-l-4 ${
-          blocked
-            ? 'border-l-red-500 bg-red-50/50'
-            : isUpdating
+          isUpdating
             ? 'border-l-yellow-500 bg-yellow-50/50'
             : isTaskCompleted()
             ? 'bg-green-50/80 border-l-green-500'
             : ''
         }`}
         style={{
-          borderLeftColor: blocked ? '#EF4444' : isUpdating ? undefined : isTaskCompleted() ? '#10B981' : (task.project?.color || '#3B82F6'),
+          borderLeftColor: isUpdating ? undefined : isTaskCompleted() ? '#10B981' : (task.project?.color || '#3B82F6'),
           paddingTop: 5,
           paddingBottom: 0
         }}
@@ -175,9 +177,6 @@ function SortableTaskCard({
             <div className="flex items-start gap-2 flex-1 min-w-0">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1">
-                  {blocked && (
-                    <Lock className="h-3 w-3 text-red-600 flex-shrink-0" />
-                  )}
                   <h4
                     className="font-medium text-sm leading-tight cursor-pointer hover:text-primary truncate"
                   >
@@ -212,22 +211,6 @@ function SortableTaskCard({
                       Loguj czas
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    {canBlock && onTaskBlock && (
-                      <DropdownMenuItem onClick={(event) => { onTaskBlock(task); event.stopPropagation();}}>
-                        {blocked ? (
-                          <>
-                            <Unlock className="mr-2 h-4 w-4" />
-                            Odblokuj zadanie
-                          </>
-                        ) : (
-                          <>
-                            <Lock className="mr-2 h-4 w-4" />
-                            Zablokuj zadanie
-                          </>
-                        )}
-                      </DropdownMenuItem>
-                    )}
-                    {canBlock && onTaskBlock && <DropdownMenuSeparator />}
                     <DropdownMenuItem
                       onClick={(event) => {event.stopPropagation(); onDelete(task)}}
                       className="text-destructive"
@@ -453,7 +436,6 @@ function KanbanColumn({
   onTimeTracking,
   onViewDetails,
   onDelete,
-  onTaskBlock,
   canEdit,
   onTaskCreated,
   updatingTasks,
@@ -469,7 +451,6 @@ function KanbanColumn({
   onTimeTracking: (task: Task) => void
   onViewDetails: (task: Task) => void
   onDelete: (task: Task) => void
-  onTaskBlock?: (task: Task) => void
   canEdit: (task: Task) => boolean
   onTaskCreated: () => void
   updatingTasks: Set<string>
@@ -556,7 +537,6 @@ export function TasksKanbanBoard({
   onTaskEdit,
   onTimeTracking,
   onTaskDelete,
-  onTaskBlock,
   canEditTask,
   projects,
   session,
@@ -795,7 +775,6 @@ export function TasksKanbanBoard({
               onTimeTracking={onTimeTracking}
               onViewDetails={handleViewDetails}
               onDelete={onTaskDelete}
-              onTaskBlock={onTaskBlock}
               canEdit={canEditTask}
               onTaskCreated={onTaskUpdated}
               updatingTasks={updatingTasks}

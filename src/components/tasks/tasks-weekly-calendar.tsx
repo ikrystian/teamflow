@@ -135,7 +135,12 @@ export function TasksWeeklyCalendar({
     const due = new Date(dueDate)
     today.setHours(0, 0, 0, 0)
     due.setHours(0, 0, 0, 0)
-    return due < today
+    
+    // Task is overdue one day after the due date
+    const overdueDate = new Date(due)
+    overdueDate.setDate(due.getDate() + 1)
+    
+    return today >= overdueDate
   }
 
   // Kolory priorytetów

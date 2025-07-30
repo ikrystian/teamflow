@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Calendar, Clock, MoreHorizontal, Plus, AlertCircle, Trash2, X, Check, Loader2, Lock } from "lucide-react"
+import { Calendar, Clock, MoreHorizontal, Plus, AlertCircle, Trash2, X, Check, Loader2 } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,7 +39,6 @@ import { TaskDetailsSheet } from "../tasks/task-details-sheet"
 import type { Task, TaskStatus } from "@/types"
 import { toast } from "sonner"
 import { formatTaskDueDate } from "@/lib/date-utils"
-import { isTaskBlocked } from "@/lib/task-utils"
 
 interface KanbanBoardProps {
   projectId: string
@@ -110,10 +109,18 @@ function SortableTaskCard({
       }
     }
 
-    return new Date(dueDate) < new Date()
+    const today = new Date()
+    const due = new Date(dueDate)
+    today.setHours(0, 0, 0, 0)
+    due.setHours(0, 0, 0, 0)
+    
+    // Task is overdue one day after the due date
+    const overdueDate = new Date(due)
+    overdueDate.setDate(due.getDate() + 1)
+    
+    return today >= overdueDate
   }
 
-  const blocked = isTaskBlocked(task)
 
   return (
     <div
@@ -125,14 +132,12 @@ function SortableTaskCard({
     >
       <Card
         className={`mb-2 cursor-pointer hover:shadow-md transition-all border-l-4 ${
-          blocked
-            ? 'border-l-red-500 bg-red-50/50'
-            : isUpdating
+          isUpdating
             ? 'border-l-yellow-500 bg-yellow-50/50'
             : ''
         }`}
         style={{
-          borderLeftColor: blocked ? '#EF4444' : isUpdating ? undefined : (task.project?.color || '#3B82F6'),
+          borderLeftColor: isUpdating ? undefined : (task.project?.color || '#3B82F6'),
           paddingTop: 5,
           paddingBottom: 0
         }}
@@ -142,9 +147,6 @@ function SortableTaskCard({
             <div className="flex items-start gap-2 flex-1 min-w-0">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1">
-                  {blocked && (
-                    <Lock className="h-3 w-3 text-red-600 flex-shrink-0" />
-                  )}
                   <h4
                     className="font-medium text-sm leading-tight cursor-pointer hover:text-primary truncate"
                   >
