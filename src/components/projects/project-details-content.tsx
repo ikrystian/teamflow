@@ -21,11 +21,13 @@ import {
   List,
   LayoutGrid,
   Settings,
-  Info
+  Info,
+  BarChart3
 } from "lucide-react"
 import Link from "next/link"
 import { TaskFormSheet } from "../shared/task-form-sheet"
 import { KanbanBoard } from "./kanban-board"
+import { ProjectGanttChart } from "./project-gantt-chart"
 import { TaskDetailsSheet } from "../tasks/task-details-sheet"
 import { TimeTrackingSheet } from "../tasks/time-tracking-sheet"
 import { TaskBoardFilters } from "./task-board-filters"
@@ -135,9 +137,17 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
               variant={viewMode === "board" ? "default" : "ghost"}
               size="sm"
               onClick={() => updateViewMode("board")}
-              className="rounded-l-none"
+              className="rounded-none"
             >
               <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "gantt" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => updateViewMode("gantt")}
+              className="rounded-l-none"
+            >
+              <BarChart3 className="h-4 w-4" />
             </Button>
           </div>
 
@@ -174,8 +184,17 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     setCreateTaskDialogOpen(false)
   }
 
-  const handleTaskUpdated = () => {
+  const handleTaskUpdated = (updatedTask?: Task) => {
     fetchProject()
+    // If we have the updated task and we're coming from edit mode, show task details
+    if (updatedTask && editTaskDialogOpen) {
+      setEditTaskDialogOpen(false)
+      // Small delay to ensure smooth transition
+      setTimeout(() => {
+        setSelectedTask(updatedTask)
+        setTaskDetailsDialogOpen(true)
+      }, 100)
+    }
   }
 
   const handleTaskDetails = (task: Task) => {
@@ -457,6 +476,11 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
             )}
           </CardContent>
         </Card>
+      ) : viewMode === "gantt" ? (
+        <ProjectGanttChart
+          tasks={getFilteredTasks(project.tasks)}
+          onTaskClick={handleTaskDetails}
+        />
       ) : (
         <div>
           <div className="flex items-center justify-between mb-6">

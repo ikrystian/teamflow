@@ -204,7 +204,8 @@ export function TaskFormDialog({
         })
 
         if (!response.ok) {
-          console.error('Failed to upload image:', pendingImage.file.name)
+          const errorData = await response.text()
+          console.error('Failed to upload image:', pendingImage.file.name, 'Status:', response.status, 'Error:', errorData)
         }
       } catch (error) {
         console.error('Error uploading image:', error)
@@ -352,6 +353,11 @@ export function TaskFormDialog({
         })
 
         if (response.ok) {
+          // Upload pending images if any
+          if (pendingImages.length > 0) {
+            await uploadPendingImages(task.id)
+          }
+
           onTaskUpdated?.()
           handleClose()
         } else {
@@ -382,7 +388,8 @@ export function TaskFormDialog({
     (assigneeId === "unassigned" ? undefined : assigneeId) !== task.assignee?.id ||
     (priority || undefined) !== task.priority ||
     (dueDate || undefined) !== (task.dueDate ? task.dueDate.split('T')[0] : undefined) ||
-    (estimatedHours === "none" ? undefined : parseFloat(estimatedHours)) !== task.estimatedHours
+    (estimatedHours === "none" ? undefined : parseFloat(estimatedHours)) !== task.estimatedHours ||
+    pendingImages.length > 0
   ) : true
 
   return (

@@ -111,7 +111,7 @@ export function QuickAddTaskCalendar({
   }
 
   return (
-    <Card className="mb-2 p-0">
+    <Card className="mb-1 p-0">
       <CardContent className="p-2">
         <form onSubmit={handleSubmit} className="flex items-center gap-2">
           <Input
@@ -144,14 +144,7 @@ export function QuickAddTaskCalendar({
               {error}
             </div>
           )}
-          <div className="flex gap-1">
-            <Button
-              type="submit"
-              size="sm"
-              disabled={!title.trim() || (!hideProjectSelect && !selectedProjectId) || loading}
-              className="w-6 h-6"            >
-              <Check className="h-3 w-3" />
-            </Button>
+          <div className="flex items-center gap-1">
             <Button
               type="button"
               variant="ghost"

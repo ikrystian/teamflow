@@ -113,11 +113,11 @@ function SortableTaskCard({
     const due = new Date(dueDate)
     today.setHours(0, 0, 0, 0)
     due.setHours(0, 0, 0, 0)
-    
+
     // Task is overdue one day after the due date
     const overdueDate = new Date(due)
     overdueDate.setDate(due.getDate() + 1)
-    
+
     return today >= overdueDate
   }
 
@@ -309,26 +309,19 @@ function QuickAddTask({
   return (
     <Card className="border-dashed border-2 border-gray-300 p-0">
       <CardContent className="p-2">
-        <form onSubmit={handleSubmit} className="space-y-2 flex alitems-center gap-1">
+        <form onSubmit={handleSubmit} className="space-y-2 flex alitems-center gap-2">
           <Input
             placeholder="Wprowadź tytuł zadania..."
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             disabled={loading}
             autoFocus
-            className="pb-0 mb-0"
+            className="pb-0  pt-0 mb-0"
           />
           {error && (
             <p className="text-sm text-red-600">{error}</p>
           )}
-          <div className="flex gap-2">
-            <Button
-              type="submit"
-              size="sm"
-              disabled={!title.trim() || loading}
-            >
-              <Check />
-            </Button>
+          <div className="flex gap-2 items-center">
             <Button
               type="button"
               variant="ghost"

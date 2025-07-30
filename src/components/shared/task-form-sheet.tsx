@@ -56,7 +56,7 @@ interface TaskFormSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onTaskCreated?: () => void
-  onTaskUpdated?: () => void
+  onTaskUpdated?: (task?: Task) => void
 
   // For create mode
   projects?: Project[]
@@ -215,18 +215,29 @@ export function TaskFormSheet({
   const uploadImages = async (taskId: string): Promise<void> => {
     if (pendingImages.length === 0) return
 
-    const formData = new FormData()
-    pendingImages.forEach(img => {
-      formData.append('images', img.file)
-    })
+    // Upload images one by one like the dialog does
+    for (const pendingImage of pendingImages) {
+      const formData = new FormData()
+      formData.append('file', pendingImage.file)
 
-    const response = await fetch(`/api/tasks/${taskId}/images`, {
-      method: 'POST',
-      body: formData,
-    })
+      console.log('Uploading image:', pendingImage.file.name, 'to task:', taskId)
 
-    if (!response.ok) {
-      throw new Error('Failed to upload images')
+      try {
+        const response = await fetch(`/api/tasks/${taskId}/images`, {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (!response.ok) {
+          const errorData = await response.text()
+          console.error('Failed to upload image:', pendingImage.file.name, 'Status:', response.status, 'Error:', errorData)
+          // Continue with other images even if one fails
+        } else {
+          console.log('Successfully uploaded image:', pendingImage.file.name)
+        }
+      } catch (error) {
+        console.error('Error uploading image:', pendingImage.file.name, 'Error:', error)
+      }
     }
   }
 
@@ -290,12 +301,14 @@ export function TaskFormSheet({
         })
 
         if (response.ok) {
+          const data = await response.json()
+          
           // Upload new images if any
           if (pendingImages.length > 0) {
             await uploadImages(task.id)
           }
 
-          onTaskUpdated?.()
+          onTaskUpdated?.(data.task)
           handleClose()
         } else {
           const data = await response.json()

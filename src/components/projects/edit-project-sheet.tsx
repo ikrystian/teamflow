@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/sheet"
 import { ProjectImageSelector } from "./project-image-selector"
 import { ProjectIconSelector } from "./project-icon-selector"
+import { editProjectSchema, type EditProjectFormData } from "@/lib/project-validations"
 
 interface Team {
   id: string
@@ -57,6 +58,7 @@ export function EditProjectSheet({
   const [icon, setIcon] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [fieldErrors, setFieldErrors] = useState<Partial<EditProjectFormData>>({})
 
   // Reset form when project changes
   useEffect(() => {
@@ -76,6 +78,28 @@ export function EditProjectSheet({
 
     setLoading(true)
     setError("")
+    setFieldErrors({})
+
+    // Validate form data
+    const validation = editProjectSchema.safeParse({
+      name,
+      description: description || undefined,
+      imageUrl,
+      color,
+      icon
+    })
+    
+    if (!validation.success) {
+      const errors: Partial<EditProjectFormData> = {}
+      validation.error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          errors[issue.path[0] as keyof EditProjectFormData] = issue.message
+        }
+      })
+      setFieldErrors(errors)
+      setLoading(false)
+      return
+    }
 
     try {
       const response = await fetch(`/api/projects/${project.id}`, {
@@ -83,13 +107,7 @@ export function EditProjectSheet({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          name,
-          description: description || undefined,
-          imageUrl,
-          color,
-          icon
-        }),
+        body: JSON.stringify(validation.data),
       })
 
       if (response.ok) {
@@ -135,7 +153,11 @@ export function EditProjectSheet({
               onChange={(e) => setName(e.target.value)}
               required
               disabled={loading}
+              className={fieldErrors.name ? "border-destructive" : ""}
             />
+            {fieldErrors.name && (
+              <p className="text-sm text-destructive">{fieldErrors.name}</p>
+            )}
           </div>
 
           <div className="grid gap-2">
@@ -147,7 +169,11 @@ export function EditProjectSheet({
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
               disabled={loading}
+              className={fieldErrors.description ? "border-destructive" : ""}
             />
+            {fieldErrors.description && (
+              <p className="text-sm text-destructive">{fieldErrors.description}</p>
+            )}
           </div>
 
           <div className="grid gap-2">

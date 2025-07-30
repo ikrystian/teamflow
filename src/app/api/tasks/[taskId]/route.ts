@@ -221,6 +221,43 @@ export async function PATCH(
       }
     }
 
+    // If assigneeId is provided, verify it exists and is a team member
+    if (assigneeId !== undefined && assigneeId !== null) {
+      const assignee = await prisma.user.findUnique({
+        where: {
+          id: assigneeId
+        }
+      })
+
+      if (!assignee) {
+        return NextResponse.json(
+          { error: "Assignee not found" },
+          { status: 400 }
+        )
+      }
+
+      // Verify assignee is a member of the project's team
+      const team = await prisma.team.findUnique({
+        where: {
+          id: existingTask.project.teamId
+        },
+        include: {
+          members: {
+            where: {
+              id: assigneeId
+            }
+          }
+        }
+      })
+
+      if (!team || team.members.length === 0) {
+        return NextResponse.json(
+          { error: "Assignee is not a member of the project team" },
+          { status: 400 }
+        )
+      }
+    }
+
     // Prepare update data
     const updateData: {
       title?: string;

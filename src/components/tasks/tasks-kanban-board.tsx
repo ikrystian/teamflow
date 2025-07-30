@@ -404,14 +404,6 @@ function QuickAddTask({
           )}
           <div className="flex gap-2 items-center">
             <Button
-              className="w-6 h-6"
-              type="submit"
-              size="sm"
-              disabled={!title.trim() || !selectedProjectId || loading}
-            >
-              <Check className="h-4 w-4" />
-            </Button>
-            <Button
               type="button"
                className="w-6 h-6"
               variant="ghost"

@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/sheet"
 import { ProjectImageSelector } from "./project-image-selector"
 import { ProjectIconSelector } from "./project-icon-selector"
+import { createProjectSchema, type CreateProjectFormData } from "@/lib/project-validations"
 
 interface Team {
   id: string
@@ -51,11 +52,35 @@ export function CreateProjectSheet({
   const [icon, setIcon] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [fieldErrors, setFieldErrors] = useState<Partial<CreateProjectFormData>>({})
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError("")
+    setFieldErrors({})
+
+    // Validate form data
+    const validation = createProjectSchema.safeParse({
+      name,
+      description: description || undefined,
+      teamId,
+      imageUrl,
+      color,
+      icon
+    })
+    
+    if (!validation.success) {
+      const errors: Partial<CreateProjectFormData> = {}
+      validation.error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          errors[issue.path[0] as keyof CreateProjectFormData] = issue.message
+        }
+      })
+      setFieldErrors(errors)
+      setLoading(false)
+      return
+    }
 
     try {
       const response = await fetch("/api/projects", {
@@ -63,14 +88,7 @@ export function CreateProjectSheet({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          name,
-          description: description || undefined,
-          teamId,
-          imageUrl,
-          color,
-          icon
-        }),
+        body: JSON.stringify(validation.data),
       })
 
       if (response.ok) {
@@ -140,7 +158,11 @@ export function CreateProjectSheet({
               onChange={(e) => setName(e.target.value)}
               required
               disabled={loading}
+              className={fieldErrors.name ? "border-destructive" : ""}
             />
+            {fieldErrors.name && (
+              <p className="text-sm text-destructive">{fieldErrors.name}</p>
+            )}
           </div>
 
           <div className="grid gap-2">
@@ -152,13 +174,17 @@ export function CreateProjectSheet({
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
               disabled={loading}
+              className={fieldErrors.description ? "border-destructive" : ""}
             />
+            {fieldErrors.description && (
+              <p className="text-sm text-destructive">{fieldErrors.description}</p>
+            )}
           </div>
 
           <div className="grid gap-2">
             <Label htmlFor="team">Zespół</Label>
             <Select value={teamId} onValueChange={setTeamId} required disabled={loading}>
-              <SelectTrigger>
+              <SelectTrigger className={fieldErrors.teamId ? "border-destructive" : ""}>
                 <SelectValue placeholder="Wybierz zespół" />
               </SelectTrigger>
               <SelectContent>
@@ -169,6 +195,9 @@ export function CreateProjectSheet({
                 ))}
               </SelectContent>
             </Select>
+            {fieldErrors.teamId && (
+              <p className="text-sm text-destructive">{fieldErrors.teamId}</p>
+            )}
           </div>
 
           <div className="grid gap-2">
