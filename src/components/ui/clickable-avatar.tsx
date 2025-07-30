@@ -16,7 +16,7 @@ interface ClickableAvatarProps {
 
 const sizeClasses = {
   sm: "h-6 w-6",
-  md: "h-8 w-8", 
+  md: "h-8 w-8",
   lg: "h-10 w-10",
   xl: "h-12 w-12"
 }
@@ -28,7 +28,7 @@ const fallbackSizeClasses = {
   xl: "text-lg"
 }
 
-export function ClickableAvatar({ 
+export function ClickableAvatar({
   userId,
   avatarUrl,
   name,
@@ -38,9 +38,9 @@ export function ClickableAvatar({
   disabled = false
 }: ClickableAvatarProps) {
   const avatarElement = (
-    <Avatar 
+    <Avatar
       className={cn(
-        sizeClasses[size], 
+        sizeClasses[size],
         !disabled && "cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all duration-200",
         className
       )}
@@ -58,7 +58,7 @@ export function ClickableAvatar({
   }
 
   return (
-    <Link href={`/dashboard/profile/${userId}`} className="inline-block">
+    <Link href={`/dashboard/profile/${userId}`} className="inline-block" onClick={(e) => e.stopPropagation()}>
       {avatarElement}
     </Link>
   )

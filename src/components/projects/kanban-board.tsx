@@ -131,22 +131,15 @@ function SortableTaskCard({
           paddingBottom: 0
         }}
       >
-        <CardContent className="p-3">
-          <div className="flex items-start justify-between mb-2">
+        <CardContent className="p-3" onClick={() => onViewDetails(task)}>
+          <div className="flex items-start justify-between mb-2 select-none">
             <div className="flex items-start gap-2 flex-1 min-w-0">
               <div className="flex-1 min-w-0">
                 <h4
                   className="font-medium text-sm leading-tight cursor-pointer hover:text-primary truncate"
-                  onClick={() => onViewDetails(task)}
-                >
+                                >
                   {task.title}
                 </h4>
-                {task.description && (
-                  <div
-                    className="text-muted-foreground text-xs mt-1 line-clamp-2 prose prose-xs max-w-none"
-                    dangerouslySetInnerHTML={{ __html: task.description }}
-                  />
-                )}
               </div>
               {isUpdating && (
                 <Loader2 className="h-3 w-3 animate-spin text-yellow-600 flex-shrink-0" />
@@ -180,7 +173,7 @@ function SortableTaskCard({
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center  gap-2 flex-wrap">
               {task.priority && (
                 <Badge variant="outline" className={`text-xs ${getPriorityColor(task.priority)}`}>
                   {task.priority}
@@ -203,9 +196,8 @@ function SortableTaskCard({
                   {task.estimatedHours}h
                 </div>
               )}
-            </div>
-
-            {task.assignee && (
+              <div className="flex-1"></div>
+                          {task.assignee && (
               <div className="flex items-center justify-end">
                 <ClickableAvatar
                   userId={task.assignee.id}
@@ -215,6 +207,9 @@ function SortableTaskCard({
                 />
               </div>
             )}
+            </div>
+
+
           </div>
         </CardContent>
       </Card>
