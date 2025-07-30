@@ -1,0 +1,304 @@
+"use client"
+
+import { useState, useEffect, useRef } from "react"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { DatePicker } from "@/components/ui/date-picker"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
+import { getPriorityColor, getPriorityDisplayName, getPriorityOptions } from "@/lib/task-utils"
+import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
+import type { User, TaskStatus } from "@/types"
+import { UserPlus } from "lucide-react"
+
+interface EditableCellProps {
+  value: any
+  type: "text" | "select" | "date" | "user" | "priority" | "status"
+  options?: Array<{ value: string; label: string; color?: string }>
+  users?: User[]
+  taskStatuses?: TaskStatus[]
+  onSave: (value: any) => void
+  className?: string
+  placeholder?: string
+}
+
+export function EditableCell({
+  value,
+  type,
+  options = [],
+  users = [],
+  taskStatuses = [],
+  onSave,
+  className,
+  placeholder
+}: EditableCellProps) {
+  const [isEditing, setIsEditing] = useState(false)
+  const [editValue, setEditValue] = useState(value)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    setEditValue(value)
+  }, [value])
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus()
+    }
+  }, [isEditing])
+
+  const handleSave = () => {
+    onSave(editValue)
+    setIsEditing(false)
+  }
+
+  const handleCancel = () => {
+    setEditValue(value)
+    setIsEditing(false)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSave()
+    } else if (e.key === "Escape") {
+      handleCancel()
+    }
+  }
+
+  const renderDisplayValue = () => {
+    switch (type) {
+      case "text":
+        return value || placeholder || "Kliknij aby edytować"
+
+      case "date":
+        return value ? formatTaskDueDateWithRelative(value) : placeholder || "Ustaw termin"
+
+      case "user":
+        if (value && users.length > 0) {
+          const user = users.find(u => u.id === value)
+          if (user) {
+            return (
+              <div className="flex items-center gap-2">
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={user.avatarUrl || ""} alt={user.name} />
+                  <AvatarFallback className="text-xs">
+                    {user.name?.charAt(0) || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-sm">{user.name}</span>
+              </div>
+            )
+          }
+        }
+        return (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Avatar className="h-6 w-6">
+              <AvatarFallback className="text-xs">
+                <UserPlus className="h-3 w-3" />
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-sm">{placeholder || "Przypisz osobę"}</span>
+          </div>
+        )
+
+      case "priority":
+        return value ? (
+          <Badge variant="outline" className={`text-xs ${getPriorityColor(value)}`}>
+            {getPriorityDisplayName(value)}
+          </Badge>
+        ) : (
+          <span className="text-muted-foreground text-sm">{placeholder || "Ustaw priorytet"}</span>
+        )
+
+      case "status":
+        if (value && taskStatuses.length > 0) {
+          const status = taskStatuses.find(s => s.id === value)
+          if (status) {
+            return (
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: status.color }}
+                />
+                <span className="text-sm">{status.name}</span>
+              </div>
+            )
+          }
+        }
+        return <span className="text-muted-foreground text-sm">{placeholder || "Ustaw status"}</span>
+
+      case "select":
+        const option = options.find(o => o.value === value)
+        return option ? option.label : (placeholder || "Wybierz opcję")
+
+      default:
+        return value || placeholder || "Kliknij aby edytować"
+    }
+  }
+
+  const renderEditor = () => {
+    switch (type) {
+      case "text":
+        return (
+          <Input
+            ref={inputRef}
+            value={editValue || ""}
+            onChange={(e) => setEditValue(e.target.value)}
+            onBlur={handleSave}
+            onKeyDown={handleKeyDown}
+            className="h-8"
+          />
+        )
+
+      case "date":
+        return (
+          <DatePicker
+            value={editValue ? new Date(editValue) : undefined}
+            onChange={(date) => {
+              const dateValue = date ? date.toISOString().split('T')[0] : ""
+              setEditValue(dateValue)
+              onSave(dateValue)
+              setIsEditing(false)
+            }}
+            className="h-8"
+          />
+        )
+
+      case "user":
+        return (
+          <Select
+            value={editValue || "unassigned"}
+            onValueChange={(value) => {
+              const finalValue = value === "unassigned" ? null : value
+              setEditValue(finalValue)
+              onSave(finalValue)
+              setIsEditing(false)
+            }}
+          >
+            <SelectTrigger className="h-8">
+              <SelectValue placeholder="Wybierz osobę" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="unassigned">Nieprzypisany</SelectItem>
+              {users.map((user) => (
+                <SelectItem key={user.id} value={user.id}>
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-5 w-5">
+                      <AvatarImage src={user.avatarUrl || ""} alt={user.name} />
+                      <AvatarFallback className="text-xs">
+                        {user.name?.charAt(0) || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    {user.name}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )
+
+      case "priority":
+        return (
+          <Select
+            value={editValue || ""}
+            onValueChange={(value) => {
+              const finalValue = value === "" ? null : value
+              setEditValue(finalValue)
+              onSave(finalValue)
+              setIsEditing(false)
+            }}
+          >
+            <SelectTrigger className="h-8">
+              <SelectValue placeholder="Wybierz priorytet" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Brak priorytetu</SelectItem>
+              {getPriorityOptions().map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${option.color}`} />
+                    {option.label}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )
+
+      case "status":
+        return (
+          <Select
+            value={editValue || ""}
+            onValueChange={(value) => {
+              setEditValue(value)
+              onSave(value)
+              setIsEditing(false)
+            }}
+          >
+            <SelectTrigger className="h-8">
+              <SelectValue placeholder="Wybierz status" />
+            </SelectTrigger>
+            <SelectContent>
+              {taskStatuses.map((status) => (
+                <SelectItem key={status.id} value={status.id}>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: status.color }}
+                    />
+                    {status.name}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )
+
+      case "select":
+        return (
+          <Select
+            value={editValue || ""}
+            onValueChange={(value) => {
+              setEditValue(value)
+              onSave(value)
+              setIsEditing(false)
+            }}
+          >
+            <SelectTrigger className="h-8">
+              <SelectValue placeholder={placeholder} />
+            </SelectTrigger>
+            <SelectContent>
+              {options.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )
+
+      default:
+        return null
+    }
+  }
+
+  if (isEditing) {
+    return (
+      <div className={cn("min-w-0", className)}>
+        {renderEditor()}
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className={cn(
+        "cursor-pointer hover:bg-muted/50 rounded px-2 py-1 min-h-[32px] flex items-center",
+        className
+      )}
+      onClick={() => setIsEditing(true)}
+    >
+      {renderDisplayValue()}
+    </div>
+  )
+}

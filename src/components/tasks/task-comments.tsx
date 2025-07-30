@@ -138,10 +138,6 @@ export function TaskComments({
 
   return (
     <div className="space-y-4">
-      <h4 className="font-medium text-gray-900 flex items-center">
-        <MessageSquare className="h-4 w-4 mr-2" />
-        Komentarze ({comments.length})
-      </h4>
 
       {/* Add new comment form */}
       {session?.user && (

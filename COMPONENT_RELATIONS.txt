@@ -45,12 +45,44 @@ RELACJE MIĘDZY KOMPONENTAMI TABLICY ZADAŃ
   - Używa TasksKanbanBoard
   - Obsługuje projects, session, hideProjectSelect
 
+### Dashboard:
+- src/components/dashboard/content.tsx
+  - Używa TasksTable do wyświetlania wszystkich zadań z systemu
+  - Pobiera dane z API: tasks, users, taskStatuses
+  - Obsługuje aktualizację zadań przez inline editing
+
+- src/components/dashboard/tasks-table.tsx
+  - Główny komponent tabelki zadań w stylu Asana
+  - Używa TanStack Table do sortowania, filtrowania, paginacji
+  - Grupuje zadania według statusów
+  - Obsługuje inline editing przez EditableCell
+  - Kolumny: nazwa, osoba przypisana, priorytet, data, status, projekt, szacowany czas
+
+- src/components/dashboard/editable-cell.tsx
+  - Komponent do edycji inline różnych typów danych
+  - Obsługuje: text, date, user, priority, status, select
+  - Automatyczne zapisywanie po stracie focusa lub Enter
+  - Placeholdery dla pustych wartości
+
 ## Wspólne zależności:
 - @dnd-kit/core - drag & drop
 - @dnd-kit/sortable - sortowanie
-- shadcn/ui komponenty (Card, Badge, Button, etc.)
+- @tanstack/react-table - zaawansowane tabele z sortowaniem i filtrowaniem
+- shadcn/ui komponenty (Card, Badge, Button, Table, etc.)
 - TaskDetailsSheet - szczegóły zadania (panel boczny)
 - ClickableAvatar - awatary użytkowników
+
+## Utility functions:
+- src/lib/task-utils.ts
+  - getPriorityColor() - kolory priorytetów
+  - getPriorityDisplayName() - polskie nazwy priorytetów
+  - getTaskStatus() - pobieranie statusu zadania
+  - isTaskOverdue() - sprawdzanie czy zadanie jest przeterminowane
+  - getPriorityOptions() - opcje priorytetów dla selectów
+
+- src/lib/date-utils.ts
+  - formatTaskDueDate() - formatowanie dat zadań
+  - formatTaskDueDateWithRelative() - formatowanie z względnymi opisami
 
 ## Korzyści z unifikacji:
 1. Spójny UX między sekcjami

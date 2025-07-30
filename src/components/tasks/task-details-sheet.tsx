@@ -1,5 +1,9 @@
 "use client"
-
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { useState, useEffect } from "react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
@@ -29,6 +33,7 @@ import { TaskComments } from "@/components/tasks/task-comments"
 import { TaskTodos } from "@/components/tasks/task-todos"
 import type { Task, Todo } from "@/types"
 import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
+import { ClickableAvatar } from "../ui/clickable-avatar"
 
 interface TaskStatus {
   id: string
@@ -308,16 +313,28 @@ export function TaskDetailsSheet({
                         <UserIcon className="h-4 w-4" />
                         Przypisany
                       </div>
+
+
+
                       {task.assignee ? (
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={task.assignee.avatarUrl} />
-                            <AvatarFallback className="text-sm">
-                              {task.assignee.name?.charAt(0) || "U"}
-                            </AvatarFallback>
-                          </Avatar>
+
+
+                      <Tooltip>
+                        <TooltipTrigger>
+
+                          <ClickableAvatar
+                              userId={task.assignee.id}
+                              avatarUrl={task.assignee.avatarUrl}
+                              name={task.assignee.name}
+                              size="sm"
+                            />
+                        </TooltipTrigger>
+                        <TooltipContent>
                           <span className="font-medium">{task.assignee.name}</span>
-                        </div>
+                        </TooltipContent>
+                      </Tooltip>
+
+
                       ) : (
                         <span className="text-muted-foreground">Nieprzypisany</span>
                       )}
@@ -330,15 +347,21 @@ export function TaskDetailsSheet({
                         Utworzone przez
                       </div>
                       {task.createdBy ? (
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={task.createdBy.avatarUrl} />
-                            <AvatarFallback className="text-sm">
-                              {task.createdBy.name?.charAt(0) || "U"}
-                            </AvatarFallback>
-                          </Avatar>
+
+                      <Tooltip>
+                        <TooltipTrigger>
+
+                          <ClickableAvatar
+                              userId={task.createdBy.id}
+                              avatarUrl={task.createdBy.avatarUrl}
+                              name={task.createdBy.name}
+                              size="sm"
+                            />
+                        </TooltipTrigger>
+                        <TooltipContent>
                           <span className="font-medium">{task.createdBy.name}</span>
-                        </div>
+                        </TooltipContent>
+                      </Tooltip>
                       ) : (
                         <span className="text-muted-foreground">Nieznany</span>
                       )}
@@ -364,6 +387,19 @@ export function TaskDetailsSheet({
                       )}
                     </div>
 
+
+                    {/* Created */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                        <CheckSquare className="h-4 w-4" />
+                        Data utworzenia
+                      </div>
+                      <span className="font-medium">
+                        {formatTaskDueDateWithRelative(task.createdAt)}
+                      </span>
+                    </div>
+
+
                     {/* Time Tracking */}
                     {task.estimatedHours && (
                       <div className="space-y-2">
@@ -384,16 +420,6 @@ export function TaskDetailsSheet({
                       </div>
                     )}
 
-                    {/* Created */}
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                        <CheckSquare className="h-4 w-4" />
-                        Data utworzenia
-                      </div>
-                      <span className="font-medium">
-                        {formatTaskDueDateWithRelative(task.createdAt)}
-                      </span>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
