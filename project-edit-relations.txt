@@ -128,6 +128,22 @@ RELACJE MIĘDZY KOMPONENTAMI - EDYCJA PROJEKTÓW
     - handleProjectUpdated() - zamyka sheet i odświeża listę projektów
     - fetchProjects() - wyodrębniona funkcja do pobierania projektów
 
+17. GLOBALNY KONTEKST PROJEKTÓW (NOWA IMPLEMENTACJA):
+    - Utworzono src/contexts/projects-context.tsx z React Context API
+    - ProjectsProvider - provider kontekstu dodany do src/components/providers.tsx
+    - useProjects() - hook do zarządzania projektami globalnie
+    - useProjectsWithFilter() - hook do pobierania projektów z filtrowaniem
+    - Automatyczne odświeżanie listy projektów w sidebarze po dodaniu/edycji
+    - Synchronizacja między DashboardLayout a ProjectsContent
+    - Eliminacja duplikacji stanu projektów w różnych komponentach
+
+18. AKTUALIZACJA KOMPONENTÓW:
+    - DashboardLayout używa useProjects() zamiast lokalnego stanu
+    - ProjectsContent używa useProjectsWithFilter() dla filtrowania
+    - CreateProjectSheet i EditProjectSheet odświeżają globalny stan po operacjach
+    - Usunięto niepotrzebne wywołania fetchProjects() w komponentach
+    - Wszystkie komponenty korzystają z jednego źródła prawdy dla projektów
+
 17. NOWA ARCHITEKTURA NAGŁÓWKÓW (HEADER CONTEXT):
     - Stworzono HeaderContext do globalnego zarządzania zawartością nagłówka
     - HeaderProvider owijają DashboardLayout i zapewnia kontekst dla całej aplikacji

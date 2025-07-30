@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useProjects } from "@/contexts/projects-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -41,6 +42,7 @@ export function CreateProjectSheet({
   onProjectCreated,
   teams
 }: CreateProjectSheetProps) {
+  const { refreshProjects } = useProjects()
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [teamId, setTeamId] = useState("")
@@ -78,6 +80,8 @@ export function CreateProjectSheet({
         setImageUrl(null)
         setColor("#3B82F6")
         setIcon(null)
+        // Odśwież globalny stan projektów
+        refreshProjects()
         onProjectCreated()
         handleClose()
       } else {

@@ -9,6 +9,7 @@ import { Plus, FolderOpen, Calendar, Users, ImageIcon, Edit, MoreVertical, Archi
 import { CreateProjectSheet } from "./create-project-sheet"
 import { EditProjectSheet } from "./edit-project-sheet"
 import { usePageHeader } from "@/contexts/header-context"
+import { useProjects, useProjectsWithFilter } from "@/contexts/projects-context"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,15 +30,15 @@ interface Project {
   id: string
   name: string
   description?: string
-  status: string
+  status?: string
   archived?: boolean
   imageUrl?: string
-  createdAt: string
+  createdAt?: string
   team: {
     id: string
     name: string
   }
-  tasks: {
+  tasks?: {
     id: string
     title: string
     statusId?: string
@@ -64,7 +65,7 @@ interface Team {
 type ProjectFilter = "active" | "archived" | "all"
 
 export function ProjectsContent() {
-  const [projects, setProjects] = useState<Project[]>([])
+  const { refreshProjects } = useProjects()
   const [teams, setTeams] = useState<Team[]>([])
   const [loading, setLoading] = useState(true)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
@@ -72,18 +73,10 @@ export function ProjectsContent() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
   const [projectFilter, setProjectFilter] = useState<ProjectFilter>("active")
 
-  const fetchProjects = useCallback(async (filter: ProjectFilter = projectFilter) => {
-    try {
-      const includeArchived = filter === "archived" || filter === "all"
-      const response = await fetch(`/api/projects?includeArchived=${includeArchived}`)
-      if (response.ok) {
-        const data = await response.json()
-        setProjects(data.projects)
-      }
-    } catch (error) {
-      console.error("Error fetching projects:", error)
-    }
-  }, [projectFilter])
+  // Używamy hook do pobierania projektów z filtrowaniem
+  const { projects } = useProjectsWithFilter(projectFilter)
+
+
 
   const fetchTeams = useCallback(async () => {
     try {
@@ -99,14 +92,14 @@ export function ProjectsContent() {
 
   useEffect(() => {
     const fetchData = async () => {
-      await Promise.all([fetchProjects(), fetchTeams()])
+      await fetchTeams()
       setLoading(false)
     }
     fetchData()
-  }, [fetchProjects, fetchTeams])
+  }, [fetchTeams])
 
   const handleProjectCreated = () => {
-    fetchProjects()
+    refreshProjects()
     setCreateDialogOpen(false)
   }
 
@@ -118,7 +111,7 @@ export function ProjectsContent() {
   const handleProjectUpdated = () => {
     setEditDialogOpen(false)
     setSelectedProject(null)
-    fetchProjects()
+    refreshProjects()
   }
 
   const handleArchiveProject = async (project: Project) => {
@@ -134,7 +127,7 @@ export function ProjectsContent() {
       })
 
       if (response.ok) {
-        fetchProjects()
+        refreshProjects()
       } else {
         console.error("Failed to archive/unarchive project")
       }
@@ -145,7 +138,7 @@ export function ProjectsContent() {
 
   const handleFilterChange = (filter: ProjectFilter) => {
     setProjectFilter(filter)
-    fetchProjects(filter)
+    // useProjectsWithFilter automatycznie pobierze projekty z nowym filtrem
   }
 
   // Set page header content
@@ -201,6 +194,9 @@ export function ProjectsContent() {
   }
 
   const getTaskStats = (tasks: Project["tasks"]) => {
+    if (!tasks) {
+      return { total: 0, completed: 0, inProgress: 0 }
+    }
     const total = tasks.length
     // TODO: Update to use statusId with proper status lookup
     const completed = 0 // tasks.filter(task => task.statusId === "done-status-id").length
@@ -323,9 +319,11 @@ export function ProjectsContent() {
                             Zarchiwizowany
                           </Badge>
                         )}
-                        <Badge className={getStatusColor(project.status)}>
-                          {project.status}
-                        </Badge>
+                        {project.status && (
+                          <Badge className={getStatusColor(project.status)}>
+                            {project.status}
+                          </Badge>
+                        )}
                       </div>
                     </div>
                     <CardDescription className="line-clamp-2">
@@ -360,10 +358,12 @@ export function ProjectsContent() {
                         </div>
                       </div>
 
-                      <div className="flex items-center text-sm text-gray-500">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Utworzono {new Date(project.createdAt).toLocaleDateString()}
-                      </div>
+                      {project.createdAt && (
+                        <div className="flex items-center text-sm text-gray-500">
+                          <Calendar className="h-4 w-4 mr-2" />
+                          Utworzono {new Date(project.createdAt).toLocaleDateString()}
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Link>

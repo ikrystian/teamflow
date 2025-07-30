@@ -72,8 +72,10 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate }: TasksTa
   const sortColumnsByOrder = (columns: ColumnDef<TableRow>[]) => {
     return columns.sort((a, b) => {
       // Używamy id kolumny zamiast accessorKey
-      const aKey = (a as any).accessorKey || (a as any).id || ''
-      const bKey = (b as any).accessorKey || (b as any).id || ''
+      const aKey = (a as ColumnDef<TableRow> & { accessorKey?: string; id?: string }).accessorKey ||
+                   (a as ColumnDef<TableRow> & { accessorKey?: string; id?: string }).id || ''
+      const bKey = (b as ColumnDef<TableRow> & { accessorKey?: string; id?: string }).accessorKey ||
+                   (b as ColumnDef<TableRow> & { accessorKey?: string; id?: string }).id || ''
 
       const aIndex = columnOrder.indexOf(aKey)
       const bIndex = columnOrder.indexOf(bKey)

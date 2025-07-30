@@ -48,6 +48,7 @@ TeamFlow to nowoczesna aplikacja internetowa do zarządzania zadaniami i projekt
 - **Ulepszone formatowanie dat** - Daty zadań w obecnym roku wyświetlane jako dzień i pełna polska nazwa miesiąca (np. "15 stycznia"), daty z innych lat w pełnym formacie
 - **Tabelka zadań w stylu Asana** - Zaawansowana tabelka w Dashboard wyświetlająca wszystkie zadania z systemu, grupowane według statusów z możliwością inline editing wszystkich pól (nazwa, osoba przypisana, priorytet, data wykonania, status, szacowany czas), sortowaniem kolumn i filtrowaniem
 - **Preferencje tabeli zadań** - Automatyczne zapisywanie wybranych kolumn w localStorage dla każdego użytkownika, domyślnie wszystkie kolumny widoczne z możliwością ukrywania niepotrzebnych
+- **Synchronizacja projektów** - Automatyczne odświeżanie listy projektów w sidebarze po dodaniu, edycji lub archiwizacji projektu dzięki globalnemu kontekstowi React
 - **Kolumna autora zadania** - Nowa kolumna "Autor zadania" wyświetlająca użytkownika który utworzył zadanie tylko z avatarem i tooltipem (analogicznie do osoby przypisanej), umieszczona zaraz po kolumnie "Osoba przypisana"
 - **Zarządzanie kolejnością kolumn** - Możliwość ustawiania kolejności kolumn przez użytkownika z drag & drop interface, zapisywanie kolejności w localStorage
 - **Ulepszone aktywne stany sidebar** - Aktywne pozycje w sidebar są teraz bardziej widoczne z niebieskim tłem, białym tekstem i pogrubioną czcionką zgodnie z wzorcem shadcn/ui dashboard-01, aktywne projekty są również wyraźnie zaznaczone

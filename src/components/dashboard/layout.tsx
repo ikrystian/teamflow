@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
 import {
   Home,
@@ -33,6 +33,7 @@ import { TeamSwitcher } from "@/components/dashboard/team-switcher"
 import { DashboardBreadcrumbs } from "@/components/dashboard/breadcrumbs"
 import { EditProjectSheet } from "@/components/projects/edit-project-sheet"
 import { HeaderProvider, useHeader } from "@/contexts/header-context"
+import { useProjects } from "@/contexts/projects-context"
 
 interface Project {
   id: string
@@ -55,7 +56,7 @@ interface DashboardLayoutProps {
 function DashboardLayoutInner({ children }: DashboardLayoutProps) {
   const { headerContent } = useHeader()
   const pathname = usePathname()
-  const [projects, setProjects] = useState<Project[]>([])
+  const { projects, refreshProjects } = useProjects()
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
 
@@ -82,30 +83,14 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
     setEditDialogOpen(true)
   }
 
-  // Fetch projects function
-  const fetchProjects = async () => {
-    try {
-      const response = await fetch('/api/projects?includeArchived=false')
-      if (response.ok) {
-        const data = await response.json()
-        setProjects(data.projects || [])
-      }
-    } catch (error) {
-      console.error('Error fetching projects:', error)
-    }
-  }
-
   const handleProjectUpdated = () => {
     setEditDialogOpen(false)
     setSelectedProject(null)
     // Refresh projects list
-    fetchProjects()
+    refreshProjects()
   }
 
-  // Fetch projects (exclude archived by default)
-  useEffect(() => {
-    fetchProjects()
-  }, [])
+
 
   return (
     <SidebarProvider>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useProjects } from "@/contexts/projects-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -48,6 +49,7 @@ export function EditProjectSheet({
   onProjectUpdated,
   project
 }: EditProjectSheetProps) {
+  const { refreshProjects } = useProjects()
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [imageUrl, setImageUrl] = useState<string | null>(null)
@@ -91,6 +93,8 @@ export function EditProjectSheet({
       })
 
       if (response.ok) {
+        // Odśwież globalny stan projektów
+        refreshProjects()
         onProjectUpdated()
         handleClose()
       } else {
