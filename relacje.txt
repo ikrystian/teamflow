@@ -84,10 +84,27 @@ Task {
 - Grupowanie według assigneeId
 
 #### Wyświetlanie w slotach czasowych:
-- Zadania z określonym czasem: wyświetlane w odpowiednich godzinach
+- Zadania z określonym czasem: wyświetlane jako ciągłe elementy z odpowiednią wysokością
 - Zadania bez czasu: wyświetlane w pierwszym slocie (8:00)
-- Zadania trwające kilka godzin: wyświetlane we wszystkich slotach w zakresie
+- Zadania trwające kilka godzin: wyświetlane jako jeden element o wysokości proporcjonalnej do czasu trwania
+- Pozycjonowanie absolutne: zadania są nakładane na siatkę czasową jako overlay
 
 #### Walidacja czasowa:
 - endTime powinien być późniejszy niż startTime (opcjonalna walidacja)
 - Czasy są przechowywane jako DateTime z pełną informacją o dacie i czasie
+
+### Algorytm renderowania ciągłych zadań
+
+#### Funkcje pomocnicze:
+- **getTaskHeight()** - oblicza wysokość zadania na podstawie czasu trwania (60px na godzinę)
+- **getTaskTopOffset()** - oblicza przesunięcie od góry slotu na podstawie minut rozpoczęcia
+
+#### Struktura renderowania:
+1. **Siatka tła** - statyczna siatka godzinowa (8:00-18:00)
+2. **Overlay zadań** - absolutnie pozycjonowane zadania nakładane na siatkę
+3. **Ciągłe elementy** - zadania trwające kilka godzin jako jeden element
+
+#### Pozycjonowanie:
+- **top**: `(startHour - 8) * 61px + minuteOffset + 8px`
+- **height**: `durationInHours * 60px - 4px` (minus padding)
+- **z-index**: 10 (nad siatką tła)

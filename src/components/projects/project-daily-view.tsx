@@ -136,17 +136,34 @@ export function ProjectDailyView({
     return format(date, "EEEE, d MMMM yyyy", { locale: pl })
   }
 
-  const getTasksForTimeSlot = (assigneeId: string, hour: number) => {
-    const assigneeTasks = tasksByAssignee[assigneeId] || []
-    return assigneeTasks.filter(task => {
-      if (task.startTime) {
-        const startHour = new Date(task.startTime).getHours()
-        const endHour = task.endTime ? new Date(task.endTime).getHours() : startHour
-        return hour >= startHour && hour <= endHour
-      }
-      // For tasks without specific time, show them in the first slot (8:00)
-      return hour === 8
-    })
+
+
+  const getTaskHeight = (task: TaskWithTime) => {
+    if (task.startTime && task.endTime) {
+      const start = new Date(task.startTime)
+      const end = new Date(task.endTime)
+      const startHour = start.getHours()
+      const endHour = end.getHours()
+      const startMinutes = start.getMinutes()
+      const endMinutes = end.getMinutes()
+
+      // Calculate duration in hours
+      const durationHours = (endHour - startHour) + (endMinutes - startMinutes) / 60
+
+      // Each hour slot is 60px (min-h-[60px]), so multiply by duration
+      return Math.max(1, durationHours) * 60
+    }
+    return 60 // Default height for 1 hour
+  }
+
+  const getTaskTopOffset = (task: TaskWithTime) => {
+    if (task.startTime) {
+      const start = new Date(task.startTime)
+      const minutes = start.getMinutes()
+      // Calculate offset based on minutes (60px per hour)
+      return (minutes / 60) * 60
+    }
+    return 0
   }
 
   const getPriorityColor = (priority?: string) => {
@@ -236,48 +253,78 @@ export function ProjectDailyView({
             </div>
 
             {/* Time slots grid */}
-            <div className="space-y-1">
-              {timeSlots.map(({ hour, displayTime }) => (
-                <div key={hour} className="grid grid-cols-[100px_1fr] gap-4 min-h-[60px] border-b border-gray-100">
-                  <div className="flex items-start pt-2">
-                    <span className="text-sm text-muted-foreground font-mono">{displayTime}</span>
-                  </div>
-                  <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Object.keys(tasksByAssignee).length}, 1fr)` }}>
-                    {Object.keys(tasksByAssignee).map(assigneeId => {
-                      const tasksInSlot = getTasksForTimeSlot(assigneeId, hour)
-                      return (
+            <div className="relative">
+              {/* Time grid background */}
+              <div className="space-y-1">
+                {timeSlots.map(({ hour, displayTime }) => (
+                  <div key={hour} className="grid grid-cols-[100px_1fr] gap-4 min-h-[60px] border-b border-gray-100">
+                    <div className="flex items-start pt-2">
+                      <span className="text-sm text-muted-foreground font-mono">{displayTime}</span>
+                    </div>
+                    <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Object.keys(tasksByAssignee).length}, 1fr)` }}>
+                      {Object.keys(tasksByAssignee).map(assigneeId => (
                         <div key={`${assigneeId}-${hour}`} className="min-h-[50px] p-1">
-                          {tasksInSlot.map(task => (
-                            <div
-                              key={task.id}
-                              className={`p-2 rounded-md border cursor-pointer hover:shadow-sm transition-shadow mb-1 ${getPriorityColor(task.priority)}`}
-                              onClick={() => onTaskClick?.(task)}
-                            >
-                              <div className="text-xs font-medium truncate">{task.title}</div>
-                              {(task.displayStartTime || task.displayEndTime) && (
-                                <div className="flex items-center gap-1 mt-1">
-                                  <Clock className="h-3 w-3" />
-                                  <span className="text-xs">
-                                    {task.displayStartTime && task.displayEndTime
-                                      ? `${task.displayStartTime} - ${task.displayEndTime}`
-                                      : task.displayStartTime || task.displayEndTime
-                                    }
-                                  </span>
-                                </div>
-                              )}
-                              {task.priority && (
-                                <Badge variant="secondary" className="text-xs mt-1">
-                                  {task.priority}
-                                </Badge>
-                              )}
-                            </div>
-                          ))}
+                          {/* Empty slot for background grid */}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Tasks overlay */}
+              <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+                <div className="grid grid-cols-[100px_1fr] gap-4 h-full">
+                  <div></div> {/* Time column spacer */}
+                  <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Object.keys(tasksByAssignee).length}, 1fr)` }}>
+                    {Object.keys(tasksByAssignee).map((assigneeId) => {
+                      const assigneeTasks = tasksByAssignee[assigneeId] || []
+                      return (
+                        <div key={assigneeId} className="relative">
+                          {assigneeTasks.map(task => {
+                            const height = getTaskHeight(task)
+                            const topOffset = getTaskTopOffset(task)
+                            const startHour = task.startTime ? new Date(task.startTime).getHours() : 8
+                            const slotIndex = startHour - 8 // 8 is the first hour
+                            const top = slotIndex * 61 + topOffset + 8 // 61px per slot (60px + 1px border) + 8px padding
+
+                            return (
+                              <div
+                                key={task.id}
+                                className={`absolute left-1 right-1 p-2 rounded-md border cursor-pointer hover:shadow-sm transition-shadow pointer-events-auto ${getPriorityColor(task.priority)}`}
+                                style={{
+                                  top: `${top}px`,
+                                  height: `${height - 4}px`, // Subtract padding
+                                  zIndex: 10
+                                }}
+                                onClick={() => onTaskClick?.(task)}
+                              >
+                                <div className="text-xs font-medium truncate">{task.title}</div>
+                                {(task.displayStartTime || task.displayEndTime) && (
+                                  <div className="flex items-center gap-1 mt-1">
+                                    <Clock className="h-3 w-3" />
+                                    <span className="text-xs">
+                                      {task.displayStartTime && task.displayEndTime
+                                        ? `${task.displayStartTime} - ${task.displayEndTime}`
+                                        : task.displayStartTime || task.displayEndTime
+                                      }
+                                    </span>
+                                  </div>
+                                )}
+                                {task.priority && height > 40 && (
+                                  <Badge variant="secondary" className="text-xs mt-1">
+                                    {task.priority}
+                                  </Badge>
+                                )}
+                              </div>
+                            )
+                          })}
                         </div>
                       )
                     })}
                   </div>
                 </div>
-              ))}
+              </div>
             </div>
           </div>
         </div>
