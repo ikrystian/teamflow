@@ -98,13 +98,41 @@ Task {
 #### Funkcje pomocnicze:
 - **getTaskHeight()** - oblicza wysokość zadania na podstawie czasu trwania (60px na godzinę)
 - **getTaskTopOffset()** - oblicza przesunięcie od góry slotu na podstawie minut rozpoczęcia
+- **tasksOverlap()** - sprawdza czy dwa zadania nakładają się czasowo
+- **calculateTaskLayout()** - algorytm układania nakładających się zadań
 
 #### Struktura renderowania:
 1. **Siatka tła** - statyczna siatka godzinowa (8:00-18:00)
 2. **Overlay zadań** - absolutnie pozycjonowane zadania nakładane na siatkę
 3. **Ciągłe elementy** - zadania trwające kilka godzin jako jeden element
+4. **Kolumny dla kolizji** - nakładające się zadania w osobnych kolumnach
 
-#### Pozycjonowanie:
+#### Algorytm wykrywania kolizji:
+1. **Sortowanie** - zadania sortowane według czasu rozpoczęcia
+2. **Algorytm kolumn** - każde zadanie umieszczane w pierwszej dostępnej kolumnie
+3. **Sprawdzanie nakładania** - porównanie z ostatnim zadaniem w kolumnie
+4. **Tworzenie nowych kolumn** - gdy brak miejsca w istniejących
+
+#### Pozycjonowanie z kolizjami:
 - **top**: `(startHour - 8) * 61px + minuteOffset + 8px`
 - **height**: `durationInHours * 60px - 4px` (minus padding)
-- **z-index**: 10 (nad siatką tła)
+- **left**: `(100 / totalColumns) * columnIndex`%
+- **width**: `(100 / totalColumns - 2)`% (minus margines)
+- **z-index**: `10 + columnIndex` (wyższy dla późniejszych kolumn)
+
+#### Przykłady działania:
+
+**Scenariusz 1: Dwa nakładające się zadania**
+- Zadanie A: 9:00-11:00
+- Zadanie B: 10:00-12:00
+- Rezultat: Każde zadanie ma 50% szerokości, A w lewej kolumnie, B w prawej
+
+**Scenariusz 2: Trzy zadania z częściowym nakładaniem**
+- Zadanie A: 9:00-10:00
+- Zadanie B: 9:30-11:30
+- Zadanie C: 11:00-12:00
+- Rezultat: A i B w osobnych kolumnach (50% każde), C w pierwszej kolumnie (pełna szerokość)
+
+**Scenariusz 3: Zadania bez czasu**
+- Zadania bez startTime wyświetlane w pierwszej kolumnie o 8:00
+- Zachowują proporcjonalną szerokość jeśli są zadania z czasem

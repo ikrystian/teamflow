@@ -166,6 +166,88 @@ export function ProjectDailyView({
     return 0
   }
 
+  // Check if two tasks overlap in time
+  const tasksOverlap = (task1: TaskWithTime, task2: TaskWithTime) => {
+    if (!task1.startTime || !task2.startTime) return false
+
+    const start1 = new Date(task1.startTime)
+    const end1 = task1.endTime ? new Date(task1.endTime) : new Date(start1.getTime() + 60 * 60 * 1000) // Default 1 hour
+    const start2 = new Date(task2.startTime)
+    const end2 = task2.endTime ? new Date(task2.endTime) : new Date(start2.getTime() + 60 * 60 * 1000) // Default 1 hour
+
+    return start1 < end2 && start2 < end1
+  }
+
+  // Calculate layout for overlapping tasks using interval scheduling algorithm
+  const calculateTaskLayout = (tasks: TaskWithTime[]) => {
+    const layouts: Record<string, { width: number; left: number; column: number }> = {}
+
+    // Filter tasks with time and sort by start time
+    const timedTasks = tasks.filter(task => task.startTime).sort((a, b) => {
+      return new Date(a.startTime!).getTime() - new Date(b.startTime!).getTime()
+    })
+
+    // Handle tasks without time separately
+    const untimedTasks = tasks.filter(task => !task.startTime)
+
+    if (timedTasks.length === 0) {
+      // Only untimed tasks - give them full width
+      untimedTasks.forEach(task => {
+        layouts[task.id] = { width: 100, left: 0, column: 0 }
+      })
+      return layouts
+    }
+
+    // Find all overlapping groups using a more sophisticated algorithm
+    const columns: TaskWithTime[][] = []
+
+    for (const task of timedTasks) {
+      // Find the first column where this task doesn't overlap with the last task
+      let placedInColumn = false
+
+      for (let i = 0; i < columns.length; i++) {
+        const column = columns[i]
+        const lastTaskInColumn = column[column.length - 1]
+
+        if (!tasksOverlap(task, lastTaskInColumn)) {
+          column.push(task)
+          placedInColumn = true
+          break
+        }
+      }
+
+      // If no suitable column found, create a new one
+      if (!placedInColumn) {
+        columns.push([task])
+      }
+    }
+
+    // Calculate layout based on columns
+    const totalColumns = columns.length
+    const columnWidth = totalColumns > 0 ? 100 / totalColumns : 100
+
+    columns.forEach((column, columnIndex) => {
+      column.forEach(task => {
+        layouts[task.id] = {
+          width: columnWidth,
+          left: columnWidth * columnIndex,
+          column: columnIndex
+        }
+      })
+    })
+
+    // Handle untimed tasks - place them in first column if available
+    untimedTasks.forEach(task => {
+      layouts[task.id] = {
+        width: totalColumns > 0 ? columnWidth : 100,
+        left: 0,
+        column: 0
+      }
+    })
+
+    return layouts
+  }
+
   const getPriorityColor = (priority?: string) => {
     switch (priority) {
       case 'high': return 'bg-red-100 text-red-800 border-red-200'
@@ -279,6 +361,8 @@ export function ProjectDailyView({
                   <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Object.keys(tasksByAssignee).length}, 1fr)` }}>
                     {Object.keys(tasksByAssignee).map((assigneeId) => {
                       const assigneeTasks = tasksByAssignee[assigneeId] || []
+                      const taskLayouts = calculateTaskLayout(assigneeTasks)
+
                       return (
                         <div key={assigneeId} className="relative">
                           {assigneeTasks.map(task => {
@@ -288,14 +372,18 @@ export function ProjectDailyView({
                             const slotIndex = startHour - 8 // 8 is the first hour
                             const top = slotIndex * 61 + topOffset + 8 // 61px per slot (60px + 1px border) + 8px padding
 
+                            const layout = taskLayouts[task.id] || { width: 100, left: 0, column: 0 }
+
                             return (
                               <div
                                 key={task.id}
-                                className={`absolute left-1 right-1 p-2 rounded-md border cursor-pointer hover:shadow-sm transition-shadow pointer-events-auto ${getPriorityColor(task.priority)}`}
+                                className={`absolute p-2 rounded-md border cursor-pointer hover:shadow-sm transition-shadow pointer-events-auto ${getPriorityColor(task.priority)}`}
                                 style={{
                                   top: `${top}px`,
                                   height: `${height - 4}px`, // Subtract padding
-                                  zIndex: 10
+                                  left: `${layout.left}%`,
+                                  width: `${layout.width - 2}%`, // Subtract small margin between tasks
+                                  zIndex: 10 + layout.column // Higher z-index for later columns
                                 }}
                                 onClick={() => onTaskClick?.(task)}
                               >
@@ -311,7 +399,7 @@ export function ProjectDailyView({
                                     </span>
                                   </div>
                                 )}
-                                {task.priority && height > 40 && (
+                                {task.priority && height > 40 && layout.width > 30 && (
                                   <Badge variant="secondary" className="text-xs mt-1">
                                     {task.priority}
                                   </Badge>
