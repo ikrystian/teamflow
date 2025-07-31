@@ -76,6 +76,8 @@ model Task {
   statusId       String?
   priority       String?
   dueDate        DateTime?
+  startTime      DateTime?   // Czas rozpoczęcia zadania
+  endTime        DateTime?   // Czas zakończenia zadania
   estimatedHours Float?
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt

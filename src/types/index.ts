@@ -35,6 +35,8 @@ export interface Task {
   statusId?: string;
   priority?: string;
   dueDate?: string;
+  startTime?: string;
+  endTime?: string;
   estimatedHours?: number;
   createdAt: string;
   project: {

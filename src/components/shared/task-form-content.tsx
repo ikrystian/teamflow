@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select"
 import { Upload, X } from "lucide-react"
 import { DatePicker } from "@/components/ui/date-picker"
+import { DateTimePicker } from "@/components/ui/datetime-picker"
 import { dateToLocalDateString } from "@/lib/date-utils"
 import type { Task, User, TaskStatus, TaskImage } from "@/types"
 
@@ -81,6 +82,8 @@ export function TaskFormContent({
   const [assigneeId, setAssigneeId] = useState("")
   const [priority, setPriority] = useState("")
   const [dueDate, setDueDate] = useState("")
+  const [startTime, setStartTime] = useState<Date | undefined>()
+  const [endTime, setEndTime] = useState<Date | undefined>()
   const [estimatedHours, setEstimatedHours] = useState("")
 
   // Additional state
@@ -158,6 +161,8 @@ export function TaskFormContent({
       setAssigneeId(session?.user?.id || "")
       setPriority("")
       setDueDate("")
+      setStartTime(undefined)
+      setEndTime(undefined)
       setEstimatedHours("")
       setImages([])
       setPendingImages([])
@@ -170,6 +175,8 @@ export function TaskFormContent({
       setAssigneeId(task.assignee?.id || "unassigned")
       setPriority(task.priority || "")
       setDueDate(task.dueDate ? task.dueDate.split('T')[0] : "")
+      setStartTime(task.startTime ? new Date(task.startTime) : undefined)
+      setEndTime(task.endTime ? new Date(task.endTime) : undefined)
       setEstimatedHours(task.estimatedHours ? task.estimatedHours.toString() : "none")
       setImages(task.images || [])
       setPendingImages([])
@@ -307,6 +314,8 @@ export function TaskFormContent({
             assigneeId: assigneeId && assigneeId !== "unassigned" ? assigneeId : undefined,
             priority: priority || undefined,
             dueDate: dueDate || undefined,
+            startTime: startTime ? startTime.toISOString() : undefined,
+            endTime: endTime ? endTime.toISOString() : undefined,
             estimatedHours: estimatedHours ? parseFloat(estimatedHours) : undefined,
             statusId: statusId || undefined
           }),
@@ -340,6 +349,8 @@ export function TaskFormContent({
             assigneeId: assigneeId === "unassigned" ? undefined : assigneeId,
             priority: priority || undefined,
             dueDate: dueDate || undefined,
+            startTime: startTime ? startTime.toISOString() : undefined,
+            endTime: endTime ? endTime.toISOString() : undefined,
             estimatedHours: estimatedHours === "none" ? undefined : parseFloat(estimatedHours),
             projectId: selectedProjectId && selectedProjectId !== "no-project" ? selectedProjectId : undefined,
           }),
@@ -381,6 +392,8 @@ export function TaskFormContent({
     (assigneeId === "unassigned" ? undefined : assigneeId) !== task.assignee?.id ||
     (priority || undefined) !== task.priority ||
     (dueDate || undefined) !== (task.dueDate ? task.dueDate.split('T')[0] : undefined) ||
+    (startTime ? startTime.toISOString() : undefined) !== task.startTime ||
+    (endTime ? endTime.toISOString() : undefined) !== task.endTime ||
     (estimatedHours === "none" ? undefined : parseFloat(estimatedHours)) !== task.estimatedHours ||
     pendingImages.length > 0
   ) : true
@@ -567,6 +580,29 @@ export function TaskFormContent({
                   <SelectItem value="40">40 godzin</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+
+          {/* Time Fields */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="startTime" className="text-sm font-medium">Czas rozpoczęcia</Label>
+              <DateTimePicker
+                value={startTime}
+                onChange={setStartTime}
+                placeholder="Wybierz czas rozpoczęcia"
+                className="rounded-lg border shadow-sm"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="endTime" className="text-sm font-medium">Czas zakończenia</Label>
+              <DateTimePicker
+                value={endTime}
+                onChange={setEndTime}
+                placeholder="Wybierz czas zakończenia"
+                className="rounded-lg border shadow-sm"
+              />
             </div>
           </div>
 

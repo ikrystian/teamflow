@@ -1,0 +1,93 @@
+# Relacje między elementami systemu TeamFlow
+
+## Nowe funkcjonalności czasowe
+
+### Pola czasowe w zadaniach
+- **startTime** (DateTime?) - Czas rozpoczęcia zadania
+- **endTime** (DateTime?) - Czas zakończenia zadania
+
+### Komponenty UI
+- **TimePicker** - Komponent do wyboru godziny i minut (15-minutowe interwały)
+- **DateTimePicker** - Komponent łączący DatePicker i TimePicker
+- **ProjectDailyView** - Widok dzienny zadań z podziałem na osoby i godziny
+
+### Widoki projektów
+- **list** - Lista zadań
+- **board** - Tablica Kanban
+- **gantt** - Wykres Gantta
+- **daily** - Nowy widok dzienny z harmonogramem godzinowym
+
+### Relacje między komponentami
+
+#### ProjectDetailsContent
+- Zawiera przełącznik widoków (list/board/gantt/daily)
+- Renderuje ProjectDailyView dla widoku "daily"
+- Przekazuje zadania, członków zespołu i funkcje callback
+
+#### ProjectDailyView
+- Wyświetla zadania w układzie godzinowym (8:00-18:00)
+- Grupuje zadania według przypisanych osób
+- Pokazuje czas rozpoczęcia i zakończenia zadań
+- Umożliwia nawigację między dniami
+- Integruje się z DatePicker do wyboru dnia
+
+#### TaskFormContent
+- Rozszerzony o pola startTime i endTime
+- Używa DateTimePicker do wprowadzania czasów
+- Waliduje i wysyła dane czasowe do API
+
+#### API Endpoints
+- POST /api/tasks - obsługuje startTime i endTime przy tworzeniu
+- PATCH /api/tasks/[taskId] - obsługuje startTime i endTime przy edycji
+
+### Przepływ danych
+
+1. **Tworzenie zadania z czasem:**
+   TaskFormContent → DateTimePicker → API POST → Prisma → Database
+
+2. **Edycja zadania z czasem:**
+   TaskFormContent → DateTimePicker → API PATCH → Prisma → Database
+
+3. **Wyświetlanie widoku dziennego:**
+   ProjectDetailsContent → ProjectDailyView → filtrowanie zadań → renderowanie harmonogramu
+
+4. **Nawigacja w widoku dziennym:**
+   ProjectDailyView → DatePicker → aktualizacja selectedDate → ponowne filtrowanie
+
+### Struktura bazy danych
+
+```sql
+Task {
+  id: String (PK)
+  title: String
+  description: String?
+  statusId: String?
+  priority: String?
+  dueDate: DateTime?
+  startTime: DateTime?  -- NOWE POLE
+  endTime: DateTime?    -- NOWE POLE
+  estimatedHours: Float?
+  createdAt: DateTime
+  updatedAt: DateTime
+  projectId: String?
+  assigneeId: String?
+  createdById: String?
+  -- pozostałe pola...
+}
+```
+
+### Logika biznesowa
+
+#### Filtrowanie zadań w widoku dziennym:
+- Zadania z startTime lub endTime w wybranym dniu
+- Zadania z dueDate w wybranym dniu (jako fallback)
+- Grupowanie według assigneeId
+
+#### Wyświetlanie w slotach czasowych:
+- Zadania z określonym czasem: wyświetlane w odpowiednich godzinach
+- Zadania bez czasu: wyświetlane w pierwszym slocie (8:00)
+- Zadania trwające kilka godzin: wyświetlane we wszystkich slotach w zakresie
+
+#### Walidacja czasowa:
+- endTime powinien być późniejszy niż startTime (opcjonalna walidacja)
+- Czasy są przechowywane jako DateTime z pełną informacją o dacie i czasie

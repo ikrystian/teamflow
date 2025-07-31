@@ -29,6 +29,7 @@ import Link from "next/link"
 import { TaskFormSheet } from "../shared/task-form-sheet"
 import { KanbanBoard } from "./kanban-board"
 import { ProjectGanttChart } from "./project-gantt-chart"
+import { ProjectDailyView } from "./project-daily-view"
 import { TaskDetailsSheet } from "../tasks/task-details-sheet"
 import { TimeTrackingSheet } from "../tasks/time-tracking-sheet"
 import { TaskBoardFilters } from "./task-board-filters"
@@ -147,9 +148,17 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
               variant={viewMode === "gantt" ? "default" : "ghost"}
               size="sm"
               onClick={() => updateViewMode("gantt")}
-              className="rounded-l-none"
+              className="rounded-none"
             >
               <BarChart3 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "daily" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => updateViewMode("daily")}
+              className="rounded-l-none"
+            >
+              <Calendar className="h-4 w-4" />
             </Button>
           </div>
 
@@ -482,6 +491,13 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         <ProjectGanttChart
           tasks={getFilteredTasks(project.tasks)}
           onTaskClick={handleTaskDetails}
+        />
+      ) : viewMode === "daily" ? (
+        <ProjectDailyView
+          tasks={getFilteredTasks(project.tasks)}
+          onTaskClick={handleTaskDetails}
+          onCreateTask={() => setCreateTaskDialogOpen(true)}
+          teamMembers={project.team.members}
         />
       ) : (
         <div>

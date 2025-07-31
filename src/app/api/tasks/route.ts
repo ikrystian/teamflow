@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { title, description, projectId, assigneeId, priority, dueDate, estimatedHours, statusId } = await request.json()
+    const { title, description, projectId, assigneeId, priority, dueDate, startTime, endTime, estimatedHours, statusId } = await request.json()
 
     if (!title) {
       return NextResponse.json(
@@ -252,6 +252,8 @@ export async function POST(request: NextRequest) {
         assigneeId,
         priority,
         dueDate: dueDate ? new Date(dueDate) : null,
+        startTime: startTime ? new Date(startTime) : null,
+        endTime: endTime ? new Date(endTime) : null,
         estimatedHours,
         statusId: finalStatusId,
         createdById: session.user.id || null

@@ -62,7 +62,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
   const { projects, refreshProjects } = useProjects()
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
-  const [rightSidebarVisible, setRightSidebarVisible] = useState(true)
+  const [rightSidebarVisible, setRightSidebarVisible] = useState(false)
 
   const navigation = [
     { name: "Panel", href: "/dashboard", icon: Home },
