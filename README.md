@@ -67,6 +67,10 @@ Nexus to nowoczesna aplikacja internetowa do zarządzania zadaniami i projektami
 - **Widok dzienny projektów** - Nowy widok dzienny w projektach wyświetlający zadania z podziałem na osoby i godziny (8:00-18:00), z możliwością ustawiania czasu rozpoczęcia i zakończenia zadań
 - **Zarządzanie czasem zadań** - Pola startTime i endTime w zadaniach z komponentami TimePicker i DateTimePicker zgodnymi z shadcn/ui
 - **Harmonogram godzinowy** - Widok dzienny z siatką godzinową pokazującą zadania przypisane do konkretnych osób w określonych przedziałach czasowych
+- **Drag and Drop w kalendarzu** - Możliwość przeciągania zadań między slotami czasowymi i osobami, automatyczna aktualizacja czasu rozpoczęcia/zakończenia i przypisania
+- **Inteligentne układanie zadań** - Automatyczne wykrywanie kolizji czasowych i układanie nakładających się zadań w kolumnach z proporcjonalną szerokością
+- **Optimistic Updates** - Natychmiastowe aktualizacje UI podczas drag and drop z rollback przy błędach, wizualny feedback dla zadań w trakcie aktualizacji
+- **Powiadomienia Sonner** - Inteligentne powiadomienia toast z loading/success/error states dla operacji drag and drop
 
 ### 🔄 Planowane funkcjonalności
 - Zaproszenia do zespołów przez email

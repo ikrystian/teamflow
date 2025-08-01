@@ -136,3 +136,75 @@ Task {
 **Scenariusz 3: Zadania bez czasu**
 - Zadania bez startTime wyświetlane w pierwszej kolumnie o 8:00
 - Zachowują proporcjonalną szerokość jeśli są zadania z czasem
+
+### Funkcjonalność Drag and Drop
+
+#### Komponenty drag and drop:
+- **DraggableTask** - komponent zadania z możliwością przeciągania
+- **DroppableTimeSlot** - slot czasowy jako cel upuszczenia
+- **DragOverlay** - podgląd przeciąganego zadania
+
+#### Biblioteka @dnd-kit:
+- **DndContext** - kontekst drag and drop dla całego widoku
+- **useDraggable** - hook dla przeciąganych zadań
+- **useDroppable** - hook dla slotów czasowych
+- **PointerSensor** - sensor do obsługi myszy/dotyku
+
+#### Logika drag and drop:
+1. **Rozpoczęcie przeciągania** - zapisanie aktywnego zadania
+2. **Upuszczenie** - parsowanie ID celu (assigneeId-hour)
+3. **Obliczanie nowego czasu** - na podstawie slotu docelowego
+4. **Zachowanie czasu trwania** - jeśli zadanie ma endTime
+5. **Aktualizacja przypisania** - zmiana assignee przy upuszczeniu na inną osobę
+
+#### API aktualizacji:
+- **PATCH /api/tasks/[taskId]** - aktualizacja startTime, endTime, assigneeId
+- **Optymistyczne aktualizacje** - natychmiastowe odświeżenie UI
+- **Obsługa błędów** - rollback w przypadku niepowodzenia
+
+#### Przykłady działania drag and drop:
+
+**Scenariusz 1: Przesunięcie zadania w czasie**
+- Zadanie 9:00-11:00 → przeciągnięcie na 14:00
+- Rezultat: zadanie 14:00-16:00 (zachowany czas trwania)
+
+**Scenariusz 2: Zmiana przypisania**
+- Zadanie Użytkownika A → przeciągnięcie na kolumnę Użytkownika B
+- Rezultat: zmiana assigneeId + zachowanie czasu
+
+**Scenariusz 3: Zadanie bez endTime**
+- Zadanie tylko z startTime → przeciągnięcie
+- Rezultat: nowy startTime, endTime ustawiony na +1 godzina
+
+### Optimistic Updates i Powiadomienia
+
+#### Optimistic UI:
+- **Natychmiastowe aktualizacje** - UI aktualizuje się przed potwierdzeniem z serwera
+- **State optimisticTasks** - lokalna kopia zadań z natychmiastowymi zmianami
+- **Rollback na błąd** - przywrócenie oryginalnego stanu przy niepowodzeniu
+- **Wizualny feedback** - animacja pulse dla aktualizowanych zadań
+
+#### Powiadomienia Sonner:
+- **Toast loading** - "Przenoszenie zadania na 14:00 (Jan)..." podczas operacji
+- **Toast success** - "Zadanie przeniesione na 14:00" po sukcesie
+- **Toast error** - "Nie udało się przenieść zadania" przy błędzie
+- **Unikalne ID** - każdy toast ma ID `move-task-${taskId}` dla zastępowania
+
+#### Przepływ optimistic updates:
+1. **Rozpoczęcie drag** - zapisanie activeTask
+2. **Drop** - natychmiastowa aktualizacja optimisticTasks
+3. **Loading toast** - wyświetlenie powiadomienia o trwającej operacji
+4. **API call** - wysłanie żądania do serwera
+5. **Success/Error** - aktualizacja toast + ewentualny rollback
+6. **Cleanup** - usunięcie z updatingTasks
+
+#### Wizualny feedback:
+- **Opacity 0.7** - zadania w trakcie aktualizacji
+- **Animate pulse** - pulsująca animacja dla updatingTasks
+- **Disabled click** - brak możliwości kliknięcia podczas aktualizacji
+- **Cursor grab** - wskazanie możliwości przeciągania
+
+#### Synchronizacja stanu:
+- **useEffect** - synchronizacja optimisticTasks z props.tasks
+- **updatingTasks Set** - śledzenie zadań w trakcie aktualizacji
+- **Rollback mechanism** - przywrócenie originalTask przy błędzie

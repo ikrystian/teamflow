@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -17,11 +17,25 @@ import {
 import { type Task } from "@/types"
 import { format, addDays, subDays, startOfDay, endOfDay, isSameDay } from "date-fns"
 import { pl } from "date-fns/locale"
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  useDroppable,
+  useDraggable,
+} from "@dnd-kit/core"
+import { toast } from "sonner"
 
 interface ProjectDailyViewProps {
   tasks: Task[]
   onTaskClick?: (task: Task) => void
   onCreateTask?: () => void
+  onTaskUpdate?: (taskId: string, updates: { startTime?: string; endTime?: string }) => Promise<void>
   teamMembers: Array<{
     id: string
     name: string
@@ -41,10 +55,29 @@ export function ProjectDailyView({
   tasks,
   onTaskClick,
   onCreateTask,
+  onTaskUpdate,
   teamMembers,
   className
 }: ProjectDailyViewProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const [activeTask, setActiveTask] = useState<TaskWithTime | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const [optimisticTasks, setOptimisticTasks] = useState<Task[]>(tasks)
+  const [updatingTasks, setUpdatingTasks] = useState<Set<string>>(new Set())
+
+  // Update optimistic tasks when props tasks change
+  useEffect(() => {
+    setOptimisticTasks(tasks)
+  }, [tasks])
+
+  // Configure drag sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Require 8px movement before drag starts
+      },
+    })
+  )
 
   // Generate time slots (8:00 - 18:00 in 1-hour intervals)
   const timeSlots = useMemo(() => {
@@ -59,9 +92,9 @@ export function ProjectDailyView({
     return slots
   }, [])
 
-  // Filter tasks for selected date
+  // Filter tasks for selected date (use optimistic tasks for immediate UI updates)
   const tasksForDate = useMemo(() => {
-    return tasks.filter(task => {
+    return optimisticTasks.filter(task => {
       // Check if task has startTime or endTime on selected date
       if (task.startTime && isSameDay(new Date(task.startTime), selectedDate)) {
         return true
@@ -95,7 +128,7 @@ export function ProjectDailyView({
 
       return taskWithTime
     })
-  }, [tasks, selectedDate])
+  }, [optimisticTasks, selectedDate])
 
   // Group tasks by assignee
   const tasksByAssignee = useMemo(() => {
@@ -248,6 +281,128 @@ export function ProjectDailyView({
     return layouts
   }
 
+  // Handle drag start
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event
+    const task = tasksForDate.find(t => t.id === active.id)
+    if (task) {
+      setActiveTask(task)
+      setIsDragging(true)
+    }
+  }
+
+  // Handle drag end
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event
+    setActiveTask(null)
+    setIsDragging(false)
+
+    if (!over || !onTaskUpdate) return
+
+    const taskId = active.id as string
+    const task = tasksForDate.find(t => t.id === taskId)
+    if (!task) return
+
+    // Parse drop target (format: "assignee-hour" or "assignee-hour-minute")
+    const dropId = over.id as string
+    const [assigneeId, hourStr, minuteStr] = dropId.split('-')
+
+    if (!hourStr) return
+
+    const hour = parseInt(hourStr)
+    const minute = minuteStr ? parseInt(minuteStr) : 0
+
+    // Calculate new start time
+    const newStartTime = new Date(selectedDate)
+    newStartTime.setHours(hour, minute, 0, 0)
+
+    // Calculate new end time (preserve duration if exists)
+    let newEndTime: Date | undefined
+    if (task.startTime && task.endTime) {
+      const originalStart = new Date(task.startTime)
+      const originalEnd = new Date(task.endTime)
+      const duration = originalEnd.getTime() - originalStart.getTime()
+      newEndTime = new Date(newStartTime.getTime() + duration)
+    } else if (task.endTime) {
+      // If only endTime exists, set it to 1 hour after new start
+      newEndTime = new Date(newStartTime.getTime() + 60 * 60 * 1000)
+    }
+
+    // Prepare updates
+    const updates: { startTime?: string; endTime?: string; assigneeId?: string } = {
+      startTime: newStartTime.toISOString(),
+    }
+
+    if (newEndTime) {
+      updates.endTime = newEndTime.toISOString()
+    }
+
+    // Check if assignee is changing
+    const isAssigneeChanging = assigneeId !== 'unassigned' && assigneeId !== task.assignee?.id
+    const isUnassigning = assigneeId === 'unassigned' && task.assignee?.id
+
+    if (isAssigneeChanging) {
+      updates.assigneeId = assigneeId
+    } else if (isUnassigning) {
+      updates.assigneeId = undefined
+    }
+
+    // Store original task for potential rollback
+    const originalTask = { ...task }
+
+    // Optimistic update - immediately update UI
+    setUpdatingTasks(prev => new Set(prev).add(taskId))
+    setOptimisticTasks(prev =>
+      prev.map(t => t.id === taskId ? {
+        ...t,
+        startTime: updates.startTime || t.startTime,
+        endTime: updates.endTime || t.endTime,
+        assignee: updates.assigneeId !== undefined
+          ? (updates.assigneeId ? teamMembers.find(m => m.id === updates.assigneeId) : undefined)
+          : t.assignee
+      } : t)
+    )
+
+    // Show loading toast
+    const timeStr = format(newStartTime, 'HH:mm')
+    const assigneeName = assigneeId === 'unassigned'
+      ? 'nieprzypisane'
+      : teamMembers.find(m => m.id === assigneeId)?.name || 'nieznany'
+
+    toast.loading(`Przenoszenie zadania na ${timeStr} (${assigneeName})...`, {
+      id: `move-task-${taskId}`,
+      duration: 3000
+    })
+
+    try {
+      await onTaskUpdate(taskId, updates)
+
+      // Success toast
+      toast.success(`Zadanie przeniesione na ${timeStr}`, {
+        id: `move-task-${taskId}`
+      })
+    } catch (error) {
+      console.error('Failed to update task:', error)
+
+      // Rollback optimistic update on error
+      setOptimisticTasks(prev =>
+        prev.map(t => t.id === taskId ? originalTask : t)
+      )
+
+      // Error toast
+      toast.error('Nie udało się przenieść zadania. Spróbuj ponownie.', {
+        id: `move-task-${taskId}`
+      })
+    } finally {
+      // Remove from updating tasks
+      setUpdatingTasks(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(taskId)
+        return newSet
+      })
+    }
+  }
+
   const getPriorityColor = (priority?: string) => {
     switch (priority) {
       case 'high': return 'bg-red-100 text-red-800 border-red-200'
@@ -257,9 +412,95 @@ export function ProjectDailyView({
     }
   }
 
+  // Draggable Task Component
+  const DraggableTask = ({ task, layout, top, height }: {
+    task: TaskWithTime
+    layout: { width: number; left: number; column: number }
+    top: number
+    height: number
+  }) => {
+    const isUpdating = updatingTasks.has(task.id)
+    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+      id: task.id,
+    })
+
+    const style = {
+      transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+      opacity: isDragging ? 0.5 : isUpdating ? 0.7 : 1,
+      zIndex: isDragging ? 1000 : 10 + layout.column,
+    }
+
+    return (
+      <div
+        ref={setNodeRef}
+        {...listeners}
+        {...attributes}
+        className={`absolute p-2 rounded-md border cursor-grab active:cursor-grabbing hover:shadow-sm transition-all pointer-events-auto ${getPriorityColor(task.priority)} ${isUpdating ? 'animate-pulse' : ''}`}
+        style={{
+          top: `${top}px`,
+          height: `${height - 4}px`,
+          left: `${layout.left}%`,
+          width: `${layout.width - 2}%`,
+          ...style
+        }}
+        onClick={() => {
+          if (!isDragging && !isUpdating) {
+            onTaskClick?.(task)
+          }
+        }}
+      >
+        <div className="text-xs font-medium truncate">{task.title}</div>
+        {(task.displayStartTime || task.displayEndTime) && (
+          <div className="flex items-center gap-1 mt-1">
+            <Clock className="h-3 w-3" />
+            <span className="text-xs">
+              {task.displayStartTime && task.displayEndTime
+                ? `${task.displayStartTime} - ${task.displayEndTime}`
+                : task.displayStartTime || task.displayEndTime
+              }
+            </span>
+          </div>
+        )}
+        {task.priority && height > 40 && layout.width > 30 && (
+          <Badge variant="secondary" className="text-xs mt-1">
+            {task.priority}
+          </Badge>
+        )}
+      </div>
+    )
+  }
+
+  // Droppable Time Slot Component
+  const DroppableTimeSlot = ({ assigneeId, hour, children }: {
+    assigneeId: string
+    hour: number
+    children: React.ReactNode
+  }) => {
+    const { setNodeRef, isOver } = useDroppable({
+      id: `${assigneeId}-${hour}`,
+    })
+
+    return (
+      <div
+        ref={setNodeRef}
+        className={`min-h-[50px] p-1 transition-colors ${
+          isOver ? 'bg-blue-50 border-blue-200 border-dashed border-2' : ''
+        }`}
+      >
+        {children}
+      </div>
+    )
+  }
+
   return (
-    <Card className={className}>
-      <CardHeader>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <Card className={className}>
+        <CardHeader>
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
@@ -345,9 +586,9 @@ export function ProjectDailyView({
                     </div>
                     <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Object.keys(tasksByAssignee).length}, 1fr)` }}>
                       {Object.keys(tasksByAssignee).map(assigneeId => (
-                        <div key={`${assigneeId}-${hour}`} className="min-h-[50px] p-1">
-                          {/* Empty slot for background grid */}
-                        </div>
+                        <DroppableTimeSlot key={`${assigneeId}-${hour}`} assigneeId={assigneeId} hour={hour}>
+                          <div></div>
+                        </DroppableTimeSlot>
                       ))}
                     </div>
                   </div>
@@ -375,36 +616,13 @@ export function ProjectDailyView({
                             const layout = taskLayouts[task.id] || { width: 100, left: 0, column: 0 }
 
                             return (
-                              <div
+                              <DraggableTask
                                 key={task.id}
-                                className={`absolute p-2 rounded-md border cursor-pointer hover:shadow-sm transition-shadow pointer-events-auto ${getPriorityColor(task.priority)}`}
-                                style={{
-                                  top: `${top}px`,
-                                  height: `${height - 4}px`, // Subtract padding
-                                  left: `${layout.left}%`,
-                                  width: `${layout.width - 2}%`, // Subtract small margin between tasks
-                                  zIndex: 10 + layout.column // Higher z-index for later columns
-                                }}
-                                onClick={() => onTaskClick?.(task)}
-                              >
-                                <div className="text-xs font-medium truncate">{task.title}</div>
-                                {(task.displayStartTime || task.displayEndTime) && (
-                                  <div className="flex items-center gap-1 mt-1">
-                                    <Clock className="h-3 w-3" />
-                                    <span className="text-xs">
-                                      {task.displayStartTime && task.displayEndTime
-                                        ? `${task.displayStartTime} - ${task.displayEndTime}`
-                                        : task.displayStartTime || task.displayEndTime
-                                      }
-                                    </span>
-                                  </div>
-                                )}
-                                {task.priority && height > 40 && layout.width > 30 && (
-                                  <Badge variant="secondary" className="text-xs mt-1">
-                                    {task.priority}
-                                  </Badge>
-                                )}
-                              </div>
+                                task={task}
+                                layout={layout}
+                                top={top}
+                                height={height}
+                              />
                             )
                           })}
                         </div>
@@ -434,5 +652,25 @@ export function ProjectDailyView({
         )}
       </CardContent>
     </Card>
+
+    <DragOverlay>
+      {activeTask ? (
+        <div className={`p-2 rounded-md border shadow-lg opacity-90 ${getPriorityColor(activeTask.priority)}`}>
+          <div className="text-xs font-medium truncate">{activeTask.title}</div>
+          {(activeTask.displayStartTime || activeTask.displayEndTime) && (
+            <div className="flex items-center gap-1 mt-1">
+              <Clock className="h-3 w-3" />
+              <span className="text-xs">
+                {activeTask.displayStartTime && activeTask.displayEndTime
+                  ? `${activeTask.displayStartTime} - ${activeTask.displayEndTime}`
+                  : activeTask.displayStartTime || activeTask.displayEndTime
+                }
+              </span>
+            </div>
+          )}
+        </div>
+      ) : null}
+    </DragOverlay>
+  </DndContext>
   )
 }

@@ -497,6 +497,27 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
           tasks={getFilteredTasks(project.tasks)}
           onTaskClick={handleTaskDetails}
           onCreateTask={() => setCreateTaskDialogOpen(true)}
+          onTaskUpdate={async (taskId: string, updates: { startTime?: string; endTime?: string; assigneeId?: string }) => {
+            try {
+              const response = await fetch(`/api/tasks/${taskId}`, {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updates),
+              })
+
+              if (!response.ok) {
+                throw new Error('Failed to update task')
+              }
+
+              // Refresh tasks
+              handleTaskUpdated()
+            } catch (error) {
+              console.error('Error updating task:', error)
+              throw error
+            }
+          }}
           teamMembers={project.team.members}
         />
       ) : (
