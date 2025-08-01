@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { isAdmin } from "@/lib/admin"
 import type { Session } from "next-auth"
 
 // GET /api/system-changes - Get visible system changes (authenticated users)
@@ -16,11 +17,15 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get("limit") || "10")
 
-    // Get only visible system changes, ordered by creation date (newest first)
+    // Check if user is admin
+    const adminStatus = await isAdmin()
+    
+    // Admins can see all changes, regular users only see visible ones
+    const whereClause = adminStatus ? {} : { isVisible: true }
+
+    // Get system changes based on user permissions, ordered by creation date (newest first)
     const systemChanges = await prisma.systemChange.findMany({
-      where: {
-        isVisible: true
-      },
+      where: whereClause,
       include: {
         createdBy: {
           select: {

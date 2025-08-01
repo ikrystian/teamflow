@@ -7,6 +7,16 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
+import { Input } from "@/components/ui/input"
+import { RichTextEditor } from "@/components/ui/rich-text-editor"
+import { DatePicker } from "@/components/ui/date-picker"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import {
   Calendar,
   User as UserIcon,
@@ -21,7 +31,9 @@ import {
   Trash2,
   FileText,
   MessageSquare,
-  ListTodo
+  ListTodo,
+  Check,
+  X
 } from "lucide-react"
 import { ImageGallery } from "@/components/ui/image-gallery"
 import { TaskComments } from "@/components/tasks/task-comments"
@@ -32,8 +44,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import type { Task, Todo } from "@/types"
-import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
+import type { Task, Todo, User } from "@/types"
+import { formatTaskDueDateWithRelative, dateToLocalDateString } from "@/lib/date-utils"
 
 interface TaskStatus {
   id: string
@@ -67,6 +79,17 @@ export function TaskDetailsContent({
   const [comments, setComments] = useState(task?.comments || [])
   const [todos, setTodos] = useState(task?.todos || [])
   const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
+  const [teamMembers, setTeamMembers] = useState<User[]>([])
+  
+  // Inline editing state
+  const [editingField, setEditingField] = useState<string | null>(null)
+  const [editTitle, setEditTitle] = useState(task.title)
+  const [editDescription, setEditDescription] = useState(task.description || "")
+  const [editPriority, setEditPriority] = useState(task.priority || "")
+  const [editDueDate, setEditDueDate] = useState(task.dueDate ? task.dueDate.split('T')[0] : "")
+  const [editAssigneeId, setEditAssigneeId] = useState(task.assignee?.id || "")
+  const [editEstimatedHours, setEditEstimatedHours] = useState(task.estimatedHours?.toString() || "")
+  const [saving, setSaving] = useState(false)
 
   // Fetch fresh task data when task changes
   useEffect(() => {
@@ -97,14 +120,39 @@ export function TaskDetailsContent({
       }
     }
 
+    const fetchTeamMembers = async () => {
+      if (task?.project?.team?.id) {
+        try {
+          const response = await fetch(`/api/teams/${task.project.team.id}/members`)
+          if (response.ok) {
+            const data = await response.json()
+            setTeamMembers(data.members || [])
+          }
+        } catch (error) {
+          console.error("Error fetching team members:", error)
+        }
+      }
+    }
+
     if (task?.id) {
       fetchTaskData()
       fetchTaskStatuses()
+      fetchTeamMembers()
     } else {
       setComments(task?.comments || [])
       setTodos(task?.todos || [])
     }
-  }, [task?.id, task?.comments, task?.todos])
+  }, [task?.id, task?.comments, task?.todos, task?.project?.team?.id])
+
+  // Update local state when task changes
+  useEffect(() => {
+    setEditTitle(task.title)
+    setEditDescription(task.description || "")
+    setEditPriority(task.priority || "")
+    setEditDueDate(task.dueDate ? task.dueDate.split('T')[0] : "")
+    setEditAssigneeId(task.assignee?.id || "")
+    setEditEstimatedHours(task.estimatedHours?.toString() || "")
+  }, [task])
 
   const handleCommentAdded = (newComment: { id: string; content: string; createdAt: string; author: { id: string; name: string; avatarUrl?: string } }) => {
     setComments(prev => [newComment, ...prev])
@@ -119,6 +167,64 @@ export function TaskDetailsContent({
     if (onTaskUpdated) {
       onTaskUpdated()
     }
+  }
+
+  const saveField = async (field: string, value: string | number | undefined) => {
+    if (!canEdit) return
+    
+    setSaving(true)
+    try {
+      const response = await fetch(`/api/tasks/${task.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          [field]: value
+        }),
+      })
+
+      if (response.ok) {
+        setEditingField(null)
+        onTaskUpdated?.()
+      } else {
+        console.error("Failed to update task field:", field)
+      }
+    } catch (error) {
+      console.error("Error updating task field:", field, error)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const cancelEdit = (field: string) => {
+    setEditingField(null)
+    // Reset to original values
+    switch (field) {
+      case 'title':
+        setEditTitle(task.title)
+        break
+      case 'description':
+        setEditDescription(task.description || "")
+        break
+      case 'priority':
+        setEditPriority(task.priority || "")
+        break
+      case 'dueDate':
+        setEditDueDate(task.dueDate ? task.dueDate.split('T')[0] : "")
+        break
+      case 'assigneeId':
+        setEditAssigneeId(task.assignee?.id || "")
+        break
+      case 'estimatedHours':
+        setEditEstimatedHours(task.estimatedHours?.toString() || "")
+        break
+    }
+  }
+
+  const startEdit = (field: string) => {
+    if (!canEdit) return
+    setEditingField(field)
   }
 
   const getPriorityColor = (priority?: string) => {
@@ -172,9 +278,47 @@ export function TaskDetailsContent({
     <div className="overflow-y-auto">
       {/* Header Section */}
       <div className="space-y-4">
-        <h2 className="text-2xl font-bold line-clamp-2">
-          {task.title}
-        </h2>
+        {editingField === 'title' ? (
+          <div className="flex items-center gap-2">
+            <Input
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              className="text-2xl font-bold h-12"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  saveField('title', editTitle.trim())
+                } else if (e.key === 'Escape') {
+                  cancelEdit('title')
+                }
+              }}
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => saveField('title', editTitle.trim())}
+              disabled={saving || !editTitle.trim()}
+            >
+              <Check className="h-4 w-4" />
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => cancelEdit('title')}
+              disabled={saving}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : (
+          <h2 
+            className={`text-2xl font-bold line-clamp-2 ${canEdit ? 'cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors' : ''}`}
+            onClick={() => startEdit('title')}
+            title={canEdit ? "Kliknij aby edytować tytuł" : undefined}
+          >
+            {task.title}
+          </h2>
+        )}
         <div className="flex items-center gap-2 flex-wrap">
           {task.project ? (
             <>
@@ -190,10 +334,73 @@ export function TaskDetailsContent({
               Brak projektu
             </Badge>
           )}
-          {task.priority && (
-            <Badge variant="secondary" className={getPriorityColor(task.priority)}>
-              {task.priority === "Low" ? "Niski" : task.priority === "Medium" ? "Średni" : "Wysoki"}
-            </Badge>
+          {editingField === 'priority' ? (
+            <div className="flex items-center gap-2">
+              <Select value={editPriority} onValueChange={setEditPriority}>
+                <SelectTrigger className="h-8 w-32">
+                  <SelectValue placeholder="Priorytet" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Brak priorytetu</SelectItem>
+                  <SelectItem value="Low">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      <span>Niski</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="Medium">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                      <span>Średni</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="High">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                      <span>Wysoki</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => saveField('priority', editPriority || undefined)}
+                disabled={saving}
+                className="h-7 w-7 p-0"
+              >
+                <Check className="h-3 w-3" />
+              </Button>
+              <Button
+                size="sm"
+                variant="outline" 
+                onClick={() => cancelEdit('priority')}
+                disabled={saving}
+                className="h-7 w-7 p-0"
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+          ) : (
+            task.priority ? (
+              <Badge 
+                variant="secondary" 
+                className={`${getPriorityColor(task.priority)} ${canEdit ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+                onClick={() => startEdit('priority')}
+                title={canEdit ? "Kliknij aby zmienić priorytet" : undefined}
+              >
+                {task.priority === "Low" ? "Niski" : task.priority === "Medium" ? "Średni" : "Wysoki"}
+              </Badge>
+            ) : canEdit ? (
+              <Badge 
+                variant="outline" 
+                className="cursor-pointer hover:bg-muted/50 transition-colors text-muted-foreground"
+                onClick={() => startEdit('priority')}
+                title="Kliknij aby ustawić priorytet"
+              >
+                Brak priorytetu
+              </Badge>
+            ) : null
           )}
           {(() => {
             const taskStatus = getTaskStatus(task)
@@ -277,19 +484,51 @@ export function TaskDetailsContent({
         <div className="flex-1 overflow-y-auto mt-4">
           <TabsContent value="overview" className="space-y-6 mt-0">
             {/* Description */}
-            {task.description && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Opis zadania</CardTitle>
-                </CardHeader>
-                <CardContent>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Opis zadania</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {editingField === 'description' ? (
+                  <div className="space-y-3">
+                    <div className="border rounded-md">
+                      <RichTextEditor
+                        content={editDescription}
+                        onChange={setEditDescription}
+                        placeholder="Wprowadź szczegółowy opis zadania..."
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => saveField('description', editDescription.trim() || undefined)}
+                        disabled={saving}
+                      >
+                        <Check className="h-4 w-4" />
+                        Zapisz
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => cancelEdit('description')}
+                        disabled={saving}
+                      >
+                        <X className="h-4 w-4" />
+                        Anuluj
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
                   <div
-                    className="prose prose-sm max-w-none text-muted-foreground"
-                    dangerouslySetInnerHTML={{ __html: task.description }}
+                    className={`prose prose-sm max-w-none text-muted-foreground ${canEdit ? 'cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors' : ''} ${!task.description ? 'text-muted-foreground italic' : ''}`}
+                    onClick={() => startEdit('description')}
+                    title={canEdit ? "Kliknij aby edytować opis" : undefined}
+                    dangerouslySetInnerHTML={{ __html: task.description || "Brak opisu - kliknij aby dodać" }}
                   />
-                </CardContent>
-              </Card>
-            )}
+                )}
+              </CardContent>
+            </Card>
 
             {/* Images */}
             {task.images && task.images.length > 0 && (
@@ -322,36 +561,83 @@ export function TaskDetailsContent({
                       <UserIcon className="h-4 w-4" />
                       Przypisany
                     </div>
-                    {task.assignee ? (
-                      <div className="flex items-center gap-3">
-                        {task.assignee.avatarUrl ? (
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <ClickableAvatar
-                                userId={task.assignee.id}
-                                avatarUrl={task.assignee.avatarUrl}
-                                name={task.assignee.name}
-                                size="sm"
-                              />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <span className="font-medium">{task.assignee.name}</span>
-                            </TooltipContent>
-                          </Tooltip>
-                        ) : (
-                          <>
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage src={task.assignee.avatarUrl} />
-                              <AvatarFallback className="text-sm">
-                                {task.assignee.name?.charAt(0) || "U"}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="font-medium">{task.assignee.name}</span>
-                          </>
-                        )}
+                    {editingField === 'assigneeId' ? (
+                      <div className="space-y-2">
+                        <Select value={editAssigneeId} onValueChange={setEditAssigneeId}>
+                          <SelectTrigger className="h-10">
+                            <SelectValue placeholder="Wybierz przypisanego" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">Nieprzypisany</SelectItem>
+                            {teamMembers.map((member) => (
+                              <SelectItem key={member.id} value={member.id}>
+                                <div className="flex items-center space-x-2">
+                                  <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
+                                    {member.name?.charAt(0).toUpperCase() || member.email?.charAt(0).toUpperCase()}
+                                  </div>
+                                  <span>{member.name || member.email}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => saveField('assigneeId', editAssigneeId || undefined)}
+                            disabled={saving}
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => cancelEdit('assigneeId')}
+                            disabled={saving}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     ) : (
-                      <span className="text-muted-foreground">Nieprzypisany</span>
+                      <div 
+                        className={`${canEdit ? 'cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors' : ''}`}
+                        onClick={() => startEdit('assigneeId')}
+                        title={canEdit ? "Kliknij aby zmienić przypisanego" : undefined}
+                      >
+                        {task.assignee ? (
+                          <div className="flex items-center gap-3">
+                            {task.assignee.avatarUrl ? (
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <ClickableAvatar
+                                    userId={task.assignee.id}
+                                    avatarUrl={task.assignee.avatarUrl}
+                                    name={task.assignee.name}
+                                    size="sm"
+                                  />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <span className="font-medium">{task.assignee.name}</span>
+                                </TooltipContent>
+                              </Tooltip>
+                            ) : (
+                              <>
+                                <Avatar className="h-8 w-8">
+                                  <AvatarImage src={task.assignee.avatarUrl} />
+                                  <AvatarFallback className="text-sm">
+                                    {task.assignee.name?.charAt(0) || "U"}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="font-medium">{task.assignee.name}</span>
+                              </>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">Nieprzypisany</span>
+                        )}
+                      </div>
                     )}
                   </div>
 
@@ -400,39 +686,132 @@ export function TaskDetailsContent({
                       <Calendar className="h-4 w-4" />
                       Termin wykonania
                     </div>
-                    {task.dueDate ? (
-                      <div className={`flex items-center gap-2 ${
-                        isOverdue(task.dueDate) ? "text-destructive" : "text-foreground"
-                      }`}>
-                        {isOverdue(task.dueDate) && <AlertCircle className="h-4 w-4" />}
-                        <span className="font-medium">
-                          {formatTaskDueDateWithRelative(task.dueDate)}
-                        </span>
+                    {editingField === 'dueDate' ? (
+                      <div className="space-y-2">
+                        <DatePicker
+                          value={editDueDate ? new Date(editDueDate) : undefined}
+                          onChange={(date) => setEditDueDate(date ? dateToLocalDateString(date) : '')}
+                          className="rounded-lg border shadow-sm"
+                        />
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => saveField('dueDate', editDueDate || undefined)}
+                            disabled={saving}
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => cancelEdit('dueDate')}
+                            disabled={saving}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     ) : (
-                      <span className="text-muted-foreground">Brak terminu</span>
+                      <div 
+                        className={`${canEdit ? 'cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors' : ''}`}
+                        onClick={() => startEdit('dueDate')}
+                        title={canEdit ? "Kliknij aby zmienić termin" : undefined}
+                      >
+                        {task.dueDate ? (
+                          <div className={`flex items-center gap-2 ${
+                            isOverdue(task.dueDate) ? "text-destructive" : "text-foreground"
+                          }`}>
+                            {isOverdue(task.dueDate) && <AlertCircle className="h-4 w-4" />}
+                            <span className="font-medium">
+                              {formatTaskDueDateWithRelative(task.dueDate)}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">Brak terminu</span>
+                        )}
+                      </div>
                     )}
                   </div>
 
                   {/* Time Tracking */}
-                  {task.estimatedHours && (
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                        <Clock className="h-4 w-4" />
-                        Czas pracy
-                      </div>
-                      <div className="space-y-1">
-                        <div className="text-sm">
-                          <span className="font-medium">{totalLoggedHours.toFixed(1)}h</span>
-                          <span className="text-muted-foreground"> / {task.estimatedHours}h</span>
-                        </div>
-                        <Progress
-                          value={(totalLoggedHours / task.estimatedHours) * 100}
-                          className="h-2"
-                        />
-                      </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                      <Clock className="h-4 w-4" />
+                      Czas pracy
                     </div>
-                  )}
+                    {editingField === 'estimatedHours' ? (
+                      <div className="space-y-2">
+                        <Select value={editEstimatedHours} onValueChange={setEditEstimatedHours}>
+                          <SelectTrigger className="h-10">
+                            <SelectValue placeholder="Wybierz szacowany czas" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">Brak szacunku</SelectItem>
+                            <SelectItem value="0.5">30 minut</SelectItem>
+                            <SelectItem value="1">1 godzina</SelectItem>
+                            <SelectItem value="1.5">1.5 godziny</SelectItem>
+                            <SelectItem value="2">2 godziny</SelectItem>
+                            <SelectItem value="2.5">2.5 godziny</SelectItem>
+                            <SelectItem value="3">3 godziny</SelectItem>
+                            <SelectItem value="3.5">3.5 godziny</SelectItem>
+                            <SelectItem value="4">4 godziny</SelectItem>
+                            <SelectItem value="4.5">4.5 godziny</SelectItem>
+                            <SelectItem value="5">5 godzin</SelectItem>
+                            <SelectItem value="5.5">5.5 godziny</SelectItem>
+                            <SelectItem value="6">6 godzin</SelectItem>
+                            <SelectItem value="6.5">6.5 godziny</SelectItem>
+                            <SelectItem value="7">7 godzin</SelectItem>
+                            <SelectItem value="7.5">7.5 godziny</SelectItem>
+                            <SelectItem value="8">8 godzin</SelectItem>
+                            <SelectItem value="12">12 godzin</SelectItem>
+                            <SelectItem value="16">16 godzin</SelectItem>
+                            <SelectItem value="24">24 godziny</SelectItem>
+                            <SelectItem value="40">40 godzin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => saveField('estimatedHours', editEstimatedHours ? parseFloat(editEstimatedHours) : undefined)}
+                            disabled={saving}
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => cancelEdit('estimatedHours')}
+                            disabled={saving}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div 
+                        className={`${canEdit ? 'cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors' : ''}`}
+                        onClick={() => startEdit('estimatedHours')}
+                        title={canEdit ? "Kliknij aby zmienić szacowany czas" : undefined}
+                      >
+                        {task.estimatedHours ? (
+                          <div className="space-y-1">
+                            <div className="text-sm">
+                              <span className="font-medium">{totalLoggedHours.toFixed(1)}h</span>
+                              <span className="text-muted-foreground"> / {task.estimatedHours}h</span>
+                            </div>
+                            <Progress
+                              value={(totalLoggedHours / task.estimatedHours) * 100}
+                              className="h-2"
+                            />
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">Brak szacunku</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
 
                   {/* Created */}
                   <div className="space-y-2">

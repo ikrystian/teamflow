@@ -9,7 +9,9 @@ import { Skeleton } from "@/components/ui/skeleton"
 import {
   XCircle,
   RefreshCw,
-  Clock
+  Clock,
+  EyeOff,
+  Eye
 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { pl } from "date-fns/locale"
@@ -97,6 +99,28 @@ export function RecentChanges({ limit = 5, onUnreadCountChange }: RecentChangesP
     setChanges(prev => [newChange, ...prev])
   }
 
+  const toggleChangeVisibility = async (changeId: string, currentVisibility: boolean) => {
+    try {
+      const response = await fetch(`/api/system-changes/${changeId}/visibility`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ isVisible: !currentVisibility }),
+      })
+
+      if (response.ok) {
+        setChanges(prev => prev.map(change => 
+          change.id === changeId 
+            ? { ...change, isVisible: !currentVisibility }
+            : change
+        ))
+      }
+    } catch (error) {
+      console.error('Error toggling change visibility:', error)
+    }
+  }
+
 
 
   if (loading) {
@@ -173,14 +197,33 @@ export function RecentChanges({ limit = 5, onUnreadCountChange }: RecentChangesP
       )}
 
       {changes.map((change) => (
-        <Card key={change.id} className="hover:shadow-sm transition-shadow">
+        <Card key={change.id} className={`hover:shadow-sm transition-shadow ${!change.isVisible ? 'opacity-50' : ''}`}>
           <CardContent className="py-0 px-2">
             <div className="space-y-3">
-
+              {/* Admin controls */}
+              {isAdmin && (
+                <div className="flex justify-end pt-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => toggleChangeVisibility(change.id, change.isVisible)}
+                    className="h-6 w-6 p-0"
+                  >
+                    {change.isVisible ? (
+                      <Eye className="h-3 w-3" />
+                    ) : (
+                      <EyeOff className="h-3 w-3" />
+                    )}
+                  </Button>
+                </div>
+              )}
 
               {/* Title */}
               <h4 className="font-medium text-sm leading-tight">
                 {change.title}
+                {!change.isVisible && (
+                  <span className="ml-2 text-xs text-muted-foreground">(ukryte)</span>
+                )}
               </h4>
 
               {/* Description */}
