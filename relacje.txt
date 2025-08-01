@@ -189,6 +189,7 @@ Task {
 - **Toast success** - "Zadanie przeniesione na 14:00" po sukcesie
 - **Toast error** - "Nie udało się przenieść zadania" przy błędzie
 - **Unikalne ID** - każdy toast ma ID `move-task-${taskId}` dla zastępowania
+- **NAPRAWIONO** - Problem z nie znikającymi spinnerami w TasksKanbanBoard (2025-08-01)
 
 #### Przepływ optimistic updates:
 1. **Rozpoczęcie drag** - zapisanie activeTask

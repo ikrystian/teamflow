@@ -639,10 +639,14 @@ export function TasksKanbanBoard({
           } : t)
         )
         console.error("Failed to update task status")
-        toast.error("Nie udało się przenieść zadania. Spróbuj ponownie.")
+        toast.error("Nie udało się przenieść zadania. Spróbuj ponownie.", {
+          id: `move-task-${taskId}`
+        })
       } else {
         // Success - keep optimistic update and refresh data in background
-        toast.success(`Zadanie przeniesione do "${newTaskStatus.name}"`)
+        toast.success(`Zadanie przeniesione do "${newTaskStatus.name}"`, {
+          id: `move-task-${taskId}`
+        })
         onTaskUpdated()
       }
     } catch (error) {
@@ -654,7 +658,9 @@ export function TasksKanbanBoard({
         } : t)
       )
       console.error("Error updating task status:", error)
-      toast.error("Wystąpił błąd podczas przenoszenia zadania")
+      toast.error("Wystąpił błąd podczas przenoszenia zadania", {
+        id: `move-task-${taskId}`
+      })
     } finally {
       setUpdatingTasks(prev => {
         const newSet = new Set(prev)
@@ -717,10 +723,14 @@ export function TasksKanbanBoard({
           } : t)
         )
         console.error("Failed to mark task as complete")
-        toast.error("Nie udało się oznaczyć zadania jako zakończone")
+        toast.error("Nie udało się oznaczyć zadania jako zakończone", {
+          id: `complete-task-${task.id}`
+        })
       } else {
         // Success - keep optimistic update and refresh data in background
-        toast.success("Zadanie oznaczone jako zakończone")
+        toast.success("Zadanie oznaczone jako zakończone", {
+          id: `complete-task-${task.id}`
+        })
         onTaskUpdated()
       }
     } catch (error) {
@@ -732,7 +742,9 @@ export function TasksKanbanBoard({
         } : t)
       )
       console.error("Error marking task as complete:", error)
-      toast.error("Wystąpił błąd podczas oznaczania zadania")
+      toast.error("Wystąpił błąd podczas oznaczania zadania", {
+        id: `complete-task-${task.id}`
+      })
     } finally {
       setUpdatingTasks(prev => {
         const newSet = new Set(prev)
