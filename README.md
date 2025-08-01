@@ -178,14 +178,31 @@ Aplikacja wykorzystuje **shadcn/ui** jako podstawowy system designu z następuj�
 
 ### Seeding bazy danych:
 ```bash
+# Dodanie danych testowych (zachowuje istniejące dane, używa upsert)
 npm run db:seed
+
+# Pełny reset bazy danych (może nie działać ze wszystkimi konfiguracjami PostgreSQL)
+npm run db:reset
 ```
 
-Tworzy przykładowe dane:
-- Użytkownika testowego
-- Zespół przykładowy
-- Projekty z zadaniami
-- Statusy zadań
+> **Uwaga:** Skrypt `db:seed` używa operacji `upsert`, więc można go bezpiecznie uruchamiać wielokrotnie. Istniejące dane zostaną zachowane lub zaktualizowane.
+
+Tworzy kompleksowe dane testowe:
+- **6 użytkowników** z różnymi rolami i pełnymi profilami
+- **3 zespoły specjalistyczne** (Development, Design, DevOps)
+- **4 różnorodne projekty** z pełną konfiguracją
+- **15 zadań** we wszystkich możliwych statusach
+- **6 statusów zadań** z kolorami (To Do, In Progress, In Review, Testing, Done, Blocked)
+- **28 subtasków** z szczegółowym podziałem pracy
+- **25 wpisów czasu** z realistycznymi godzinami pracy
+- **8 komentarzy** pokazujących współpracę zespołową
+- **6 dokumentów projektowych** różnych typów
+- **6 wpisów changelog** z komunikatami systemowymi
+- **8 todos** z listami kontrolnymi
+
+**Konta testowe:**
+- Administrator: `krystian@bpcoders.pl` / `admin123`
+- Użytkownicy: `john@example.com`, `jane@example.com`, `bob@example.com`, `alice@example.com`, `charlie@example.com` / `password123`
 
 ## 📱 Responsywność
 
