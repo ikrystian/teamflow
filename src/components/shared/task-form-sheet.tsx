@@ -4,7 +4,9 @@ import {
   Sheet,
   SheetContent,
   SheetHeader,
+  SheetTitle,
 } from "@/components/ui/sheet"
+import { VisuallyHidden } from "@/components/ui/visually-hidden"
 import { TaskFormContent } from "./task-form-content"
 import type { Task, User } from "@/types"
 
@@ -62,6 +64,11 @@ export function TaskFormSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[600px] sm:max-w-[600px] overflow-hidden flex flex-col">
         <SheetHeader className="pb-4 border-b">
+          <VisuallyHidden>
+            <SheetTitle>
+              {mode === "create" ? "Utwórz nowe zadanie" : `Edytuj zadanie: ${task?.title || ""}`}
+            </SheetTitle>
+          </VisuallyHidden>
           <div className="px-4 flex-1 overflow-y-auto">
             <TaskFormContent
               onTaskCreated={onTaskCreated}

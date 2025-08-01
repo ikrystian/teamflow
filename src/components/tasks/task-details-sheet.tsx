@@ -1,6 +1,7 @@
 "use client"
 
-import { Sheet, SheetContent, SheetHeader } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { VisuallyHidden } from "@/components/ui/visually-hidden"
 import { TaskDetailsContent } from "@/components/tasks/task-details-content"
 import type { Task } from "@/types"
 
@@ -31,6 +32,9 @@ export function TaskDetailsSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[800px] sm:max-w-[800px] overflow-hidden flex flex-col">
         <SheetHeader className="space-y-3 pb-4 border-b">
+          <VisuallyHidden>
+            <SheetTitle>Szczegóły zadania: {task.title}</SheetTitle>
+          </VisuallyHidden>
           <div className="px-4">
             <TaskDetailsContent
               task={task}

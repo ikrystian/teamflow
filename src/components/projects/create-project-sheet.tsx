@@ -4,7 +4,9 @@ import {
   Sheet,
   SheetContent,
   SheetHeader,
+  SheetTitle,
 } from "@/components/ui/sheet"
+import { VisuallyHidden } from "@/components/ui/visually-hidden"
 import { CreateProjectContent } from "./create-project-content"
 
 interface Team {
@@ -29,6 +31,9 @@ export function CreateProjectSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[500px] sm:max-w-[500px] overflow-hidden flex flex-col">
         <SheetHeader className="pb-4 border-b">
+          <VisuallyHidden>
+            <SheetTitle>Utwórz nowy projekt</SheetTitle>
+          </VisuallyHidden>
           <div className="px-4 flex-1 overflow-y-auto">
             <CreateProjectContent
               onProjectCreated={onProjectCreated}
