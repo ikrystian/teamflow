@@ -32,6 +32,7 @@ model User {
   timeEntries       TimeEntry[]
   teams             Team[]            @relation("TeamMembers")
   systemChanges     SystemChange[]    @relation("SystemChangeCreator")
+  systemChangeReads SystemChangeRead[]
   pushSubscriptions PushSubscription[]
 }
 
@@ -236,6 +237,18 @@ model SystemChange {
   updatedAt   DateTime @updatedAt
   createdById String
   createdBy   User     @relation("SystemChangeCreator", fields: [createdById], references: [id])
+  readBy      SystemChangeRead[]
+}
+
+model SystemChangeRead {
+  id        String       @id @default(cuid())
+  userId    String
+  changeId  String
+  readAt    DateTime     @default(now())
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  change    SystemChange @relation(fields: [changeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, changeId])
 }
 
 model PushSubscription {

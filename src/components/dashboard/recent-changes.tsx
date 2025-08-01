@@ -18,9 +18,10 @@ import { SystemChangeFormTrigger } from "@/components/admin/system-change-form"
 
 interface RecentChangesProps {
   limit?: number
+  onUnreadCountChange?: (count: number) => void
 }
 
-export function RecentChanges({ limit = 5 }: RecentChangesProps) {
+export function RecentChanges({ limit = 5, onUnreadCountChange }: RecentChangesProps) {
   const { data: session } = useSession()
   const [changes, setChanges] = useState<SystemChange[]>([])
   const [loading, setLoading] = useState(true)
@@ -66,9 +67,31 @@ export function RecentChanges({ limit = 5 }: RecentChangesProps) {
     checkAdminStatus()
   }, [session])
 
+  const markAllAsRead = useCallback(async () => {
+    try {
+      const response = await fetch('/api/system-changes', {
+        method: 'POST'
+      })
+      
+      if (response.ok) {
+        // Update changes to mark them as read
+        setChanges(prev => prev.map(change => ({ ...change, isRead: true })))
+        // Notify parent component about unread count change
+        onUnreadCountChange?.(0)
+      }
+    } catch (error) {
+      console.error('Error marking changes as read:', error)
+    }
+  }, [onUnreadCountChange])
+
   useEffect(() => {
     fetchChanges()
   }, [limit, fetchChanges])
+
+  // Mark all as read when component mounts (when panel is opened)
+  useEffect(() => {
+    markAllAsRead()
+  }, [markAllAsRead])
 
   const handleChangeAdded = (newChange: SystemChange) => {
     setChanges(prev => [newChange, ...prev])
