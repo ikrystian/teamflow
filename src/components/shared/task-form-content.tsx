@@ -21,6 +21,7 @@ import { DatePicker } from "@/components/ui/date-picker"
 import { DateTimePicker } from "@/components/ui/datetime-picker"
 import { dateToLocalDateString } from "@/lib/date-utils"
 import type { Task, User, TaskStatus, TaskImage } from "@/types"
+import { ReminderSettings } from "@/components/tasks/reminder-settings"
 
 interface Project {
   id: string
@@ -85,6 +86,11 @@ export function TaskFormContent({
   const [startTime, setStartTime] = useState<Date | undefined>()
   const [endTime, setEndTime] = useState<Date | undefined>()
   const [estimatedHours, setEstimatedHours] = useState("")
+
+  // Reminder state
+  const [reminderEnabled, setReminderEnabled] = useState(false)
+  const [reminderType, setReminderType] = useState("hours")
+  const [reminderValue, setReminderValue] = useState(1)
 
   // Additional state
   const [, setTaskStatuses] = useState<TaskStatus[]>([])
@@ -164,6 +170,9 @@ export function TaskFormContent({
       setStartTime(undefined)
       setEndTime(undefined)
       setEstimatedHours("")
+      setReminderEnabled(false)
+      setReminderType("hours")
+      setReminderValue(1)
       setImages([])
       setPendingImages([])
       setError("")
@@ -178,6 +187,9 @@ export function TaskFormContent({
       setStartTime(task.startTime ? new Date(task.startTime) : undefined)
       setEndTime(task.endTime ? new Date(task.endTime) : undefined)
       setEstimatedHours(task.estimatedHours ? task.estimatedHours.toString() : "none")
+      setReminderEnabled((task as any).reminderEnabled || false)
+      setReminderType((task as any).reminderType || "hours")
+      setReminderValue((task as any).reminderValue || 1)
       setImages(task.images || [])
       setPendingImages([])
       setError("")
@@ -292,6 +304,12 @@ export function TaskFormContent({
     }
   }
 
+  const handleReminderChange = (enabled: boolean, type: string, value: number) => {
+    setReminderEnabled(enabled)
+    setReminderType(type)
+    setReminderValue(value)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -317,7 +335,10 @@ export function TaskFormContent({
             startTime: startTime ? startTime.toISOString() : undefined,
             endTime: endTime ? endTime.toISOString() : undefined,
             estimatedHours: estimatedHours ? parseFloat(estimatedHours) : undefined,
-            statusId: statusId || undefined
+            statusId: statusId || undefined,
+            reminderEnabled,
+            reminderType: reminderEnabled ? reminderType : undefined,
+            reminderValue: reminderEnabled ? reminderValue : undefined
           }),
         })
 
@@ -353,6 +374,9 @@ export function TaskFormContent({
             endTime: endTime ? endTime.toISOString() : undefined,
             estimatedHours: estimatedHours === "none" ? undefined : parseFloat(estimatedHours),
             projectId: selectedProjectId && selectedProjectId !== "no-project" ? selectedProjectId : undefined,
+            reminderEnabled,
+            reminderType: reminderEnabled ? reminderType : undefined,
+            reminderValue: reminderEnabled ? reminderValue : undefined,
           }),
         })
 
@@ -605,6 +629,15 @@ export function TaskFormContent({
               />
             </div>
           </div>
+
+          {/* Reminder Settings */}
+          <ReminderSettings
+            reminderEnabled={reminderEnabled}
+            reminderType={reminderType}
+            reminderValue={reminderValue}
+            dueDate={dueDate}
+            onReminderChange={handleReminderChange}
+          />
 
           {/* Images Section */}
           {isCreateMode ? (

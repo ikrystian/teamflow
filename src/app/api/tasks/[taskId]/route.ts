@@ -148,7 +148,7 @@ export async function PATCH(
     }
 
     const { taskId } = await params
-    const { title, description, statusId, priority, dueDate, startTime, endTime, assigneeId, estimatedHours, projectId } = await request.json()
+    const { title, description, statusId, priority, dueDate, startTime, endTime, assigneeId, estimatedHours, projectId, reminderEnabled, reminderType, reminderValue } = await request.json()
 
     // Fetch task to check permissions
     const existingTask = await prisma.task.findUnique({
@@ -317,6 +317,10 @@ export async function PATCH(
       assigneeId?: string;
       estimatedHours?: number;
       projectId?: string | null;
+      reminderEnabled?: boolean;
+      reminderType?: string | null;
+      reminderValue?: number | null;
+      reminderTime?: Date | null;
   } = {}
     if (title !== undefined) updateData.title = title
     if (description !== undefined) updateData.description = description
@@ -329,6 +333,29 @@ export async function PATCH(
     if (estimatedHours !== undefined) updateData.estimatedHours = estimatedHours
     if (projectId !== undefined) {
       updateData.projectId = (projectId === "no-project" || projectId === "") ? null : projectId
+    }
+
+    // Handle reminder fields
+    if (reminderEnabled !== undefined) {
+      updateData.reminderEnabled = reminderEnabled
+      updateData.reminderType = reminderEnabled ? reminderType : null
+      updateData.reminderValue = reminderEnabled ? reminderValue : null
+
+      // Oblicz reminderTime jeśli przypomnienie jest włączone
+      if (reminderEnabled && (dueDate !== undefined || existingTask.dueDate) && reminderType && reminderValue) {
+        const due = dueDate !== undefined ? (dueDate ? new Date(dueDate) : null) : existingTask.dueDate
+        if (due) {
+          const reminderTime = new Date(due)
+          if (reminderType === "hours") {
+            reminderTime.setHours(reminderTime.getHours() - reminderValue)
+          } else if (reminderType === "days") {
+            reminderTime.setDate(reminderTime.getDate() - reminderValue)
+          }
+          updateData.reminderTime = reminderTime
+        }
+      } else {
+        updateData.reminderTime = null
+      }
     }
 
     const task = await prisma.task.update({

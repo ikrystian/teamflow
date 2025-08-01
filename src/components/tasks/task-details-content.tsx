@@ -156,11 +156,11 @@ export function TaskDetailsContent({
     const due = new Date(dueDate)
     today.setHours(0, 0, 0, 0)
     due.setHours(0, 0, 0, 0)
-    
+
     // Task is overdue one day after the due date
     const overdueDate = new Date(due)
     overdueDate.setDate(due.getDate() + 1)
-    
+
     return today >= overdueDate
   }
 
@@ -169,7 +169,7 @@ export function TaskDetailsContent({
   const subtaskProgress = task.subtasks.length > 0 ? (completedSubtasks / task.subtasks.length) * 100 : 0
 
   return (
-    <>
+    <div className="overflow-y-auto">
       {/* Header Section */}
       <div className="space-y-4">
         <h2 className="text-2xl font-bold line-clamp-2">
@@ -252,7 +252,7 @@ export function TaskDetailsContent({
       </div>
 
       {/* Content Tabs */}
-      <Tabs defaultValue="overview" className="flex-1 overflow-hidden">
+      <Tabs defaultValue="overview" className="flex-1 overflow-auto">
         <TabsList className={`grid w-full ${showCommentsInTabs ? 'grid-cols-4' : 'grid-cols-3'}`}>
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
@@ -555,6 +555,6 @@ export function TaskDetailsContent({
           </TabsContent>
         </div>
       </Tabs>
-    </>
+    </div>
   )
 }

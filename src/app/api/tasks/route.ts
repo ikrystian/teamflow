@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { title, description, projectId, assigneeId, priority, dueDate, startTime, endTime, estimatedHours, statusId } = await request.json()
+    const { title, description, projectId, assigneeId, priority, dueDate, startTime, endTime, estimatedHours, statusId, reminderEnabled, reminderType, reminderValue } = await request.json()
 
     if (!title) {
       return NextResponse.json(
@@ -244,6 +244,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Oblicz reminderTime jeśli przypomnienie jest włączone
+    let reminderTime: Date | null = null
+    if (reminderEnabled && dueDate && reminderType && reminderValue) {
+      const due = new Date(dueDate)
+      reminderTime = new Date(due)
+
+      if (reminderType === "hours") {
+        reminderTime.setHours(reminderTime.getHours() - reminderValue)
+      } else if (reminderType === "days") {
+        reminderTime.setDate(reminderTime.getDate() - reminderValue)
+      }
+    }
+
     const task = await prisma.task.create({
       data: {
         title,
@@ -256,8 +269,12 @@ export async function POST(request: NextRequest) {
         endTime: endTime ? new Date(endTime) : null,
         estimatedHours,
         statusId: finalStatusId,
-        createdById: session.user.id || null
-      },
+        createdById: session.user.id || null,
+        reminderEnabled: reminderEnabled || false,
+        reminderType: reminderEnabled ? reminderType : null,
+        reminderValue: reminderEnabled ? reminderValue : null,
+        reminderTime
+      } as any,
       include: {
         project: {
           select: {

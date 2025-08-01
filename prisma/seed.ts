@@ -296,7 +296,7 @@ export async function main() {
       projectId: project1.id,
       assigneeId: user1.id,
       createdById: adminUser.id,
-      dueDate: new Date('2025-07-15'),
+      dueDate: new Date('2025-07-15T17:00:00Z'),
       startTime: new Date('2025-07-10T09:00:00Z'),
       endTime: new Date('2025-07-15T17:00:00Z'),
     },
@@ -310,7 +310,7 @@ export async function main() {
       projectId: project1.id,
       assigneeId: user2.id,
       createdById: user1.id,
-      dueDate: new Date('2025-08-05'),
+      dueDate: new Date('2025-08-05T18:00:00Z'),
       startTime: new Date('2025-07-25T09:00:00Z'),
     },
     {
@@ -323,7 +323,7 @@ export async function main() {
       projectId: project1.id,
       assigneeId: user4.id,
       createdById: user1.id,
-      dueDate: new Date('2025-08-10'),
+      dueDate: new Date('2025-08-10T16:00:00Z'),
       startTime: new Date('2025-07-20T09:00:00Z'),
     },
     {
@@ -336,7 +336,7 @@ export async function main() {
       projectId: project1.id,
       assigneeId: user1.id,
       createdById: user2.id,
-      dueDate: new Date('2025-08-15'),
+      dueDate: new Date('2025-08-15T17:00:00Z'),
     },
     {
       id: 'task-notifications',
@@ -348,7 +348,7 @@ export async function main() {
       projectId: project1.id,
       assigneeId: user4.id,
       createdById: adminUser.id,
-      dueDate: new Date('2025-08-20'),
+      dueDate: new Date('2025-08-20T15:00:00Z'),
     },
 
     // Mobile App tasks
@@ -362,7 +362,7 @@ export async function main() {
       projectId: project2.id,
       assigneeId: user3.id,
       createdById: user2.id,
-      dueDate: new Date('2025-07-20'),
+      dueDate: new Date('2025-07-20T17:00:00Z'),
       startTime: new Date('2025-07-15T09:00:00Z'),
       endTime: new Date('2025-07-20T17:00:00Z'),
     },
@@ -376,7 +376,7 @@ export async function main() {
       projectId: project2.id,
       assigneeId: user3.id,
       createdById: user2.id,
-      dueDate: new Date('2025-08-01'),
+      dueDate: new Date('2025-08-01T16:00:00Z'),
       startTime: new Date('2025-07-22T09:00:00Z'),
     },
     {
@@ -389,7 +389,7 @@ export async function main() {
       projectId: project2.id,
       assigneeId: user2.id,
       createdById: user1.id,
-      dueDate: new Date('2025-08-05'),
+      dueDate: new Date('2025-08-05T14:00:00Z'),
     },
 
     // Analytics Dashboard tasks
@@ -403,7 +403,7 @@ export async function main() {
       projectId: project3.id,
       assigneeId: user4.id,
       createdById: adminUser.id,
-      dueDate: new Date('2025-08-12'),
+      dueDate: new Date('2025-08-12T18:00:00Z'),
       startTime: new Date('2025-07-28T09:00:00Z'),
     },
     {
@@ -416,7 +416,7 @@ export async function main() {
       projectId: project3.id,
       assigneeId: user4.id,
       createdById: user1.id,
-      dueDate: new Date('2025-08-25'),
+      dueDate: new Date('2025-08-25T17:00:00Z'),
     },
 
     // Infrastructure tasks
@@ -430,7 +430,7 @@ export async function main() {
       projectId: project4.id,
       assigneeId: user5.id,
       createdById: adminUser.id,
-      dueDate: new Date('2025-07-25'),
+      dueDate: new Date('2025-07-25T17:00:00Z'),
       startTime: new Date('2025-07-20T09:00:00Z'),
       endTime: new Date('2025-07-25T17:00:00Z'),
     },
@@ -444,7 +444,7 @@ export async function main() {
       projectId: project4.id,
       assigneeId: user5.id,
       createdById: user1.id,
-      dueDate: new Date('2025-08-08'),
+      dueDate: new Date('2025-08-08T16:00:00Z'),
       startTime: new Date('2025-07-26T09:00:00Z'),
     },
     {
@@ -457,7 +457,7 @@ export async function main() {
       projectId: project4.id,
       assigneeId: user5.id,
       createdById: adminUser.id,
-      dueDate: new Date('2025-08-18'),
+      dueDate: new Date('2025-08-18T17:00:00Z'),
     },
 
     // Blocked task example
@@ -471,7 +471,7 @@ export async function main() {
       projectId: project1.id,
       assigneeId: user4.id,
       createdById: adminUser.id,
-      dueDate: new Date('2025-08-30'),
+      dueDate: new Date('2025-08-30T15:00:00Z'),
       isBlocked: true,
       blockReason: 'Waiting for legal approval and compliance review',
       blockedAt: new Date('2025-07-28T10:00:00Z'),

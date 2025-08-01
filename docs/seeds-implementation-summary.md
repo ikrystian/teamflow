@@ -52,6 +52,11 @@ Przygotowano kompleksowy system seeds dla aplikacji Nexus, który zawiera różn
 - To Do: Zadania zaplanowane do wykonania
 - Blocked: Zadanie zablokowane z powodem
 
+**Terminy wykonania (dueDate):**
+- Wszystkie zadania mają precyzyjne terminy z godziną (datetime)
+- Różne godziny zakończenia: 14:00, 15:00, 16:00, 17:00, 18:00 UTC
+- Realistyczne terminy uwzględniające strefy czasowe i czas pracy
+
 ### ✅ 3. Realistyczne scenariusze
 
 **Workflow kompletny:**

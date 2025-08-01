@@ -117,6 +117,11 @@ Plik `prisma/seed.ts` zawiera kompleksowe dane testowe obejmujące wszystkie asp
 - **Medium:** Dashboard, time tracking, notyfikacje, monitoring
 - **Low:** Raporty analityczne
 
+### Terminy wykonania (dueDate):
+- Wszystkie zadania mają precyzyjne terminy z godziną (datetime)
+- Różne godziny zakończenia: 14:00, 15:00, 16:00, 17:00, 18:00
+- Realistyczne terminy uwzględniające czas pracy zespołu
+
 ## Scenariusze Testowe
 
 ### 1. Kompletny Workflow

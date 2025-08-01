@@ -71,10 +71,11 @@ Nexus to nowoczesna aplikacja internetowa do zarządzania zadaniami i projektami
 - **Inteligentne układanie zadań** - Automatyczne wykrywanie kolizji czasowych i układanie nakładających się zadań w kolumnach z proporcjonalną szerokością
 - **Optimistic Updates** - Natychmiastowe aktualizacje UI podczas drag and drop z rollback przy błędach, wizualny feedback dla zadań w trakcie aktualizacji
 - **Powiadomienia Sonner** - Inteligentne powiadomienia toast z loading/success/error states dla operacji drag and drop
+- **Przypomnienia Push** - System powiadomień push przeglądarki z możliwością ustawienia przypomnienia na wybrane godziny/dni przed terminem zadania
 
 ### 🔄 Planowane funkcjonalności
 - Zaproszenia do zespołów przez email
-- Powiadomienia w aplikacji
+- ✅ ~~Powiadomienia push o zadaniach~~ - **ZAIMPLEMENTOWANE**
 - ✅ ~~Załączniki plików (dokumenty, PDF, itp.)~~ - **ZAIMPLEMENTOWANE**
 - ✅ ~~Aktywne oznaczanie stron w nawigacji~~ - **ZAIMPLEMENTOWANE**
 - ✅ ~~System ról i zarządzanie użytkownikami~~ - **ZAIMPLEMENTOWANE**

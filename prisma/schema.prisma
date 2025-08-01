@@ -32,6 +32,7 @@ model User {
   timeEntries       TimeEntry[]
   teams             Team[]            @relation("TeamMembers")
   systemChanges     SystemChange[]    @relation("SystemChangeCreator")
+  pushSubscriptions PushSubscription[]
 }
 
 model Team {
@@ -89,6 +90,11 @@ model Task {
   blockedAt      DateTime?
   unblockedAt    DateTime?
   blockedById    String?
+  // Pola związane z przypomnieniami
+  reminderEnabled Boolean    @default(false)
+  reminderTime   DateTime?   // Kiedy wysłać przypomnienie
+  reminderType   String?     // "hours" lub "days"
+  reminderValue  Int?        // Ile godzin/dni przed zadaniem
   comments       Comment[]
   subtasks       Subtask[]
   assignee       User?       @relation(fields: [assigneeId], references: [id])
@@ -230,4 +236,18 @@ model SystemChange {
   updatedAt   DateTime @updatedAt
   createdById String
   createdBy   User     @relation("SystemChangeCreator", fields: [createdById], references: [id])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, endpoint])
 }

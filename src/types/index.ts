@@ -39,6 +39,11 @@ export interface Task {
   endTime?: string;
   estimatedHours?: number;
   createdAt: string;
+  // Pola przypomnienia
+  reminderEnabled?: boolean;
+  reminderTime?: string;
+  reminderType?: string;
+  reminderValue?: number;
   project: {
     id: string;
     name: string;

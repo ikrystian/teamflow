@@ -1,15 +1,25 @@
 # Relacje między elementami systemu TeamFlow
 
-## Nowe funkcjonalności czasowe
+## Funkcjonalności czasowe w zadaniach
 
 ### Pola czasowe w zadaniach
 - **startTime** (DateTime?) - Czas rozpoczęcia zadania
 - **endTime** (DateTime?) - Czas zakończenia zadania
+- **dueDate** (DateTime?) - Termin wykonania zadania
+- **createdAt** (DateTime) - Data utworzenia zadania
+- **updatedAt** (DateTime) - Data ostatniej aktualizacji zadania
 
-### Komponenty UI
-- **TimePicker** - Komponent do wyboru godziny i minut (15-minutowe interwały)
-- **DateTimePicker** - Komponent łączący DatePicker i TimePicker
+### Komponenty UI do obsługi dat i czasu
+- **DatePicker** - Komponent do wyboru daty (używa react-day-picker z lokalizacją polską)
+- **TimePicker** - Komponent do wyboru godziny i minut (15-minutowe interwały: 00, 15, 30, 45)
+- **DateTimePicker** - Komponent łączący DatePicker i TimePicker, zwraca obiekt Date
 - **ProjectDailyView** - Widok dzienny zadań z podziałem na osoby i godziny
+
+### Formatowanie dat
+- **formatTaskDueDate()** - Formatuje termin wykonania (dzień i miesiąc dla bieżącego roku)
+- **formatTaskDueDateWithRelative()** - Dodaje względne opisy (Dzisiaj, Jutro)
+- **formatCreatedDate()** - Formatuje datę utworzenia w krótkim formacie
+- **dateToLocalDateString()** - Konwertuje Date na string YYYY-MM-DD bez problemów ze strefą czasową
 
 ### Widoki projektów
 - **list** - Lista zadań
@@ -37,16 +47,68 @@
 - Waliduje i wysyła dane czasowe do API
 
 #### API Endpoints
-- POST /api/tasks - obsługuje startTime i endTime przy tworzeniu
-- PATCH /api/tasks/[taskId] - obsługuje startTime i endTime przy edycji
+- **POST /api/tasks** - obsługuje startTime i endTime przy tworzeniu zadań
+  - Konwertuje ISO string na Date: `new Date(startTime)`, `new Date(endTime)`
+  - Zapisuje w bazie danych jako DateTime
+- **PATCH /api/tasks/[taskId]** - obsługuje startTime i endTime przy edycji zadań
+  - Waliduje uprawnienia użytkownika
+  - Aktualizuje tylko przekazane pola
 
-### Przepływ danych
+### Przepływ danych datetime
 
 1. **Tworzenie zadania z czasem:**
-   TaskFormContent → DateTimePicker → API POST → Prisma → Database
+   ```
+   DateTimePicker (Date object) →
+   TaskFormContent (toISOString()) →
+   API POST (new Date()) →
+   Prisma (DateTime) →
+   Database
+   ```
 
 2. **Edycja zadania z czasem:**
-   TaskFormContent → DateTimePicker → API PATCH → Prisma → Database
+   ```
+   Database (DateTime) →
+   API GET (ISO string) →
+   TaskFormContent (new Date()) →
+   DateTimePicker (Date object) →
+   TaskFormContent (toISOString()) →
+   API PATCH (new Date()) →
+   Prisma (DateTime) →
+   Database
+   ```
+
+3. **Wyświetlanie dat:**
+   ```
+   Database (DateTime) →
+   API GET (ISO string) →
+   formatTaskDueDateWithRelative() →
+   UI (sformatowany tekst)
+   ```
+
+### Walidacja i obsługa błędów datetime
+
+1. **Walidacja w komponencie DateTimePicker:**
+   - Sprawdza czy wybrana data jest prawidłowa
+   - Obsługuje przypadki gdy data lub czas nie są wybrane
+   - Zwraca `undefined` dla nieprawidłowych wartości
+
+2. **Walidacja w API:**
+   - Sprawdza czy przekazane stringi można skonwertować na Date
+   - Obsługuje przypadki `null` i `undefined`
+   - Zwraca błędy 400 dla nieprawidłowych danych
+
+3. **Obsługa stref czasowych:**
+   - Wszystkie daty są przechowywane w UTC w bazie danych
+   - Konwersja na czas lokalny odbywa się w komponencie UI
+   - Używa `toISOString()` do wysyłania dat do API
+
+### Najlepsze praktyki
+
+1. **Zawsze używaj `toISOString()` przy wysyłaniu dat do API**
+2. **Sprawdzaj czy data istnieje przed konwersją: `date ? date.toISOString() : undefined`**
+3. **W API używaj `new Date()` do konwersji ISO string na Date object**
+4. **Używaj polskiej lokalizacji w komponentach dat: `locale: pl`**
+5. **Dla dat bez czasu ustaw godziny na 00:00:00: `setHours(0, 0, 0, 0)`**
 
 3. **Wyświetlanie widoku dziennego:**
    ProjectDetailsContent → ProjectDailyView → filtrowanie zadań → renderowanie harmonogramu
