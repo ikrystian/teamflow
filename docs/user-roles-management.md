@@ -130,8 +130,14 @@ Usuwa konto użytkownika.
 
 ### Ograniczenia
 - Administrator nie może usunąć własnego konta
+- Administrator nie może zmienić swojej własnej roli
 - Tylko administratorzy mogą zmieniać role użytkowników
 - Dostęp do zarządzania użytkownikami tylko przez interfejs ustawień
+
+### Zabezpieczenia interfejsu
+- Pole roli jest wyłączone dla edycji własnego konta
+- Przycisk usuwania jest wyłączony dla własnego konta
+- Wyświetlane są komunikaty informacyjne o ograniczeniach
 
 ## Pliki systemu
 

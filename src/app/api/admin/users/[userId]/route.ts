@@ -134,6 +134,11 @@ export async function PATCH(
       return NextResponse.json({ error: "Invalid role" }, { status: 400 })
     }
 
+    // Prevent admin from changing their own role
+    if (role && session.user.id === userId) {
+      return NextResponse.json({ error: "Cannot change your own role" }, { status: 400 })
+    }
+
     // Check if email is already taken by another user
     if (email) {
       const existingUser = await prisma.user.findFirst({

@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
+import { useSession } from "next-auth/react"
 import {
   Users,
   Search,
@@ -80,6 +81,7 @@ interface PaginationData {
 }
 
 export function UserManagement() {
+  const { data: session } = useSession()
   const [users, setUsers] = useState<UserData[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
@@ -308,6 +310,7 @@ export function UserManagement() {
                           variant="outline"
                           size="sm"
                           onClick={() => setUserToDelete(user)}
+                          disabled={user.id === session?.user?.id}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -415,7 +418,11 @@ export function UserManagement() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="role">Rola</Label>
-                  <Select value={editForm.role} onValueChange={(value) => setEditForm(prev => ({ ...prev, role: value }))}>
+                  <Select
+                    value={editForm.role}
+                    onValueChange={(value) => setEditForm(prev => ({ ...prev, role: value }))}
+                    disabled={editingUser?.id === session?.user?.id}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -424,6 +431,11 @@ export function UserManagement() {
                       <SelectItem value="admin">Administrator</SelectItem>
                     </SelectContent>
                   </Select>
+                  {editingUser?.id === session?.user?.id && (
+                    <p className="text-xs text-muted-foreground">
+                      Nie możesz zmienić swojej własnej roli
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">Telefon</Label>

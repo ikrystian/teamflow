@@ -1,5 +1,27 @@
 # Relacje między elementami w Nexus
 
+## Zabezpieczenia zarządzania użytkownikami (2025-08-01):
+
+### Problem:
+W systemie zarządzania użytkownikami administrator mógł edytować swoją własną rolę, co stanowiło zagrożenie bezpieczeństwa.
+
+### Rozwiązanie:
+1. **Zabezpieczenie API**:
+   - Dodano sprawdzenie w `/api/admin/users/[userId]` PATCH endpoint
+   - Blokada zmiany roli gdy `session.user.id === userId`
+   - Zwracany błąd 400 z komunikatem "Cannot change your own role"
+
+2. **Zabezpieczenie interfejsu**:
+   - Dodano import `useSession` w komponencie `user-management.tsx`
+   - Pole Select roli jest wyłączone (`disabled`) gdy edytowany użytkownik to aktualny użytkownik
+   - Przycisk usuwania jest wyłączony dla własnego konta
+   - Dodano komunikat informacyjny "Nie możesz zmienić swojej własnej roli"
+
+### Pliki zmodyfikowane:
+- `src/app/api/admin/users/[userId]/route.ts` - zabezpieczenie API
+- `src/components/settings/user-management.tsx` - zabezpieczenie interfejsu
+- `docs/user-roles-management.md` - aktualizacja dokumentacji
+
 ## Naprawa liczenia zadań w TasksTable (2025-07-30):
 
 ### Problem:
