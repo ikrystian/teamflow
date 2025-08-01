@@ -11,7 +11,8 @@ import {
   RefreshCw,
   Clock,
   EyeOff,
-  Eye
+  Eye,
+  Trash2
 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { pl } from "date-fns/locale"
@@ -74,7 +75,7 @@ export function RecentChanges({ limit = 5, onUnreadCountChange }: RecentChangesP
       const response = await fetch('/api/system-changes', {
         method: 'POST'
       })
-      
+
       if (response.ok) {
         // Update changes to mark them as read
         setChanges(prev => prev.map(change => ({ ...change, isRead: true })))
@@ -99,7 +100,7 @@ export function RecentChanges({ limit = 5, onUnreadCountChange }: RecentChangesP
     setChanges(prev => [newChange, ...prev])
   }
 
-  const toggleChangeVisibility = async (changeId: string, currentVisibility: boolean) => {
+  const toggleChangeVisibility = async (changeId: string, currentVisibility: boolean | undefined) => {
     try {
       const response = await fetch(`/api/system-changes/${changeId}/visibility`, {
         method: 'PATCH',
@@ -110,14 +111,34 @@ export function RecentChanges({ limit = 5, onUnreadCountChange }: RecentChangesP
       })
 
       if (response.ok) {
-        setChanges(prev => prev.map(change => 
-          change.id === changeId 
+        setChanges(prev => prev.map(change =>
+          change.id === changeId
             ? { ...change, isVisible: !currentVisibility }
             : change
         ))
       }
     } catch (error) {
       console.error('Error toggling change visibility:', error)
+    }
+  }
+
+  const deleteChange = async (changeId: string) => {
+    if (!confirm('Czy na pewno chcesz usunąć tę zmianę? Ta akcja jest nieodwracalna.')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/admin/system-changes/${changeId}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        setChanges(prev => prev.filter(change => change.id !== changeId))
+      } else {
+        console.error('Failed to delete change')
+      }
+    } catch (error) {
+      console.error('Error deleting change:', error)
     }
   }
 
@@ -202,18 +223,28 @@ export function RecentChanges({ limit = 5, onUnreadCountChange }: RecentChangesP
             <div className="space-y-3">
               {/* Admin controls */}
               {isAdmin && (
-                <div className="flex justify-end pt-2">
+                <div className="flex justify-end gap-1 pt-2">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => toggleChangeVisibility(change.id, change.isVisible)}
                     className="h-6 w-6 p-0"
+                    title={change.isVisible ? "Ukryj zmianę" : "Pokaż zmianę"}
                   >
                     {change.isVisible ? (
                       <Eye className="h-3 w-3" />
                     ) : (
                       <EyeOff className="h-3 w-3" />
                     )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => deleteChange(change.id)}
+                    className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                    title="Usuń zmianę"
+                  >
+                    <Trash2 className="h-3 w-3" />
                   </Button>
                 </div>
               )}

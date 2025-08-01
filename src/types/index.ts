@@ -89,6 +89,7 @@ export interface SystemChange {
   createdAt: string;
   updatedAt: string;
   isRead?: boolean;
+  isVisible?: boolean;
   createdBy: {
     id: string;
     name: string;
