@@ -14,10 +14,20 @@ import {
   TrendingUp,
   Download,
   Filter,
-  FileText
+  FileText,
+  BarChart3,
+  Users,
+  Activity,
+  Target,
+  PieChart,
+  LineChart,
+  Zap
 } from "lucide-react"
 import { TimeTrackingReport, type TimeTrackingData } from "./time-tracking-report"
 import { ProjectProgressReport, type ProjectProgressData } from "./project-progress-report"
+import { DashboardOverviewReport, type DashboardOverviewData } from "./dashboard-overview-report"
+import { TeamPerformanceReport, type TeamPerformanceData } from "./team-performance-report"
+import { WorkloadAnalyticsReport, type WorkloadAnalyticsData } from "./workload-analytics-report"
 import { exportTimeTrackingToPDF, exportProjectProgressToPDF } from "@/lib/pdf-export"
 import { usePageHeader } from "@/contexts/header-context"
 
@@ -44,12 +54,12 @@ interface User {
 
 export function ReportsContent() {
   useSession() as { data: Session | null }
-  const [activeReport, setActiveReport] = useState<"time-tracking" | "project-progress">("time-tracking")
+  const [activeReport, setActiveReport] = useState<"dashboard-overview" | "time-tracking" | "project-progress" | "team-performance" | "workload-analytics">("dashboard-overview")
   const [loading, setLoading] = useState(false)
   const [teams, setTeams] = useState<Team[]>([])
   const [projects, setProjects] = useState<Project[]>([])
   const [users, setUsers] = useState<User[]>([])
-  const [reportData, setReportData] = useState<TimeTrackingData | ProjectProgressData | null>(null)
+  const [reportData, setReportData] = useState<TimeTrackingData | ProjectProgressData | DashboardOverviewData | TeamPerformanceData | WorkloadAnalyticsData | null>(null)
 
   // Filters
   const [filters, setFilters] = useState({
@@ -66,10 +76,19 @@ export function ReportsContent() {
       <div>
         <h1 className="text-2xl font-bold text-foreground">Generuj szczegółowe raporty i analizy dla swoich projektów</h1>
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
+        <Button
+          variant={activeReport === "dashboard-overview" ? "default" : "outline"}
+          onClick={() => setActiveReport("dashboard-overview")}
+          size="sm"
+        >
+          <BarChart3 className="mr-2 h-4 w-4" />
+          Dashboard
+        </Button>
         <Button
           variant={activeReport === "time-tracking" ? "default" : "outline"}
           onClick={() => setActiveReport("time-tracking")}
+          size="sm"
         >
           <Clock className="mr-2 h-4 w-4" />
           Czas pracy
@@ -77,34 +96,58 @@ export function ReportsContent() {
         <Button
           variant={activeReport === "project-progress" ? "default" : "outline"}
           onClick={() => setActiveReport("project-progress")}
+          size="sm"
         >
           <TrendingUp className="mr-2 h-4 w-4" />
           Postęp projektów
         </Button>
         <Button
-          variant="outline"
-          onClick={() => exportReport("csv")}
-          disabled={loading}
+          variant={activeReport === "team-performance" ? "default" : "outline"}
+          onClick={() => setActiveReport("team-performance")}
+          size="sm"
         >
-          <Download className="mr-2 h-4 w-4" />
-          Eksportuj CSV
+          <Users className="mr-2 h-4 w-4" />
+          Wydajność zespołu
         </Button>
         <Button
-          variant="outline"
-          onClick={() => exportReport("excel")}
-          disabled={loading}
+          variant={activeReport === "workload-analytics" ? "default" : "outline"}
+          onClick={() => setActiveReport("workload-analytics")}
+          size="sm"
         >
-          <Download className="mr-2 h-4 w-4" />
-          Eksportuj Excel
+          <Activity className="mr-2 h-4 w-4" />
+          Analiza obciążenia
         </Button>
-        <Button
-          variant="outline"
-          onClick={() => exportReport("pdf")}
-          disabled={loading}
-        >
-          <FileText className="mr-2 h-4 w-4" />
-          Eksportuj PDF
-        </Button>
+        <div className="border-l pl-2 ml-2">
+          <Button
+            variant="outline"
+            onClick={() => exportReport("csv")}
+            disabled={loading}
+            size="sm"
+          >
+            <Download className="mr-2 h-4 w-4" />
+            CSV
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => exportReport("excel")}
+            disabled={loading}
+            size="sm"
+            className="ml-1"
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Excel
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => exportReport("pdf")}
+            disabled={loading}
+            size="sm"
+            className="ml-1"
+          >
+            <FileText className="mr-2 h-4 w-4" />
+            PDF
+          </Button>
+        </div>
       </div>
     </div>,
     [activeReport] // Re-render when active report changes
@@ -188,7 +231,8 @@ export function ReportsContent() {
         } else if (activeReport === "project-progress") {
           doc = exportProjectProgressToPDF(reportData as ProjectProgressData, filters)
         } else {
-          console.error("Unknown report type for PDF export")
+          // For now, other report types will show an alert
+          alert("Eksport PDF dla tego typu raportu będzie dostępny wkrótce!")
           return
         }
 
@@ -230,6 +274,13 @@ export function ReportsContent() {
 
   const reportTypes = [
     {
+      id: "dashboard-overview",
+      name: "Dashboard przegląd",
+      description: "Kompleksowy przegląd kluczowych wskaźników wydajności i metryk zespołu",
+      icon: BarChart3,
+      color: "text-purple-600"
+    },
+    {
       id: "time-tracking",
       name: "Raport śledzenia czasu",
       description: "Szczegółowy podział czasu spędzonego przez użytkowników na zadaniach i projektach",
@@ -242,6 +293,20 @@ export function ReportsContent() {
       description: "Przegląd statusu ukończenia projektu i rozkładu zadań",
       icon: TrendingUp,
       color: "text-green-600"
+    },
+    {
+      id: "team-performance",
+      name: "Wydajność zespołu",
+      description: "Zaawansowana analiza wydajności członków zespołu i współpracy",
+      icon: Users,
+      color: "text-orange-600"
+    },
+    {
+      id: "workload-analytics",
+      name: "Analiza obciążenia",
+      description: "Monitoring obciążenia zespołu, wykrywanie ryzyka wypalenia i optymalizacja",
+      icon: Activity,
+      color: "text-red-600"
     }
   ]
 
@@ -261,7 +326,7 @@ export function ReportsContent() {
                 ? "ring-2 ring-blue-500 bg-blue-50"
                 : "hover:shadow-md"
             }`}
-            onClick={() => setActiveReport(report.id as "time-tracking" | "project-progress")}
+            onClick={() => setActiveReport(report.id as "dashboard-overview" | "time-tracking" | "project-progress" | "team-performance" | "workload-analytics")}
           >
             <CardContent className="p-6">
               <div className="flex items-center">
@@ -371,11 +436,20 @@ export function ReportsContent() {
       </Card>
 
       {/* Report Content */}
+      {activeReport === "dashboard-overview" && (
+        <DashboardOverviewReport filters={filters} onDataLoaded={setReportData} />
+      )}
       {activeReport === "time-tracking" && (
         <TimeTrackingReport filters={filters} onDataLoaded={setReportData} />
       )}
       {activeReport === "project-progress" && (
         <ProjectProgressReport filters={filters} onDataLoaded={setReportData} />
+      )}
+      {activeReport === "team-performance" && (
+        <TeamPerformanceReport filters={filters} onDataLoaded={setReportData} />
+      )}
+      {activeReport === "workload-analytics" && (
+        <WorkloadAnalyticsReport filters={filters} onDataLoaded={setReportData} />
       )}
     </div>
   )

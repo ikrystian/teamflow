@@ -85,10 +85,10 @@ export function TaskDetailsContent({
   const [editingField, setEditingField] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState(task.title)
   const [editDescription, setEditDescription] = useState(task.description || "")
-  const [editPriority, setEditPriority] = useState(task.priority || "")
+  const [editPriority, setEditPriority] = useState(task.priority || "none")
   const [editDueDate, setEditDueDate] = useState(task.dueDate ? task.dueDate.split('T')[0] : "")
-  const [editAssigneeId, setEditAssigneeId] = useState(task.assignee?.id || "")
-  const [editEstimatedHours, setEditEstimatedHours] = useState(task.estimatedHours?.toString() || "")
+  const [editAssigneeId, setEditAssigneeId] = useState(task.assignee?.id || "unassigned")
+  const [editEstimatedHours, setEditEstimatedHours] = useState(task.estimatedHours?.toString() || "none")
   const [saving, setSaving] = useState(false)
 
   // Fetch fresh task data when task changes
@@ -148,10 +148,10 @@ export function TaskDetailsContent({
   useEffect(() => {
     setEditTitle(task.title)
     setEditDescription(task.description || "")
-    setEditPriority(task.priority || "")
+    setEditPriority(task.priority || "none")
     setEditDueDate(task.dueDate ? task.dueDate.split('T')[0] : "")
-    setEditAssigneeId(task.assignee?.id || "")
-    setEditEstimatedHours(task.estimatedHours?.toString() || "")
+    setEditAssigneeId(task.assignee?.id || "unassigned")
+    setEditEstimatedHours(task.estimatedHours?.toString() || "none")
   }, [task])
 
   const handleCommentAdded = (newComment: { id: string; content: string; createdAt: string; author: { id: string; name: string; avatarUrl?: string } }) => {
@@ -208,16 +208,16 @@ export function TaskDetailsContent({
         setEditDescription(task.description || "")
         break
       case 'priority':
-        setEditPriority(task.priority || "")
+        setEditPriority(task.priority || "none")
         break
       case 'dueDate':
         setEditDueDate(task.dueDate ? task.dueDate.split('T')[0] : "")
         break
       case 'assigneeId':
-        setEditAssigneeId(task.assignee?.id || "")
+        setEditAssigneeId(task.assignee?.id || "unassigned")
         break
       case 'estimatedHours':
-        setEditEstimatedHours(task.estimatedHours?.toString() || "")
+        setEditEstimatedHours(task.estimatedHours?.toString() || "none")
         break
     }
   }
@@ -341,7 +341,7 @@ export function TaskDetailsContent({
                   <SelectValue placeholder="Priorytet" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Brak priorytetu</SelectItem>
+                  <SelectItem value="none">Brak priorytetu</SelectItem>
                   <SelectItem value="Low">
                     <div className="flex items-center space-x-2">
                       <div className="w-2 h-2 rounded-full bg-green-500"></div>
@@ -365,7 +365,7 @@ export function TaskDetailsContent({
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => saveField('priority', editPriority || undefined)}
+                onClick={() => saveField('priority', editPriority === 'none' ? undefined : editPriority)}
                 disabled={saving}
                 className="h-7 w-7 p-0"
               >
@@ -568,7 +568,7 @@ export function TaskDetailsContent({
                             <SelectValue placeholder="Wybierz przypisanego" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">Nieprzypisany</SelectItem>
+                            <SelectItem value="unassigned">Nieprzypisany</SelectItem>
                             {teamMembers.map((member) => (
                               <SelectItem key={member.id} value={member.id}>
                                 <div className="flex items-center space-x-2">
@@ -585,7 +585,7 @@ export function TaskDetailsContent({
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => saveField('assigneeId', editAssigneeId || undefined)}
+                            onClick={() => saveField('assigneeId', editAssigneeId === 'unassigned' ? null : editAssigneeId)}
                             disabled={saving}
                           >
                             <Check className="h-4 w-4" />
@@ -747,7 +747,7 @@ export function TaskDetailsContent({
                             <SelectValue placeholder="Wybierz szacowany czas" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">Brak szacunku</SelectItem>
+                            <SelectItem value="none">Brak szacunku</SelectItem>
                             <SelectItem value="0.5">30 minut</SelectItem>
                             <SelectItem value="1">1 godzina</SelectItem>
                             <SelectItem value="1.5">1.5 godziny</SelectItem>
@@ -774,7 +774,7 @@ export function TaskDetailsContent({
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => saveField('estimatedHours', editEstimatedHours ? parseFloat(editEstimatedHours) : undefined)}
+                            onClick={() => saveField('estimatedHours', editEstimatedHours === 'none' ? undefined : parseFloat(editEstimatedHours))}
                             disabled={saving}
                           >
                             <Check className="h-4 w-4" />

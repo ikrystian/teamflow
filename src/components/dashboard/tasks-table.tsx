@@ -844,7 +844,8 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate, onTaskDet
             </p>
           </div>
         ) : (
-          <Table>
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
@@ -911,6 +912,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate, onTaskDet
               )}
             </TableBody>
           </Table>
+          </div>
         )}
       </div>
 
