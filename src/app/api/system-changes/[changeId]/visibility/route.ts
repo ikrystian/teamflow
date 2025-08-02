@@ -4,7 +4,7 @@ import { getAdminSession } from "@/lib/admin"
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { changeId: string } }
+  { params }: { params: Promise<{ changeId: string }> }
 ) {
   try {
     const session = await getAdminSession()
@@ -25,9 +25,11 @@ export async function PATCH(
       )
     }
 
+    const { changeId } = await params
+    
     const updatedChange = await prisma.systemChange.update({
       where: {
-        id: params.changeId
+        id: changeId
       },
       data: {
         isVisible

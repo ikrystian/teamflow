@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserInfoPopover } from "@/components/users/user-info-popover"
 import { cn } from "@/lib/utils"
 
 interface ClickableAvatarProps {
@@ -44,7 +45,6 @@ export function ClickableAvatar({
         !disabled && "cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all duration-200",
         className
       )}
-      title={showTooltip && name ? `Zobacz profil: ${name}` : undefined}
     >
       <AvatarImage src={avatarUrl || ""} alt={name || ""} />
       <AvatarFallback className={fallbackSizeClasses[size]}>
@@ -54,12 +54,22 @@ export function ClickableAvatar({
   )
 
   if (disabled) {
-    return avatarElement
+    return showTooltip ? (
+      <UserInfoPopover userId={userId}>
+        {avatarElement}
+      </UserInfoPopover>
+    ) : avatarElement
   }
 
-  return (
+  const linkElement = (
     <Link href={`/dashboard/profile/${userId}`} className="inline-block" onClick={(e) => e.stopPropagation()}>
       {avatarElement}
     </Link>
   )
+
+  return showTooltip ? (
+    <UserInfoPopover userId={userId}>
+      {linkElement}
+    </UserInfoPopover>
+  ) : linkElement
 }
