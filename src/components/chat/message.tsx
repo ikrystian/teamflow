@@ -2,8 +2,8 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { formatDistanceToNow } from 'date-fns'
 import { cn } from '@/lib/utils'
+import { CheckCheck } from 'lucide-react'
 
 interface User {
   id: string
@@ -27,94 +27,122 @@ interface MessageProps {
 }
 
 export function Message({ message, showAvatar, isOwn }: MessageProps) {
-  const formatTime = (dateString: string) => {
+
+
+  const formatShortTime = (dateString: string) => {
     const date = new Date(dateString)
-    return formatDistanceToNow(date, { addSuffix: true })
+    return date.toLocaleTimeString('pl-PL', {
+      hour: '2-digit',
+      minute: '2-digit'
+    })
   }
 
   return (
     <div className={cn(
-      "flex gap-3 group",
+      "flex gap-4 group hover:bg-muted/30 transition-colors duration-200 rounded-lg p-2 -mx-2",
       isOwn ? "flex-row-reverse" : "flex-row"
     )}>
       <div className="flex-shrink-0">
         {showAvatar ? (
-          <Avatar className="h-8 w-8">
+          <Avatar className="h-10 w-10 ring-2 ring-background shadow-sm">
             <AvatarImage src={message.sender.avatarUrl || undefined} />
-            <AvatarFallback className="text-xs">
-              {message.sender.name?.charAt(0) || message.sender.email.charAt(0)}
+            <AvatarFallback className="text-sm font-medium bg-gradient-to-br from-primary/20 to-primary/10">
+              {(message.sender.name?.charAt(0) || message.sender.email.charAt(0)).toUpperCase()}
             </AvatarFallback>
           </Avatar>
         ) : (
-          <div className="w-8 h-8" />
+          <div className="w-10 h-10" />
         )}
       </div>
 
       <div className={cn(
-        "flex-1 max-w-xs sm:max-w-md",
+        "flex-1 max-w-sm lg:max-w-lg xl:max-w-2xl",
         isOwn ? "items-end" : "items-start"
       )}>
         {showAvatar && (
           <div className={cn(
-            "flex items-center gap-2 mb-1",
-            isOwn ? "flex-row-reverse" : "flex-row"
+            "flex items-center gap-3 mb-2",
+            isOwn ? "flex-row-reverse justify-end" : "flex-row justify-start"
           )}>
-            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-              {message.sender.name || message.sender.email}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-foreground">
+                {message.sender.name || message.sender.email.split('@')[0]}
+              </span>
+              {/* You could add status badges here like "Admin", "Online" etc */}
+            </div>
             <Popover>
               <PopoverTrigger asChild>
-                <span className="text-xs text-gray-500 cursor-pointer hover:underline">
-                  {formatTime(message.createdAt)}
+                <span className="text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
+                  {formatShortTime(message.createdAt)}
                 </span>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-2">
-                <p className="text-sm">
-                  {new Date(message.createdAt).toLocaleString('pl-PL', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </p>
+              <PopoverContent className="w-auto p-3">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">
+                    {new Date(message.createdAt).toLocaleDateString('pl-PL', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(message.createdAt).toLocaleTimeString('pl-PL')}
+                  </p>
+                </div>
               </PopoverContent>
             </Popover>
           </div>
         )}
 
         <div className={cn(
-          "rounded-lg px-3 py-2 text-sm break-words",
+          "relative group/message rounded-2xl px-4 py-3 text-sm shadow-sm border",
           isOwn
-            ? "bg-blue-500 text-white rounded-br-sm"
-            : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-bl-sm"
+            ? "bg-primary text-primary-foreground border-primary/20 rounded-br-md ml-8"
+            : "bg-card text-card-foreground border-border rounded-bl-md mr-8"
         )}>
-          {message.content}
+          <p className="whitespace-pre-wrap break-words leading-relaxed">{message.content}</p>
+
+          {/* Message status indicators for own messages */}
+          {isOwn && (
+            <div className="absolute -bottom-1 -right-1 opacity-0 group-hover/message:opacity-100 transition-opacity">
+              <div className="bg-background rounded-full p-1 shadow-sm border">
+                <CheckCheck className="h-3 w-3 text-green-600" />
+              </div>
+            </div>
+          )}
         </div>
 
         {!showAvatar && (
           <div className={cn(
-            "text-xs text-gray-500 mt-1",
-            isOwn ? "text-right" : "text-left"
+            "flex items-center gap-2 mt-1 opacity-0 group-hover:opacity-100 transition-opacity",
+            isOwn ? "justify-end" : "justify-start"
           )}>
             <Popover>
               <PopoverTrigger asChild>
-                <span className="cursor-pointer hover:underline">
-                  {formatTime(message.createdAt)}
+                <span className="text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
+                  {formatShortTime(message.createdAt)}
                 </span>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-2">
-                <p className="text-sm">
-                  {new Date(message.createdAt).toLocaleString('pl-PL', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </p>
+              <PopoverContent className="w-auto p-3">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">
+                    {new Date(message.createdAt).toLocaleDateString('pl-PL', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(message.createdAt).toLocaleTimeString('pl-PL')}
+                  </p>
+                </div>
               </PopoverContent>
             </Popover>
+            {isOwn && (
+              <CheckCheck className="h-3 w-3 text-green-600" />
+            )}
           </div>
         )}
       </div>

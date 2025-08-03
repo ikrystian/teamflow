@@ -4,6 +4,14 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { io, Socket } from 'socket.io-client'
 
+interface AuthUser {
+  id: string;
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  role?: string;
+}
+
 interface SocketContextType {
   socket: Socket | null
   isConnected: boolean
@@ -26,9 +34,10 @@ export function SocketProvider({ children }: SocketProviderProps) {
   const [socket, setSocket] = useState<Socket | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const { data: session } = useSession()
+  const user = session?.user as AuthUser | undefined;
 
   useEffect(() => {
-    if (!session?.user?.id) {
+    if (!user?.id) {
       return
     }
 
@@ -58,7 +67,7 @@ export function SocketProvider({ children }: SocketProviderProps) {
       setSocket(null)
       setIsConnected(false)
     }
-  }, [session?.user?.id])
+  }, [user?.id])
 
   return (
     <SocketContext.Provider value={{ socket, isConnected }}>

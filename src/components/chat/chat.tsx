@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -10,9 +10,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { MessageCircle, Plus, Users } from 'lucide-react'
+import { MessageCircle, Plus, Users, Search, ArrowLeft } from 'lucide-react'
 import { ChatRoom } from './chat-room'
 import { useSocket } from '@/components/providers/socket-provider'
+import { useIsMobile } from '@/hooks/use-media-query'
+
+interface AuthUser {
+  id: string;
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  role?: string;
+}
 
 interface User {
   id: string
@@ -28,6 +37,15 @@ interface Project {
   icon: string | null
 }
 
+interface MessageData {
+  id: string
+  content: string
+  createdAt: string
+  senderId: string
+  chatRoomId: string
+  sender: User
+}
+
 interface ChatRoomData {
   id: string
   name: string | null
@@ -37,17 +55,13 @@ interface ChatRoomData {
   members: Array<{
     user: User
   }>
-  messages: Array<{
-    id: string
-    content: string
-    createdAt: string
-    sender: User
-  }>
+  messages: MessageData[]
 }
 
 export function Chat() {
   const { data: session } = useSession()
   const { socket, isConnected } = useSocket()
+  const isMobile = useIsMobile()
   const [chatRooms, setChatRooms] = useState<ChatRoomData[]>([])
   const [selectedRoom, setSelectedRoom] = useState<ChatRoomData | null>(null)
   const [users, setUsers] = useState<User[]>([])
@@ -60,13 +74,56 @@ export function Chat() {
   const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(true)
 
+  const fetchChatRooms = useCallback(async () => {
+    try {
+      const response = await fetch('/api/chat/rooms')
+      if (response.ok) {
+        const rooms = await response.json()
+        setChatRooms(rooms)
+      }
+    } catch (error) {
+      console.error('Error fetching chat rooms:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      const response = await fetch('/api/users')
+      if (response.ok) {
+        const data = await response.json()
+        const allUsers = data.users || data // Handle both { users: [...] } and [...] formats
+        if (session?.user) {
+          setUsers(allUsers.filter((user: User) => user.id !== (session.user as AuthUser).id))
+        } else {
+          setUsers(allUsers);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error)
+    }
+  }, [session?.user])
+
+  const fetchProjects = useCallback(async () => {
+    try {
+      const response = await fetch('/api/projects')
+      if (response.ok) {
+        const data = await response.json()
+        setProjects(data.projects || data)
+      }
+    } catch (error) {
+      console.error('Error fetching projects:', error)
+    }
+  }, [])
+
   useEffect(() => {
-    if (session?.user?.id) {
+    if (session?.user) {
       fetchChatRooms()
       fetchUsers()
       fetchProjects()
     }
-  }, [session?.user?.id])
+  }, [session?.user, fetchChatRooms, fetchUsers, fetchProjects])
 
   useEffect(() => {
     if (socket && isConnected) {
@@ -88,44 +145,6 @@ export function Chat() {
     }
   }, [socket, isConnected])
 
-  const fetchChatRooms = async () => {
-    try {
-      const response = await fetch('/api/chat/rooms')
-      if (response.ok) {
-        const rooms = await response.json()
-        setChatRooms(rooms)
-      }
-    } catch (error) {
-      console.error('Error fetching chat rooms:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchUsers = async () => {
-    try {
-      const response = await fetch('/api/users')
-      if (response.ok) {
-        const data = await response.json()
-        const allUsers = data.users || data // Handle both { users: [...] } and [...] formats
-        setUsers(allUsers.filter((user: User) => user.id !== session?.user?.id))
-      }
-    } catch (error) {
-      console.error('Error fetching users:', error)
-    }
-  }
-
-  const fetchProjects = async () => {
-    try {
-      const response = await fetch('/api/projects')
-      if (response.ok) {
-        const data = await response.json()
-        setProjects(data.projects || data)
-      }
-    } catch (error) {
-      console.error('Error fetching projects:', error)
-    }
-  }
 
   const createDirectMessage = async (userId: string) => {
     try {
@@ -210,7 +229,7 @@ export function Chat() {
 
   const getRoomDisplayName = (room: ChatRoomData) => {
     if (room.type === 'direct') {
-      const otherUser = room.members.find(m => m.user.id !== session?.user?.id)
+      const otherUser = room.members.find(m => m.user.id !== (session?.user as AuthUser)?.id)
       return otherUser?.user.name || otherUser?.user.email || 'Unknown User'
     }
     if (room.type === 'project' && room.project) {
@@ -221,7 +240,7 @@ export function Chat() {
 
   const getRoomAvatar = (room: ChatRoomData) => {
     if (room.type === 'direct') {
-      const otherUser = room.members.find(m => m.user.id !== session?.user?.id)
+      const otherUser = room.members.find(m => m.user.id !== (session?.user as AuthUser)?.id)
       return otherUser?.user.avatarUrl
     }
     return null
@@ -251,80 +270,89 @@ export function Chat() {
     )
   }
 
-  return (
-    <div className="flex">
-      <div className="w-100 border-r">
-        <div className="h-full rounded-none border-0">
-          <div className="pb-4">
-            <div className="flex items-center justify-between">
-              <div className="text-lg flex items-center gap-2">
-                <MessageCircle className="h-5 w-5" />
-                Czat
-              </div>
-              <Dialog open={isNewChatDialogOpen} onOpenChange={setIsNewChatDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button size="sm" variant="outline">
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Nowy Czat</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <Select value={newChatType} onValueChange={(value: 'direct' | 'group' | 'project') => setNewChatType(value)}>
-                      <SelectTrigger>
-                        <SelectValue />
+  const SidebarContent = () => {
+    return (
+      <div className="h-full flex flex-col">
+        {/* Header */}
+        <div className="p-4 border-b bg-background/80">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/70 rounded-lg flex items-center justify-center">
+              <MessageCircle className="h-4 w-4 text-primary-foreground" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">
+                Komunikator
+              </h2>
+              <p className="text-xs text-muted-foreground">Enterprise Chat</p>
+            </div>
+          </div>
+          <Dialog open={isNewChatDialogOpen} onOpenChange={setIsNewChatDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-primary hover:text-primary-foreground">
+                <Plus className="h-4 w-4" />
+              </Button>
+            </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Nowy Czat</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <Select value={newChatType} onValueChange={(value: 'direct' | 'group' | 'project') => setNewChatType(value)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Typ czatu" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="direct">Wiadomość Bezpośrednia</SelectItem>
+                      <SelectItem value="group">Czat Grupowy</SelectItem>
+                      <SelectItem value="project">Czat Projektu</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {newChatType === 'group' && (
+                    <Input
+                      placeholder="Nazwa grupy"
+                      value={groupName}
+                      onChange={(e) => setGroupName(e.target.value)}
+                      className="w-full"
+                    />
+                  )}
+
+                  {newChatType === 'project' && (
+                    <Select value={selectedProject} onValueChange={setSelectedProject}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Wybierz projekt" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="direct">Wiadomość Bezpośrednia</SelectItem>
-                        <SelectItem value="group">Czat Grupowy</SelectItem>
-                        <SelectItem value="project">Czat Projektu</SelectItem>
+                        {projects.map((project) => (
+                          <SelectItem key={project.id} value={project.id}>
+                            <div className="flex items-center gap-2">
+                              {project.icon && <span>{project.icon}</span>}
+                              <span>{project.name}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
+                  )}
 
-                    {newChatType === 'group' && (
+                  {newChatType !== 'project' && (
+                    <div className="space-y-2">
                       <Input
-                        placeholder="Nazwa grupy"
-                        value={groupName}
-                        onChange={(e) => setGroupName(e.target.value)}
+                        placeholder="Szukaj użytkowników..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full"
                       />
-                    )}
-
-                    {newChatType === 'project' && (
-                      <Select value={selectedProject} onValueChange={setSelectedProject}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Wybierz projekt" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {projects.map((project) => (
-                            <SelectItem key={project.id} value={project.id}>
-                              <div className="flex items-center gap-2">
-                                {project.icon && <span>{project.icon}</span>}
-                                <span>{project.name}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-
-                    {newChatType !== 'project' && (
-                      <div className="space-y-2">
-                        <Input
-                          placeholder="Szukaj użytkowników..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                        <ScrollArea className="h-48">
-                          <div className="space-y-2">
-                            {filteredUsers.map((user) => (
+                      <ScrollArea className="h-48">
+                        <div className="space-y-2">
+                          {filteredUsers.map((user) => (
                             <div
                               key={user.id}
-                              className={`flex items-center gap-3 p-2 rounded cursor-pointer hover:bg-gray-50 ${
-                                newChatType === 'direct' ? 'hover:bg-blue-50' : ''
+                              className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors ${
+                                newChatType === 'direct' ? 'hover:bg-blue-100 dark:hover:bg-blue-900/30' : 'hover:bg-gray-100 dark:hover:bg-gray-800'
                               } ${
-                                selectedUsers.includes(user.id) ? 'bg-blue-50' : ''
+                                selectedUsers.includes(user.id) ? 'bg-blue-100 dark:bg-blue-900/30' : ''
                               }`}
                               onClick={() => {
                                 if (newChatType === 'direct') {
@@ -360,46 +388,62 @@ export function Chat() {
                                 </Badge>
                               )}
                             </div>
-                              ))}
-                            </div>
-                          </ScrollArea>
+                          ))}
                         </div>
-                      )}
+                      </ScrollArea>
+                    </div>
+                  )}
 
-                    {newChatType === 'group' && selectedUsers.length > 0 && (
-                      <Button onClick={createGroupChat} className="w-full">
-                        Stwórz czat grupowy
-                      </Button>
-                    )}
+                  {newChatType === 'group' && selectedUsers.length > 0 && (
+                    <Button onClick={createGroupChat} className="w-full">
+                      Stwórz czat grupowy
+                    </Button>
+                  )}
 
-                    {newChatType === 'project' && selectedProject && (
-                      <Button onClick={createProjectChat} className="w-full">
-                        Stwórz czat projektu
-                      </Button>
-                    )}
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
+                  {newChatType === 'project' && selectedProject && (
+                    <Button onClick={createProjectChat} className="w-full">
+                      Stwórz czat projektu
+                    </Button>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
-          <div className="p-0">
-            <ScrollArea className="10vh">
-              <div className="space-y-1 p-3">
-                {chatRooms.map((room) => (
-                  <div
-                    key={room.id}
-                    className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                      selectedRoom?.id === room.id
-                        ? 'bg-blue-100 dark:bg-blue-900/20'
-                        : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-                    }`}
-                    onClick={() => setSelectedRoom(room)}
-                  >
-                    <Avatar className="h-10 w-10">
+        </div>
+
+        {/* Search bar */}
+        <div className="px-4 pb-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Szukaj rozmów..."
+              className="pl-9 h-9 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary"
+            />
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          <ScrollArea className="h-full">
+            <div className="p-3 space-y-1">
+              {chatRooms.map((room) => (
+                <div
+                  key={room.id}
+                  className={`group relative flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
+                    selectedRoom?.id === room.id
+                      ? 'bg-primary/10 border border-primary/20 shadow-sm'
+                      : 'hover:bg-muted/50 border border-transparent hover:border-border/50'
+                  }`}
+                  onClick={() => setSelectedRoom(room)}
+                >
+                  <div className="relative">
+                    <Avatar className="h-12 w-12 ring-2 ring-background shadow-sm">
                       <AvatarImage src={getRoomAvatar(room) || undefined} />
-                      <AvatarFallback style={{ backgroundColor: room.type === 'project' && room.project?.color ? room.project.color : undefined }}>
+                      <AvatarFallback
+                        className="text-sm font-medium"
+                        style={{ backgroundColor: room.type === 'project' && room.project?.color ? room.project.color : undefined }}
+                      >
                         {room.type === 'direct' ? (
-                          getRoomDisplayName(room).charAt(0)
+                          getRoomDisplayName(room).charAt(0).toUpperCase()
                         ) : room.type === 'project' && getRoomIcon(room) ? (
                           <span className="text-lg">{getRoomIcon(room)}</span>
                         ) : (
@@ -407,57 +451,159 @@ export function Chat() {
                         )}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-medium truncate">
-                            {getRoomDisplayName(room)}
-                          </p>
-                          {room.type === 'project' && (
-                            <Badge variant="outline" className="text-xs">
-                              Projekt
-                            </Badge>
-                          )}
-                        </div>
-                        <Badge variant="secondary" className="ml-2">
-                          {room.members.length}
-                        </Badge>
+                    {/* Online status indicator for direct messages */}
+                    {room.type === 'direct' && (
+                      <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 border-2 border-background rounded-full" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <h4 className="text-sm font-semibold truncate text-foreground">
+                        {getRoomDisplayName(room)}
+                      </h4>
+                      <div className="flex items-center gap-1">
+                        {room.messages.length > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(room.messages[0].createdAt).toLocaleTimeString('pl-PL', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                        )}
+                        {room.type === 'project' && (
+                          <Badge variant="outline" className="text-xs h-5 px-2">
+                            <span className="w-1.5 h-1.5 bg-current rounded-full mr-1" />
+                            Projekt
+                          </Badge>
+                        )}
                       </div>
-                      {room.messages.length > 0 && (
-                        <p className="text-xs text-gray-500 truncate">
-                          {room.messages[0].content}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      {room.messages.length > 0 ? (
+                        <p className="text-xs text-muted-foreground truncate pr-2">
+                          <span className="font-medium">
+                            {room.messages[0].sender.name || room.messages[0].sender.email.split('@')[0]}
+                          </span>
+                          : {room.messages[0].content}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground italic">
+                          Brak wiadomości
                         </p>
                       )}
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <Users className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">
+                          {room.members.length}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                ))}
-                {chatRooms.length === 0 && (
-                  <div className="text-center text-gray-500 py-8">
-                    <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Brak czatów</p>
-                    <p className="text-xs">Utwórz swój pierwszy czat, aby rozpocząć</p>
+                </div>
+              ))}
+              {chatRooms.length === 0 && (
+                <div className="text-center text-muted-foreground py-12">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-muted/50 rounded-2xl flex items-center justify-center">
+                    <MessageCircle className="h-8 w-8 opacity-50" />
                   </div>
-                )}
-              </div>
-            </ScrollArea>
-          </div>
+                  <h3 className="font-semibold mb-2">Witaj w komunikatorze</h3>
+                  <p className="text-sm text-muted-foreground mb-4">Utwórz swój pierwszy czat, aby rozpocząć współpracę</p>
+                  <Button
+                    onClick={() => setIsNewChatDialogOpen(true)}
+                    size="sm"
+                    className="gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Nowy czat
+                  </Button>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
         </div>
       </div>
-      <div className="flex-1">
-        {selectedRoom ? (
-          <ChatRoom room={selectedRoom} />
-        ) : (
-          <div className="h-full rounded-none border-0">
-            <CardContent className="h-full flex items-center justify-center">
-              <div className="text-center text-gray-500">
-                <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-medium mb-2">Wybierz czat, aby rozpocząć rozmowę</h3>
-                <p className="text-sm">Wybierz z istniejących rozmów lub rozpocznij nową</p>
-              </div>
-            </CardContent>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="h-full">
+        <CardContent className="p-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+            <div className="space-y-2">
+              <div className="h-12 bg-gray-200 rounded"></div>
+              <div className="h-12 bg-gray-200 rounded"></div>
+              <div className="h-12 bg-gray-200 rounded"></div>
+            </div>
           </div>
-        )}
+        </CardContent>
       </div>
+    )
+  }
+
+  return (
+    <div className="flex h-full bg-background">
+      {/* Mobile Sidebar */}
+      {isMobile ? (
+        <>
+          {/* Mobile Chat Room */}
+          {selectedRoom ? (
+            <div className="flex-1 flex flex-col">
+              <div className="p-4 border-b bg-background flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setSelectedRoom(null)}
+                  className="h-8 w-8"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <h3 className="font-semibold">{getRoomDisplayName(selectedRoom)}</h3>
+              </div>
+              <ChatRoom room={selectedRoom} />
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col">
+              <div className="w-full">
+                <SidebarContent />
+              </div>
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          {/* Desktop Sidebar */}
+          <div className="w-80 flex-shrink-0 border-r bg-muted/30 backdrop-blur-sm">
+            <SidebarContent />
+          </div>
+          {/* Desktop Chat Area */}
+          <div className="flex-1 flex flex-col bg-background">
+            {selectedRoom ? (
+              <ChatRoom room={selectedRoom} />
+            ) : (
+              <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-muted/20 to-muted/40">
+                <div className="text-center p-8 max-w-md">
+                  <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-primary/20 to-primary/10 rounded-3xl flex items-center justify-center">
+                    <MessageCircle className="h-12 w-12 text-primary/60" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-3 text-foreground">Rozpocznij rozmowę</h3>
+                  <p className="text-muted-foreground mb-6 leading-relaxed">
+                    Wybierz istniejący czat z listy po lewej stronie lub utwórz nową rozmowę, aby rozpocząć komunikację z zespołem.
+                  </p>
+                  <Button
+                    onClick={() => setIsNewChatDialogOpen(true)}
+                    className="gap-2 px-6"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Utwórz nowy czat
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   )
 }
