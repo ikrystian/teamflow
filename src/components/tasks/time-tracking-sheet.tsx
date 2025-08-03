@@ -233,9 +233,7 @@ export function TimeTrackingSheet({
                     <SelectValue placeholder="Wybierz czas" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="0.25">15 minut</SelectItem>
                     <SelectItem value="0.5">30 minut</SelectItem>
-                    <SelectItem value="0.75">45 minut</SelectItem>
                     <SelectItem value="1">1 godzina</SelectItem>
                     <SelectItem value="1.5">1.5 godziny</SelectItem>
                     <SelectItem value="2">2 godziny</SelectItem>
@@ -247,7 +245,9 @@ export function TimeTrackingSheet({
                     <SelectItem value="5">5 godzin</SelectItem>
                     <SelectItem value="5.5">5.5 godziny</SelectItem>
                     <SelectItem value="6">6 godzin</SelectItem>
+                    <SelectItem value="6.5">6.5 godziny</SelectItem>
                     <SelectItem value="7">7 godzin</SelectItem>
+                    <SelectItem value="7.5">7.5 godziny</SelectItem>
                     <SelectItem value="8">8 godzin</SelectItem>
                   </SelectContent>
                 </Select>

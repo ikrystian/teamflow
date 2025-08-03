@@ -67,20 +67,20 @@ export function TimePicker({
 
   const formatTime = (time?: Date) => {
     if (!time) return null
-    return time.toLocaleTimeString('pl-PL', { 
-      hour: '2-digit', 
+    return time.toLocaleTimeString('pl-PL', {
+      hour: '2-digit',
       minute: '2-digit',
-      hour12: false 
+      hour12: false
     })
   }
 
   // Generate hours (00-23)
-  const hourOptions = Array.from({ length: 24 }, (_, i) => 
+  const hourOptions = Array.from({ length: 24 }, (_, i) =>
     i.toString().padStart(2, '0')
   )
 
-  // Generate minutes (00, 15, 30, 45)
-  const minuteOptions = ['00', '15', '30', '45']
+  // Generate minutes (00, 30)
+  const minuteOptions = ['00', '30']
 
   return (
     <Popover>

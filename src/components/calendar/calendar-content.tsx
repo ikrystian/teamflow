@@ -39,9 +39,9 @@ export function CalendarContent() {
       const response = await fetch("/api/tasks")
       if (response.ok) {
         const data = await response.json()
-        // Filter tasks that have due dates
-        const tasksWithDueDates = data.tasks.filter((task: Task) => task.dueDate)
-        setTasks(tasksWithDueDates)
+        // Filter tasks that have due dates or start times
+        const tasksWithDates = data.tasks.filter((task: Task) => task.dueDate || task.startTime)
+        setTasks(tasksWithDates)
       }
     } catch (error) {
       console.error("Error fetching tasks:", error)
@@ -110,15 +110,25 @@ export function CalendarContent() {
   }
 
   const getFirstDayOfMonth = (date: Date) => {
-    return new Date(date.getFullYear(), date.getMonth(), 1).getDay()
+    const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay()
+    // Convert Sunday (0) to 6, and shift Monday (1) to 0, Tuesday (2) to 1, etc.
+    return firstDay === 0 ? 6 : firstDay - 1
   }
 
   const getTasksForDate = (date: Date) => {
     const dateString = date.toISOString().split('T')[0]
     return tasks.filter(task => {
-      if (!task.dueDate) return false
-      const taskDate = new Date(task.dueDate).toISOString().split('T')[0]
+      // Use startTime if available, otherwise fall back to dueDate
+      const taskDateField = task.startTime || task.dueDate
+      if (!taskDateField) return false
+      const taskDate = new Date(taskDateField).toISOString().split('T')[0]
       return taskDate === dateString
+    }).sort((a, b) => {
+      // Sort by start time if available, otherwise by due date
+      const aTime = a.startTime || a.dueDate
+      const bTime = b.startTime || b.dueDate
+      if (!aTime || !bTime) return 0
+      return new Date(aTime).getTime() - new Date(bTime).getTime()
     })
   }
 
@@ -140,7 +150,17 @@ export function CalendarContent() {
     "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"
   ]
 
-  const dayNames = ["Niedz.", "Pon.", "Wt.", "Śr.", "Czw.", "Pt.", "Sob."]
+  const dayNames = ["Pon.", "Wt.", "Śr.", "Czw.", "Pt.", "Sob."]
+
+  const formatStartTime = (startTime?: string) => {
+    if (!startTime) return null
+    const date = new Date(startTime)
+    return date.toLocaleTimeString('pl-PL', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    })
+  }
 
   const handleTaskDetails = (task: Task) => {
     setSelectedTask(task)
@@ -185,7 +205,7 @@ export function CalendarContent() {
                   </div>
                 </div>
                 <div>
-                  <div className="grid grid-cols-7 gap-1 mb-4">
+                  <div className="grid grid-cols-6 gap-1 mb-4">
                     {dayNames.map(day => (
                       <div key={day} className="p-2 text-center font-medium text-gray-500 text-sm">
                         {day}
@@ -193,7 +213,7 @@ export function CalendarContent() {
                     ))}
                   </div>
 
-                  <div className="grid grid-cols-7 gap-1">
+                  <div className="grid grid-cols-6 gap-1">
                     {/* Empty cells for days before the first day of the month */}
                     {Array.from({ length: firstDay }).map((_, index) => (
                       <div key={`empty-${index}`} className="h-24 p-1"></div>
@@ -203,6 +223,13 @@ export function CalendarContent() {
                     {Array.from({ length: daysInMonth }).map((_, index) => {
                       const day = index + 1
                       const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
+                      const dayOfWeek = date.getDay()
+
+                      // Skip Sundays (dayOfWeek === 0)
+                      if (dayOfWeek === 0) {
+                        return null
+                      }
+
                       const tasksForDay = getTasksForDate(date)
                       const isToday = date.toDateString() === today.toDateString()
 
@@ -230,10 +257,18 @@ export function CalendarContent() {
                                 align="start"
                               >
                                 <div
-                                  className="text-xs p-1 rounded bg-blue-100 text-blue-800 truncate cursor-pointer hover:bg-blue-200 transition-colors"
+                                  className="text-xs p-1 rounded bg-white border-l-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                                  style={{ borderLeftColor: task.project?.color || '#3B82F6' }}
                                   onClick={() => handleTaskDetails(task)}
                                 >
-                                  {task.title}
+                                  <div className="flex items-center gap-1">
+                                    {formatStartTime(task.startTime) && (
+                                      <span className="text-xs font-medium text-gray-600 shrink-0">
+                                        {formatStartTime(task.startTime)}
+                                      </span>
+                                    )}
+                                    <span className="truncate">{task.title}</span>
+                                  </div>
                                 </div>
                               </TaskPopover>
                             ))}
@@ -245,7 +280,7 @@ export function CalendarContent() {
                           </div>
                         </div>
                       )
-                    })}
+                    }).filter(Boolean)}
                   </div>
                 </div>
               </div>

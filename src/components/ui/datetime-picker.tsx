@@ -96,12 +96,12 @@ export function DateTimePicker({
   }
 
   // Generate hours (00-23)
-  const hourOptions = Array.from({ length: 24 }, (_, i) => 
+  const hourOptions = Array.from({ length: 24 }, (_, i) =>
     i.toString().padStart(2, '0')
   )
 
-  // Generate minutes (00, 15, 30, 45)
-  const minuteOptions = ['00', '15', '30', '45']
+  // Generate minutes (00, 30)
+  const minuteOptions = ['00', '30']
 
   return (
     <Popover>
@@ -127,7 +127,7 @@ export function DateTimePicker({
             onSelect={handleDateChange}
             initialFocus
           />
-          
+
           {showTime && (
             <div className="border-t p-4 space-y-4">
               <div className="flex items-center gap-2">

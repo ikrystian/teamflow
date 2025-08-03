@@ -86,20 +86,25 @@ export function QuickTimeEntry({ task, onTimeLogged, disabled = false }: QuickTi
               <SelectValue placeholder="Czas" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="0.25">15 min</SelectItem>
               <SelectItem value="0.5">30 min</SelectItem>
-              <SelectItem value="0.75">45 min</SelectItem>
               <SelectItem value="1">1h</SelectItem>
               <SelectItem value="1.5">1.5h</SelectItem>
               <SelectItem value="2">2h</SelectItem>
               <SelectItem value="2.5">2.5h</SelectItem>
               <SelectItem value="3">3h</SelectItem>
+              <SelectItem value="3.5">3.5h</SelectItem>
               <SelectItem value="4">4h</SelectItem>
+              <SelectItem value="4.5">4.5h</SelectItem>
+              <SelectItem value="5">5h</SelectItem>
+              <SelectItem value="5.5">5.5h</SelectItem>
               <SelectItem value="6">6h</SelectItem>
+              <SelectItem value="6.5">6.5h</SelectItem>
+              <SelectItem value="7">7h</SelectItem>
+              <SelectItem value="7.5">7.5h</SelectItem>
               <SelectItem value="8">8h</SelectItem>
             </SelectContent>
           </Select>
-          
+
           <div className="flex gap-1">
             <Button
               type="submit"
@@ -121,7 +126,7 @@ export function QuickTimeEntry({ task, onTimeLogged, disabled = false }: QuickTi
             </Button>
           </div>
         </div>
-        
+
         <Input
           value={description}
           onChange={(e) => setDescription(e.target.value)}

@@ -11,7 +11,7 @@
 
 ### Komponenty UI do obsługi dat i czasu
 - **DatePicker** - Komponent do wyboru daty (używa react-day-picker z lokalizacją polską)
-- **TimePicker** - Komponent do wyboru godziny i minut (15-minutowe interwały: 00, 15, 30, 45)
+- **TimePicker** - Komponent do wyboru godziny i minut (30-minutowe interwały: 00, 30)
 - **DateTimePicker** - Komponent łączący DatePicker i TimePicker, zwraca obiekt Date
 - **ProjectDailyView** - Widok dzienny zadań z podziałem na osoby i godziny
 
@@ -20,12 +20,28 @@
 - **formatTaskDueDateWithRelative()** - Dodaje względne opisy (Dzisiaj, Jutro)
 - **formatCreatedDate()** - Formatuje datę utworzenia w krótkim formacie
 - **dateToLocalDateString()** - Konwertuje Date na string YYYY-MM-DD bez problemów ze strefą czasową
+- **formatStartTime()** - Formatuje czas rozpoczęcia zadania w formacie HH:MM (kalendarz)
 
 ### Widoki projektów
 - **list** - Lista zadań
 - **board** - Tablica Kanban (DOMYŚLNY WIDOK)
 - **gantt** - Wykres Gantta
 - **daily** - Nowy widok dzienny z harmonogramem godzinowym
+
+### Widok kalendarza zadań
+- **CalendarContent** - Wyświetla zadania według daty wykonania na kalendarzu
+- Wyklucza niedziele z wyświetlania (6-dniowy tydzień: Pon-Sob)
+- Zadania oznaczone kolorem projektu (lewa krawędź)
+- Wyświetla godzinę rozpoczęcia zadania (jeśli dostępna)
+- Sortuje zadania według czasu rozpoczęcia lub terminu wykonania
+- Używa startTime lub dueDate do pozycjonowania zadań na kalendarzu
+
+### Śledzenie czasu pracy
+- **Interwały czasowe**: Wszystkie komponenty używają interwałów 0.5 godziny (30 minut)
+- **TimeTrackingSheet** - Główny komponent do logowania czasu z historią wpisów
+- **TimeTrackingDialog** - Dialog do szybkiego logowania czasu
+- **QuickTimeEntry** - Kompaktowy komponent do szybkiego dodawania czasu w popoverach
+- **Opcje czasowe**: 0.5h, 1h, 1.5h, 2h, 2.5h, 3h, 3.5h, 4h, 4.5h, 5h, 5.5h, 6h, 6.5h, 7h, 7.5h, 8h
 
 ### Relacje między komponentami
 
