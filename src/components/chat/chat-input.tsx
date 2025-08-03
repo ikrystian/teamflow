@@ -1,20 +1,48 @@
 'use client'
 
-import { useState, KeyboardEvent, useRef } from 'react'
+import { useState, KeyboardEvent, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Send, Paperclip, Smile, AtSign } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { MentionInput } from './mention-input'
+
+interface User {
+  id: string
+  name: string | null
+  email: string
+  avatarUrl: string | null
+}
 
 interface ChatInputProps {
   onSendMessage: (content: string) => void
   onTyping: () => void
+  users: User[]
 }
 
-export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
+export function ChatInput({ onSendMessage, onTyping, users }: ChatInputProps) {
   const [message, setMessage] = useState('')
   const [isEmojiOpen, setIsEmojiOpen] = useState(false)
+  const [showMentions, setShowMentions] = useState(false)
+  const [mentionSearch, setMentionSearch] = useState('')
+  const [mentionPosition, setMentionPosition] = useState({ top: 0, left: 0 })
+  const [cursorPosition, setCursorPosition] = useState(0)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // Handle click outside to close mention dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setShowMentions(false)
+      }
+    }
+
+    if (showMentions) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showMentions])
 
   // Common emojis for quick access
   const commonEmojis = [
@@ -35,6 +63,11 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    // If mention dropdown is open, let it handle navigation keys
+    if (showMentions && ['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(e.key)) {
+      return // Let MentionInput handle these
+    }
+
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSend()
@@ -54,6 +87,84 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
       textareaRef.current.style.height = 'auto'
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`
     }
+
+    // Check for mention trigger
+    checkForMention(value, textareaRef.current?.selectionStart || 0)
+  }
+
+  const checkForMention = (text: string, cursorPos: number) => {
+    // Find the last @ before cursor position
+    const beforeCursor = text.slice(0, cursorPos)
+    const lastAtIndex = beforeCursor.lastIndexOf('@')
+
+    if (lastAtIndex === -1) {
+      setShowMentions(false)
+      return
+    }
+
+    // Check if there's a space between @ and cursor (which would end the mention)
+    const afterAt = beforeCursor.slice(lastAtIndex + 1)
+    if (afterAt.includes(' ') || afterAt.includes('\n')) {
+      setShowMentions(false)
+      return
+    }
+
+    // Show mention dropdown
+    setMentionSearch(afterAt)
+    setShowMentions(true)
+    setCursorPosition(cursorPos)
+
+    // Calculate position for mention dropdown
+    if (textareaRef.current) {
+      const rect = textareaRef.current.getBoundingClientRect()
+      setMentionPosition({
+        top: rect.bottom,
+        left: rect.left + 50 // Approximate position
+      })
+    }
+  }
+
+  const handleMentionSelect = (user: User) => {
+    if (!textareaRef.current) return
+
+    const beforeCursor = message.slice(0, cursorPosition)
+    const afterCursor = message.slice(cursorPosition)
+    const lastAtIndex = beforeCursor.lastIndexOf('@')
+
+    if (lastAtIndex === -1) return
+
+    const beforeMention = message.slice(0, lastAtIndex)
+    const mentionText = `@[${user.id}] `
+    const newMessage = beforeMention + mentionText + afterCursor
+
+    setMessage(newMessage)
+    setShowMentions(false)
+
+    // Focus and set cursor position after mention
+    setTimeout(() => {
+      if (textareaRef.current) {
+        const newCursorPos = beforeMention.length + mentionText.length
+        textareaRef.current.focus()
+        textareaRef.current.setSelectionRange(newCursorPos, newCursorPos)
+      }
+    }, 0)
+  }
+
+  const handleAtSignClick = () => {
+    if (textareaRef.current) {
+      const cursorPos = textareaRef.current.selectionStart || 0
+      const newMessage = message.slice(0, cursorPos) + '@' + message.slice(cursorPos)
+      setMessage(newMessage)
+
+      setTimeout(() => {
+        if (textareaRef.current) {
+          const newCursorPos = cursorPos + 1
+          textareaRef.current.focus()
+          textareaRef.current.setSelectionRange(newCursorPos, newCursorPos)
+          checkForMention(newMessage, newCursorPos)
+        }
+      }, 0)
+    }
   }
 
   const handleEmojiSelect = (emoji: string) => {
@@ -71,7 +182,7 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
   }
 
   return (
-    <div className="relative">
+    <div ref={containerRef} className="relative">
       <div className="flex items-end gap-3 p-3 bg-muted/30 rounded-2xl border border-border/50 focus-within:border-primary/50 focus-within:bg-background transition-all duration-200">
         {/* Action buttons on the left */}
         <div className="flex items-center gap-1 pb-2">
@@ -132,6 +243,7 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
             variant="ghost"
             size="icon"
             className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            onClick={handleAtSignClick}
           >
             <AtSign className="h-4 w-4" />
           </Button>
@@ -146,10 +258,23 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
         </div>
       </div>
 
+      {/* Mention dropdown */}
+      {showMentions && (
+        <MentionInput
+          users={users}
+          onSelect={handleMentionSelect}
+          onClose={() => setShowMentions(false)}
+          position={mentionPosition}
+          searchTerm={mentionSearch}
+        />
+      )}
+
       {/* Hint text */}
       <p className="text-xs text-muted-foreground mt-2 px-1">
         <kbd className="px-1.5 py-0.5 text-xs bg-muted rounded border">Enter</kbd> aby wysłać,
         <kbd className="px-1.5 py-0.5 text-xs bg-muted rounded border">Shift + Enter</kbd> dla nowej linii
+        <span className="ml-2">•</span>
+        <kbd className="px-1.5 py-0.5 text-xs bg-muted rounded border ml-1">@</kbd> aby oznaczyć użytkownika
       </p>
     </div>
   )

@@ -29,17 +29,19 @@ app.prepare().then(() => {
     }
   })
 
-  // Store user socket mappings
+  // Store user socket mappings and online users
   const userSockets = new Map()
+  const onlineUsers = new Set()
 
   // Make socket server globally available
   global.socketServer = io
   global.userSockets = userSockets
+  global.onlineUsers = onlineUsers
 
   // Listen for chat room creation events from API routes
   io.on('chat-room-creation', (data) => {
     console.log('Broadcasting chat room creation:', data)
-    
+
     data.memberIds.forEach(memberId => {
       const memberSocketId = userSockets.get(memberId)
       if (memberSocketId) {
@@ -56,6 +58,30 @@ app.prepare().then(() => {
       userSockets.set(data.userId, socket.id)
       socket.userId = data.userId
       console.log(`User ${data.userId} registered with socket ${socket.id}`)
+    })
+
+    // Handle user going online
+    socket.on('user-online', (data) => {
+      const { userId, userName } = data
+      onlineUsers.add(userId)
+      socket.userId = userId
+      console.log(`User ${userId} (${userName}) is now online`)
+
+      // Broadcast to all connected clients that this user is online
+      socket.broadcast.emit('user-online', { userId })
+
+      // Send current online users list to the newly connected user
+      socket.emit('online-users-list', Array.from(onlineUsers))
+    })
+
+    // Handle user going offline
+    socket.on('user-offline', (data) => {
+      const { userId } = data
+      onlineUsers.delete(userId)
+      console.log(`User ${userId} is now offline`)
+
+      // Broadcast to all connected clients that this user is offline
+      socket.broadcast.emit('user-offline', { userId })
     })
 
     socket.on('join-room', (roomId) => {
@@ -92,7 +118,7 @@ app.prepare().then(() => {
     // Handle new chat room creation
     socket.on('chat-room-created', (data) => {
       console.log('Chat room created:', data)
-      
+
       // Notify all members of the new chat room
       data.memberIds.forEach(memberId => {
         const memberSocketId = userSockets.get(memberId)
@@ -104,9 +130,14 @@ app.prepare().then(() => {
 
     socket.on('disconnect', () => {
       console.log('User disconnected:', socket.id)
-      // Remove user from socket mapping
+      // Remove user from socket mapping and online users
       if (socket.userId) {
         userSockets.delete(socket.userId)
+        onlineUsers.delete(socket.userId)
+
+        // Broadcast to all connected clients that this user is offline
+        socket.broadcast.emit('user-offline', { userId: socket.userId })
+        console.log(`User ${socket.userId} removed from online users due to disconnect`)
       }
     })
   })

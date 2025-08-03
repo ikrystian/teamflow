@@ -132,7 +132,7 @@ export function TaskPopover({
             </h3>
 
             <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs tuncate overflow-hidden justify-start max-w-[200px]">
                 {formatProjectDisplay(task.project)}
               </Badge>
 

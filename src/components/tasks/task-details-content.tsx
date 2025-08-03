@@ -26,8 +26,7 @@ import {
   MessageSquare,
   ListTodo,
   Check,
-  X,
-  Bell
+  X
 } from "lucide-react"
 import { ImageGallery } from "@/components/ui/image-gallery"
 import { useTranslation } from 'react-i18next';
@@ -40,7 +39,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { SlackNotificationModal } from "@/components/tasks/slack-notification-modal"
 import type { Task, Todo, User } from "@/types"
 import { formatTaskDueDateWithRelative, formatCreatedDate, dateToLocalDateString } from "@/lib/date-utils"
 import { getPriorityColor, getPriorityDisplayName, formatProjectDisplay } from "@/lib/task-format-utils"
@@ -92,7 +90,6 @@ export function TaskDetailsContent({
   const [editEstimatedHours, setEditEstimatedHours] = useState(task.estimatedHours?.toString() || "none")
   const [editProjectId, setEditProjectId] = useState(task.project?.id || "none")
   const [saving, setSaving] = useState(false)
-  const [showNotificationModal, setShowNotificationModal] = useState(false)
   const [projects, setProjects] = useState<Array<{
     id: string
     name: string
@@ -463,14 +460,6 @@ export function TaskDetailsContent({
           })()}
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowNotificationModal(true)}
-          >
-            <Bell className="h-4 w-4 mr-2" />
-            Powiadom
-          </Button>
           {onTimeTracking && (
             <Button
               variant="outline"
@@ -1021,12 +1010,7 @@ export function TaskDetailsContent({
         </div>
       </Tabs>
 
-      {/* Slack Notification Modal */}
-      <SlackNotificationModal
-        open={showNotificationModal}
-        onOpenChange={setShowNotificationModal}
-        task={task}
-      />
+
     </div>
   )
 }

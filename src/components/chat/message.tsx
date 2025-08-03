@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
+import { MessageContent } from './message-content'
 // import { formatDistanceToNow } from 'date-fns' // This line was removed
 
 interface User {
@@ -25,9 +26,11 @@ interface MessageProps {
   message: MessageData
   showAvatar: boolean
   isOwn: boolean
+  users: User[]
+  currentUserId?: string
 }
 
-export function Message({ message, showAvatar, isOwn }: MessageProps) {
+export function Message({ message, showAvatar, isOwn, users, currentUserId }: MessageProps) {
 
 
   const formatShortTime = (dateString: string) => {
@@ -74,10 +77,7 @@ export function Message({ message, showAvatar, isOwn }: MessageProps) {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 text-xs">
-                    <div className="w-2 h-2 bg-green-500 rounded-full" />
-                    <span className="text-green-600">Online</span>
-                  </div>
+
                 </div>
               </TooltipContent>
             </Tooltip>
@@ -99,7 +99,12 @@ export function Message({ message, showAvatar, isOwn }: MessageProps) {
             ? "bg-primary text-primary-foreground border-primary/20  rounded-br-md rounded-tr-md ml-8"
             : "bg-card text-card-foreground border-border rounded-bl-md rounded-tl-md mr-8",
         )}>
-          <p className="whitespace-pre-wrap break-words leading-relaxed">{message.content}</p>
+          <MessageContent
+            content={message.content}
+            users={users}
+            currentUserId={currentUserId}
+            className="leading-relaxed"
+          />
 
           {/* Hover timestamp */}
           <Popover>

@@ -48,6 +48,9 @@ Nexus to nowoczesna aplikacja internetowa do zarządzania zadaniami i projektami
 - **Ulepszone formatowanie dat** - Daty zadań w obecnym roku wyświetlane jako dzień i pełna polska nazwa miesiąca (np. "15 stycznia"), daty z innych lat w pełnym formacie
 - **Tabelka zadań w stylu Asana** - Zaawansowana tabelka w Dashboard wyświetlająca wszystkie zadania z systemu, grupowane według statusów z możliwością inline editing wszystkich pól (nazwa, osoba przypisana, priorytet, data wykonania, status, szacowany czas), sortowaniem kolumn i filtrowaniem
 - **Preferencje tabeli zadań** - Automatyczne zapisywanie wybranych kolumn w localStorage dla każdego użytkownika, domyślnie wszystkie kolumny widoczne z możliwością ukrywania niepotrzebnych
+- **System komunikacji w czasie rzeczywistym** - Pełnofunkcjonalny chat z Socket.IO obsługujący wiadomości bezpośrednie, grupowe i projektowe
+- **Widoczność online użytkowników** - Śledzenie statusu online/offline użytkowników w czasie rzeczywistym z wizualnymi wskaźnikami w interfejsie chat
+- **Tagowanie użytkowników w chat** - Możliwość oznaczania użytkowników w wiadomościach za pomocą @username z autocomplete i kolorowymi tagami
 - **Inteligentny przegląd zadań** - Dashboard automatycznie dostosowuje tytuł i zakres zadań w zależności od uprawnień użytkownika: administratorzy widzą wszystkie zadania z systemu ("Przegląd wszystkich zadań z całego systemu"), zwykli użytkownicy tylko swoje zadania ("Przegląd moich zadań")
 - **Zawsze rozwinięte grupy zadań** - Usunięto możliwość zwijania grup zadań w tabeli Dashboard dla lepszej przejrzystości i dostępności wszystkich zadań
 - **Numeryczny input dla szacowanego czasu** - Pole szacowanego czasu w tabeli zadań używa teraz input typu number z min="0" i step="0.1" dla lepszej walidacji i UX
@@ -200,6 +203,9 @@ Tworzy kompleksowe dane testowe:
 - **6 dokumentów projektowych** różnych typów
 - **6 wpisów changelog** z komunikatami systemowymi
 - **8 todos** z listami kontrolnymi
+- **5 pokojów czatu** (ogólny, projektowe, zespołowy, prywatny)
+- **47 wiadomości czatu** z mentions, emoji i realistycznymi konwersacjami
+- **Członkostwo w pokojach** z różnymi poziomami aktywności
 
 **Konta testowe:**
 - Administrator: `krystian@bpcoders.pl` / `admin123`

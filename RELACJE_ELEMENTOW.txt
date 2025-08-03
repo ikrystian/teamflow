@@ -411,6 +411,27 @@ System umożliwia użytkownikom ustawienie powiadomień push przeglądarki, któ
 - Różne stany ukończenia
 - Szczegółowe kroki implementacji
 
+**Chat Rooms (5 pokojów czatu):**
+- **Ogólny** - główny kanał zespołu (wszyscy użytkownicy)
+- **Nexus - Dyskusja projektu** - chat projektowy (główny zespół)
+- **Mobile App - Sprint Planning** - chat dla zespołu mobilnego
+- **Design Team** - kanał dla designerów
+- **Direct Chat** - prywatna rozmowa admin-john
+
+**Chat Messages (50+ wiadomości):**
+- Realistyczne konwersacje zespołowe
+- Wiadomości z @mentions (tagowanie użytkowników)
+- Emoji i emotikony w komunikacji
+- Różne typy dyskusji: powitania, pytania techniczne, updates
+- Chronologiczne rozmowy z ostatnich dni
+- Przykłady współpracy i rozwiązywania problemów
+
+**User Chat Room Relations:**
+- Członkostwo użytkowników w pokojach
+- Śledzenie czasu dołączenia (joinedAt)
+- Status przeczytania wiadomości (lastReadAt)
+- Różne poziomy aktywności użytkowników
+
 ### Uruchomienie seeds:
 ```bash
 npm run db:seed
@@ -427,3 +448,8 @@ npm run db:seed
 - **Komunikacja systemowa** przez changelog
 - **Przykłady problemów** (zablokowane zadania)
 - **Kompletne workflow** od planowania do wdrożenia
+- **Komunikacja zespołowa** przez chat rooms i messages
+- **Różne typy czatów** (ogólny, projektowy, zespołowy, prywatny)
+- **Funkcje społecznościowe** (mentions, emoji, status online)
+- **Historia konwersacji** z realistycznymi scenariuszami
+- **Zarządzanie członkostwem** w pokojach czatu

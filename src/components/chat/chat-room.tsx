@@ -59,9 +59,10 @@ interface ChatRoomData {
 
 interface ChatRoomProps {
   room: ChatRoomData
+  users: User[]
 }
 
-export function ChatRoom({ room }: ChatRoomProps) {
+export function ChatRoom({ room, users }: ChatRoomProps) {
   const { data: session } = useSession()
   const { socket, isConnected, onlineUsers } = useSocket()
   const [messages, setMessages] = useState<MessageData[]>([])
@@ -485,6 +486,8 @@ export function ChatRoom({ room }: ChatRoomProps) {
                     message={message}
                     showAvatar={showAvatar}
                     isOwn={message.senderId === (session?.user as AuthUser)?.id}
+                    users={users}
+                    currentUserId={(session?.user as AuthUser)?.id}
                   />
                 )
               })}
@@ -529,7 +532,7 @@ export function ChatRoom({ room }: ChatRoomProps) {
 
         {/* Input Area */}
         <div className="border-t bg-background/80 backdrop-blur-sm p-4">
-          <ChatInput onSendMessage={handleSendMessage} onTyping={handleTyping} />
+          <ChatInput onSendMessage={handleSendMessage} onTyping={handleTyping} users={users} />
         </div>
       </div>
     </div>

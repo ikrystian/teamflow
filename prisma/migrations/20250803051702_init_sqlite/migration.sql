@@ -12,8 +12,8 @@ CREATE TABLE "User" (
     "company" TEXT,
     "website" TEXT,
     "slackUserId" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     "role" TEXT NOT NULL DEFAULT 'user'
 );
 
@@ -21,8 +21,8 @@ CREATE TABLE "User" (
 CREATE TABLE "Team" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL
 );
 
 -- CreateTable
@@ -41,13 +41,24 @@ CREATE TABLE "Project" (
     "stagingUrl" TEXT,
     "productionUrl" TEXT,
     "credentials" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     "teamId" TEXT NOT NULL,
     "color" TEXT NOT NULL DEFAULT '#3B82F6',
     "icon" TEXT,
     "archived" BOOLEAN NOT NULL DEFAULT false,
     CONSTRAINT "Project_teamId_fkey" FOREIGN KEY ("teamId") REFERENCES "Team" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "TaskStatus" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "color" TEXT NOT NULL DEFAULT '#6B7280',
+    "order" INTEGER NOT NULL,
+    "isDefault" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL
 );
 
 -- CreateTable
@@ -57,22 +68,22 @@ CREATE TABLE "Task" (
     "description" TEXT,
     "statusId" TEXT,
     "priority" TEXT,
-    "dueDate" DATETIME,
-    "startTime" DATETIME,
-    "endTime" DATETIME,
+    "dueDate" TIMESTAMP,
+    "startTime" TIMESTAMP,
+    "endTime" TIMESTAMP,
     "estimatedHours" REAL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     "projectId" TEXT,
     "assigneeId" TEXT,
     "createdById" TEXT,
     "isBlocked" BOOLEAN NOT NULL DEFAULT false,
     "blockReason" TEXT,
-    "blockedAt" DATETIME,
-    "unblockedAt" DATETIME,
+    "blockedAt" TIMESTAMP,
+    "unblockedAt" TIMESTAMP,
     "blockedById" TEXT,
     "reminderEnabled" BOOLEAN NOT NULL DEFAULT false,
-    "reminderTime" DATETIME,
+    "reminderTime" TIMESTAMP,
     "reminderType" TEXT,
     "reminderValue" INTEGER,
     CONSTRAINT "Task_assigneeId_fkey" FOREIGN KEY ("assigneeId") REFERENCES "User" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
@@ -87,21 +98,10 @@ CREATE TABLE "Todo" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "title" TEXT NOT NULL,
     "isCompleted" BOOLEAN NOT NULL DEFAULT false,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     "taskId" TEXT NOT NULL,
     CONSTRAINT "Todo_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "Task" ("id") ON DELETE CASCADE ON UPDATE CASCADE
-);
-
--- CreateTable
-CREATE TABLE "TaskStatus" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "name" TEXT NOT NULL,
-    "color" TEXT NOT NULL DEFAULT '#6B7280',
-    "order" INTEGER NOT NULL,
-    "isDefault" BOOLEAN NOT NULL DEFAULT false,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
 );
 
 -- CreateTable
@@ -109,8 +109,8 @@ CREATE TABLE "Subtask" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "title" TEXT NOT NULL,
     "isCompleted" BOOLEAN NOT NULL DEFAULT false,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     "taskId" TEXT NOT NULL,
     CONSTRAINT "Subtask_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "Task" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
@@ -122,7 +122,7 @@ CREATE TABLE "TaskImage" (
     "url" TEXT NOT NULL,
     "mimeType" TEXT NOT NULL,
     "size" INTEGER NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "taskId" TEXT NOT NULL,
     CONSTRAINT "TaskImage_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "Task" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
@@ -131,8 +131,8 @@ CREATE TABLE "TaskImage" (
 CREATE TABLE "Comment" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "content" TEXT NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     "taskId" TEXT NOT NULL,
     "authorId" TEXT NOT NULL,
     CONSTRAINT "Comment_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
@@ -144,9 +144,9 @@ CREATE TABLE "TimeEntry" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "hours" REAL NOT NULL,
     "description" TEXT,
-    "date" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "date" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     "taskId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     CONSTRAINT "TimeEntry_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "Task" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
@@ -162,8 +162,8 @@ CREATE TABLE "ProjectDocument" (
     "size" INTEGER NOT NULL,
     "description" TEXT,
     "category" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     "projectId" TEXT NOT NULL,
     "uploadedById" TEXT NOT NULL,
     CONSTRAINT "ProjectDocument_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
@@ -192,10 +192,10 @@ CREATE TABLE "Session" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "sessionToken" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "expires" DATETIME NOT NULL,
+    "expires" TIMESTAMP NOT NULL,
     "userAgent" TEXT,
     "ipAddress" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "Session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -203,7 +203,7 @@ CREATE TABLE "Session" (
 CREATE TABLE "VerificationToken" (
     "identifier" TEXT NOT NULL,
     "token" TEXT NOT NULL,
-    "expires" DATETIME NOT NULL
+    "expires" TIMESTAMP NOT NULL
 );
 
 -- CreateTable
@@ -213,8 +213,8 @@ CREATE TABLE "SystemChange" (
     "description" TEXT,
     "type" TEXT NOT NULL DEFAULT 'info',
     "isVisible" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     "createdById" TEXT NOT NULL,
     CONSTRAINT "SystemChange_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
@@ -224,7 +224,7 @@ CREATE TABLE "SystemChangeRead" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
     "changeId" TEXT NOT NULL,
-    "readAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "readAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "SystemChangeRead_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "SystemChangeRead_changeId_fkey" FOREIGN KEY ("changeId") REFERENCES "SystemChange" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
@@ -237,8 +237,8 @@ CREATE TABLE "PushSubscription" (
     "p256dh" TEXT NOT NULL,
     "auth" TEXT NOT NULL,
     "userAgent" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     CONSTRAINT "PushSubscription_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -248,8 +248,8 @@ CREATE TABLE "ChatRoom" (
     "name" TEXT,
     "type" TEXT NOT NULL DEFAULT 'group',
     "projectId" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     "createdById" TEXT NOT NULL,
     CONSTRAINT "ChatRoom_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "ChatRoom_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project" ("id") ON DELETE CASCADE ON UPDATE CASCADE
@@ -259,8 +259,8 @@ CREATE TABLE "ChatRoom" (
 CREATE TABLE "Message" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "content" TEXT NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     "chatRoomId" TEXT NOT NULL,
     "senderId" TEXT NOT NULL,
     CONSTRAINT "Message_chatRoomId_fkey" FOREIGN KEY ("chatRoomId") REFERENCES "ChatRoom" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
@@ -272,8 +272,8 @@ CREATE TABLE "UserChatRoom" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
     "chatRoomId" TEXT NOT NULL,
-    "joinedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "lastReadAt" DATETIME,
+    "joinedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "lastReadAt" TIMESTAMP,
     CONSTRAINT "UserChatRoom_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "UserChatRoom_chatRoomId_fkey" FOREIGN KEY ("chatRoomId") REFERENCES "ChatRoom" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
@@ -288,9 +288,6 @@ CREATE TABLE "_TeamMembers" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
-
--- CreateIndex
-CREATE UNIQUE INDEX "User_slackUserId_key" ON "User"("slackUserId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "TaskStatus_name_key" ON "TaskStatus"("name");

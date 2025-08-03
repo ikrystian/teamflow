@@ -663,7 +663,7 @@ export function Chat() {
                   <h3 className="font-semibold">{getRoomDisplayName(selectedRoom)}</h3>
                 </div>
               </div>
-              <ChatRoom room={selectedRoom} />
+              <ChatRoom room={selectedRoom} users={users} />
             </div>
           ) : (
             <div className="flex-1 flex flex-col">
@@ -682,7 +682,7 @@ export function Chat() {
           {/* Desktop Chat Area */}
           <div className="flex-1 flex flex-col bg-background">
             {selectedRoom ? (
-              <ChatRoom room={selectedRoom} />
+              <ChatRoom room={selectedRoom} users={users} />
             ) : (
               <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-muted/20 to-muted/40">
                 <div className="text-center p-8 max-w-md">

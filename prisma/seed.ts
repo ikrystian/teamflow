@@ -947,6 +947,515 @@ export async function main() {
     await prisma.todo.create({ data: todo })
   }
 
+  // Create chat rooms and messages
+  console.log('Creating chat rooms and messages...')
+
+  // 1. General team chat room
+  const generalChatRoom = await prisma.chatRoom.upsert({
+    where: { id: 'chat-general' },
+    update: {},
+    create: {
+      id: 'chat-general',
+      name: 'Ogólny',
+      type: 'group',
+      createdById: adminUser.id,
+    },
+  })
+
+  // Add all users to general chat
+  const allUsers = [adminUser, user1, user2, user3, user4, user5]
+  for (const user of allUsers) {
+    await prisma.userChatRoom.upsert({
+      where: {
+        userId_chatRoomId: {
+          userId: user.id,
+          chatRoomId: generalChatRoom.id,
+        },
+      },
+      update: {},
+      create: {
+        userId: user.id,
+        chatRoomId: generalChatRoom.id,
+        joinedAt: new Date('2025-07-25T09:00:00Z'),
+        lastReadAt: new Date('2025-08-02T16:00:00Z'),
+      },
+    })
+  }
+
+  // 2. Project-specific chat rooms
+  const nexusProjectChat = await prisma.chatRoom.upsert({
+    where: { id: 'chat-nexus-project' },
+    update: {},
+    create: {
+      id: 'chat-nexus-project',
+      name: 'Nexus - Dyskusja projektu',
+      type: 'project',
+      projectId: project1.id,
+      createdById: adminUser.id,
+    },
+  })
+
+  // Add main team members to Nexus project chat
+  const nexusTeamMembers = [adminUser, user1, user2, user4]
+  for (const user of nexusTeamMembers) {
+    await prisma.userChatRoom.upsert({
+      where: {
+        userId_chatRoomId: {
+          userId: user.id,
+          chatRoomId: nexusProjectChat.id,
+        },
+      },
+      update: {},
+      create: {
+        userId: user.id,
+        chatRoomId: nexusProjectChat.id,
+        joinedAt: new Date('2025-07-26T10:00:00Z'),
+        lastReadAt: new Date('2025-08-02T15:30:00Z'),
+      },
+    })
+  }
+
+  const mobileAppChat = await prisma.chatRoom.upsert({
+    where: { id: 'chat-mobile-app' },
+    update: {},
+    create: {
+      id: 'chat-mobile-app',
+      name: 'Mobile App - Sprint Planning',
+      type: 'project',
+      projectId: project2.id,
+      createdById: user1.id,
+    },
+  })
+
+  // Add mobile team members
+  const mobileTeamMembers = [user1, user2, user3]
+  for (const user of mobileTeamMembers) {
+    await prisma.userChatRoom.upsert({
+      where: {
+        userId_chatRoomId: {
+          userId: user.id,
+          chatRoomId: mobileAppChat.id,
+        },
+      },
+      update: {},
+      create: {
+        userId: user.id,
+        chatRoomId: mobileAppChat.id,
+        joinedAt: new Date('2025-07-27T11:00:00Z'),
+        lastReadAt: new Date('2025-08-02T14:45:00Z'),
+      },
+    })
+  }
+
+  // 3. Design team chat
+  const designTeamChat = await prisma.chatRoom.upsert({
+    where: { id: 'chat-design-team' },
+    update: {},
+    create: {
+      id: 'chat-design-team',
+      name: 'Design Team',
+      type: 'group',
+      createdById: user3.id,
+    },
+  })
+
+  // Add design team members
+  const designMembers = [user3, user2, adminUser]
+  for (const user of designMembers) {
+    await prisma.userChatRoom.upsert({
+      where: {
+        userId_chatRoomId: {
+          userId: user.id,
+          chatRoomId: designTeamChat.id,
+        },
+      },
+      update: {},
+      create: {
+        userId: user.id,
+        chatRoomId: designTeamChat.id,
+        joinedAt: new Date('2025-07-28T12:00:00Z'),
+        lastReadAt: new Date('2025-08-02T13:20:00Z'),
+      },
+    })
+  }
+
+  // 4. Direct message chat between admin and user1
+  const directChat = await prisma.chatRoom.upsert({
+    where: { id: 'chat-direct-admin-john' },
+    update: {},
+    create: {
+      id: 'chat-direct-admin-john',
+      name: null, // Direct chats don't have names
+      type: 'direct',
+      createdById: adminUser.id,
+    },
+  })
+
+  // Add both users to direct chat
+  for (const user of [adminUser, user1]) {
+    await prisma.userChatRoom.upsert({
+      where: {
+        userId_chatRoomId: {
+          userId: user.id,
+          chatRoomId: directChat.id,
+        },
+      },
+      update: {},
+      create: {
+        userId: user.id,
+        chatRoomId: directChat.id,
+        joinedAt: new Date('2025-07-29T13:00:00Z'),
+        lastReadAt: new Date('2025-08-02T17:00:00Z'),
+      },
+    })
+  }
+
+  // Create messages for chat rooms
+  console.log('Creating chat messages...')
+
+  // Messages for general chat room
+  const generalMessages = [
+    {
+      content: 'Witajcie wszystkich! 👋 Miło Was poznać w naszym zespole.',
+      senderId: adminUser.id,
+      chatRoomId: generalChatRoom.id,
+      createdAt: new Date('2025-07-25T09:15:00Z'),
+    },
+    {
+      content: 'Cześć @[' + adminUser.id + ']! Dziękuję za ciepłe powitanie. Cieszę się, że mogę być częścią zespołu! 🚀',
+      senderId: user1.id,
+      chatRoomId: generalChatRoom.id,
+      createdAt: new Date('2025-07-25T09:20:00Z'),
+    },
+    {
+      content: 'Hej wszystkim! Jestem Jane, frontend developer. Mam nadzieję na świetną współpracę! ✨',
+      senderId: user2.id,
+      chatRoomId: generalChatRoom.id,
+      createdAt: new Date('2025-07-25T09:25:00Z'),
+    },
+    {
+      content: 'Cześć! Bob tutaj, UI/UX designer. Już nie mogę się doczekać pracy nad nowymi projektami! 🎨',
+      senderId: user3.id,
+      chatRoomId: generalChatRoom.id,
+      createdAt: new Date('2025-07-25T09:30:00Z'),
+    },
+    {
+      content: 'Witam! Alice, backend developer. Gotowa na nowe wyzwania! 💻',
+      senderId: user4.id,
+      chatRoomId: generalChatRoom.id,
+      createdAt: new Date('2025-07-25T09:35:00Z'),
+    },
+    {
+      content: 'Hej! Charlie z DevOps. Jeśli będziecie potrzebować pomocy z infrastrukturą, jestem do dyspozycji! ⚙️',
+      senderId: user5.id,
+      chatRoomId: generalChatRoom.id,
+      createdAt: new Date('2025-07-25T09:40:00Z'),
+    },
+    {
+      content: 'Świetnie! Mamy kompletny zespół. Jutro o 10:00 mamy pierwsze spotkanie planistyczne. Przygotujcie się! 📅',
+      senderId: adminUser.id,
+      chatRoomId: generalChatRoom.id,
+      createdAt: new Date('2025-07-25T10:00:00Z'),
+    },
+    {
+      content: 'Czy ktoś wie gdzie znajdę dokumentację API? Chciałbym się przygotować przed jutrzejszym spotkaniem.',
+      senderId: user2.id,
+      chatRoomId: generalChatRoom.id,
+      createdAt: new Date('2025-08-01T14:30:00Z'),
+    },
+    {
+      content: '@[' + user2.id + '] Dokumentacja jest w repozytorium w folderze /docs. Mogę Ci też wysłać link na priv.',
+      senderId: user4.id,
+      chatRoomId: generalChatRoom.id,
+      createdAt: new Date('2025-08-01T14:35:00Z'),
+    },
+    {
+      content: 'Dzięki @[' + user4.id + ']! To będzie bardzo pomocne 🙏',
+      senderId: user2.id,
+      chatRoomId: generalChatRoom.id,
+      createdAt: new Date('2025-08-01T14:37:00Z'),
+    },
+    {
+      content: 'Przypominam o dzisiejszym daily standup o 9:00. Przygotujcie updates! ⏰',
+      senderId: adminUser.id,
+      chatRoomId: generalChatRoom.id,
+      createdAt: new Date('2025-08-02T08:45:00Z'),
+    },
+  ]
+
+  // Messages for Nexus project chat
+  const nexusMessages = [
+    {
+      content: 'Rozpoczynamy prace nad projektem Nexus! 🚀 To będzie nasza flagowa platforma.',
+      senderId: adminUser.id,
+      chatRoomId: nexusProjectChat.id,
+      createdAt: new Date('2025-07-26T10:15:00Z'),
+    },
+    {
+      content: 'Świetnie! Przejrzałem wymagania i mam kilka pytań dotyczących architektury bazy danych.',
+      senderId: user4.id,
+      chatRoomId: nexusProjectChat.id,
+      createdAt: new Date('2025-07-26T10:30:00Z'),
+    },
+    {
+      content: '@[' + user4.id + '] Umówmy się na osobne spotkanie techniczne. Jutro o 14:00?',
+      senderId: adminUser.id,
+      chatRoomId: nexusProjectChat.id,
+      createdAt: new Date('2025-07-26T10:35:00Z'),
+    },
+    {
+      content: 'Idealnie! Przygotuje listę pytań i propozycji.',
+      senderId: user4.id,
+      chatRoomId: nexusProjectChat.id,
+      createdAt: new Date('2025-07-26T10:37:00Z'),
+    },
+    {
+      content: 'Czy mamy już gotowe mockupy interfejsu? Chciałbym zacząć pracę nad komponentami.',
+      senderId: user2.id,
+      chatRoomId: nexusProjectChat.id,
+      createdAt: new Date('2025-07-28T11:00:00Z'),
+    },
+    {
+      content: '@[' + user2.id + '] Mockupy będą gotowe do końca tygodnia. Na razie możesz przygotować podstawową strukturę.',
+      senderId: user1.id,
+      chatRoomId: nexusProjectChat.id,
+      createdAt: new Date('2025-07-28T11:15:00Z'),
+    },
+    {
+      content: 'Update: API dla zarządzania użytkownikami jest gotowe! 🎉 Można zacząć integrację.',
+      senderId: user4.id,
+      chatRoomId: nexusProjectChat.id,
+      createdAt: new Date('2025-08-01T16:00:00Z'),
+    },
+    {
+      content: 'Fantastycznie @[' + user4.id + ']! Zacznę testy integracyjne jutro rano.',
+      senderId: user1.id,
+      chatRoomId: nexusProjectChat.id,
+      createdAt: new Date('2025-08-01T16:05:00Z'),
+    },
+    {
+      content: 'Mam problem z responsywnością dashboardu. @[' + user1.id + '] możesz rzucić okiem?',
+      senderId: user2.id,
+      chatRoomId: nexusProjectChat.id,
+      createdAt: new Date('2025-08-02T13:30:00Z'),
+    },
+    {
+      content: 'Jasne! Spojrzę po lunch. Wyślij mi link do branch-a.',
+      senderId: user1.id,
+      chatRoomId: nexusProjectChat.id,
+      createdAt: new Date('2025-08-02T13:35:00Z'),
+    },
+  ]
+
+  // Messages for mobile app chat
+  const mobileMessages = [
+    {
+      content: 'Czas na sprint planning dla aplikacji mobilnej! 📱',
+      senderId: user1.id,
+      chatRoomId: mobileAppChat.id,
+      createdAt: new Date('2025-07-27T11:15:00Z'),
+    },
+    {
+      content: 'Mam gotowe wireframes dla głównych ekranów. Mogę je zaprezentować.',
+      senderId: user3.id,
+      chatRoomId: mobileAppChat.id,
+      createdAt: new Date('2025-07-27T11:20:00Z'),
+    },
+    {
+      content: 'Super @[' + user3.id + ']! Pokażesz je na dzisiejszym spotkaniu?',
+      senderId: user2.id,
+      chatRoomId: mobileAppChat.id,
+      createdAt: new Date('2025-07-27T11:25:00Z'),
+    },
+    {
+      content: 'Tak, przygotowałem prezentację. Będzie o 15:00 w sali konferencyjnej.',
+      senderId: user3.id,
+      chatRoomId: mobileAppChat.id,
+      createdAt: new Date('2025-07-27T11:30:00Z'),
+    },
+    {
+      content: 'Pytanie: czy używamy React Native czy Flutter?',
+      senderId: user2.id,
+      chatRoomId: mobileAppChat.id,
+      createdAt: new Date('2025-07-29T09:00:00Z'),
+    },
+    {
+      content: 'React Native. Mamy już doświadczenie z tym frameworkiem w zespole.',
+      senderId: user1.id,
+      chatRoomId: mobileAppChat.id,
+      createdAt: new Date('2025-07-29T09:05:00Z'),
+    },
+    {
+      content: 'Świetnie! Zacznę setup projektu. Potrzebuję dostępu do repo.',
+      senderId: user2.id,
+      chatRoomId: mobileAppChat.id,
+      createdAt: new Date('2025-07-29T09:10:00Z'),
+    },
+    {
+      content: 'Wysłałem zaproszenie. Sprawdź email! 📧',
+      senderId: user1.id,
+      chatRoomId: mobileAppChat.id,
+      createdAt: new Date('2025-07-29T09:15:00Z'),
+    },
+  ]
+
+  // Messages for design team chat
+  const designMessages = [
+    {
+      content: 'Witajcie w kanale design team! 🎨 Tutaj będziemy omawiać wszystkie kwestie designu.',
+      senderId: user3.id,
+      chatRoomId: designTeamChat.id,
+      createdAt: new Date('2025-07-28T12:15:00Z'),
+    },
+    {
+      content: 'Cześć @[' + user3.id + ']! Cieszę się, że mogę współpracować z zespołem design.',
+      senderId: user2.id,
+      chatRoomId: designTeamChat.id,
+      createdAt: new Date('2025-07-28T12:20:00Z'),
+    },
+    {
+      content: 'Mam pytanie o system kolorów. Czy mamy już zdefiniowaną paletę?',
+      senderId: user2.id,
+      chatRoomId: designTeamChat.id,
+      createdAt: new Date('2025-07-30T10:00:00Z'),
+    },
+    {
+      content: 'Tak! Mam przygotowany design system. Udostępnię link do Figmy.',
+      senderId: user3.id,
+      chatRoomId: designTeamChat.id,
+      createdAt: new Date('2025-07-30T10:05:00Z'),
+    },
+    {
+      content: 'https://figma.com/design-system-nexus - tutaj macie wszystko! 🔗',
+      senderId: user3.id,
+      chatRoomId: designTeamChat.id,
+      createdAt: new Date('2025-07-30T10:07:00Z'),
+    },
+    {
+      content: 'Świetnie! Przejrzę to i dam feedback do końca dnia.',
+      senderId: adminUser.id,
+      chatRoomId: designTeamChat.id,
+      createdAt: new Date('2025-07-30T10:10:00Z'),
+    },
+    {
+      content: 'Czy możemy dodać dark mode do design systemu? Użytkownicy często o to pytają.',
+      senderId: user2.id,
+      chatRoomId: designTeamChat.id,
+      createdAt: new Date('2025-08-01T11:00:00Z'),
+    },
+    {
+      content: 'Dobry pomysł @[' + user2.id + ']! Dodaję to do backlogu. Priorytet: średni.',
+      senderId: user3.id,
+      chatRoomId: designTeamChat.id,
+      createdAt: new Date('2025-08-01T11:05:00Z'),
+    },
+  ]
+
+  // Messages for direct chat
+  const directMessages = [
+    {
+      content: 'Cześć John! Masz chwilę na rozmowę o architekturze projektu?',
+      senderId: adminUser.id,
+      chatRoomId: directChat.id,
+      createdAt: new Date('2025-07-29T13:15:00Z'),
+    },
+    {
+      content: 'Oczywiście! O czym konkretnie chciałbyś porozmawiać?',
+      senderId: user1.id,
+      chatRoomId: directChat.id,
+      createdAt: new Date('2025-07-29T13:20:00Z'),
+    },
+    {
+      content: 'Zastanawiam się nad mikroserwisami vs monolit dla Nexus. Jakie masz zdanie?',
+      senderId: adminUser.id,
+      chatRoomId: directChat.id,
+      createdAt: new Date('2025-07-29T13:25:00Z'),
+    },
+    {
+      content: 'Na początek bym poszedł w monolit. Łatwiej będzie nam się rozwijać i debugować. Mikroserwisy możemy wprowadzić później gdy będziemy mieli więcej ruchu.',
+      senderId: user1.id,
+      chatRoomId: directChat.id,
+      createdAt: new Date('2025-07-29T13:30:00Z'),
+    },
+    {
+      content: 'Zgadzam się! Modularny monolit to dobry kompromis. Dzięki za input! 👍',
+      senderId: adminUser.id,
+      chatRoomId: directChat.id,
+      createdAt: new Date('2025-07-29T13:35:00Z'),
+    },
+    {
+      content: 'Btw, jak Ci idzie z nowym zespołem? Wszyscy wydają się bardzo zaangażowani.',
+      senderId: adminUser.id,
+      chatRoomId: directChat.id,
+      createdAt: new Date('2025-08-01T15:00:00Z'),
+    },
+    {
+      content: 'Świetnie! Zespół jest naprawdę profesjonalny. Jane ma świetne pomysły na frontend, a Alice zna się na rzeczy z backendem.',
+      senderId: user1.id,
+      chatRoomId: directChat.id,
+      createdAt: new Date('2025-08-01T15:05:00Z'),
+    },
+    {
+      content: 'A Bob? Jak oceniasz jego design skills?',
+      senderId: adminUser.id,
+      chatRoomId: directChat.id,
+      createdAt: new Date('2025-08-01T15:10:00Z'),
+    },
+    {
+      content: 'Bob ma świetne oko do detali. Jego wireframes są bardzo przemyślane. Myślę, że będzie świetnym dodatkiem do zespołu.',
+      senderId: user1.id,
+      chatRoomId: directChat.id,
+      createdAt: new Date('2025-08-01T15:15:00Z'),
+    },
+    {
+      content: 'Cieszę się! Mam dobre przeczucia co do tego projektu 🚀',
+      senderId: adminUser.id,
+      chatRoomId: directChat.id,
+      createdAt: new Date('2025-08-01T15:20:00Z'),
+    },
+  ]
+
+  // Create all messages
+  const allMessages = [
+    ...generalMessages,
+    ...nexusMessages,
+    ...mobileMessages,
+    ...designMessages,
+    ...directMessages,
+  ]
+
+  for (const messageData of allMessages) {
+    await prisma.message.create({
+      data: messageData,
+    })
+  }
+
+  // Update chat rooms with latest activity
+  await prisma.chatRoom.update({
+    where: { id: generalChatRoom.id },
+    data: { updatedAt: new Date('2025-08-02T08:45:00Z') },
+  })
+
+  await prisma.chatRoom.update({
+    where: { id: nexusProjectChat.id },
+    data: { updatedAt: new Date('2025-08-02T13:35:00Z') },
+  })
+
+  await prisma.chatRoom.update({
+    where: { id: mobileAppChat.id },
+    data: { updatedAt: new Date('2025-07-29T09:15:00Z') },
+  })
+
+  await prisma.chatRoom.update({
+    where: { id: designTeamChat.id },
+    data: { updatedAt: new Date('2025-08-01T11:05:00Z') },
+  })
+
+  await prisma.chatRoom.update({
+    where: { id: directChat.id },
+    data: { updatedAt: new Date('2025-08-01T15:20:00Z') },
+  })
+
   console.log('✅ Database seeded successfully!')
   console.log('\n📊 Created data summary:')
   console.log(`👥 Users: ${[adminUser.email, user1.email, user2.email, user3.email, user4.email, user5.email].length}`)
@@ -960,6 +1469,8 @@ export async function main() {
   console.log(`🔄 System changes: ${systemChanges.length}`)
   console.log(`✅ Todos: ${todos.length}`)
   console.log(`🏷️ Task statuses: ${taskStatuses.length}`)
+  console.log(`💭 Chat rooms: 5 (General, Nexus Project, Mobile App, Design Team, Direct)`)
+  console.log(`📨 Chat messages: ${allMessages.length}`)
 
   console.log('\n🔑 Login credentials:')
   console.log('Admin: krystian@bpcoders.pl / admin123')
@@ -976,6 +1487,9 @@ export async function main() {
   console.log('• Project documents and attachments')
   console.log('• System changelog entries')
   console.log('• Real-world scenarios including blocked tasks and completed work')
+  console.log('• Chat rooms: general team chat, project-specific chats, design team, direct messages')
+  console.log('• Chat messages with mentions, emojis, and realistic team conversations')
+  console.log('• User participation in multiple chat rooms with read status tracking')
 }
 
 main()

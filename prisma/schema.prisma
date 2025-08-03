@@ -19,7 +19,6 @@ model User {
   jobTitle          String?
   company           String?
   website           String?
-  slackUserId       String?           @unique
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
   role              String            @default("user")
