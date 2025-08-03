@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
+import { DatePicker } from "@/components/ui/date-picker"
 import { Label } from "@/components/ui/label"
 import {
   Clock,
@@ -65,6 +66,10 @@ export function ReportsContent() {
     userId: "",
     teamId: ""
   })
+
+  // Date filter states for DatePicker
+  const [startDate, setStartDate] = useState<Date | undefined>()
+  const [endDate, setEndDate] = useState<Date | undefined>()
 
   // Set page header content
   usePageHeader(
@@ -153,14 +158,16 @@ export function ReportsContent() {
     fetchFilterData()
 
     // Set default date range (last 30 days)
-    const endDate = new Date()
-    const startDate = new Date()
-    startDate.setDate(startDate.getDate() - 30)
+    const defaultEndDate = new Date()
+    const defaultStartDate = new Date()
+    defaultStartDate.setDate(defaultStartDate.getDate() - 30)
 
+    setStartDate(defaultStartDate)
+    setEndDate(defaultEndDate)
     setFilters(prev => ({
       ...prev,
-      startDate: startDate.toISOString().split('T')[0],
-      endDate: endDate.toISOString().split('T')[0]
+      startDate: defaultStartDate.toISOString().split('T')[0],
+      endDate: defaultEndDate.toISOString().split('T')[0]
     }))
   }, [])
 
@@ -202,6 +209,8 @@ export function ReportsContent() {
   }
 
   const clearFilters = () => {
+    setStartDate(undefined)
+    setEndDate(undefined)
     setFilters({
       startDate: "",
       endDate: "",
@@ -209,6 +218,22 @@ export function ReportsContent() {
       userId: "",
       teamId: ""
     })
+  }
+
+  const handleDateChange = (type: 'start' | 'end', date?: Date) => {
+    if (type === 'start') {
+      setStartDate(date)
+      setFilters(prev => ({
+        ...prev,
+        startDate: date ? date.toISOString().split('T')[0] : ""
+      }))
+    } else {
+      setEndDate(date)
+      setFilters(prev => ({
+        ...prev,
+        endDate: date ? date.toISOString().split('T')[0] : ""
+      }))
+    }
   }
 
   const exportReport = async (format: "excel" | "csv" | "pdf") => {
@@ -357,21 +382,17 @@ export function ReportsContent() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="startDate">Data początkowa</Label>
-              <Input
-                id="startDate"
-                type="date"
-                value={filters.startDate}
-                onChange={(e) => handleFilterChange("startDate", e.target.value)}
+              <Label>Data początkowa</Label>
+              <DatePicker
+                value={startDate}
+                onChange={(date) => handleDateChange('start', date)}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="endDate">Data końcowa</Label>
-              <Input
-                id="endDate"
-                type="date"
-                value={filters.endDate}
-                onChange={(e) => handleFilterChange("endDate", e.target.value)}
+              <Label>Data końcowa</Label>
+              <DatePicker
+                value={endDate}
+                onChange={(date) => handleDateChange('end', date)}
               />
             </div>
             <div className="space-y-2">
