@@ -48,7 +48,7 @@ export function Message({ message, showAvatar, isOwn }: MessageProps) {
           <div className="w-8 h-8" />
         )}
       </div>
-      
+
       <div className={cn(
         "flex-1 max-w-xs sm:max-w-md",
         isOwn ? "items-end" : "items-start"
@@ -66,7 +66,7 @@ export function Message({ message, showAvatar, isOwn }: MessageProps) {
             </span>
           </div>
         )}
-        
+
         <div className={cn(
           "rounded-lg px-3 py-2 text-sm break-words",
           isOwn
@@ -75,7 +75,7 @@ export function Message({ message, showAvatar, isOwn }: MessageProps) {
         )}>
           {message.content}
         </div>
-        
+
         {!showAvatar && (
           <div className={cn(
             "text-xs text-gray-500 mt-1 opacity-0 group-hover:opacity-100 transition-opacity",

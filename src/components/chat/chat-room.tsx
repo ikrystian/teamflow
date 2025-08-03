@@ -24,6 +24,7 @@ interface MessageData {
   createdAt: string
   senderId: string
   sender: User
+  chatRoomId: string
 }
 
 interface Project {
@@ -173,7 +174,7 @@ export function ChatRoom({ room }: ChatRoomProps) {
 
       if (response.ok) {
         const message = await response.json()
-        
+
         // Dodaj wiadomość lokalnie od razu (optimistic update)
         setMessages(prev => {
           // Sprawdź czy wiadomość już nie istnieje (deduplikacja)
@@ -184,7 +185,7 @@ export function ChatRoom({ room }: ChatRoomProps) {
           return [...prev, message]
         })
         scrollToBottom()
-        
+
         // Wyślij przez socket do innych użytkowników
         if (socket) {
           socket.emit('send-message', {
@@ -265,10 +266,10 @@ export function ChatRoom({ room }: ChatRoomProps) {
             <CardTitle className="text-lg">{getRoomDisplayName()}</CardTitle>
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <Users className="h-4 w-4" />
-              <span>{room.members.length} members</span>
+              <span>{room.members.length} członków</span>
               {room.type === 'group' && (
                 <Badge variant="secondary" className="ml-2">
-                  Group
+                  Grupa
                 </Badge>
               )}
               {room.type === 'project' && (
@@ -280,7 +281,7 @@ export function ChatRoom({ room }: ChatRoomProps) {
           </div>
         </div>
       </CardHeader>
-      
+
       <CardContent className="flex-1 flex flex-col p-0">
         <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
           {loading ? (
@@ -301,7 +302,7 @@ export function ChatRoom({ room }: ChatRoomProps) {
             <div className="space-y-4">
               {messages.map((message, index) => {
                 const prevMessage = messages[index - 1]
-                const showAvatar = !prevMessage || 
+                const showAvatar = !prevMessage ||
                   prevMessage.senderId !== message.senderId ||
                   new Date(message.createdAt).getTime() - new Date(prevMessage.createdAt).getTime() > 300000 // 5 minutes
 
@@ -314,7 +315,7 @@ export function ChatRoom({ room }: ChatRoomProps) {
                   />
                 )
               })}
-              
+
               {typingUsers.length > 0 && (
                 <div className="flex items-center gap-2 text-sm text-gray-500 px-4">
                   <div className="flex space-x-1">
@@ -324,24 +325,24 @@ export function ChatRoom({ room }: ChatRoomProps) {
                   </div>
                   <span>
                     {typingUsers.length === 1
-                      ? `${typingUsers[0].userName} is typing...`
-                      : `${typingUsers.length} people are typing...`
+                      ? `${typingUsers[0].userName} pisze...`
+                      : `${typingUsers.length} osoby piszą...`
                     }
                   </span>
                 </div>
               )}
-              
+
               {messages.length === 0 && !loading && (
                 <div className="text-center text-gray-500 py-8">
                   <div className="text-lg mb-2">👋</div>
-                  <p>Start the conversation!</p>
-                  <p className="text-sm">Send your first message to {getRoomDisplayName()}</p>
+                  <p>Rozpocznij rozmowę!</p>
+                  <p className="text-sm">Wyślij swoją pierwszą wiadomość do {getRoomDisplayName()}</p>
                 </div>
               )}
             </div>
           )}
         </ScrollArea>
-        
+
         <div className="border-t p-4">
           <ChatInput onSendMessage={handleSendMessage} onTyping={handleTyping} />
         </div>

@@ -43,7 +43,7 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
           value={message}
           onChange={(e) => handleChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Type a message..."
+          placeholder="Wpisz wiadomość..."
           className="min-h-[40px] max-h-32 resize-none"
           rows={1}
         />

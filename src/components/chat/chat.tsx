@@ -42,6 +42,8 @@ interface ChatRoomData {
     content: string
     createdAt: string
     sender: User
+    senderId: string
+    chatRoomId: string
   }>
 }
 
@@ -259,7 +261,7 @@ export function Chat() {
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg flex items-center gap-2">
                 <MessageCircle className="h-5 w-5" />
-                Chat
+                Czat
               </CardTitle>
               <Dialog open={isNewChatDialogOpen} onOpenChange={setIsNewChatDialogOpen}>
                 <DialogTrigger asChild>
@@ -269,7 +271,7 @@ export function Chat() {
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
                   <DialogHeader>
-                    <DialogTitle>New Chat</DialogTitle>
+                    <DialogTitle>Nowy Czat</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
                     <Select value={newChatType} onValueChange={(value: 'direct' | 'group' | 'project') => setNewChatType(value)}>
@@ -277,15 +279,15 @@ export function Chat() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="direct">Direct Message</SelectItem>
-                        <SelectItem value="group">Group Chat</SelectItem>
-                        <SelectItem value="project">Project Chat</SelectItem>
+                        <SelectItem value="direct">Wiadomość Bezpośrednia</SelectItem>
+                        <SelectItem value="group">Czat Grupowy</SelectItem>
+                        <SelectItem value="project">Czat Projektu</SelectItem>
                       </SelectContent>
                     </Select>
 
                     {newChatType === 'group' && (
                       <Input
-                        placeholder="Group name"
+                        placeholder="Nazwa grupy"
                         value={groupName}
                         onChange={(e) => setGroupName(e.target.value)}
                       />
@@ -312,7 +314,7 @@ export function Chat() {
                     {newChatType !== 'project' && (
                       <div className="space-y-2">
                         <Input
-                          placeholder="Search users..."
+                          placeholder="Szukaj użytkowników..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -356,7 +358,7 @@ export function Chat() {
                               </div>
                               {selectedUsers.includes(user.id) && (
                                 <Badge variant="secondary" className="ml-2">
-                                  Selected
+                                  Wybrano
                                 </Badge>
                               )}
                             </div>
@@ -434,8 +436,8 @@ export function Chat() {
                 {chatRooms.length === 0 && (
                   <div className="text-center text-gray-500 py-8">
                     <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No chat rooms yet</p>
-                    <p className="text-xs">Create your first chat to get started</p>
+                    <p>Brak czatów</p>
+                    <p className="text-xs">Utwórz swój pierwszy czat, aby rozpocząć</p>
                   </div>
                 )}
               </div>
@@ -451,8 +453,8 @@ export function Chat() {
             <CardContent className="h-full flex items-center justify-center">
               <div className="text-center text-gray-500">
                 <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-medium mb-2">Select a chat to start messaging</h3>
-                <p className="text-sm">Choose from your existing conversations or start a new one</p>
+                <h3 className="text-lg font-medium mb-2">Wybierz czat, aby rozpocząć rozmowę</h3>
+                <p className="text-sm">Wybierz z istniejących rozmów lub rozpocznij nową</p>
               </div>
             </CardContent>
           </Card>
