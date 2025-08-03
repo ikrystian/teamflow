@@ -135,7 +135,7 @@ export function Chat() {
         const bTime = b.messages[0]?.createdAt ? new Date(b.messages[0].createdAt).getTime() : 0
         return bTime - aTime
       })
-      
+
       if (sortedRooms.length > 0) {
         setSelectedRoom(sortedRooms[0])
       }
@@ -258,35 +258,35 @@ export function Chat() {
   // Filter chat rooms based on search term
   const filteredChatRooms = useMemo(() => chatRooms.filter(room => {
     if (!roomSearchTerm) return true
-    
+
     try {
       const searchLower = roomSearchTerm.toLowerCase()
       const roomName = getRoomDisplayName(room).toLowerCase()
-      
+
       // Search in room name
       if (roomName.includes(searchLower)) return true
-      
+
       // Search in recent messages
       if (room.messages && room.messages.length > 0) {
         const lastMessage = room.messages[0]
         if (lastMessage && lastMessage.content && lastMessage.sender) {
           const messageContent = lastMessage.content.toLowerCase()
           const senderName = (lastMessage.sender.name || lastMessage.sender.email || '').toLowerCase()
-          
+
           if (messageContent.includes(searchLower) || senderName.includes(searchLower)) {
             return true
           }
         }
       }
-      
+
       // Search in member names for group chats
       if (room.type !== 'direct' && room.members) {
-        return room.members.some(member => 
+        return room.members.some(member =>
           member?.user?.name?.toLowerCase().includes(searchLower) ||
           member?.user?.email?.toLowerCase().includes(searchLower)
         )
       }
-      
+
       return false
     } catch (error) {
       // If any error occurs during filtering, include the room by default
@@ -540,7 +540,7 @@ export function Chat() {
                     </div>
                     <div className="flex items-center justify-between " >
                       {room.messages.length > 0 ? (
-                        <p className="text-xs text-muted-foreground w-[12rem] tuncate pr-2">
+                        <p className="text-xs text-muted-foreground w-[12rem]  truncate pr-2 whitespace-nowrap">
                           <span className="font-medium">
                             {room.messages[0].sender.name || room.messages[0].sender.email.split('@')[0]}
                           </span>
@@ -551,12 +551,14 @@ export function Chat() {
                           Brak wiadomości
                         </p>
                       )}
+                      {room.members.length > 2 && (
                       <div className="flex items-center gap-1 flex-shrink-0">
                         <Users className="h-3 w-3 text-muted-foreground" />
                         <span className="text-xs text-muted-foreground">
                           {room.members.length}
                         </span>
                       </div>
+                      )}
                     </div>
                   </div>
                 </div>

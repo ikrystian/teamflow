@@ -69,10 +69,10 @@ export function ChatRoom({ room }: ChatRoomProps) {
   const [isMuted, setIsMuted] = useState(false)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const typingTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
-  
+
   // Optimization: Limit messages to prevent memory issues
   const MAX_MESSAGES = 100
-  
+
   // Simple cache for messages to reduce server requests
   const messageCache = useRef<{ [roomId: string]: { messages: MessageData[], timestamp: number } }>({})
   const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
@@ -80,28 +80,28 @@ export function ChatRoom({ room }: ChatRoomProps) {
   const fetchMessages = useCallback(async (forceRefresh = false) => {
     try {
       setLoading(true)
-      
+
       // Check cache first
       const cached = messageCache.current[room.id]
       const now = Date.now()
-      
+
       if (!forceRefresh && cached && (now - cached.timestamp < CACHE_DURATION)) {
         setMessages(cached.messages)
         setLoading(false)
         return
       }
-      
+
       const response = await fetch(`/api/chat/rooms/${room.id}/messages`)
       if (response.ok) {
         const data = await response.json()
         const messages = data.messages || []
-        
+
         // Update cache
         messageCache.current[room.id] = {
           messages,
           timestamp: now
         }
-        
+
         setMessages(messages)
       }
     } catch (error) {
@@ -140,8 +140,8 @@ export function ChatRoom({ room }: ChatRoomProps) {
             }
             // Limit messages to prevent memory issues
             const newMessages = [...prev, message]
-            return newMessages.length > MAX_MESSAGES 
-              ? newMessages.slice(-MAX_MESSAGES) 
+            return newMessages.length > MAX_MESSAGES
+              ? newMessages.slice(-MAX_MESSAGES)
               : newMessages
           })
           scrollToBottom()
@@ -158,8 +158,8 @@ export function ChatRoom({ room }: ChatRoomProps) {
             }
             // Limit messages to prevent memory issues
             const newMessages = [...prev, message]
-            return newMessages.length > MAX_MESSAGES 
-              ? newMessages.slice(-MAX_MESSAGES) 
+            return newMessages.length > MAX_MESSAGES
+              ? newMessages.slice(-MAX_MESSAGES)
               : newMessages
           })
           scrollToBottom()
@@ -372,7 +372,7 @@ export function ChatRoom({ room }: ChatRoomProps) {
             <Button variant="ghost" size="icon" className="h-9 w-9">
               <Users className="h-4 w-4" />
             </Button>
-            
+
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-9 w-9">
@@ -388,7 +388,7 @@ export function ChatRoom({ room }: ChatRoomProps) {
                     </p>
                   </div>
                   <Separator />
-                  
+
                   <Button
                     variant="ghost"
                     className="w-full justify-start gap-2 h-8"
@@ -406,7 +406,7 @@ export function ChatRoom({ room }: ChatRoomProps) {
                       </>
                     )}
                   </Button>
-                  
+
                   {room.type === 'group' && (
                     <Button
                       variant="ghost"
@@ -416,9 +416,9 @@ export function ChatRoom({ room }: ChatRoomProps) {
                       Opuść grupę
                     </Button>
                   )}
-                  
+
                   <Separator />
-                  
+
                   <Button
                     variant="ghost"
                     className="w-full justify-start gap-2 h-8"
@@ -477,9 +477,9 @@ export function ChatRoom({ room }: ChatRoomProps) {
                   </Avatar>
                   <div className="flex items-center gap-2 bg-muted/50 rounded-full px-3 py-2">
                     <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                      <div className="w-2 h-2 bg-primary/50 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                      <div className="w-2 h-2 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                     </div>
                     <span className="text-sm text-muted-foreground">
                       {typingUsers.length === 1
