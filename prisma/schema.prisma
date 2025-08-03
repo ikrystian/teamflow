@@ -35,6 +35,9 @@ model User {
   systemChanges     SystemChange[]    @relation("SystemChangeCreator")
   systemChangeReads SystemChangeRead[]
   pushSubscriptions PushSubscription[]
+  createdChatRooms  ChatRoom[]        @relation("ChatRoomCreator")
+  sentMessages      Message[]         @relation("MessageSender")
+  chatRooms         UserChatRoom[]
 }
 
 model Team {
@@ -70,6 +73,7 @@ model Project {
   team          Team              @relation(fields: [teamId], references: [id])
   documents     ProjectDocument[]
   tasks         Task[]
+  chatRooms     ChatRoom[]
 }
 
 model Task {
@@ -264,4 +268,41 @@ model PushSubscription {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, endpoint])
+}
+
+model ChatRoom {
+  id          String         @id @default(cuid())
+  name        String?
+  type        String         @default("group") // "direct", "group", or "project"
+  projectId   String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  createdById String
+  createdBy   User           @relation("ChatRoomCreator", fields: [createdById], references: [id])
+  project     Project?       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  messages    Message[]
+  members     UserChatRoom[]
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  content    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  chatRoomId String
+  senderId   String
+  chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  sender     User     @relation("MessageSender", fields: [senderId], references: [id])
+}
+
+model UserChatRoom {
+  id         String   @id @default(cuid())
+  userId     String
+  chatRoomId String
+  joinedAt   DateTime @default(now())
+  lastReadAt DateTime?
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, chatRoomId])
 }

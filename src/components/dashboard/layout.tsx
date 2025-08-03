@@ -11,6 +11,7 @@ import {
   Calendar,
   BarChart3,
   FolderOpen,
+  MessageCircle,
 } from "lucide-react"
 import {
   Sidebar,
@@ -67,6 +68,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
   const navigation = [
     { name: "Panel", href: "/dashboard", icon: Home },
     { name: "Moje zadania", href: "/dashboard/tasks", icon: CheckSquare },
+    { name: "Chat", href: "/dashboard/chat", icon: MessageCircle },
     { name: "Zespoły", href: "/dashboard/teams", icon: Users },
     { name: "Raporty", href: "/dashboard/reports", icon: BarChart3 },
     { name: "Kalendarz", href: "/dashboard/calendar", icon: Calendar },
