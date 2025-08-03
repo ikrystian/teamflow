@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { isAdmin } from "@/lib/admin"
 import type { Session } from "next-auth"
 
 export async function GET(
@@ -194,8 +195,10 @@ export async function PATCH(
       )
     }
 
-    // Check if user can edit this task (creator or assignee)
-    const canEdit = existingTask.createdById === session.user.id ||
+    // Check if user can edit this task (creator, assignee, or admin)
+    const userIsAdmin = await isAdmin()
+    const canEdit = userIsAdmin ||
+                   existingTask.createdById === session.user.id ||
                    existingTask.assigneeId === session.user.id
 
     if (!canEdit) {

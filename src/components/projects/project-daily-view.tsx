@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -499,17 +498,17 @@ export function ProjectDailyView({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <Card className={className}>
-        <CardHeader>
+      <div className={className}>
+        <div>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
               Widok dzienny
-            </CardTitle>
-            <CardDescription>
+            </div>
+            <div>
               Zadania z podziałem na osoby i godziny dla {formatDate(selectedDate)}
-            </CardDescription>
+            </div>
           </div>
           <div>
             <div className="flex items-center space-x-2">
@@ -539,8 +538,8 @@ export function ProjectDailyView({
             />
           </div>
         </div>
-      </CardHeader>
-      <CardContent>
+      </div>
+      <div>
         <div className="overflow-x-auto">
           <div className="min-w-[800px]">
             {/* Header with team members */}
@@ -650,8 +649,8 @@ export function ProjectDailyView({
             )}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
 
     <DragOverlay>
       {activeTask ? (

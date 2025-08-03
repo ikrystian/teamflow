@@ -1,6 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react'
+import { useSession } from 'next-auth/react'
 
 interface Project {
   id: string
@@ -50,8 +51,14 @@ const ProjectsContext = createContext<ProjectsContextType | undefined>(undefined
 export function ProjectsProvider({ children }: { children: ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
+  const { data: session, status } = useSession()
 
   const fetchProjects = useCallback(async (includeArchived: boolean = false) => {
+    if (!session?.user) {
+      setLoading(false)
+      return
+    }
+    
     try {
       setLoading(true)
       const response = await fetch(`/api/projects?includeArchived=${includeArchived}`)
@@ -64,7 +71,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [session?.user])
 
   const refreshProjects = useCallback(async () => {
     // Odświeża projekty zachowując obecne ustawienia filtrowania
@@ -90,10 +97,15 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     setProjects(prev => prev.filter(project => project.id !== projectId))
   }, [])
 
-  // Wczytaj projekty przy inicjalizacji
+  // Wczytaj projekty tylko gdy użytkownik jest zalogowany
   useEffect(() => {
-    fetchProjects(false) // Domyślnie tylko aktywne projekty
-  }, [fetchProjects])
+    if (status === 'authenticated' && session?.user) {
+      fetchProjects(false) // Domyślnie tylko aktywne projekty
+    } else if (status === 'unauthenticated') {
+      setLoading(false)
+      setProjects([])
+    }
+  }, [status, session?.user, fetchProjects])
 
   const value = {
     projects,
@@ -124,11 +136,14 @@ export function useProjects() {
 export function useProjectsWithFilter(filter: 'active' | 'archived' | 'all' = 'active') {
   const { projects, loading, fetchProjects } = useProjects()
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([])
+  const { data: session, status } = useSession()
 
   useEffect(() => {
-    const includeArchived = filter === 'archived' || filter === 'all'
-    fetchProjects(includeArchived)
-  }, [filter, fetchProjects])
+    if (status === 'authenticated' && session?.user) {
+      const includeArchived = filter === 'archived' || filter === 'all'
+      fetchProjects(includeArchived)
+    }
+  }, [filter, fetchProjects, status, session?.user])
 
   useEffect(() => {
     let filtered = projects

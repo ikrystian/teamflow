@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import type { Session } from "next-auth"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
@@ -384,16 +384,16 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
 
       {/* Tasks */}
       {viewMode === "list" ? (
-        <Card >
-          <CardHeader>
+        <div >
+          <div>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Zadania</CardTitle>
-                <CardDescription>
+                <div>Zadania</div>
+                <div>
                   {taskFilter === "all" ? "Wszystkie zadania w tym projekcie" :
                    taskFilter === "mine" ? "Twoje zadania w tym projekcie" :
                    `Zadania przypisane do ${project.team.members.find(m => m.id === taskFilter)?.name || "Nieznany użytkownik"}`}
-                </CardDescription>
+                </div>
               </div>
               <div className="flex items-center space-x-2">
                 <TaskBoardFilters
@@ -409,8 +409,8 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                 </Button>
               </div>
             </div>
-          </CardHeader>
-          <CardContent>
+          </div>
+          <div>
             {getFilteredTasks(project.tasks).length === 0 ? (
               <div className="text-center py-8">
                 <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -485,8 +485,8 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ) : viewMode === "gantt" ? (
         <ProjectGanttChart
           tasks={getFilteredTasks(project.tasks)}

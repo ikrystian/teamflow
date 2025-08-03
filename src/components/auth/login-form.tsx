@@ -98,6 +98,7 @@ export function LoginForm({
         <div className="grid gap-2">
           <Label htmlFor="email">Email</Label>
           <Input
+            tabIndex={1}
             id="email"
             type="email"
             placeholder="m@example.com"
@@ -115,6 +116,7 @@ export function LoginForm({
           <div className="flex items-center">
             <Label htmlFor="password">Hasło</Label>
             <Link
+              tabIndex={0}
               href="/auth/forgot-password"
               className="ml-auto text-sm underline-offset-4 hover:underline"
             >
@@ -122,6 +124,7 @@ export function LoginForm({
             </Link>
           </div>
           <Input
+            tabIndex={1}
             id="password"
             type="password"
             value={password}

@@ -1,11 +1,10 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { 
+import {
   Calendar,
   Clock,
   Filter
@@ -73,14 +72,14 @@ export function ProjectGanttChart({ tasks, onTaskClick }: ProjectGanttChartProps
       .map(task => {
         const createdDate = parseISO(task.createdAt)
         const dueDate = task.dueDate ? parseISO(task.dueDate) : addDays(createdDate, 7) // Default 7 days if no due date
-        
+
         // Calculate progress based on subtasks completion
         const completedSubtasks = task.subtasks.filter(st => st.isCompleted).length
         const totalSubtasks = task.subtasks.length
         const progress = totalSubtasks > 0 ? (completedSubtasks / totalSubtasks) * 100 : 0
 
         // Determine color based on priority or status
-        const color = task.priority 
+        const color = task.priority
           ? PRIORITY_COLORS[task.priority as keyof typeof PRIORITY_COLORS] || STATUS_COLORS['todo']
           : STATUS_COLORS[task.statusId as keyof typeof STATUS_COLORS] || task.project?.color || '#3b82f6'
 
@@ -113,7 +112,7 @@ export function ProjectGanttChart({ tasks, onTaskClick }: ProjectGanttChartProps
     const allDates = ganttTasks.flatMap(task => [task.startDate, task.endDate])
     const earliestDate = new Date(Math.min(...allDates.map(d => d.getTime())))
     const latestDate = new Date(Math.max(...allDates.map(d => d.getTime())))
-    
+
     // Add some padding
     return {
       start: addDays(startOfDay(earliestDate), -7),
@@ -166,7 +165,7 @@ export function ProjectGanttChart({ tasks, onTaskClick }: ProjectGanttChartProps
     const totalDays = Math.ceil((dateRange.end.getTime() - dateRange.start.getTime()) / (1000 * 60 * 60 * 24))
     const startOffset = Math.ceil((task.startDate.getTime() - dateRange.start.getTime()) / (1000 * 60 * 60 * 24))
     const duration = Math.ceil((task.endDate.getTime() - task.startDate.getTime()) / (1000 * 60 * 60 * 24))
-    
+
     const leftPercent = (startOffset / totalDays) * 100
     const widthPercent = (duration / totalDays) * 100
 
@@ -196,17 +195,17 @@ export function ProjectGanttChart({ tasks, onTaskClick }: ProjectGanttChartProps
 
   if (ganttTasks.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
+      <div>
+        <div>
+          <div className="flex items-center space-x-2">
             <Calendar className="h-5 w-5" />
             <span>Wykres Gantta</span>
-          </CardTitle>
-          <CardDescription>
+          </div>
+          <div>
             Wizualizacja terminów i postępu zadań w projekcie
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          </div>
+        </div>
+        <div>
           <div className="text-center py-8">
             <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">Brak zadań z datami</h3>
@@ -214,25 +213,25 @@ export function ProjectGanttChart({ tasks, onTaskClick }: ProjectGanttChartProps
               Dodaj terminy do zadań, aby zobaczyć wykres Gantta
             </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     )
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <div>
+      <div>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2">
               <Calendar className="h-5 w-5" />
               <span>Wykres Gantta</span>
-            </CardTitle>
-            <CardDescription>
+            </div>
+            <div>
               Wizualizacja terminów i postępu zadań w projekcie
-            </CardDescription>
+            </div>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             {/* Timeline Scale Selector */}
             <div className="flex items-center border rounded-lg">
@@ -248,16 +247,16 @@ export function ProjectGanttChart({ tasks, onTaskClick }: ProjectGanttChartProps
                 </Button>
               ))}
             </div>
-            
+
             <Button variant="outline" size="sm">
               <Filter className="h-4 w-4 mr-2" />
               Filtry
             </Button>
           </div>
         </div>
-      </CardHeader>
-      
-      <CardContent>
+      </div>
+
+      <div>
         <div className="gantt-container">
           {/* Header with timeline */}
           <div className="gantt-header grid grid-cols-12 border-b">
@@ -305,8 +304,8 @@ export function ProjectGanttChart({ tasks, onTaskClick }: ProjectGanttChartProps
                         </div>
                       )}
                       {task.priority && (
-                        <Badge 
-                          variant="outline" 
+                        <Badge
+                          variant="outline"
                           className="text-xs"
                           style={{ borderColor: task.color, color: task.color }}
                         >
@@ -337,7 +336,7 @@ export function ProjectGanttChart({ tasks, onTaskClick }: ProjectGanttChartProps
                           style={{ width: `${task.progress}%` }}
                         />
                       )}
-                      
+
                       {/* Task label */}
                       <div className="absolute inset-0 flex items-center px-2">
                         <span className="text-white text-xs font-medium truncate">
@@ -351,7 +350,7 @@ export function ProjectGanttChart({ tasks, onTaskClick }: ProjectGanttChartProps
                       const todayOffset = Math.ceil((currentDate.getTime() - dateRange.start.getTime()) / (1000 * 60 * 60 * 24))
                       const totalDays = Math.ceil((dateRange.end.getTime() - dateRange.start.getTime()) / (1000 * 60 * 60 * 24))
                       const todayPercent = (todayOffset / totalDays) * 100
-                      
+
                       if (todayPercent >= 0 && todayPercent <= 100) {
                         return (
                           <div
@@ -387,7 +386,7 @@ export function ProjectGanttChart({ tasks, onTaskClick }: ProjectGanttChartProps
             </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

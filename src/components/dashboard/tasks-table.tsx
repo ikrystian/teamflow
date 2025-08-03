@@ -57,9 +57,11 @@ interface TasksTableProps {
   taskStatuses: TaskStatus[]
   onTaskUpdate: (taskId: string, updates: TaskUpdateData) => Promise<void>
   onTaskDetails?: (task: Task) => void
+  isAdmin?: boolean
+  currentUserId?: string
 }
 
-export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate, onTaskDetails }: TasksTableProps) {
+export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate, onTaskDetails, isAdmin = false, currentUserId }: TasksTableProps) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [rowSelection, setRowSelection] = useState({})
@@ -71,6 +73,17 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate, onTaskDet
 
   // Używamy hooka do zarządzania preferencjami widoczności i kolejności kolumn
   const { columnVisibility, columnOrder, updateColumnVisibility, updateColumnOrder, isLoaded } = useTasksTablePreferences()
+
+  // Function to check if current user can edit a task
+  const canEditTask = useCallback((task: Task): boolean => {
+    if (!currentUserId) return false
+    
+    // Admin can edit all tasks
+    if (isAdmin) return true
+    
+    // User can edit tasks they created or are assigned to
+    return task.createdById === currentUserId || task.assigneeId === currentUserId
+  }, [isAdmin, currentUserId])
 
   // Sync optimistic tasks with props tasks when they change
   useEffect(() => {
@@ -257,6 +270,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate, onTaskDet
               type="text"
               onSave={(value) => handleOptimisticTaskUpdate(task.id, { title: value })}
               className="font-medium"
+              disabled={!canEditTask(task)}
             />
           </div>
         )
@@ -292,6 +306,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate, onTaskDet
             users={users}
             onSave={(value) => handleOptimisticTaskUpdate(task.id, { assigneeId: value })}
             placeholder="Przypisz osobę"
+            disabled={!canEditTask(task)}
           />
         )
       },
@@ -406,6 +421,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate, onTaskDet
             type="priority"
             onSave={(value) => handleOptimisticTaskUpdate(task.id, { priority: value })}
             placeholder="Ustaw priorytet"
+            disabled={!canEditTask(task)}
           />
         )
       },
@@ -454,6 +470,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate, onTaskDet
               onSave={(value) => handleOptimisticTaskUpdate(task.id, { dueDate: value })}
               placeholder="Ustaw termin"
               className={isOverdue ? 'text-red-600' : ''}
+              disabled={!canEditTask(task)}
             />
           </div>
         )
@@ -489,6 +506,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate, onTaskDet
             taskStatuses={taskStatuses}
             onSave={(value) => handleOptimisticTaskUpdate(task.id, { statusId: value })}
             placeholder="Ustaw status"
+            disabled={!canEditTask(task)}
           />
         )
       },
@@ -627,6 +645,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate, onTaskDet
                 handleOptimisticTaskUpdate(task.id, { estimatedHours: hours })
               }}
               placeholder="Szacowany czas (h)"
+              disabled={!canEditTask(task)}
             />
             {task.estimatedHours && <span className="text-xs text-muted-foreground">h</span>}
           </div>
@@ -714,7 +733,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate, onTaskDet
         )
       },
     },
-  ], [users, taskStatuses, handleOptimisticTaskUpdate, onTaskDetails])
+  ], [users, taskStatuses, handleOptimisticTaskUpdate, onTaskDetails, canEditTask])
 
   // Sortuj kolumny według zapisanej kolejności
   const sortedColumns = useMemo(() => sortColumnsByOrder(columns), [columns, sortColumnsByOrder])
