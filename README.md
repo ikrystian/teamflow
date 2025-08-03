@@ -79,9 +79,10 @@ Nexus to nowoczesna aplikacja internetowa do zarządzania zadaniami i projektami
 - **Powiadomienia Sonner** - Inteligentne powiadomienia toast z loading/success/error states dla operacji drag and drop
 - **Przypomnienia Push** - System powiadomień push przeglądarki z możliwością ustawienia przypomnienia na wybrane godziny/dni przed terminem zadania
 - **Publiczne udostępnianie projektów** - Możliwość generowania specjalnych linków do udostępnienia tablicy zadań osobom bez konta w systemie, widok tylko do odczytu z tablicą Kanban i kalendarzem
+- **System wysyłania maili** - Konfiguracja SMTP przez panel administratora, maile powitalne po rejestracji, resetowanie hasła przez email
 
 ### 🔄 Planowane funkcjonalności
-- Zaproszenia do zespołów przez email
+- ✅ ~~Zaproszenia do zespołów przez email~~ - **CZĘŚCIOWO ZAIMPLEMENTOWANE** (system SMTP gotowy)
 - ✅ ~~Powiadomienia push o zadaniach~~ - **ZAIMPLEMENTOWANE**
 - ✅ ~~Załączniki plików (dokumenty, PDF, itp.)~~ - **ZAIMPLEMENTOWANE**
 - ✅ ~~Aktywne oznaczanie stron w nawigacji~~ - **ZAIMPLEMENTOWANE**
@@ -148,6 +149,24 @@ npm run dev
 ```
 
 Aplikacja będzie dostępna pod adresem `http://localhost:3000`
+
+## 📧 Konfiguracja SMTP (Opcjonalna)
+
+Aby włączyć funkcjonalność wysyłania maili (powitalne, resetowanie hasła):
+
+1. **Zaloguj się jako administrator** (krystian@bpcoders.pl / admin123)
+2. **Przejdź do Ustawień** → zakładka "SMTP"
+3. **Skonfiguruj ustawienia SMTP**:
+   - **Gmail**: smtp.gmail.com, port 587, TLS, hasło aplikacji
+   - **Outlook**: smtp-mail.outlook.com, port 587, TLS
+   - **SendGrid**: smtp.sendgrid.net, port 587, TLS, API key jako hasło
+4. **Przetestuj połączenie** przyciskiem "Testuj połączenie"
+5. **Zapisz ustawienia**
+
+Po konfiguracji SMTP:
+- Nowi użytkownicy otrzymają mail powitalny po rejestracji
+- Funkcja "Nie pamiętam hasła" będzie działać
+- Linki resetowania hasła będą wysyłane na email
 
 ## 🗄️ Struktura bazy danych
 

@@ -162,7 +162,8 @@ export function CalendarContent() {
     })
   }
 
-  const handleTaskDetails = (task: Task) => {
+  const handleTaskDetails = (task: Task, e?: React.MouseEvent) => {
+    e?.stopPropagation()
     setSelectedTask(task)
     setTaskDetailsDialogOpen(true)
   }
@@ -186,150 +187,148 @@ export function CalendarContent() {
   return (
     <>
       <div className="space-y-6 p-4 md:p-8 pt-6">
-
-
-              <div>
-                <div>
-                  <div className="flex items-center justify-between">
-                    <div className="text-xl">
-                      {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm" onClick={() => navigateMonth('prev')}>
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => navigateMonth('next')}>
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <div className="grid grid-cols-6 gap-1 mb-4">
-                    {dayNames.map(day => (
-                      <div key={day} className="p-2 text-center font-medium text-gray-500 text-sm">
-                        {day}
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="grid grid-cols-6 gap-1">
-                    {/* Empty cells for days before the first day of the month */}
-                    {Array.from({ length: firstDay }).map((_, index) => (
-                      <div key={`empty-${index}`} className="h-24 p-1"></div>
-                    ))}
-
-                    {/* Days of the month */}
-                    {Array.from({ length: daysInMonth }).map((_, index) => {
-                      const day = index + 1
-                      const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
-                      const dayOfWeek = date.getDay()
-
-                      // Skip Sundays (dayOfWeek === 0)
-                      if (dayOfWeek === 0) {
-                        return null
-                      }
-
-                      const tasksForDay = getTasksForDate(date)
-                      const isToday = date.toDateString() === today.toDateString()
-
-                      return (
-                        <div
-                          key={day}
-                          className={`h-24 p-1 border rounded-lg ${isToday ? 'bg-blue-50 border-blue-200' : 'border-gray-200'
-                            }`}
-                        >
-                          <div className={`text-sm font-medium mb-1 ${isToday ? 'text-blue-600' : 'text-gray-900'
-                            }`}>
-                            {day}
-                          </div>
-                          <div className="space-y-1">
-                            {tasksForDay.slice(0, 2).map(task => (
-                              <TaskPopover
-                                key={task.id}
-                                task={task}
-                                onTaskClick={handleTaskDetails}
-                                onTaskUpdate={handleTaskUpdate}
-                                onTimeLogged={handleTimeLogged}
-                                users={users}
-                                canEdit={canEditTask(task)}
-                                side="bottom"
-                                align="start"
-                              >
-                                <div
-                                  className="text-xs p-1 rounded bg-white border-l-4 cursor-pointer hover:bg-gray-50 transition-colors"
-                                  style={{ borderLeftColor: task.project?.color || '#3B82F6' }}
-                                  onClick={() => handleTaskDetails(task)}
-                                >
-                                  <div className="flex items-center gap-1">
-                                    {formatStartTime(task.startTime) && (
-                                      <span className="text-xs font-medium text-gray-600 shrink-0">
-                                        {formatStartTime(task.startTime)}
-                                      </span>
-                                    )}
-                                    <span className="truncate">{task.title}</span>
-                                  </div>
-                                </div>
-                              </TaskPopover>
-                            ))}
-                            {tasksForDay.length > 2 && (
-                              <div className="text-xs text-gray-500">
-                                +{tasksForDay.length - 2} więcej
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )
-                    }).filter(Boolean)}
-                  </div>
-                </div>
+        <div>
+          <div>
+            <div className="flex items-center justify-between">
+              <div className="text-xl">
+                {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
               </div>
-
-              {/* Upcoming tasks */}
-              <div>
-                <div>
-                  <div className="text-xl">Nadchodzące zadania</div>
+              <div className="flex space-x-2">
+                <Button variant="outline" size="sm" onClick={() => navigateMonth('prev')}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => navigateMonth('next')}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div className="grid grid-cols-6 gap-1 mb-4">
+              {dayNames.map(day => (
+                <div key={day} className="p-2 text-center font-medium text-gray-500 text-sm">
+                  {day}
                 </div>
-                <div>
-                  {tasks.length === 0 ? (
-                    <div className="text-center py-8">
-                      <CalendarIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-500">Nie znaleziono zadań z terminami wykonania</p>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-6 gap-1">
+              {/* Empty cells for days before the first day of the month */}
+              {Array.from({ length: firstDay }).map((_, index) => (
+                <div key={`empty-${index}`} className="h-24 p-1"></div>
+              ))}
+
+              {/* Days of the month */}
+              {Array.from({ length: daysInMonth }).map((_, index) => {
+                const day = index + 1
+                const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
+                const dayOfWeek = date.getDay()
+
+                // Skip Sundays (dayOfWeek === 0)
+                if (dayOfWeek === 0) {
+                  return null
+                }
+
+                const tasksForDay = getTasksForDate(date)
+                const isToday = date.toDateString() === today.toDateString()
+
+                return (
+                  <div
+                    key={day}
+                    className={`h-[20vh] p-1 border rounded-lg ${isToday ? 'bg-blue-50 border-blue-200' : 'border-gray-200'
+                      }`}
+                  >
+                    <div className={`text-sm font-medium mb-1 ${isToday ? 'text-blue-600' : 'text-gray-900'
+                      }`}>
+                      {day}
                     </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {tasks
-                        .filter(task => task.dueDate)
-                        .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
-                        .slice(0, 10)
-                        .map(task => (
+                    <div className="space-y-1">
+                      {tasksForDay.slice(0, 2).map(task => (
+                        <TaskPopover
+                          key={task.id}
+                          task={task}
+                          onTaskClick={handleTaskDetails}
+                          onTaskUpdate={handleTaskUpdate}
+                          onTimeLogged={handleTimeLogged}
+                          users={users}
+                          canEdit={canEditTask(task)}
+                          side="bottom"
+                          align="start"
+                        >
                           <div
-                            key={task.id}
-                            className="flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                            className="text-xs p-1 rounded bg-white border-l-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                            style={{ borderLeftColor: task.project?.color || '#3B82F6' }}
                             onClick={() => handleTaskDetails(task)}
                           >
-                            <div className="flex-1">
-                              <h4 className="font-medium text-gray-900">{task.title}</h4>
-                              <p className="text-sm text-gray-500">
-                                {formatProjectDisplay(task.project)}
-                              </p>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              {task.priority && (
-                                <Badge className={getPriorityColor(task.priority)}>
-                                  {getPriorityDisplayName(task.priority)}
-                                </Badge>
+                            <div className="flex items-center gap-1">
+                              {formatStartTime(task.startTime) && (
+                                <span className="text-xs font-medium text-gray-600 shrink-0">
+                                  {formatStartTime(task.startTime)}
+                                </span>
                               )}
-                              <span className="text-sm text-gray-500">
-                                {task.dueDate ? formatTaskDueDateWithRelative(task.dueDate) : 'Brak terminu'}
-                              </span>
+                              <span className="truncate">{task.title}</span>
                             </div>
                           </div>
-                        ))}
+                        </TaskPopover>
+                      ))}
+                      {tasksForDay.length > 2 && (
+                        <div className="text-xs text-gray-500">
+                          +{tasksForDay.length - 2} więcej
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )
+              }).filter(Boolean)}
+            </div>
+          </div>
+        </div>
+
+        {/* Upcoming tasks */}
+        <div>
+          <div>
+            <div className="text-xl">Nadchodzące zadania</div>
+          </div>
+          <div>
+            {tasks.length === 0 ? (
+              <div className="text-center py-8">
+                <CalendarIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">Nie znaleziono zadań z terminami wykonania</p>
               </div>
+            ) : (
+              <div className="space-y-3">
+                {tasks
+                  .filter(task => task.dueDate)
+                  .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
+                  .slice(0, 10)
+                  .map(task => (
+                    <div
+                      key={task.id}
+                      className="flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                      onClick={() => handleTaskDetails(task)}
+                    >
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900">{task.title}</h4>
+                        <p className="text-sm text-gray-500">
+                          {formatProjectDisplay(task.project)}
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {task.priority && (
+                          <Badge className={getPriorityColor(task.priority)}>
+                            {getPriorityDisplayName(task.priority)}
+                          </Badge>
+                        )}
+                        <span className="text-sm text-gray-500">
+                          {task.dueDate ? formatTaskDueDateWithRelative(task.dueDate) : 'Brak terminu'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Task Details Sheet */}

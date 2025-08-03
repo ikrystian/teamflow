@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/prisma"
+import { sendWelcomeEmail } from "@/lib/email"
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,6 +37,14 @@ export async function POST(request: NextRequest) {
         password: hashedPassword
       }
     })
+
+    // Wyślij mail powitalny (nie blokuj rejestracji jeśli się nie uda)
+    try {
+      await sendWelcomeEmail(user.email, user.name || user.email)
+    } catch (emailError) {
+      console.error("Error sending welcome email:", emailError)
+      // Nie zwracamy błędu - rejestracja się powiodła, tylko mail się nie wysłał
+    }
 
     // Remove password from response
     const { ...userWithoutPassword } = user

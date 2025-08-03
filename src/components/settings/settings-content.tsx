@@ -21,7 +21,8 @@ import {
   Loader2,
   Settings,
   Key,
-  Users
+  Users,
+  Mail
 } from "lucide-react"
 import { useSession } from "next-auth/react"
 import type { Session } from "next-auth"
@@ -30,6 +31,7 @@ import { SystemTaskStatuses } from "./system-task-statuses"
 import { PasswordChangeForm } from "./password-change-form"
 import { ActiveSessions } from "./active-sessions"
 import { UserManagement } from "./user-management"
+import { SMTPSettings } from "./smtp-settings"
 
 interface UserProfile {
   id: string
@@ -211,7 +213,7 @@ export function SettingsContent() {
     <div className="container mx-auto py-6 px-4">
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-7' : 'grid-cols-6'}`}>
+          <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-8' : 'grid-cols-6'}`}>
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="h-4 w-4" />
               Profil
@@ -237,10 +239,16 @@ export function SettingsContent() {
               Statusy zadań
             </TabsTrigger>
             {isAdmin && (
-              <TabsTrigger value="users" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Użytkownicy
-              </TabsTrigger>
+              <>
+                <TabsTrigger value="smtp" className="flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  SMTP
+                </TabsTrigger>
+                <TabsTrigger value="users" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Użytkownicy
+                </TabsTrigger>
+              </>
             )}
           </TabsList>
 
@@ -629,9 +637,15 @@ export function SettingsContent() {
           </TabsContent>
 
           {isAdmin && (
-            <TabsContent value="users" className="space-y-6">
-              <UserManagement />
-            </TabsContent>
+            <>
+              <TabsContent value="smtp" className="space-y-6">
+                <SMTPSettings />
+              </TabsContent>
+
+              <TabsContent value="users" className="space-y-6">
+                <UserManagement />
+              </TabsContent>
+            </>
           )}
         </Tabs>
       </div>
