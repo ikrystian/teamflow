@@ -37,6 +37,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { useSession } from "next-auth/react"
 import { Session } from "next-auth"
+import { formatCreatedDate } from "@/lib/date-utils"
 import {
   Users,
   Search,
@@ -347,7 +348,7 @@ export function UserManagement() {
                   </span>
                   <span className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
-                    {new Date(user.createdAt).toLocaleDateString()}
+                    {formatCreatedDate(user.createdAt)}
                   </span>
                 </div>
               </div>

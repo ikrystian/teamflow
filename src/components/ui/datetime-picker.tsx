@@ -89,9 +89,9 @@ export function DateTimePicker({
   const formatDateTime = (date?: Date) => {
     if (!date) return null
     if (showTime) {
-      return format(date, "PPP 'o' HH:mm", { locale: pl })
+      return format(date, "PP 'o' HH:mm", { locale: pl })
     } else {
-      return format(date, "PPP", { locale: pl })
+      return format(date, "PP", { locale: pl })
     }
   }
 

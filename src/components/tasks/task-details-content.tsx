@@ -47,7 +47,7 @@ import {
 } from "@/components/ui/tooltip"
 import { SlackNotificationModal } from "@/components/tasks/slack-notification-modal"
 import type { Task, Todo, User } from "@/types"
-import { formatTaskDueDateWithRelative, dateToLocalDateString } from "@/lib/date-utils"
+import { formatTaskDueDateWithRelative, formatCreatedDate, dateToLocalDateString } from "@/lib/date-utils"
 
 interface TaskStatus {
   id: string
@@ -831,7 +831,7 @@ export function TaskDetailsContent({
                       Data utworzenia
                     </div>
                     <span className="font-medium">
-                      {formatTaskDueDateWithRelative(task.createdAt)}
+                      {formatCreatedDate(task.createdAt)}
                     </span>
                   </div>
                 </div>
@@ -923,7 +923,7 @@ export function TaskDetailsContent({
                   <div className="flex items-center gap-3 text-sm">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                     <span className="text-muted-foreground">
-                      Zadanie utworzone {formatTaskDueDateWithRelative(task.createdAt)}
+                      Zadanie utworzone {formatCreatedDate(task.createdAt)}
                     </span>
                   </div>
                   {task.timeEntries && task.timeEntries.length > 0 && (

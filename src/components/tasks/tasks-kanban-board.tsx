@@ -40,7 +40,7 @@ import { TaskDetailsSheet } from "./task-details-sheet"
 import type { Task, TaskStatus } from "@/types"
 import type { Session } from "next-auth"
 import { toast } from "sonner"
-import { formatTaskDueDate } from "@/lib/date-utils"
+import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
 
 interface TasksKanbanBoardProps {
   tasks: Task[]
@@ -240,7 +240,7 @@ function SortableTaskCard({
                   isOverdue(task.dueDate) ? 'text-red-600' : 'text-muted-foreground'
                 }`}>
                   <Calendar className="h-3 w-3" />
-                  {formatTaskDueDate(task.dueDate)}
+                  {formatTaskDueDateWithRelative(task.dueDate)}
                   {isOverdue(task.dueDate) && <AlertCircle className="h-3 w-3 text-red-600" />}
                 </div>
               )}

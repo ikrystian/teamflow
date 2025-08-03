@@ -9,7 +9,7 @@ import { TaskPopover } from "@/components/tasks/task-popover"
 import { usePageHeader } from "@/contexts/header-context"
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react"
 import type { Task } from "@/types"
-import { formatTaskDueDate } from "@/lib/date-utils"
+import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
 
 export function CalendarContent() {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -227,7 +227,7 @@ export function CalendarContent() {
                                 </Badge>
                               )}
                               <span className="text-sm text-gray-500">
-                                {task.dueDate ? formatTaskDueDate(task.dueDate) : 'Brak terminu'}
+                                {task.dueDate ? formatTaskDueDateWithRelative(task.dueDate) : 'Brak terminu'}
                               </span>
                             </div>
                           </div>

@@ -9,6 +9,7 @@ import { TaskDetailsSheet } from "@/components/tasks/task-details-sheet"
 import type { Task, User, TaskStatus } from "@/types"
 import type { Session } from "next-auth"
 import { usePageHeader } from "@/contexts/header-context"
+import { formatTaskDueDateWithRelative, formatCreatedDate } from "@/lib/date-utils"
 
 export function DashboardContent() {
   const { data: session } = useSession() as { data: Session | null }
@@ -255,7 +256,7 @@ export function DashboardContent() {
                     <span className="text-sm font-medium truncate">{task.title}</span>
                   </div>
                   <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
-                    {new Date(task.dueDate!).toLocaleDateString('pl-PL', { month: 'short', day: 'numeric' })}
+                    {formatTaskDueDateWithRelative(task.dueDate!)}
                   </span>
                 </div>
               ))}
@@ -285,7 +286,7 @@ export function DashboardContent() {
                     <span className="text-sm font-medium truncate">{task.title}</span>
                   </div>
                   <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
-                    {new Date(task.createdAt!).toLocaleDateString('pl-PL', { month: 'short', day: 'numeric' })}
+                    {formatCreatedDate(task.createdAt!)}
                   </span>
                 </div>
               ))}
