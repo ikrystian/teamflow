@@ -60,7 +60,7 @@ interface ChatRoomData {
 
 export function Chat() {
   const { data: session } = useSession()
-  const { socket, isConnected } = useSocket()
+  const { socket, isConnected, onlineUsers } = useSocket()
   const isMobile = useIsMobile()
   const [chatRooms, setChatRooms] = useState<ChatRoomData[]>([])
   const [selectedRoom, setSelectedRoom] = useState<ChatRoomData | null>(null)
@@ -156,8 +156,22 @@ export function Chat() {
         }))
       })
 
+      // Listen for new chat rooms
+      socket.on('new-chat-room', (newRoom) => {
+        console.log('Received new chat room:', newRoom)
+        setChatRooms(prev => {
+          // Check if room already exists
+          const exists = prev.find(room => room.id === newRoom.id)
+          if (!exists) {
+            return [newRoom, ...prev]
+          }
+          return prev
+        })
+      })
+
       return () => {
         socket.off('new-message')
+        socket.off('new-chat-room')
       }
     }
   }, [socket, isConnected])
@@ -310,6 +324,10 @@ export function Chat() {
       return room.project.icon
     }
     return null
+  }
+
+  const isUserOnline = (userId: string) => {
+    return onlineUsers.has(userId)
   }
 
   if (loading) {
@@ -490,7 +508,7 @@ export function Chat() {
                   key={room.id}
                   className={`group relative flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
                     selectedRoom?.id === room.id
-                      ? 'bg-primary/10 border border-primary/20 shadow-sm'
+                      ? 'bg-primary/10 border border-primary/20'
                       : 'hover:bg-muted/50 border border-transparent hover:border-border/50'
                   }`}
                   onClick={() => setSelectedRoom(room)}
@@ -512,16 +530,25 @@ export function Chat() {
                       </AvatarFallback>
                     </Avatar>
                     {/* Online status indicator for direct messages */}
-                    {room.type === 'direct' && (
-                      <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 border-2 border-background rounded-full" />
-                    )}
+                    {room.type === 'direct' && (() => {
+                      const otherUser = room.members.find(m => m.user.id !== (session?.user as AuthUser)?.id)
+                      const isOnline = otherUser ? isUserOnline(otherUser.user.id) : false
+                      return isOnline ? (
+                        <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 border-2 border-background rounded-full" />
+                      ) : (
+                        <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-gray-400 border-2 border-background rounded-full" />
+                      )
+                    })()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <h4 className="text-sm font-semibold truncate text-foreground w-[12rem]" title={getRoomDisplayName(room)}>
-                        {getRoomDisplayName(room)}
-                      </h4>
-                      <div className="flex items-center gap-1">
+                    <div className="flex items-center justify-between mb-1 ">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+
+                        <h4 className="text-sm font-semibold truncate text-foreground max-w-[12rem]" title={getRoomDisplayName(room)}>
+                          {getRoomDisplayName(room)}
+                        </h4>
+                      </div>
+                      <div className="flex items-center gap-1 flex-shrink-0">
                         {room.messages.length > 0 && (
                           <span className="text-xs text-muted-foreground">
                             {new Date(room.messages[0].createdAt).toLocaleTimeString('pl-PL', {
@@ -621,7 +648,14 @@ export function Chat() {
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <h3 className="font-semibold">{getRoomDisplayName(selectedRoom)}</h3>
+                <div className="flex items-center gap-2">
+                  {selectedRoom.type === 'project' && selectedRoom.project?.icon && (
+                    <span className="text-xl" style={{ color: selectedRoom.project.color }}>
+                      {selectedRoom.project.icon}
+                    </span>
+                  )}
+                  <h3 className="font-semibold">{getRoomDisplayName(selectedRoom)}</h3>
+                </div>
               </div>
               <ChatRoom room={selectedRoom} />
             </div>

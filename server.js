@@ -29,8 +29,34 @@ app.prepare().then(() => {
     }
   })
 
+  // Store user socket mappings
+  const userSockets = new Map()
+
+  // Make socket server globally available
+  global.socketServer = io
+  global.userSockets = userSockets
+
+  // Listen for chat room creation events from API routes
+  io.on('chat-room-creation', (data) => {
+    console.log('Broadcasting chat room creation:', data)
+    
+    data.memberIds.forEach(memberId => {
+      const memberSocketId = userSockets.get(memberId)
+      if (memberSocketId) {
+        io.to(memberSocketId).emit('new-chat-room', data.chatRoom)
+      }
+    })
+  })
+
   io.on('connection', (socket) => {
     console.log('User connected:', socket.id)
+
+    // Store user ID mapping when they connect
+    socket.on('user-register', (data) => {
+      userSockets.set(data.userId, socket.id)
+      socket.userId = data.userId
+      console.log(`User ${data.userId} registered with socket ${socket.id}`)
+    })
 
     socket.on('join-room', (roomId) => {
       socket.join(roomId)
@@ -63,8 +89,25 @@ app.prepare().then(() => {
       })
     })
 
+    // Handle new chat room creation
+    socket.on('chat-room-created', (data) => {
+      console.log('Chat room created:', data)
+      
+      // Notify all members of the new chat room
+      data.memberIds.forEach(memberId => {
+        const memberSocketId = userSockets.get(memberId)
+        if (memberSocketId && memberSocketId !== socket.id) {
+          io.to(memberSocketId).emit('new-chat-room', data.chatRoom)
+        }
+      })
+    })
+
     socket.on('disconnect', () => {
       console.log('User disconnected:', socket.id)
+      // Remove user from socket mapping
+      if (socket.userId) {
+        userSockets.delete(socket.userId)
+      }
     })
   })
 

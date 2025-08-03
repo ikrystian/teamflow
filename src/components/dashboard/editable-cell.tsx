@@ -22,6 +22,7 @@ interface EditableCellProps {
   onSave: (value: string) => void
   className?: string
   placeholder?: string
+  disabled?: boolean
 }
 
 export function EditableCell({
@@ -32,7 +33,8 @@ export function EditableCell({
   taskStatuses = [],
   onSave,
   className,
-  placeholder
+  placeholder,
+  disabled = false
 }: EditableCellProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState<string | number | undefined>(value)
@@ -309,10 +311,12 @@ export function EditableCell({
   return (
     <div
       className={cn(
-        "editable-cell cursor-pointer hover:bg-muted/50 rounded pl-2 pr-0 py-1 min-h-[32px] flex items-center",
+        "editable-cell rounded pl-2 pr-0 py-1 min-h-[32px] flex items-center",
+        !disabled && "cursor-pointer hover:bg-muted/50",
+        disabled && "opacity-60 cursor-not-allowed",
         className
       )}
-      onClick={() => setIsEditing(true)}
+      onClick={() => !disabled && setIsEditing(true)}
     >
       {renderDisplayValue()}
     </div>

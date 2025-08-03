@@ -18,7 +18,7 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
 
   // Common emojis for quick access
   const commonEmojis = [
-    '😊', '😂', '😍', '🤔', '😎', '😢', '😡', '😱', 
+    '😊', '😂', '😍', '🤔', '😎', '😢', '😡', '😱',
     '👍', '👎', '❤️', '🔥', '💯', '✨', '🎉', '👏',
     '💪', '🙏', '👀', '🤝', '✅', '❌', '⚡', '🚀'
   ]
@@ -48,7 +48,7 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
     if (value.length > 0) {
       onTyping()
     }
-    
+
     // Auto-resize textarea
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
@@ -60,12 +60,12 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
     const newMessage = message + emoji
     setMessage(newMessage)
     setIsEmojiOpen(false)
-    
+
     // Focus textarea after emoji selection
     if (textareaRef.current) {
       textareaRef.current.focus()
     }
-    
+
     // Trigger typing
     onTyping()
   }
@@ -75,15 +75,15 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
       <div className="flex items-end gap-3 p-3 bg-muted/30 rounded-2xl border border-border/50 focus-within:border-primary/50 focus-within:bg-background transition-all duration-200">
         {/* Action buttons on the left */}
         <div className="flex items-center gap-1 pb-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             className="h-8 w-8 text-muted-foreground hover:text-foreground"
           >
             <Paperclip className="h-4 w-4" />
           </Button>
         </div>
-        
+
         {/* Message input */}
         <div className="flex-1 min-w-0">
           <Textarea
@@ -96,14 +96,14 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
             rows={1}
           />
         </div>
-        
+
         {/* Action buttons on the right */}
         <div className="flex items-center gap-1 pb-2">
           <Popover open={isEmojiOpen} onOpenChange={setIsEmojiOpen}>
             <PopoverTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="h-8 w-8 text-muted-foreground hover:text-foreground"
               >
                 <Smile className="h-4 w-4" />
@@ -128,9 +128,9 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
               </div>
             </PopoverContent>
           </Popover>
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             className="h-8 w-8 text-muted-foreground hover:text-foreground"
           >
             <AtSign className="h-4 w-4" />
@@ -145,10 +145,10 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
           </Button>
         </div>
       </div>
-      
+
       {/* Hint text */}
       <p className="text-xs text-muted-foreground mt-2 px-1">
-        <kbd className="px-1.5 py-0.5 text-xs bg-muted rounded border">Enter</kbd> aby wysłać, 
+        <kbd className="px-1.5 py-0.5 text-xs bg-muted rounded border">Enter</kbd> aby wysłać,
         <kbd className="px-1.5 py-0.5 text-xs bg-muted rounded border">Shift + Enter</kbd> dla nowej linii
       </p>
     </div>

@@ -194,8 +194,106 @@ export function DashboardContent() {
     return <PageLoadingLayout variant="list" showTopBar={false} />
   }
 
+  // Get user's upcoming tasks (due in next 7 days)
+  const upcomingTasks = tasks.filter(task => {
+    if (!task.dueDate || !session?.user?.id) return false
+    
+    // For admin, show all upcoming tasks; for user, show only assigned/created tasks
+    const hasAccess = isAdmin || 
+                     task.assigneeId === session.user.id || 
+                     task.createdById === session.user.id
+    
+    if (!hasAccess) return false
+    
+    const dueDate = new Date(task.dueDate)
+    const today = new Date()
+    const sevenDaysFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
+    
+    return dueDate >= today && dueDate <= sevenDaysFromNow
+  }).sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
+
+  // Get recently updated tasks (updated in last 3 days)
+  const recentlyUpdatedTasks = tasks.filter(task => {
+    if (!task.updatedAt || !session?.user?.id) return false
+    
+    // For admin, show all recent tasks; for user, show only assigned/created tasks
+    const hasAccess = isAdmin || 
+                     task.assigneeId === session.user.id || 
+                     task.createdById === session.user.id
+    
+    if (!hasAccess) return false
+    
+    const updatedDate = new Date(task.updatedAt)
+    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
+    
+    return updatedDate >= threeDaysAgo
+  }).sort((a, b) => new Date(b.updatedAt!).getTime() - new Date(a.updatedAt!).getTime()).slice(0, 10)
+
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
+      {/* Quick Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Upcoming Tasks */}
+        <div className="bg-card border rounded-lg p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold">Najbliższe zadania</h3>
+            <span className="text-sm text-muted-foreground">
+              {upcomingTasks.length} zadań
+            </span>
+          </div>
+          {upcomingTasks.length === 0 ? (
+            <p className="text-muted-foreground text-sm">Brak nadchodzących zadań</p>
+          ) : (
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {upcomingTasks.map(task => (
+                <div key={task.id} className="flex items-center justify-between p-2 hover:bg-muted/50 rounded cursor-pointer" onClick={() => handleTaskDetails(task)}>
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <div
+                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: task.project?.color || '#3B82F6' }}
+                    />
+                    <span className="text-sm font-medium truncate">{task.title}</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
+                    {new Date(task.dueDate!).toLocaleDateString('pl-PL', { month: 'short', day: 'numeric' })}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Recently Updated Tasks */}
+        <div className="bg-card border rounded-lg p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold">Ostatnio zaktualizowane</h3>
+            <span className="text-sm text-muted-foreground">
+              {recentlyUpdatedTasks.length} zadań
+            </span>
+          </div>
+          {recentlyUpdatedTasks.length === 0 ? (
+            <p className="text-muted-foreground text-sm">Brak ostatnio zaktualizowanych zadań</p>
+          ) : (
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {recentlyUpdatedTasks.map(task => (
+                <div key={task.id} className="flex items-center justify-between p-2 hover:bg-muted/50 rounded cursor-pointer" onClick={() => handleTaskDetails(task)}>
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <div
+                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: task.project?.color || '#3B82F6' }}
+                    />
+                    <span className="text-sm font-medium truncate">{task.title}</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
+                    {new Date(task.updatedAt!).toLocaleDateString('pl-PL', { month: 'short', day: 'numeric' })}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
       <MyTasks />
       <TasksTable
         tasks={tasks}
@@ -203,6 +301,8 @@ export function DashboardContent() {
         taskStatuses={taskStatuses}
         onTaskUpdate={handleTaskUpdate}
         onTaskDetails={handleTaskDetails}
+        isAdmin={isAdmin}
+        currentUserId={session?.user?.id}
       />
 
       {/* Task Details Sheet */}

@@ -119,6 +119,21 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    // Emit socket event for real-time chat room creation
+    try {
+      if (global.socketServer && global.userSockets) {
+        const memberIds = project.team.members.map(member => member.id)
+        memberIds.forEach(memberId => {
+          const memberSocketId = global.userSockets.get(memberId)
+          if (memberSocketId && memberId !== session.user.id) {
+            global.socketServer.to(memberSocketId).emit('new-chat-room', chatRoom)
+          }
+        })
+      }
+    } catch (socketError) {
+      console.log('Socket emission failed (non-critical):', socketError)
+    }
+
     return NextResponse.json(chatRoom, { status: 201 })
   } catch (error) {
     console.error('Error creating project chat room:', error)

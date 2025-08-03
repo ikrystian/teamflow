@@ -12,6 +12,7 @@ import { Separator } from '@/components/ui/separator'
 import { Message } from './message'
 import { ChatInput } from './chat-input'
 import { useSocket } from '@/components/providers/socket-provider'
+import { ProjectIcon } from '@/components/projects/project-icon'
 
 interface AuthUser {
   id: string;
@@ -62,7 +63,7 @@ interface ChatRoomProps {
 
 export function ChatRoom({ room }: ChatRoomProps) {
   const { data: session } = useSession()
-  const { socket, isConnected } = useSocket()
+  const { socket, isConnected, onlineUsers } = useSocket()
   const [messages, setMessages] = useState<MessageData[]>([])
   const [loading, setLoading] = useState(true)
   const [typingUsers, setTypingUsers] = useState<Array<{ userId: string; userName: string }>>([])
@@ -299,6 +300,10 @@ export function ChatRoom({ room }: ChatRoomProps) {
     return null
   }
 
+  const isUserOnline = (userId: string) => {
+    return onlineUsers.has(userId)
+  }
+
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Chat Header */}
@@ -315,20 +320,37 @@ export function ChatRoom({ room }: ChatRoomProps) {
                   {room.type === 'direct' ? (
                     getRoomDisplayName().charAt(0).toUpperCase()
                   ) : room.type === 'project' && getRoomIcon() ? (
-                    <span className="text-lg">{getRoomIcon()}</span>
+                                    <ProjectIcon
+                  iconName={getRoomIcon()}
+                  color={room.project?.color}
+                  className="w-4 h-4 flex-shrink-0"
+                />
                   ) : (
                     <Hash className="h-5 w-5" />
                   )}
                 </AvatarFallback>
               </Avatar>
               {/* Online status indicator */}
-              {room.type === 'direct' && (
-                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 border-2 border-background rounded-full" />
-              )}
+              {room.type === 'direct' && (() => {
+                const otherUser = room.members.find(m => m.user.id !== (session?.user as AuthUser)?.id)
+                const isOnline = otherUser ? isUserOnline(otherUser.user.id) : false
+                return isOnline ? (
+                  <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 border-2 border-background rounded-full" />
+                ) : (
+                  <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-gray-400 border-2 border-background rounded-full" />
+                )
+              })()}
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-3">
-                <h3 className="text-lg font-semibold text-foreground">{getRoomDisplayName()}</h3>
+                <div className="flex items-center gap-2">
+                  {room.type === 'project' && room.project?.icon && (
+                    <span className="text-2xl" style={{ color: room.project.color }}>
+                      {room.project.icon}
+                    </span>
+                  )}
+                  <h3 className="text-lg font-semibold text-foreground">{getRoomDisplayName()}</h3>
+                </div>
                 {room.type === 'group' && (
                   <Badge variant="secondary" className="gap-1">
                     <Users className="h-3 w-3" />
@@ -347,12 +369,16 @@ export function ChatRoom({ room }: ChatRoomProps) {
                   <Users className="h-3 w-3" />
                   <span>{room.members.length} {room.members.length === 1 ? 'członek' : 'członków'}</span>
                 </div>
-                {room.type === 'direct' && (
-                  <div className="flex items-center gap-1 text-sm text-green-600">
-                    <div className="w-2 h-2 bg-green-500 rounded-full" />
-                    <span>Online</span>
-                  </div>
-                )}
+                {room.type === 'direct' && (() => {
+                  const otherUser = room.members.find(m => m.user.id !== (session?.user as AuthUser)?.id)
+                  const isOnline = otherUser ? isUserOnline(otherUser.user.id) : false
+                  return (
+                    <div className={`flex items-center gap-1 text-sm ${isOnline ? 'text-green-600' : 'text-gray-500'}`}>
+                      <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-gray-400'}`} />
+                      <span>{isOnline ? 'Online' : 'Offline'}</span>
+                    </div>
+                  )
+                })()}
               </div>
             </div>
           </div>
