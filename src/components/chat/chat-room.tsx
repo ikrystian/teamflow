@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -247,8 +246,8 @@ export function ChatRoom({ room }: ChatRoomProps) {
   }
 
   return (
-    <Card className="h-full rounded-none border-0 flex flex-col">
-      <CardHeader className="pb-4 border-b">
+    <div className="h-full rounded-none border-0 flex flex-col">
+      <div className="pb-4 border-b">
         <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10">
             <AvatarImage src={getRoomAvatar() || undefined} />
@@ -262,8 +261,8 @@ export function ChatRoom({ room }: ChatRoomProps) {
               )}
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1">
-            <CardTitle className="text-lg">{getRoomDisplayName()}</CardTitle>
+          <div className="flex justify-between flex-1">
+            <div className="text-lg">{getRoomDisplayName()}</div>
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <Users className="h-4 w-4" />
               <span>{room.members.length} członków</span>
@@ -280,9 +279,9 @@ export function ChatRoom({ room }: ChatRoomProps) {
             </div>
           </div>
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent className="flex-1 flex flex-col p-0">
+      <div className="flex-1 flex flex-col p-0">
         <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
           {loading ? (
             <div className="space-y-4">
@@ -346,7 +345,7 @@ export function ChatRoom({ room }: ChatRoomProps) {
         <div className="border-t p-4">
           <ChatInput onSendMessage={handleSendMessage} onTyping={handleTyping} />
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

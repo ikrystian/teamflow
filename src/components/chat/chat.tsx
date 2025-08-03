@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { MessageCircle, Plus, Users, Search } from 'lucide-react'
+import { MessageCircle, Plus, Users } from 'lucide-react'
 import { ChatRoom } from './chat-room'
 import { useSocket } from '@/components/providers/socket-provider'
 
@@ -42,8 +42,6 @@ interface ChatRoomData {
     content: string
     createdAt: string
     sender: User
-    senderId: string
-    chatRoomId: string
   }>
 }
 
@@ -238,7 +236,7 @@ export function Chat() {
 
   if (loading) {
     return (
-      <Card className="h-full">
+      <div className="h-full">
         <CardContent className="p-6">
           <div className="animate-pulse space-y-4">
             <div className="h-4 bg-gray-200 rounded w-1/4"></div>
@@ -249,20 +247,20 @@ export function Chat() {
             </div>
           </div>
         </CardContent>
-      </Card>
+      </div>
     )
   }
 
   return (
-    <div className="h-[calc(100vh-101px)] -my-6 -mx-4 flex">
+    <div className="flex">
       <div className="w-100 border-r">
-        <Card className="h-full rounded-none border-0">
-          <CardHeader className="pb-4">
+        <div className="h-full rounded-none border-0">
+          <div className="pb-4">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg flex items-center gap-2">
+              <div className="text-lg flex items-center gap-2">
                 <MessageCircle className="h-5 w-5" />
                 Czat
-              </CardTitle>
+              </div>
               <Dialog open={isNewChatDialogOpen} onOpenChange={setIsNewChatDialogOpen}>
                 <DialogTrigger asChild>
                   <Button size="sm" variant="outline">
@@ -383,9 +381,9 @@ export function Chat() {
                 </DialogContent>
               </Dialog>
             </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <ScrollArea className="h-[calc(50vw)]">
+          </div>
+          <div className="p-0">
+            <ScrollArea className="10vh">
               <div className="space-y-1 p-3">
                 {chatRooms.map((room) => (
                   <div
@@ -442,14 +440,14 @@ export function Chat() {
                 )}
               </div>
             </ScrollArea>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
       <div className="flex-1">
         {selectedRoom ? (
           <ChatRoom room={selectedRoom} />
         ) : (
-          <Card className="h-full rounded-none border-0">
+          <div className="h-full rounded-none border-0">
             <CardContent className="h-full flex items-center justify-center">
               <div className="text-center text-gray-500">
                 <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
@@ -457,7 +455,7 @@ export function Chat() {
                 <p className="text-sm">Wybierz z istniejących rozmów lub rozpocznij nową</p>
               </div>
             </CardContent>
-          </Card>
+          </div>
         )}
       </div>
     </div>

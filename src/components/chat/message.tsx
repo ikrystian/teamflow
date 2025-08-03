@@ -1,6 +1,7 @@
 'use client'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { formatDistanceToNow } from 'date-fns'
 import { cn } from '@/lib/utils'
 
@@ -61,9 +62,24 @@ export function Message({ message, showAvatar, isOwn }: MessageProps) {
             <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
               {message.sender.name || message.sender.email}
             </span>
-            <span className="text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
-              {formatTime(message.createdAt)}
-            </span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <span className="text-xs text-gray-500 cursor-pointer hover:underline">
+                  {formatTime(message.createdAt)}
+                </span>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-2">
+                <p className="text-sm">
+                  {new Date(message.createdAt).toLocaleString('pl-PL', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </p>
+              </PopoverContent>
+            </Popover>
           </div>
         )}
 
@@ -78,10 +94,27 @@ export function Message({ message, showAvatar, isOwn }: MessageProps) {
 
         {!showAvatar && (
           <div className={cn(
-            "text-xs text-gray-500 mt-1 opacity-0 group-hover:opacity-100 transition-opacity",
+            "text-xs text-gray-500 mt-1",
             isOwn ? "text-right" : "text-left"
           )}>
-            {formatTime(message.createdAt)}
+            <Popover>
+              <PopoverTrigger asChild>
+                <span className="cursor-pointer hover:underline">
+                  {formatTime(message.createdAt)}
+                </span>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-2">
+                <p className="text-sm">
+                  {new Date(message.createdAt).toLocaleString('pl-PL', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </p>
+              </PopoverContent>
+            </Popover>
           </div>
         )}
       </div>
