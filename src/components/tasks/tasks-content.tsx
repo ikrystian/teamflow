@@ -33,9 +33,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import type { Task, User } from "@/types"
+import type { Task, User, TaskUpdateData } from "@/types"
 import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
-import { getPriorityColor, getPriorityDisplayName, formatProjectDisplay } from "@/lib/task-format-utils"
+import { getPriorityColor, getPriorityDisplayName } from "@/lib/task-format-utils"
 import { formatEstimatedHours, formatAssignee } from "@/lib/task-format-utils"
 
 interface Project {
@@ -208,6 +208,27 @@ export function TasksContent() {
     fetchTasks()
     setEditDialogOpen(false)
     setSelectedTask(null)
+  }
+
+  const handleTaskUpdate = async (taskId: string, updates: TaskUpdateData) => {
+    try {
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updates),
+      })
+
+      if (response.ok) {
+        fetchTasks() // Refresh to get updated data
+      } else {
+        throw new Error("Failed to update task")
+      }
+    } catch (error) {
+      console.error("Error updating task:", error)
+      throw error
+    }
   }
 
   const handleTimeTracking = (task: Task, e: React.MouseEvent) => {
@@ -461,6 +482,8 @@ export function TasksContent() {
           <TasksWeeklyCalendar
             tasks={tasks.filter(task => task.dueDate)}
             onTaskUpdated={fetchTasks}
+            onTaskUpdate={handleTaskUpdate}
+            teamMembers={teamMembers}
             projects={projects}
             session={session}
             hideProjectSelect={filter === "assigned"}

@@ -37,26 +37,27 @@ export function MentionInput({ users, onSelect, onClose, position, searchTerm }:
   }, [searchTerm])
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowDown') {
-        e.preventDefault()
+    const handleKeyDown = (e: Event) => {
+      const keyboardEvent = e as unknown as KeyboardEvent
+      if (keyboardEvent.key === 'ArrowDown') {
+        keyboardEvent.preventDefault()
         setSelectedIndex(prev => Math.min(prev + 1, filteredUsers.length - 1))
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault()
+      } else if (keyboardEvent.key === 'ArrowUp') {
+        keyboardEvent.preventDefault()
         setSelectedIndex(prev => Math.max(prev - 1, 0))
-      } else if (e.key === 'Enter') {
-        e.preventDefault()
+      } else if (keyboardEvent.key === 'Enter') {
+        keyboardEvent.preventDefault()
         if (filteredUsers[selectedIndex]) {
           onSelect(filteredUsers[selectedIndex])
         }
-      } else if (e.key === 'Escape') {
-        e.preventDefault()
+      } else if (keyboardEvent.key === 'Escape') {
+        keyboardEvent.preventDefault()
         onClose()
       }
     }
 
-    document.addEventListener('keydown', handleKeyDown as any)
-    return () => document.removeEventListener('keydown', handleKeyDown as any)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
   }, [selectedIndex, filteredUsers, onSelect, onClose])
 
   if (filteredUsers.length === 0) {

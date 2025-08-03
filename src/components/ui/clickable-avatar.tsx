@@ -1,6 +1,5 @@
 "use client"
 
-import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { UserInfoPopover } from "@/components/users/user-info-popover"
 import { cn } from "@/lib/utils"

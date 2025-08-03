@@ -26,6 +26,16 @@ export default withAuth(
           return true
         }
 
+        // Allow access to public API routes
+        if (req.nextUrl.pathname.startsWith("/api/public/")) {
+          return true
+        }
+
+        // Allow access to public pages
+        if (req.nextUrl.pathname.startsWith("/public/")) {
+          return true
+        }
+
         // For dashboard routes, require authentication
         if (req.nextUrl.pathname.startsWith("/dashboard")) {
           return !!token

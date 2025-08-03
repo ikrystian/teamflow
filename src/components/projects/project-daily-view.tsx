@@ -482,9 +482,8 @@ export function ProjectDailyView({
     return (
       <div
         ref={setNodeRef}
-        className={`min-h-[50px] p-1 transition-colors ${
-          isOver ? 'bg-blue-50 border-blue-200 border-dashed border-2' : ''
-        }`}
+        className={`min-h-[50px] p-1 transition-colors ${isOver ? 'bg-blue-50 border-blue-200 border-dashed border-2' : ''
+          }`}
       >
         {children}
       </div>
@@ -500,176 +499,177 @@ export function ProjectDailyView({
     >
       <div className={className}>
         <div>
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Widok dzienny
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Widok dzienny
+              </div>
+              <div>
+                Zadania z podziałem na osoby i godziny dla {formatDate(selectedDate)}
+              </div>
             </div>
             <div>
-              Zadania z podziałem na osoby i godziny dla {formatDate(selectedDate)}
-            </div>
-          </div>
-          <div>
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm" onClick={goToToday}>
-                Dzisiaj
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => navigateDate('prev')}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-
-              <Button variant="outline" size="sm" onClick={() => navigateDate('next')}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              {onCreateTask && (
-                <Button onClick={onCreateTask} size="sm">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Dodaj zadanie
+              <div className="flex items-center space-x-2">
+                <Button variant="outline" size="sm" onClick={goToToday}>
+                  Dzisiaj
                 </Button>
-              )}
+                <Button variant="outline" size="sm" onClick={() => navigateDate('prev')}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+
+                <Button variant="outline" size="sm" onClick={() => navigateDate('next')}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                {onCreateTask && (
+                  <Button onClick={onCreateTask} size="sm">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Dodaj zadanie
+                  </Button>
+                )}
+
+
+
+                <DatePicker
+                  value={selectedDate}
+                  onChange={(date) => date && setSelectedDate(date)}
+                />
+              </div>
 
             </div>
-            <div>
-            </div>
-            <DatePicker
-              value={selectedDate}
-              onChange={(date) => date && setSelectedDate(date)}
-            />
           </div>
         </div>
-      </div>
-      <div>
-        <div className="overflow-x-auto">
-          <div className="min-w-[800px]">
-            {/* Header with team members */}
-            <div className="grid grid-cols-[100px_1fr] gap-4 mb-4">
-              <div className="text-sm font-medium text-muted-foreground">Czas</div>
-              <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Object.keys(tasksByAssignee).length}, 1fr)` }}>
-                {Object.entries(tasksByAssignee).map(([assigneeId, tasks]) => {
-                  const member = teamMembers.find(m => m.id === assigneeId)
-                  return (
-                    <div key={assigneeId} className="text-center">
-                      {assigneeId === 'unassigned' ? (
-                        <div className="flex flex-col items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                            <User className="h-4 w-4 text-gray-500" />
+        <div>
+          <div className="overflow-x-auto">
+            <div className="min-w-[800px]">
+              {/* Header with team members */}
+              <div className="grid grid-cols-[100px_1fr] gap-4 mb-4">
+                <div className="text-sm font-medium text-muted-foreground">Czas</div>
+                <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Object.keys(tasksByAssignee).length}, 1fr)` }}>
+                  {Object.entries(tasksByAssignee).map(([assigneeId, tasks]) => {
+                    const member = teamMembers.find(m => m.id === assigneeId)
+                    return (
+                      <div key={assigneeId} className="text-center">
+                        {assigneeId === 'unassigned' ? (
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                              <User className="h-4 w-4 text-gray-500" />
+                            </div>
+                            <span className="text-sm font-medium">Nieprzypisane</span>
+                            <span className="text-xs text-muted-foreground">{tasks.length} zadań</span>
                           </div>
-                          <span className="text-sm font-medium">Nieprzypisane</span>
-                          <span className="text-xs text-muted-foreground">{tasks.length} zadań</span>
-                        </div>
-                      ) : member ? (
-                        <div className="flex flex-col items-center gap-2">
-                          <Avatar className="w-8 h-8">
-                            <AvatarImage src={member.avatarUrl} alt={member.name} />
-                            <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          <span className="text-sm font-medium">{member.name}</span>
-                          <span className="text-xs text-muted-foreground">{tasks.length} zadań</span>
-                        </div>
-                      ) : null}
-                    </div>
-                  )
-                })}
+                        ) : member ? (
+                          <div className="flex flex-col items-center gap-2">
+                            <Avatar className="w-8 h-8">
+                              <AvatarImage src={member.avatarUrl} alt={member.name} />
+                              <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm font-medium">{member.name}</span>
+                            <span className="text-xs text-muted-foreground">{tasks.length} zadań</span>
+                          </div>
+                        ) : null}
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
-            </div>
 
-            {/* Time slots grid */}
-            <div className="relative">
-              {/* Time grid background */}
-              <div className="space-y-1">
-                {timeSlots.map(({ hour, displayTime }) => (
-                  <div key={hour} className="grid grid-cols-[100px_1fr] gap-4 min-h-[60px] border-b border-gray-100">
-                    <div className="flex items-start pt-2">
-                      <span className="text-sm text-muted-foreground font-mono">{displayTime}</span>
+              {/* Time slots grid */}
+              <div className="relative">
+                {/* Time grid background */}
+                <div className="space-y-1">
+                  {timeSlots.map(({ hour, displayTime }) => (
+                    <div key={hour} className="grid grid-cols-[100px_1fr] gap-4 min-h-[60px] border-b border-gray-100">
+                      <div className="flex items-start pt-2">
+                        <span className="text-sm text-muted-foreground font-mono">{displayTime}</span>
+                      </div>
+                      <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Object.keys(tasksByAssignee).length}, 1fr)` }}>
+                        {Object.keys(tasksByAssignee).map(assigneeId => (
+                          <DroppableTimeSlot key={`${assigneeId}-${hour}`} assigneeId={assigneeId} hour={hour}>
+                            <div></div>
+                          </DroppableTimeSlot>
+                        ))}
+                      </div>
                     </div>
+                  ))}
+                </div>
+
+                {/* Tasks overlay */}
+                <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+                  <div className="grid grid-cols-[100px_1fr] gap-4 h-full">
+                    <div></div> {/* Time column spacer */}
                     <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Object.keys(tasksByAssignee).length}, 1fr)` }}>
-                      {Object.keys(tasksByAssignee).map(assigneeId => (
-                        <DroppableTimeSlot key={`${assigneeId}-${hour}`} assigneeId={assigneeId} hour={hour}>
-                          <div></div>
-                        </DroppableTimeSlot>
-                      ))}
+                      {Object.keys(tasksByAssignee).map((assigneeId) => {
+                        const assigneeTasks = tasksByAssignee[assigneeId] || []
+                        const taskLayouts = calculateTaskLayout(assigneeTasks)
+
+                        return (
+                          <div key={assigneeId} className="relative">
+                            {assigneeTasks.map(task => {
+                              const height = getTaskHeight(task)
+                              const topOffset = getTaskTopOffset(task)
+                              const startHour = task.startTime ? new Date(task.startTime).getHours() : 8
+                              const slotIndex = startHour - 8 // 8 is the first hour
+                              const top = slotIndex * 61 + topOffset + 8 // 61px per slot (60px + 1px border) + 8px padding
+
+                              const layout = taskLayouts[task.id] || { width: 100, left: 0, column: 0 }
+
+                              return (
+                                <DraggableTask
+                                  key={task.id}
+                                  task={task}
+                                  layout={layout}
+                                  top={top}
+                                  height={height}
+                                />
+                              )
+                            })}
+                          </div>
+                        )
+                      })}
                     </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Tasks overlay */}
-              <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
-                <div className="grid grid-cols-[100px_1fr] gap-4 h-full">
-                  <div></div> {/* Time column spacer */}
-                  <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Object.keys(tasksByAssignee).length}, 1fr)` }}>
-                    {Object.keys(tasksByAssignee).map((assigneeId) => {
-                      const assigneeTasks = tasksByAssignee[assigneeId] || []
-                      const taskLayouts = calculateTaskLayout(assigneeTasks)
-
-                      return (
-                        <div key={assigneeId} className="relative">
-                          {assigneeTasks.map(task => {
-                            const height = getTaskHeight(task)
-                            const topOffset = getTaskTopOffset(task)
-                            const startHour = task.startTime ? new Date(task.startTime).getHours() : 8
-                            const slotIndex = startHour - 8 // 8 is the first hour
-                            const top = slotIndex * 61 + topOffset + 8 // 61px per slot (60px + 1px border) + 8px padding
-
-                            const layout = taskLayouts[task.id] || { width: 100, left: 0, column: 0 }
-
-                            return (
-                              <DraggableTask
-                                key={task.id}
-                                task={task}
-                                layout={layout}
-                                top={top}
-                                height={height}
-                              />
-                            )
-                          })}
-                        </div>
-                      )
-                    })}
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {tasksForDate.length === 0 && (
-          <div className="text-center py-8">
-            <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Brak zadań na ten dzień</h3>
-            <p className="text-gray-500 mb-4">
-              Nie ma żadnych zadań zaplanowanych na {formatDate(selectedDate)}
-            </p>
-            {onCreateTask && (
-              <Button onClick={onCreateTask}>
-                <Plus className="mr-2 h-4 w-4" />
-                Dodaj zadanie
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-
-    <DragOverlay>
-      {activeTask ? (
-        <div className={`p-2 rounded-md border shadow-lg opacity-90 ${getPriorityColor(activeTask.priority)}`}>
-          <div className="text-xs font-medium truncate">{activeTask.title}</div>
-          {(activeTask.displayStartTime || activeTask.displayEndTime) && (
-            <div className="flex items-center gap-1 mt-1">
-              <Clock className="h-3 w-3" />
-              <span className="text-xs">
-                {activeTask.displayStartTime && activeTask.displayEndTime
-                  ? `${activeTask.displayStartTime} - ${activeTask.displayEndTime}`
-                  : activeTask.displayStartTime || activeTask.displayEndTime
-                }
-              </span>
+          {tasksForDate.length === 0 && (
+            <div className="text-center py-8">
+              <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Brak zadań na ten dzień</h3>
+              <p className="text-gray-500 mb-4">
+                Nie ma żadnych zadań zaplanowanych na {formatDate(selectedDate)}
+              </p>
+              {onCreateTask && (
+                <Button onClick={onCreateTask}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Dodaj zadanie
+                </Button>
+              )}
             </div>
           )}
         </div>
-      ) : null}
-    </DragOverlay>
-  </DndContext>
+      </div>
+
+      <DragOverlay>
+        {activeTask ? (
+          <div className={`p-2 rounded-md border shadow-lg opacity-90 ${getPriorityColor(activeTask.priority)}`}>
+            <div className="text-xs font-medium truncate">{activeTask.title}</div>
+            {(activeTask.displayStartTime || activeTask.displayEndTime) && (
+              <div className="flex items-center gap-1 mt-1">
+                <Clock className="h-3 w-3" />
+                <span className="text-xs">
+                  {activeTask.displayStartTime && activeTask.displayEndTime
+                    ? `${activeTask.displayStartTime} - ${activeTask.displayEndTime}`
+                    : activeTask.displayStartTime || activeTask.displayEndTime
+                  }
+                </span>
+              </div>
+            )}
+          </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
   )
 }

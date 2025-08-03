@@ -10,15 +10,21 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ta
   }
 
   const { todoId } = await params
-  const { title, isCompleted } = await request.json()
+  const { title, isCompleted, timeSpent } = await request.json()
 
   try {
+    const updateData: {
+      title?: string;
+      isCompleted?: boolean;
+      timeSpent?: number;
+    } = {}
+    if (title !== undefined) updateData.title = title
+    if (isCompleted !== undefined) updateData.isCompleted = isCompleted
+    if (timeSpent !== undefined) updateData.timeSpent = timeSpent
+
     const updatedTodo = await prisma.todo.update({
       where: { id: todoId },
-      data: {
-        title,
-        isCompleted,
-      },
+      data: updateData,
     })
     return NextResponse.json(updatedTodo)
   } catch (error) {

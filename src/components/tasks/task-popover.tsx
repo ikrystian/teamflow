@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -14,19 +14,16 @@ import {
   CheckCircle2,
   Eye,
   Edit,
-  Timer
+  Timer,
+  File
 } from "lucide-react"
-import type { Task } from "@/types"
+import { EditableCell } from "@/components/dashboard/editable-cell"
+import { QuickTimeEntry } from "./quick-time-entry"
+import { TaskDetailsForm } from "./task-details-form"
+import type { Task, User, TaskStatus, TaskUpdateData } from "@/types"
 import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
 import { getPriorityColor, getPriorityDisplayName, formatProjectDisplay } from "@/lib/task-format-utils"
-
-interface TaskStatus {
-  id: string
-  name: string
-  color: string
-  order: number
-  isDefault: boolean
-}
+import { toast } from "sonner"
 
 interface TaskPopoverProps {
   task: Task
@@ -34,6 +31,9 @@ interface TaskPopoverProps {
   onTaskClick?: (task: Task) => void
   onEdit?: (task: Task, e: React.MouseEvent) => void
   onTimeTracking?: (task: Task, e: React.MouseEvent) => void
+  onTaskUpdate?: (taskId: string, updates: TaskUpdateData) => void | Promise<void>
+  onTimeLogged?: () => void
+  users?: User[]
   canEdit?: boolean
   side?: "top" | "bottom" | "left" | "right"
   align?: "start" | "center" | "end"
@@ -45,12 +45,22 @@ export function TaskPopover({
   onTaskClick,
   onEdit,
   onTimeTracking,
+  onTaskUpdate,
+  onTimeLogged,
+  users = [],
   canEdit = false,
   side = "top",
   align = "center"
 }: TaskPopoverProps) {
   const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
   const [isOpen, setIsOpen] = useState(false)
+  const [optimisticTask, setOptimisticTask] = useState<Task>(task)
+  const [isEditingDetails, setIsEditingDetails] = useState(false)
+
+  // Sync optimistic task with prop changes
+  useEffect(() => {
+    setOptimisticTask(task)
+  }, [task])
 
   useEffect(() => {
     const fetchTaskStatuses = async () => {
@@ -70,6 +80,66 @@ export function TaskPopover({
     }
   }, [isOpen])
 
+  // Optimistic update function
+  const handleOptimisticTaskUpdate = useCallback(async (updates: TaskUpdateData) => {
+    if (!onTaskUpdate) return
+
+    // Optimistic update - immediately update UI
+    setOptimisticTask(prev => ({
+      ...prev,
+      ...updates,
+      // Handle assignee update specially
+      ...(updates.assigneeId !== undefined && {
+        assignee: updates.assigneeId ? users.find(u => u.id === updates.assigneeId) : undefined
+      })
+    }))
+
+    // Show immediate feedback
+    toast.loading("Aktualizowanie zadania...", {
+      id: `update-task-${task.id}`,
+      duration: 2000
+    })
+
+    try {
+      // Call the original update function
+      const result = onTaskUpdate(task.id, updates)
+      if (result instanceof Promise) {
+        await result
+      }
+
+      // Success feedback
+      toast.success("Zadanie zostało zaktualizowane", {
+        id: `update-task-${task.id}`
+      })
+    } catch (error) {
+      // Revert optimistic update on error
+      setOptimisticTask(task)
+      console.error("Error updating task:", error)
+      toast.error("Nie udało się zaktualizować zadania", {
+        id: `update-task-${task.id}`
+      })
+    }
+  }, [task, users, onTaskUpdate])
+
+  const handleTimeLogged = useCallback(() => {
+    if (onTimeLogged) {
+      onTimeLogged()
+    }
+  }, [onTimeLogged])
+
+  const handleDetailsFormSave = useCallback(async (updates: TaskUpdateData) => {
+    await handleOptimisticTaskUpdate(updates)
+    setIsEditingDetails(false)
+  }, [handleOptimisticTaskUpdate])
+
+  const handleDetailsFormCancel = useCallback(() => {
+    setIsEditingDetails(false)
+  }, [])
+
+  const handleEditDetailsClick = useCallback(() => {
+    setIsEditingDetails(true)
+  }, [])
+
 
   const getTaskStatus = (task: Task) => {
     if (task.statusId) {
@@ -82,9 +152,9 @@ export function TaskPopover({
     if (!dueDate) return false
 
     // Don't show completed tasks as overdue
-    if (task && task.statusId && taskStatuses.length > 0) {
+    if (optimisticTask && optimisticTask.statusId && taskStatuses.length > 0) {
       const doneStatus = taskStatuses.find(status => status.name === "Done")
-      if (doneStatus && task.statusId === doneStatus.id) {
+      if (doneStatus && optimisticTask.statusId === doneStatus.id) {
         return false
       }
     }
@@ -103,9 +173,9 @@ export function TaskPopover({
 
 
 
-  const totalLoggedHours = task.timeEntries?.reduce((sum, entry) => sum + entry.hours, 0) || 0
-  const completedSubtasks = task.subtasks?.filter(subtask => subtask.isCompleted).length || 0
-  const subtaskProgress = task.subtasks?.length > 0 ? (completedSubtasks / task.subtasks.length) * 100 : 0
+  const totalLoggedHours = optimisticTask.timeEntries?.reduce((sum, entry) => sum + entry.hours, 0) || 0
+  const completedSubtasks = optimisticTask.subtasks?.filter(subtask => subtask.isCompleted).length || 0
+  const subtaskProgress = optimisticTask.subtasks?.length > 0 ? (completedSubtasks / optimisticTask.subtasks.length) * 100 : 0
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -127,23 +197,48 @@ export function TaskPopover({
         <div className="p-4 space-y-4">
           {/* Header */}
           <div className="space-y-3">
-            <h3 className="font-semibold text-sm line-clamp-2 leading-tight">
-              {task.title}
-            </h3>
+            {canEdit && onTaskUpdate ? (
+              <EditableCell
+                value={optimisticTask.title}
+                type="text"
+                onSave={(value) => handleOptimisticTaskUpdate({ title: value })}
+                className="font-semibold text-sm"
+                placeholder="Tytuł zadania"
+              />
+            ) : (
+              <h3 className="font-semibold text-sm line-clamp-2 leading-tight">
+                {optimisticTask.title}
+              </h3>
+            )}
 
             <div className="flex items-center gap-2 flex-wrap">
               <Badge variant="outline" className="text-xs tuncate overflow-hidden justify-start max-w-[200px]">
-                {formatProjectDisplay(task.project)}
+                {formatProjectDisplay(optimisticTask.project)}
               </Badge>
 
-              {task.priority && (
-                <Badge variant="secondary" className={`text-xs ${getPriorityColor(task.priority)}`}>
-                  {getPriorityDisplayName(task.priority)}
+              {canEdit && onTaskUpdate ? (
+                <EditableCell
+                  value={optimisticTask.priority || ""}
+                  type="priority"
+                  onSave={(value) => handleOptimisticTaskUpdate({ priority: value })}
+                  placeholder="Ustaw priorytet"
+                />
+              ) : optimisticTask.priority ? (
+                <Badge variant="secondary" className={`text-xs ${getPriorityColor(optimisticTask.priority)}`}>
+                  {getPriorityDisplayName(optimisticTask.priority)}
                 </Badge>
-              )}
+              ) : null}
 
-              {(() => {
-                const taskStatus = getTaskStatus(task)
+              {canEdit && onTaskUpdate ? (
+                <EditableCell
+                  value={optimisticTask.statusId || ""}
+                  type="status"
+                  taskStatuses={taskStatuses}
+                  onSave={(value) => handleOptimisticTaskUpdate({ statusId: value })}
+                  placeholder="Ustaw status"
+                />
+              ) : (() => {
+                const taskStatus = getTaskStatus(optimisticTask)
                 return (
                   <Badge
                     variant="default"
@@ -158,80 +253,247 @@ export function TaskPopover({
           </div>
 
           {/* Description */}
-          {task.description && (
+          {(optimisticTask.description || (canEdit && onTaskUpdate)) && (
             <div className="space-y-2">
               <h4 className="text-xs font-medium text-muted-foreground">Opis</h4>
-              <div
-                className="text-xs text-muted-foreground line-clamp-3"
-                dangerouslySetInnerHTML={{ __html: task.description }}
-              />
+              {canEdit && onTaskUpdate ? (
+                <EditableCell
+                  value={optimisticTask.description || ""}
+                  type="text"
+                  onSave={(value) => handleOptimisticTaskUpdate({ description: value })}
+                  placeholder="Dodaj opis zadania"
+                  className="text-xs text-muted-foreground"
+                />
+              ) : (
+                <div
+                  className="text-xs text-muted-foreground line-clamp-3"
+                  dangerouslySetInnerHTML={{ __html: optimisticTask.description || "" }}
+                />
+              )}
             </div>
           )}
 
           {/* Details */}
           <div className="space-y-3">
-            {/* Assignee */}
-            {task.assignee && (
-              <div className="flex items-center gap-2">
-                <UserIcon className="h-4 w-4 text-muted-foreground" />
-                <div className="flex items-center gap-2">
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src={task.assignee.avatarUrl} />
-                    <AvatarFallback className="text-xs">
-                      {task.assignee.name?.charAt(0) || "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-xs font-medium">{task.assignee.name}</span>
+            {canEdit && onTaskUpdate ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-medium text-muted-foreground">Szczegóły zadania</h4>
+                  {!isEditingDetails && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleEditDetailsClick}
+                      className="h-6 px-2 text-xs"
+                    >
+                      <Edit className="mr-1 h-3 w-3" />
+                      Edytuj
+                    </Button>
+                  )}
                 </div>
-              </div>
-            )}
 
-            {/* Due Date */}
-            {task.dueDate && (
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <div className={`flex items-center gap-1 text-xs ${
-                  isOverdue(task.dueDate) ? "text-destructive" : "text-foreground"
-                }`}>
-                  {isOverdue(task.dueDate) && <AlertCircle className="h-3 w-3" />}
-                  <span className="font-medium">
-                    {formatTaskDueDateWithRelative(task.dueDate)}
-                  </span>
-                </div>
-              </div>
-            )}
+                {isEditingDetails ? (
+                  <TaskDetailsForm
+                    task={optimisticTask}
+                    users={users}
+                    taskStatuses={taskStatuses}
+                    onSave={handleDetailsFormSave}
+                    onCancel={handleDetailsFormCancel}
+                  />
+                ) : (
+                  <div className="space-y-3">
+                    {/* Assignee - Read Only */}
+                    <div className="flex items-center gap-2">
+                      <UserIcon className="h-4 w-4 text-muted-foreground" />
+                      {optimisticTask.assignee ? (
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={optimisticTask.assignee.avatarUrl} />
+                            <AvatarFallback className="text-xs">
+                              {optimisticTask.assignee.name?.charAt(0) || "U"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-xs font-medium">{optimisticTask.assignee.name}</span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Nieprzypisany</span>
+                      )}
+                    </div>
 
-            {/* Time Tracking */}
-            {task.estimatedHours && (
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <div className="text-xs">
-                    <span className="font-medium">{totalLoggedHours.toFixed(1)}h</span>
-                    <span className="text-muted-foreground"> / {task.estimatedHours}h</span>
+                    {/* Due Date - Read Only */}
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      {optimisticTask.dueDate ? (
+                        <div className={`flex items-center gap-1 text-xs ${
+                          isOverdue(optimisticTask.dueDate) ? "text-destructive" : "text-foreground"
+                        }`}>
+                          {isOverdue(optimisticTask.dueDate) && <AlertCircle className="h-3 w-3" />}
+                          <span className="font-medium">
+                            {formatTaskDueDateWithRelative(optimisticTask.dueDate)}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Brak terminu</span>
+                      )}
+                    </div>
+
+                    {/* Time Tracking - Read Only */}
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        {optimisticTask.estimatedHours ? (
+                          <div className="text-xs">
+                            <span className="font-medium">{totalLoggedHours.toFixed(1)}h</span>
+                            <span className="text-muted-foreground"> / {optimisticTask.estimatedHours}h</span>
+                          </div>
+                        ) : (
+                          <div className="text-xs">
+                            <span className="font-medium">{totalLoggedHours.toFixed(1)}h</span>
+                            <span className="text-muted-foreground"> zalogowane</span>
+                          </div>
+                        )}
+                      </div>
+                      {optimisticTask.estimatedHours && (
+                        <Progress
+                          value={(totalLoggedHours / optimisticTask.estimatedHours) * 100}
+                          className="h-1"
+                        />
+                      )}
+                    </div>
+
+                    {/* Subtasks - Read Only */}
+                    {optimisticTask.subtasks && optimisticTask.subtasks.length > 0 && (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                          <div className="text-xs">
+                            <span className="font-medium">{completedSubtasks}/{optimisticTask.subtasks.length}</span>
+                            <span className="text-muted-foreground"> podzadań</span>
+                          </div>
+                        </div>
+                        <Progress value={subtaskProgress} className="h-1" />
+                      </div>
+                    )}
                   </div>
-                </div>
-                <Progress
-                  value={(totalLoggedHours / task.estimatedHours) * 100}
-                  className="h-1"
-                />
+                )}
               </div>
-            )}
+            ) : (
+              /* Read-only view for users without edit permissions */
+              <div className="space-y-3">
+                <h4 className="text-xs font-medium text-muted-foreground">Szczegóły zadania</h4>
 
-            {/* Subtasks */}
-            {task.subtasks && task.subtasks.length > 0 && (
-              <div className="space-y-1">
+                {/* Assignee - Read Only */}
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-                  <div className="text-xs">
-                    <span className="font-medium">{completedSubtasks}/{task.subtasks.length}</span>
-                    <span className="text-muted-foreground"> podzadań</span>
-                  </div>
+                  <UserIcon className="h-4 w-4 text-muted-foreground" />
+                  {optimisticTask.assignee ? (
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={optimisticTask.assignee.avatarUrl} />
+                        <AvatarFallback className="text-xs">
+                          {optimisticTask.assignee.name?.charAt(0) || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-xs font-medium">{optimisticTask.assignee.name}</span>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Nieprzypisany</span>
+                  )}
                 </div>
-                <Progress value={subtaskProgress} className="h-1" />
+
+                {/* Due Date - Read Only */}
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  {optimisticTask.dueDate ? (
+                    <div className={`flex items-center gap-1 text-xs ${
+                      isOverdue(optimisticTask.dueDate) ? "text-destructive" : "text-foreground"
+                    }`}>
+                      {isOverdue(optimisticTask.dueDate) && <AlertCircle className="h-3 w-3" />}
+                      <span className="font-medium">
+                        {formatTaskDueDateWithRelative(optimisticTask.dueDate)}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Brak terminu</span>
+                  )}
+                </div>
+
+                {/* Time Tracking - Read Only */}
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    {optimisticTask.estimatedHours ? (
+                      <div className="text-xs">
+                        <span className="font-medium">{totalLoggedHours.toFixed(1)}h</span>
+                        <span className="text-muted-foreground"> / {optimisticTask.estimatedHours}h</span>
+                      </div>
+                    ) : (
+                      <div className="text-xs">
+                        <span className="font-medium">{totalLoggedHours.toFixed(1)}h</span>
+                        <span className="text-muted-foreground"> zalogowane</span>
+                      </div>
+                    )}
+                  </div>
+                  {optimisticTask.estimatedHours && (
+                    <Progress
+                      value={(totalLoggedHours / optimisticTask.estimatedHours) * 100}
+                      className="h-1"
+                    />
+                  )}
+                </div>
+
+                {/* Subtasks - Read Only */}
+                {optimisticTask.subtasks && optimisticTask.subtasks.length > 0 && (
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                      <div className="text-xs">
+                        <span className="font-medium">{completedSubtasks}/{optimisticTask.subtasks.length}</span>
+                        <span className="text-muted-foreground"> podzadań</span>
+                      </div>
+                    </div>
+                    <Progress value={subtaskProgress} className="h-1" />
+                  </div>
+                )}
               </div>
             )}
           </div>
+
+          {/* File Attachments */}
+          {optimisticTask.attachments && optimisticTask.attachments.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-xs font-medium text-muted-foreground">Załączniki ({optimisticTask.attachments.length})</h4>
+              <div className="space-y-1">
+                {optimisticTask.attachments.slice(0, 3).map((attachment) => (
+                  <div key={attachment.id} className="flex items-center gap-2 text-xs">
+                    <File className="h-3 w-3 text-muted-foreground" />
+                    <span className="truncate flex-1" title={attachment.originalName}>
+                      {attachment.originalName}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {(attachment.size / 1024).toFixed(0)}KB
+                    </span>
+                  </div>
+                ))}
+                {optimisticTask.attachments.length > 3 && (
+                  <div className="text-xs text-muted-foreground">
+                    +{optimisticTask.attachments.length - 3} więcej
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Quick Time Entry */}
+          {canEdit && onTaskUpdate && (
+            <div className="space-y-2">
+              <h4 className="text-xs font-medium text-muted-foreground">Szybkie dodanie czasu</h4>
+              <QuickTimeEntry
+                task={optimisticTask}
+                onTimeLogged={handleTimeLogged}
+                disabled={false}
+              />
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex items-center gap-2 pt-2 border-t">
@@ -243,7 +505,7 @@ export function TaskPopover({
                 onClick={(e) => {
                   e.stopPropagation()
                   setIsOpen(false)
-                  onTaskClick(task)
+                  onTaskClick(optimisticTask)
                 }}
               >
                 <Eye className="h-3 w-3 mr-1" />
@@ -259,7 +521,7 @@ export function TaskPopover({
                 onClick={(e) => {
                   e.stopPropagation()
                   setIsOpen(false)
-                  onEdit(task, e)
+                  onEdit(optimisticTask, e)
                 }}
               >
                 <Edit className="h-3 w-3" />
@@ -274,7 +536,7 @@ export function TaskPopover({
                 onClick={(e) => {
                   e.stopPropagation()
                   setIsOpen(false)
-                  onTimeTracking(task, e)
+                  onTimeTracking(optimisticTask, e)
                 }}
               >
                 <Timer className="h-3 w-3" />

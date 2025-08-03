@@ -363,7 +363,9 @@ export function ChatRoom({ room, users }: ChatRoomProps) {
               <div className="flex items-center gap-3 mt-1">
                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                   <Users className="h-3 w-3" />
-                  <span>{room.members.length} {room.members.length === 1 ? 'członek' : 'członków'}</span>
+                  {room.members.length > 2 ? (
+                    <span>{room.members.length}członków</span>
+                    ): ''}
                 </div>
                 {room.type === 'direct' && (() => {
                   const otherUser = room.members.find(m => m.user.id !== (session?.user as AuthUser)?.id)

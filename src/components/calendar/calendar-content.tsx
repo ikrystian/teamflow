@@ -8,7 +8,7 @@ import { TaskDetailsSheet } from "@/components/tasks/task-details-sheet"
 import { TaskPopover } from "@/components/tasks/task-popover"
 import { usePageHeader } from "@/contexts/header-context"
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react"
-import type { Task } from "@/types"
+import type { Task, TaskUpdateData } from "@/types"
 import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
 import { getPriorityColor, getPriorityDisplayName, formatProjectDisplay } from "@/lib/task-format-utils"
 
@@ -18,6 +18,13 @@ export function CalendarContent() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [taskDetailsDialogOpen, setTaskDetailsDialogOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [users, setUsers] = useState<Array<{
+    id: string
+    name: string
+    email: string
+    avatarUrl?: string
+  }>>([])
+  const [session, setSession] = useState<{ user?: { id: string } } | null>(null)
 
   // Set page header content
   usePageHeader(
@@ -43,8 +50,59 @@ export function CalendarContent() {
     }
   }
 
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch("/api/users")
+      if (response.ok) {
+        const data = await response.json()
+        setUsers(data.users)
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error)
+    }
+  }
+
+  const fetchSession = async () => {
+    try {
+      const response = await fetch("/api/auth/session")
+      if (response.ok) {
+        const data = await response.json()
+        setSession(data)
+      }
+    } catch (error) {
+      console.error("Error fetching session:", error)
+    }
+  }
+
+  const handleTaskUpdate = async (taskId: string, updates: TaskUpdateData) => {
+    try {
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updates),
+      })
+
+      if (response.ok) {
+        fetchTasks() // Refresh to get updated data
+      } else {
+        throw new Error("Failed to update task")
+      }
+    } catch (error) {
+      console.error("Error updating task:", error)
+      throw error
+    }
+  }
+
+  const handleTimeLogged = () => {
+    fetchTasks() // Refresh to get updated time data
+  }
+
   useEffect(() => {
     fetchTasks()
+    fetchUsers()
+    fetchSession()
   }, [])
 
   const getDaysInMonth = (date: Date) => {
@@ -87,6 +145,14 @@ export function CalendarContent() {
   const handleTaskDetails = (task: Task) => {
     setSelectedTask(task)
     setTaskDetailsDialogOpen(true)
+  }
+
+  // Check if user can edit task
+  const canEditTask = (task: Task) => {
+    if (!session?.user?.id) return false
+
+    // User can edit tasks they created or are assigned to
+    return task.createdBy?.id === session.user.id || task.assignee?.id === session.user.id
   }
 
   const daysInMonth = getDaysInMonth(currentDate)
@@ -156,6 +222,10 @@ export function CalendarContent() {
                                 key={task.id}
                                 task={task}
                                 onTaskClick={handleTaskDetails}
+                                onTaskUpdate={handleTaskUpdate}
+                                onTimeLogged={handleTimeLogged}
+                                users={users}
+                                canEdit={canEditTask(task)}
                                 side="bottom"
                                 align="start"
                               >
@@ -233,6 +303,7 @@ export function CalendarContent() {
           task={selectedTask as Task}
           open={taskDetailsDialogOpen}
           onOpenChange={setTaskDetailsDialogOpen}
+          onTaskUpdated={fetchTasks}
         />
       )}
     </>

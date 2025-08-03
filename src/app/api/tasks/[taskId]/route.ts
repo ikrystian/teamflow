@@ -116,7 +116,22 @@ export async function GET(
             date: "desc"
           }
         },
-        images: true
+        images: true,
+        attachments: {
+          include: {
+            uploadedBy: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                avatarUrl: true
+              }
+            }
+          },
+          orderBy: {
+            createdAt: "desc"
+          }
+        }
       }
     })
 
@@ -383,8 +398,7 @@ export async function PATCH(
             id: true,
             name: true,
             email: true,
-            avatarUrl: true,
-            slackUserId: true
+            avatarUrl: true
           }
         },
         createdBy: {
@@ -424,86 +438,26 @@ export async function PATCH(
           orderBy: {
             date: "desc"
           }
+        },
+        attachments: {
+          include: {
+            uploadedBy: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                avatarUrl: true
+              }
+            }
+          },
+          orderBy: {
+            createdAt: "desc"
+          }
         }
       }
     })
 
-    // Send automatic Slack notification if assignee was changed and new assignee has Slack connected
-    if (assigneeId !== undefined && assigneeId !== existingTask.assigneeId && assigneeId && task.assignee?.slackUserId) {
-      try {
-        const slackToken = process.env.SLACK_BOT_TOKEN
-        if (slackToken) {
-          const blocks = [
-            {
-              type: "header",
-              text: {
-                type: "plain_text",
-                text: "📝 Zadanie zostało Ci przypisane"
-              }
-            },
-            {
-              type: "section",
-              fields: [
-                {
-                  type: "mrkdwn",
-                  text: `*Zadanie:*\n${task.title}`
-                },
-                {
-                  type: "mrkdwn",
-                  text: `*Projekt:*\n${task.project?.name || "Brak projektu"}`
-                }
-              ]
-            }
-          ]
-
-          if (task.description) {
-            blocks.push({
-              type: "section",
-              text: {
-                type: "mrkdwn",
-                text: `*Opis:*\n${task.description.replace(/<[^>]*>/g, '').substring(0, 200)}${task.description.length > 200 ? '...' : ''}`
-              }
-            })
-          }
-
-          if (task.priority) {
-            blocks.push({
-              type: "section",
-              text: {
-                type: "mrkdwn",
-                text: `*Priorytet:* ${task.priority}`
-              }
-            })
-          }
-
-          if (task.dueDate) {
-            blocks.push({
-              type: "section",
-              text: {
-                type: "mrkdwn",
-                text: `*Termin:* ${new Date(task.dueDate).toLocaleDateString('pl-PL')}`
-              }
-            })
-          }
-
-          await fetch('https://slack.com/api/chat.postMessage', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${slackToken}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              channel: task.assignee.slackUserId,
-              text: `Zostało Ci przypisane zadanie: ${task.title}`,
-              blocks: blocks
-            }),
-          })
-        }
-      } catch (error) {
-        // Don't fail task update if Slack notification fails
-        console.error("Failed to send Slack notification:", error)
-      }
-    }
+    // TODO: Add Slack notification when slackUserId is available in user model
 
     return NextResponse.json({ task })
   } catch (error) {

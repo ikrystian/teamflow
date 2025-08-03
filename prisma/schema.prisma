@@ -37,6 +37,7 @@ model User {
   createdChatRooms  ChatRoom[]        @relation("ChatRoomCreator")
   sentMessages      Message[]         @relation("MessageSender")
   chatRooms         UserChatRoom[]
+  taskAttachments   TaskAttachment[]
 }
 
 model Team {
@@ -63,6 +64,7 @@ model Project {
   stagingUrl    String?
   productionUrl String?
   credentials   String?
+  shareToken    String?           @unique // Token for public sharing
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
   teamId        String
@@ -107,6 +109,7 @@ model Task {
   project        Project?    @relation(fields: [projectId], references: [id])
   taskStatus     TaskStatus? @relation(fields: [statusId], references: [id])
   images         TaskImage[]
+  attachments    TaskAttachment[]
   timeEntries    TimeEntry[]
   todos          Todo[]
   blockedBy      User?       @relation("TaskBlocker", fields: [blockedById], references: [id])
@@ -116,6 +119,7 @@ model Todo {
   id          String   @id @default(cuid())
   title       String
   isCompleted Boolean  @default(false)
+  timeSpent   Float?   // Time spent in hours
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   taskId      String
@@ -152,6 +156,22 @@ model TaskImage {
   createdAt DateTime @default(now())
   taskId    String
   task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+model TaskAttachment {
+  id          String   @id @default(cuid())
+  filename    String
+  originalName String
+  url         String
+  mimeType    String
+  size        Int
+  description String?
+  category    String?
+  createdAt   DateTime @default(now())
+  taskId      String
+  uploadedById String
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  uploadedBy  User     @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
 }
 
 model Comment {

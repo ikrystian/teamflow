@@ -13,7 +13,7 @@ import { formatTaskDueDateWithRelative, formatCreatedDate } from "@/lib/date-uti
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Clock, Calendar, User, ArrowRight } from "lucide-react"
+import { Clock, Calendar, User as UserIcon, ArrowRight } from "lucide-react"
 
 export function DashboardContent() {
   const { data: session } = useSession() as { data: Session | null }
@@ -309,7 +309,7 @@ export function DashboardContent() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <User className="h-5 w-5 text-green-500" />
+              <UserIcon className="h-5 w-5 text-green-500" />
               <CardTitle>Ostatnio zaktualizowane</CardTitle>
             </div>
             <CardDescription>

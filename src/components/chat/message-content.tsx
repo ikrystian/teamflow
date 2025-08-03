@@ -73,7 +73,7 @@ export function MessageContent({ content, users, currentUserId, className }: Mes
               className={cn(
                 "inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium",
                 part.isCurrentUser
-                  ? "bg-primary/20 text-primary border border-primary/30"
+                  ? "bg-primary text-primary border border-primary/30"
                   : "bg-white-100 text-primary border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700"
               )}
               title={part.user?.email}

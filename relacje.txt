@@ -298,3 +298,44 @@ Task {
 - **useEffect** - synchronizacja optimisticTasks z props.tasks
 - **updatingTasks Set** - śledzenie zadań w trakcie aktualizacji
 - **Rollback mechanism** - przywrócenie originalTask przy błędzie
+
+## System udostępniania projektów (2025-08-03):
+
+### Funkcjonalność publicznego udostępniania tablicy zadań:
+
+**Nowe pola w bazie danych:**
+- `Project.shareToken` - unikalny token do publicznego udostępniania (nullable, unique)
+
+**API Endpoints:**
+- `POST /api/projects/[projectId]/share` - generowanie tokenu udostępniania
+- `GET /api/projects/[projectId]/share` - pobieranie aktualnego tokenu
+- `DELETE /api/projects/[projectId]/share` - usuwanie tokenu udostępniania
+- `GET /api/public/projects/[shareToken]` - publiczny dostęp do danych projektu
+
+**Publiczne strony:**
+- `/public/project/[shareToken]` - publiczna strona projektu z tablicą zadań i kalendarzem
+
+**Komponenty tylko do odczytu:**
+- `ReadOnlyKanbanBoard` - tablica Kanban bez możliwości edycji
+- `ReadOnlyTaskCalendar` - kalendarz zadań tylko do odczytu
+- `ReadOnlyTaskDetails` - szczegóły zadania bez możliwości edycji
+
+**UI zarządzania:**
+- Sekcja udostępniania w ustawieniach projektu (`ProjectSettingsContent`)
+- Generowanie/usuwanie linków udostępniania
+- Kopiowanie linków do schowka
+- Otwieranie publicznego widoku w nowej karcie
+
+**Bezpieczeństwo:**
+- Middleware zaktualizowany o publiczne ścieżki `/public/*` i `/api/public/*`
+- Tylko niezharchiwizowane projekty mogą być udostępniane
+- Brak możliwości edycji w widoku publicznym
+- Token generowany za pomocą `crypto.randomBytes(32).toString('hex')`
+
+**Funkcjonalności publicznego widoku:**
+- Wyświetlanie statystyk projektu (wszystkie zadania, ukończone, z terminem, przeterminowane)
+- Tablica Kanban z zadaniami pogrupowanymi według statusów
+- Kalendarz tygodniowy z zadaniami według terminów
+- Szczegóły zadań w trybie tylko do odczytu
+- Responsywny design z headerem i footerem
+- Informacje o zespole i opisie projektu

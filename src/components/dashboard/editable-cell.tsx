@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 import { cn } from "@/lib/utils"
 import { getPriorityColor, getPriorityDisplayName, getPriorityOptions } from "@/lib/task-format-utils"
-import { formatTaskDueDateWithRelative, dateToLocalDateString } from "@/lib/date-utils"
+import { dateToLocalDateString } from "@/lib/date-utils"
 import type { User, TaskStatus } from "@/types"
 import { UserPlus } from "lucide-react"
 

@@ -12,6 +12,7 @@ import { DateTimePicker } from "@/components/ui/datetime-picker"
 import { dateToLocalDateString } from "@/lib/date-utils"
 import type { Task, User, TaskStatus } from "@/types"
 import { ReminderSettings } from "@/components/tasks/reminder-settings"
+import { FileUpload } from "@/components/ui/file-upload"
 import {
   getEstimatedHoursOptions,
   hoursToSelectValue,
@@ -90,6 +91,10 @@ export function TaskFormContent({
   const [, setTaskStatuses] = useState<TaskStatus[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+
+  // File upload state
+  const [attachments, setAttachments] = useState<File[]>([])
+  const [uploadingFiles, setUploadingFiles] = useState(false)
 
   const isCreateMode = mode === "create"
   const isEditMode = mode === "edit"
@@ -290,7 +295,12 @@ export function TaskFormContent({
         })
 
         if (response.ok) {
-          await response.json()
+          const { task: createdTask } = await response.json()
+
+          // Upload attachments if any
+          if (attachments.length > 0) {
+            await uploadAttachmentsAfterTaskCreation(createdTask.id)
+          }
 
           onTaskCreated?.()
           handleClose()
@@ -339,7 +349,86 @@ export function TaskFormContent({
 
   const handleClose = () => {
     setError("")
+    setAttachments([])
     onClose?.()
+  }
+
+  // File upload handlers
+  const handleFileUpload = async (file: File, description?: string, category?: string) => {
+    // For create mode, just store files to upload after task creation
+    if (isCreateMode) {
+      setAttachments(prev => [...prev, file])
+      return
+    }
+
+    // For edit mode, upload immediately
+    if (task) {
+      setUploadingFiles(true)
+      try {
+        const formData = new FormData()
+        formData.append('file', file)
+        if (description) formData.append('description', description)
+        if (category) formData.append('category', category)
+
+        const response = await fetch(`/api/tasks/${task.id}/attachments`, {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (!response.ok) throw new Error('Upload failed')
+
+        // Refresh task data
+        onTaskUpdated?.()
+      } catch (error) {
+        console.error('File upload error:', error)
+        setError('Nie udało się przesłać pliku')
+      } finally {
+        setUploadingFiles(false)
+      }
+    }
+  }
+
+  const handleFileDelete = async (fileId: string) => {
+    if (task) {
+      try {
+        const response = await fetch(`/api/tasks/${task.id}/attachments?attachmentId=${fileId}`, {
+          method: 'DELETE',
+        })
+
+        if (!response.ok) throw new Error('Delete failed')
+
+        // Refresh task data
+        onTaskUpdated?.()
+      } catch (error) {
+        console.error('File delete error:', error)
+        setError('Nie udało się usunąć pliku')
+      }
+    }
+  }
+
+  const uploadAttachmentsAfterTaskCreation = async (taskId: string) => {
+    if (attachments.length === 0) return
+
+    setUploadingFiles(true)
+    try {
+      for (const file of attachments) {
+        const formData = new FormData()
+        formData.append('file', file)
+
+        const response = await fetch(`/api/tasks/${taskId}/attachments`, {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (!response.ok) {
+          console.error(`Failed to upload ${file.name}`)
+        }
+      }
+    } catch (error) {
+      console.error('Error uploading attachments:', error)
+    } finally {
+      setUploadingFiles(false)
+    }
   }
 
   // Check if form is valid
@@ -374,12 +463,6 @@ export function TaskFormContent({
         <h2 className="text-xl font-semibold">
           {isCreateMode ? "Utwórz nowe zadanie" : "Edytuj zadanie"}
         </h2>
-        <p className="text-muted-foreground">
-          {isCreateMode
-            ? "Utwórz nowe zadanie i przypisz je członkowi zespołu. Wypełnij wymagane pola i dodaj szczegóły."
-            : `Zaktualizuj szczegóły zadania. ${task ? `Możesz edytować to zadanie, ponieważ ${task.createdBy?.id === task.assignee?.id ? "utworzyłeś i jesteś do niego przypisany" : task.assignee ? "jesteś do niego przypisany" : "utworzyłeś je"}.` : "Ładowanie szczegółów zadania..."}`
-          }
-        </p>
       </div>
 
       {/* Form Content */}
@@ -591,6 +674,68 @@ export function TaskFormContent({
               </div>
             </div>
           )}
+
+          {/* File Attachments */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Załączniki</Label>
+            {isCreateMode ? (
+              <div className="space-y-2">
+                <FileUpload
+                  files={attachments.map((file, index) => ({
+                    id: `temp-${index}`,
+                    filename: file.name,
+                    originalName: file.name,
+                    url: '',
+                    mimeType: file.type,
+                    size: file.size,
+                    createdAt: new Date().toISOString(),
+                    uploadedBy: { id: '', name: '', email: '', avatarUrl: '' }
+                  }))}
+                  onFileUpload={handleFileUpload}
+                  onFileDelete={async (fileId) => {
+                    const index = parseInt(fileId.replace('temp-', ''))
+                    setAttachments(prev => prev.filter((_, i) => i !== index))
+                  }}
+                  editable={true}
+                  accept="*/*"
+                  maxSize={10 * 1024 * 1024} // 10MB
+                  maxFiles={10}
+                  title="Załączniki"
+                  description="Dodaj pliki do zadania (max 10MB każdy)"
+                  categories={["specification", "design", "manual", "other"]}
+                  showCategories={false}
+                  showDescriptions={false}
+                  className="border rounded-lg p-4"
+                />
+                {uploadingFiles && (
+                  <div className="text-sm text-muted-foreground">
+                    Przesyłanie plików...
+                  </div>
+                )}
+              </div>
+            ) : task?.attachments ? (
+              <FileUpload
+                files={task.attachments}
+                onFileUpload={handleFileUpload}
+                onFileDelete={handleFileDelete}
+                editable={true}
+                accept="*/*"
+                maxSize={10 * 1024 * 1024} // 10MB
+                maxFiles={10}
+                title="Załączniki"
+                description="Zarządzaj plikami zadania"
+                categories={["specification", "design", "manual", "other"]}
+                showCategories={true}
+                showDescriptions={true}
+                className="border rounded-lg p-4"
+              />
+            ) : (
+              <div className="text-sm text-muted-foreground border rounded-lg p-4">
+                Brak załączników
+              </div>
+            )}
+          </div>
+
           {/* Reminder Settings */}
           <ReminderSettings
             reminderEnabled={reminderEnabled}

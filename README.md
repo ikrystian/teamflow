@@ -48,6 +48,9 @@ Nexus to nowoczesna aplikacja internetowa do zarządzania zadaniami i projektami
 - **Ulepszone formatowanie dat** - Daty zadań w obecnym roku wyświetlane jako dzień i pełna polska nazwa miesiąca (np. "15 stycznia"), daty z innych lat w pełnym formacie
 - **Tabelka zadań w stylu Asana** - Zaawansowana tabelka w Dashboard wyświetlająca wszystkie zadania z systemu, grupowane według statusów z możliwością inline editing wszystkich pól (nazwa, osoba przypisana, priorytet, data wykonania, status, szacowany czas), sortowaniem kolumn i filtrowaniem
 - **Preferencje tabeli zadań** - Automatyczne zapisywanie wybranych kolumn w localStorage dla każdego użytkownika, domyślnie wszystkie kolumny widoczne z możliwością ukrywania niepotrzebnych
+- **Edytowalne pola w popover zadań** - Szczegóły zadań w popover zawierają edytowalne pola (tytuł, opis, priorytet, status, przypisana osoba, termin, szacowany czas) z optimistic updates i powiadomieniami Sonner
+- **Szybkie dodawanie czasu w popover** - Prosty komponent do raportowania czasu pracy bezpośrednio w popover zadania z predefiniowanymi wartościami i opcjonalnym opisem
+- **Formularz szczegółów zadania** - Kompletny formularz edycji wszystkich szczegółów zadania w popover z przyciskiem "Edytuj", umożliwiający szybką edycję wszystkich pól w jednym miejscu
 - **System komunikacji w czasie rzeczywistym** - Pełnofunkcjonalny chat z Socket.IO obsługujący wiadomości bezpośrednie, grupowe i projektowe
 - **Widoczność online użytkowników** - Śledzenie statusu online/offline użytkowników w czasie rzeczywistym z wizualnymi wskaźnikami w interfejsie chat
 - **Tagowanie użytkowników w chat** - Możliwość oznaczania użytkowników w wiadomościach za pomocą @username z autocomplete i kolorowymi tagami
@@ -75,6 +78,7 @@ Nexus to nowoczesna aplikacja internetowa do zarządzania zadaniami i projektami
 - **Optimistic Updates** - Natychmiastowe aktualizacje UI podczas drag and drop z rollback przy błędach, wizualny feedback dla zadań w trakcie aktualizacji
 - **Powiadomienia Sonner** - Inteligentne powiadomienia toast z loading/success/error states dla operacji drag and drop
 - **Przypomnienia Push** - System powiadomień push przeglądarki z możliwością ustawienia przypomnienia na wybrane godziny/dni przed terminem zadania
+- **Publiczne udostępnianie projektów** - Możliwość generowania specjalnych linków do udostępnienia tablicy zadań osobom bez konta w systemie, widok tylko do odczytu z tablicą Kanban i kalendarzem
 
 ### 🔄 Planowane funkcjonalności
 - Zaproszenia do zespołów przez email
@@ -83,6 +87,7 @@ Nexus to nowoczesna aplikacja internetowa do zarządzania zadaniami i projektami
 - ✅ ~~Aktywne oznaczanie stron w nawigacji~~ - **ZAIMPLEMENTOWANE**
 - ✅ ~~System ról i zarządzanie użytkownikami~~ - **ZAIMPLEMENTOWANE**
 - ✅ ~~Prawy sidebar z ostatnimi zmianami~~ - **ZAIMPLEMENTOWANE**
+- ✅ ~~Publiczne udostępnianie projektów~~ - **ZAIMPLEMENTOWANE**
 - Zaawansowane raporty i analityka
 - Wyszukiwarka globalna
 - Szablony projektów z predefiniowanymi statusami

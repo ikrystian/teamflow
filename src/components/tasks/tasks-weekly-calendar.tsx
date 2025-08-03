@@ -8,13 +8,20 @@ import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, User } from
 import { TaskDetailsSheet } from "./task-details-sheet"
 import { TaskPopover } from "./task-popover"
 import { QuickAddTaskCalendar } from "./quick-add-task-calendar"
-import type { Task, TaskStatus } from "@/types"
+import type { Task, TaskStatus, TaskUpdateData } from "@/types"
 import type { Session } from "next-auth"
-import { formatAssignee, getPriorityColor, getPriorityShortName } from "@/lib/task-format-utils"
+import { formatAssignee, getPriorityColor } from "@/lib/task-format-utils"
 
 interface TasksWeeklyCalendarProps {
   tasks: Task[]
   onTaskUpdated: () => void
+  onTaskUpdate?: (taskId: string, updates: TaskUpdateData) => void
+  teamMembers?: Array<{
+    id: string
+    name: string
+    email: string
+    avatarUrl?: string
+  }>
   projects?: Array<{
     id: string
     name: string
@@ -30,6 +37,8 @@ interface TasksWeeklyCalendarProps {
 export function TasksWeeklyCalendar({
   tasks,
   onTaskUpdated,
+  onTaskUpdate,
+  teamMembers = [],
   projects = [],
   session = null,
   hideProjectSelect = false
@@ -106,6 +115,14 @@ export function TasksWeeklyCalendar({
   const handleTaskClick = (task: Task) => {
     setSelectedTask(task)
     setTaskDetailsDialogOpen(true)
+  }
+
+  // Check if user can edit task
+  const canEditTask = (task: Task) => {
+    if (!session?.user?.id) return false
+
+    // User can edit tasks they created or are assigned to
+    return task.createdBy?.id === session.user.id || task.assignee?.id === session.user.id
   }
 
   // Formatowanie daty
@@ -199,6 +216,10 @@ export function TasksWeeklyCalendar({
                         key={task.id}
                         task={task}
                         onTaskClick={handleTaskClick}
+                        onTaskUpdate={onTaskUpdate}
+                        onTimeLogged={onTaskUpdated}
+                        users={teamMembers}
+                        canEdit={canEditTask(task)}
                         side="right"
                         align="start"
                       >

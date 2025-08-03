@@ -14,10 +14,24 @@ export interface TaskImage {
   createdAt: string;
 }
 
+export interface TaskAttachment {
+  id: string;
+  filename: string;
+  originalName: string;
+  url: string;
+  mimeType: string;
+  size: number;
+  description?: string;
+  category?: string;
+  createdAt: string;
+  uploadedBy: User;
+}
+
 export interface Todo {
   id: string;
   title: string;
   isCompleted: boolean;
+  timeSpent?: number; // Time spent in hours
 }
 
 export interface TaskStatus {
@@ -56,6 +70,7 @@ export interface Task {
   };
   assignee?: User;
   createdBy?: User;
+  taskStatus?: TaskStatus;
   subtasks: {
     id: string;
     title: string;
@@ -79,7 +94,14 @@ export interface Task {
     user: User;
   }[];
   images?: TaskImage[];
+  attachments?: TaskAttachment[];
   todos?: Todo[];
+}
+
+export interface TaskUpdateData extends Partial<Task> {
+  assigneeId?: string;
+  statusId?: string;
+  projectId?: string;
 }
 
 export interface SystemChange {

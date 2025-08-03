@@ -156,6 +156,21 @@ export async function GET(request: NextRequest) {
           orderBy: {
             createdAt: "asc"
           }
+        },
+        attachments: {
+          include: {
+            uploadedBy: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                avatarUrl: true
+              }
+            }
+          },
+          orderBy: {
+            createdAt: "desc"
+          }
         }
       },
       orderBy: {
@@ -288,8 +303,7 @@ export async function POST(request: NextRequest) {
             id: true,
             name: true,
             email: true,
-            avatarUrl: true,
-            slackUserId: true
+            avatarUrl: true
           }
         },
         createdBy: {
@@ -299,86 +313,23 @@ export async function POST(request: NextRequest) {
             email: true,
             avatarUrl: true
           }
+        },
+        attachments: {
+          include: {
+            uploadedBy: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                avatarUrl: true
+              }
+            }
+          }
         }
       }
     })
 
-    // Send automatic Slack notification if assignee has Slack connected
-    if (assigneeId && task.assignee?.slackUserId) {
-      try {
-        const slackToken = process.env.SLACK_BOT_TOKEN
-        if (slackToken) {
-          const blocks = [
-            {
-              type: "header",
-              text: {
-                type: "plain_text",
-                text: "🆕 Nowe zadanie zostało Ci przypisane"
-              }
-            },
-            {
-              type: "section",
-              fields: [
-                {
-                  type: "mrkdwn",
-                  text: `*Zadanie:*\n${title}`
-                },
-                {
-                  type: "mrkdwn",
-                  text: `*Projekt:*\n${task.project?.name || "Brak projektu"}`
-                }
-              ]
-            }
-          ]
-
-          if (description) {
-            blocks.push({
-              type: "section",
-              text: {
-                type: "mrkdwn",
-                text: `*Opis:*\n${description.replace(/<[^>]*>/g, '').substring(0, 200)}${description.length > 200 ? '...' : ''}`
-              }
-            })
-          }
-
-          if (priority) {
-            blocks.push({
-              type: "section",
-              text: {
-                type: "mrkdwn",
-                text: `*Priorytet:* ${priority}`
-              }
-            })
-          }
-
-          if (dueDate) {
-            blocks.push({
-              type: "section",
-              text: {
-                type: "mrkdwn",
-                text: `*Termin:* ${new Date(dueDate).toLocaleDateString('pl-PL')}`
-              }
-            })
-          }
-
-          await fetch('https://slack.com/api/chat.postMessage', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${slackToken}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              channel: task.assignee.slackUserId,
-              text: `Nowe zadanie: ${title}`,
-              blocks: blocks
-            }),
-          })
-        }
-      } catch (error) {
-        // Don't fail task creation if Slack notification fails
-        console.error("Failed to send Slack notification:", error)
-      }
-    }
+    // TODO: Add Slack notification when slackUserId is available in user model
 
     return NextResponse.json({ task }, { status: 201 })
   } catch (error) {

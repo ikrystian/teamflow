@@ -8,9 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Key, Save, Eye, EyeOff, X, Plus, Edit, Trash2 } from "lucide-react"
+import { ArrowLeft, Key, Save, Eye, EyeOff, X, Plus, Edit, Trash2, Share2, Copy, ExternalLink, Trash } from "lucide-react"
 import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { usePageHeader } from "@/contexts/header-context"
+import { toast } from "sonner"
 
 
 
@@ -55,6 +56,13 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
   const [editingCredential, setEditingCredential] = useState<string | null>(null)
   const [savingCredentials, setSavingCredentials] = useState(false)
   const [showCredentials, setShowCredentials] = useState<Record<string, boolean>>({})
+
+  // Share settings state
+  const [shareToken, setShareToken] = useState<string | null>(null)
+  const [shareUrl, setShareUrl] = useState<string | null>(null)
+  const [generatingShare, setGeneratingShare] = useState(false)
+  const [removingShare, setRemovingShare] = useState(false)
+
   const router = useRouter()
 
   // Set page header content
@@ -120,8 +128,77 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
         }
       }
       setCredentialsList(parsedCredentials)
+
+      // Load share settings
+      loadShareSettings()
     }
   }, [project])
+
+  // Share settings functions
+  const loadShareSettings = async () => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}/share`)
+      if (response.ok) {
+        const data = await response.json()
+        setShareToken(data.shareToken)
+        setShareUrl(data.shareUrl)
+      }
+    } catch (error) {
+      console.error('Error loading share settings:', error)
+    }
+  }
+
+  const generateShareLink = async () => {
+    setGeneratingShare(true)
+    try {
+      const response = await fetch(`/api/projects/${projectId}/share`, {
+        method: 'POST'
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setShareToken(data.shareToken)
+        setShareUrl(data.shareUrl)
+        toast.success('Link udostępniania został wygenerowany')
+      } else {
+        toast.error('Nie udało się wygenerować linku udostępniania')
+      }
+    } catch (error) {
+      console.error('Error generating share link:', error)
+      toast.error('Wystąpił błąd podczas generowania linku')
+    } finally {
+      setGeneratingShare(false)
+    }
+  }
+
+  const removeShareLink = async () => {
+    setRemovingShare(true)
+    try {
+      const response = await fetch(`/api/projects/${projectId}/share`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        setShareToken(null)
+        setShareUrl(null)
+        toast.success('Link udostępniania został usunięty')
+      } else {
+        toast.error('Nie udało się usunąć linku udostępniania')
+      }
+    } catch (error) {
+      console.error('Error removing share link:', error)
+      toast.error('Wystąpił błąd podczas usuwania linku')
+    } finally {
+      setRemovingShare(false)
+    }
+  }
+
+  const copyShareLink = () => {
+    if (shareUrl) {
+      navigator.clipboard.writeText(shareUrl)
+      toast.success('Link został skopiowany do schowka')
+    }
+  }
 
   const handleAddCredential = () => {
     if (!newCredential.name.trim() || !newCredential.content.trim()) {
@@ -212,6 +289,90 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
   return (
     <div className="space-y-6 p-4 md:p-8 pt-6">
       {/* Header */}
+
+      {/* Project Sharing */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Share2 className="h-5 w-5" />
+            <span>Udostępnianie projektu</span>
+          </CardTitle>
+          <CardDescription>
+            Wygeneruj publiczny link do udostępnienia tablicy zadań osobom bez konta w systemie.
+            Udostępniona tablica będzie dostępna tylko do odczytu.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {shareToken && shareUrl ? (
+              <div className="space-y-4">
+                <div className="p-4 border rounded-lg bg-muted/50">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <Label className="text-sm font-medium">Link publiczny</Label>
+                      <div className="mt-1 p-2 bg-background border rounded text-sm font-mono break-all">
+                        {shareUrl}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={copyShareLink}
+                      >
+                        <Copy className="h-4 w-4 mr-2" />
+                        Kopiuj
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(shareUrl, '_blank')}
+                      >
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Otwórz
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={generateShareLink}
+                    disabled={generatingShare}
+                  >
+                    <Share2 className="h-4 w-4 mr-2" />
+                    {generatingShare ? 'Generowanie...' : 'Wygeneruj nowy link'}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={removeShareLink}
+                    disabled={removingShare}
+                  >
+                    <Trash className="h-4 w-4 mr-2" />
+                    {removingShare ? 'Usuwanie...' : 'Usuń udostępnianie'}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <Share2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">Projekt nie jest udostępniony</h3>
+                <p className="text-muted-foreground mb-4">
+                  Wygeneruj link publiczny, aby udostępnić tablicę zadań osobom bez konta.
+                </p>
+                <Button
+                  onClick={generateShareLink}
+                  disabled={generatingShare}
+                >
+                  <Share2 className="h-4 w-4 mr-2" />
+                  {generatingShare ? 'Generowanie...' : 'Wygeneruj link udostępniania'}
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Access Credentials Configuration */}
       <Card>
