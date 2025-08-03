@@ -311,7 +311,7 @@ export function DashboardContent() {
         onOpenChange={setDetailsDialogOpen}
         task={selectedTask}
         onTaskUpdated={handleTaskUpdated}
-        canEdit={false}
+        canEdit={selectedTask ? (isAdmin || selectedTask.createdBy?.id === session?.user?.id || selectedTask.assignee?.id === session?.user?.id) : false}
       />
     </div>
   )

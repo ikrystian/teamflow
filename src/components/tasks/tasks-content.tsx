@@ -69,6 +69,25 @@ export function TasksContent() {
   const [filter, setFilter] = useState<"all" | "assigned">("assigned")
   const [deletingTask, setDeletingTask] = useState(false)
   const [activeTab, setActiveTab] = useState("board")
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  // Check if user is admin
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (session?.user) {
+        try {
+          const response = await fetch('/api/user/admin-status')
+          if (response.ok) {
+            const data = await response.json()
+            setIsAdmin(data.isAdmin)
+          }
+        } catch (error) {
+          console.error('Error checking admin status:', error)
+        }
+      }
+    }
+    checkAdminStatus()
+  }, [session])
 
   // Set page header content
   usePageHeader(
@@ -96,6 +115,10 @@ export function TasksContent() {
         >
           <Filter className="mr-2 h-4 w-4" />
           Wszystkie zadania
+        </Button>
+
+        <Button onClick={() => {setCreateDialogOpen(true)}}>
+          Utwórz nowe zadanie
         </Button>
       </div>
     </div>,
@@ -235,6 +258,11 @@ export function TasksContent() {
 
   const canEditTask = (task: Task) => {
     if (!session?.user?.id) return false
+
+    // Admin can edit all tasks
+    if (isAdmin) return true
+
+    // User can edit tasks they created or are assigned to
     return task.createdBy?.id === session.user.id || task.assignee?.id === session.user.id
   }
 
@@ -675,6 +703,7 @@ export function TasksContent() {
         onOpenChange={setCreateDialogOpen}
         onTaskCreated={handleTaskCreated}
         projects={projects}
+        forceAssignToCurrentUser={true}
       />
 
       <TaskFormSheet

@@ -82,7 +82,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate, onTaskDet
     if (isAdmin) return true
     
     // User can edit tasks they created or are assigned to
-    return task.createdById === currentUserId || task.assigneeId === currentUserId
+    return task.createdBy?.id === currentUserId || task.assignee?.id === currentUserId
   }, [isAdmin, currentUserId])
 
   // Sync optimistic tasks with props tasks when they change
