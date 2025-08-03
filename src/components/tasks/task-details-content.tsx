@@ -33,7 +33,8 @@ import {
   MessageSquare,
   ListTodo,
   Check,
-  X
+  X,
+  Bell
 } from "lucide-react"
 import { ImageGallery } from "@/components/ui/image-gallery"
 import { TaskComments } from "@/components/tasks/task-comments"
@@ -44,6 +45,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { SlackNotificationModal } from "@/components/tasks/slack-notification-modal"
 import type { Task, Todo, User } from "@/types"
 import { formatTaskDueDateWithRelative, dateToLocalDateString } from "@/lib/date-utils"
 
@@ -90,6 +92,7 @@ export function TaskDetailsContent({
   const [editAssigneeId, setEditAssigneeId] = useState(task.assignee?.id || "unassigned")
   const [editEstimatedHours, setEditEstimatedHours] = useState(task.estimatedHours?.toString() || "none")
   const [saving, setSaving] = useState(false)
+  const [showNotificationModal, setShowNotificationModal] = useState(false)
 
   // Fetch fresh task data when task changes
   useEffect(() => {
@@ -416,6 +419,14 @@ export function TaskDetailsContent({
           })()}
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowNotificationModal(true)}
+          >
+            <Bell className="h-4 w-4 mr-2" />
+            Powiadom
+          </Button>
           {onTimeTracking && (
             <Button
               variant="outline"
@@ -934,6 +945,13 @@ export function TaskDetailsContent({
           </TabsContent>
         </div>
       </Tabs>
+      
+      {/* Slack Notification Modal */}
+      <SlackNotificationModal
+        open={showNotificationModal}
+        onOpenChange={setShowNotificationModal}
+        task={task}
+      />
     </div>
   )
 }

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useSession, signOut } from "next-auth/react"
+import { useSession } from "next-auth/react"
 import Link from "next/link"
 import {
   Settings,
@@ -31,6 +31,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { LogoutButton } from "@/components/auth/logout-button"
 
 interface UserProfile {
   id: string
@@ -138,10 +139,7 @@ export function NavUser() {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => signOut()}>
-              <LogOut className="mr-2 h-4 w-4" />
-              Wyloguj się
-            </DropdownMenuItem>
+            <LogoutButton variant="dropdown" />
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>

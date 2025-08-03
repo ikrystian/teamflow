@@ -61,20 +61,20 @@ export async function GET(request: NextRequest) {
       prisma.task.count({ 
         where: { 
           ...filters, 
-          status: { name: "Done" }
+          taskStatus: { name: "Done" }
         } 
       }),
       prisma.task.count({
         where: {
           ...filters,
           dueDate: { lt: new Date() },
-          status: { NOT: { name: "Done" } }
+          taskStatus: { NOT: { name: "Done" } }
         }
       }),
       prisma.task.count({
         where: {
           ...filters,
-          status: { name: "In Progress" }
+          taskStatus: { name: "In Progress" }
         }
       }),
       prisma.project.count({
@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
     ])
 
     // Calculate KPIs
-    const totalTimeLogged = timeEntries.reduce((sum, entry) => sum + entry.duration, 0)
+    const totalTimeLogged = timeEntries.reduce((sum, entry) => sum + entry.hours, 0)
     const avgTaskCompletionTime = completedTasks > 0 ? 5.2 : 0 // Mock calculation
     const productivityScore = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
     const teamEfficiency = Math.min(100, Math.round((productivityScore + (totalTimeLogged / 100)) / 2))
@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
             where: {
               ...filters,
               updatedAt: { gte: dayStart, lte: dayEnd },
-              status: { name: "Done" }
+              taskStatus: { name: "Done" }
             }
           }),
           prisma.timeEntry.findMany({
@@ -154,7 +154,7 @@ export async function GET(request: NextRequest) {
           })
         ])
 
-        const dayHours = dayTimeEntries.reduce((sum, entry) => sum + entry.duration, 0)
+        const dayHours = dayTimeEntries.reduce((sum, entry) => sum + entry.hours, 0)
         
         return {
           date: format(date, 'yyyy-MM-dd'),
@@ -176,7 +176,8 @@ export async function GET(request: NextRequest) {
         tasks: {
           where: filters,
           include: {
-            timeEntries: true
+            timeEntries: true,
+            taskStatus: true
           }
         }
       }
@@ -185,9 +186,9 @@ export async function GET(request: NextRequest) {
     const projectDistribution = projects.map(project => ({
       project: project.name,
       tasks: project.tasks.length,
-      completed: project.tasks.filter(t => t.status?.name === "Done").length,
+      completed: project.tasks.filter(t => t.taskStatus?.name === "Done").length,
       hours: project.tasks.reduce((sum, task) => 
-        sum + task.timeEntries.reduce((timeSum, entry) => timeSum + entry.duration, 0), 0
+        sum + task.timeEntries.reduce((timeSum, entry) => timeSum + entry.hours, 0), 0
       ),
       color: project.color || '#3B82F6'
     }))
@@ -198,7 +199,8 @@ export async function GET(request: NextRequest) {
         tasks: {
           where: filters,
           include: {
-            timeEntries: true
+            timeEntries: true,
+            taskStatus: true
           }
         }
       }
@@ -208,12 +210,12 @@ export async function GET(request: NextRequest) {
       .filter(user => user.tasks.length > 0)
       .map(user => ({
         user: user.name || user.email,
-        completedTasks: user.tasks.filter(t => t.status?.name === "Done").length,
+        completedTasks: user.tasks.filter(t => t.taskStatus?.name === "Done").length,
         hoursLogged: user.tasks.reduce((sum, task) => 
-          sum + task.timeEntries.reduce((timeSum, entry) => timeSum + entry.duration, 0), 0
+          sum + task.timeEntries.reduce((timeSum, entry) => timeSum + entry.hours, 0), 0
         ),
         efficiency: user.tasks.length > 0 ? 
-          Math.round((user.tasks.filter(t => t.status?.name === "Done").length / user.tasks.length) * 100) : 0,
+          Math.round((user.tasks.filter(t => t.taskStatus?.name === "Done").length / user.tasks.length) * 100) : 0,
         avatar: user.avatarUrl
       }))
       .sort((a, b) => b.completedTasks - a.completedTasks)
@@ -269,7 +271,7 @@ export async function GET(request: NextRequest) {
         inProgressTasks,
         totalProjects,
         activeUsers,
-        totalTimeLogged: totalTimeLogged / 3600, // Convert to hours
+        totalTimeLogged: totalTimeLogged, // Already in hours
         avgTaskCompletionTime,
         productivityScore,
         teamEfficiency
@@ -277,7 +279,7 @@ export async function GET(request: NextRequest) {
       trends: {
         tasksCreated: trendsData.map(d => ({ date: d.date, count: d.tasksCreated })),
         tasksCompleted: trendsData.map(d => ({ date: d.date, count: d.tasksCompleted })),
-        timeLogged: trendsData.map(d => ({ date: d.date, hours: d.timeLogged / 3600 })),
+        timeLogged: trendsData.map(d => ({ date: d.date, hours: d.timeLogged })),
         productivity: trendsData.map(d => ({ date: d.date, score: d.productivity }))
       },
       projectDistribution,

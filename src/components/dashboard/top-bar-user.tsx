@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { useSession, signOut } from "next-auth/react"
+import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -18,6 +18,7 @@ import {
   LogOut,
 } from "lucide-react"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
+import { LogoutButton } from "@/components/auth/logout-button"
 
 interface UserProfile {
   id: string
@@ -85,10 +86,7 @@ export function TopBarUser() {
             </Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => signOut()}>
-            <LogOut className="mr-2 h-4 w-4" />
-            <span>Log out</span>
-          </DropdownMenuItem>
+          <LogoutButton variant="dropdown" />
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

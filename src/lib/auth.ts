@@ -74,6 +74,12 @@ export const authOptions = {
     }
   },
   pages: {
-    signIn: "/auth/signin"
+    signIn: "/auth/signin",
+    signOut: "/auth/signin"
+  },
+  events: {
+    async signOut() {
+      // Clear any additional client-side state if needed
+    }
   }
 }
