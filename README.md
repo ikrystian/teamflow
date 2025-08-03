@@ -36,7 +36,7 @@ Nexus to nowoczesna aplikacja internetowa do zarządzania zadaniami i projektami
 - **Responsywny interfejs** - Zbudowany z shadcn/ui i Tailwind CSS
 - **Nowoczesna nawigacja** - Sidebar z aktywnym oznaczaniem stron i responsywnym designem
 - **Zdjęcia projektów** - Upload własnych zdjęć lub automatyczne pobieranie losowych zdjęć z Unsplash
-- **Preferencje widoku projektów** - Automatyczne zapisywanie preferencji widoku (lista/tablica) dla każdego projektu w localStorage
+- **Preferencje widoku projektów** - Automatyczne zapisywanie preferencji widoku (lista/tablica) dla każdego projektu w localStorage, domyślny widok to Tablica Kanban
 - **Ujednolicone komponenty tablicy** - Tablica zadań w projektach używa tego samego komponentu co w sekcji zadań dla spójności UX
 - **Oznaczanie zadań jako zakończone** - Możliwość szybkiego oznaczania zadań jako zakończone z menu dropdown z wizualnym oznaczeniem zielonym kolorem
 - **Kolorowe oznaczenia projektów** - Kolorowe kwadraty przed nazwami projektów w lewym menu i kolorowe obramowania kart zadań we wszystkich widokach odpowiadające kolorom wybranym podczas tworzenia

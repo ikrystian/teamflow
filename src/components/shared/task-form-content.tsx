@@ -7,21 +7,19 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RichTextEditor } from "@/components/ui/rich-text-editor"
-import { ImageGallery } from "@/components/ui/image-gallery"
-import Image from "next/image"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { Upload, X } from "lucide-react"
-import { DatePicker } from "@/components/ui/date-picker"
+
 import { DateTimePicker } from "@/components/ui/datetime-picker"
 import { dateToLocalDateString } from "@/lib/date-utils"
-import type { Task, User, TaskStatus, TaskImage } from "@/types"
+import type { Task, User, TaskStatus } from "@/types"
 import { ReminderSettings } from "@/components/tasks/reminder-settings"
+import {
+  getEstimatedHoursOptions,
+  hoursToSelectValue,
+  selectValueToHours,
+  formatAssignee,
+  getPriorityOptions,
+  formatProjectDisplay
+} from "@/lib/task-format-utils"
 
 interface Project {
   id: string
@@ -30,12 +28,6 @@ interface Project {
     id: string
     name: string
   }
-}
-
-interface PendingImage {
-  file: File
-  preview: string
-  id: string
 }
 
 interface TaskFormContentProps {
@@ -86,6 +78,9 @@ export function TaskFormContent({
   const [endTime, setEndTime] = useState<Date | undefined>()
   const [estimatedHours, setEstimatedHours] = useState("")
 
+  // Time planning mode state
+  const [timePlanningMode, setTimePlanningMode] = useState<"reporting" | "scheduled">("reporting")
+
   // Reminder state
   const [reminderEnabled, setReminderEnabled] = useState(false)
   const [reminderType, setReminderType] = useState("hours")
@@ -93,8 +88,6 @@ export function TaskFormContent({
 
   // Additional state
   const [, setTaskStatuses] = useState<TaskStatus[]>([])
-  const [images, setImages] = useState<TaskImage[]>([])
-  const [pendingImages, setPendingImages] = useState<PendingImage[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
@@ -169,28 +162,30 @@ export function TaskFormContent({
       setStartTime(undefined)
       setEndTime(undefined)
       setEstimatedHours("")
+      setTimePlanningMode("reporting")
       setReminderEnabled(false)
       setReminderType("hours")
       setReminderValue(1)
-      setImages([])
-      setPendingImages([])
       setError("")
     } else if (isEditMode && task) {
       // Populate form for edit mode
       setTitle(task.title)
       setDescription(task.description || "")
       setSelectedProjectId(task.project?.id || "")
-      setAssigneeId(task.assignee?.id || "unassigned")
+      setAssigneeId(task.assignee?.id || "")
       setPriority(task.priority || "")
-      setDueDate(task.dueDate ? task.dueDate.split('T')[0] : "")
+      setDueDate(task.dueDate ? dateToLocalDateString(new Date(task.dueDate)) : "")
       setStartTime(task.startTime ? new Date(task.startTime) : undefined)
       setEndTime(task.endTime ? new Date(task.endTime) : undefined)
-      setEstimatedHours(task.estimatedHours ? task.estimatedHours.toString() : "none")
+      setEstimatedHours(hoursToSelectValue(task.estimatedHours))
+
+      // Determine time planning mode based on existing data
+      const hasScheduledTime = task.startTime && task.endTime
+      setTimePlanningMode(hasScheduledTime ? "scheduled" : "reporting")
+
       setReminderEnabled(task.reminderEnabled || false)
       setReminderType(task.reminderType || "hours")
       setReminderValue(task.reminderValue || 1)
-      setImages(task.images || [])
-      setPendingImages([])
       setError("")
     }
   }, [isCreateMode, isEditMode, task, projectId, session?.user?.id, fetchTaskStatuses])
@@ -202,106 +197,44 @@ export function TaskFormContent({
     }
   }, [forceAssignToCurrentUser, isCreateMode, session?.user?.id, selectedProjectId])
 
-  const uploadPendingImages = async (taskId: string) => {
-    for (const pendingImage of pendingImages) {
-      const formData = new FormData()
-      formData.append('file', pendingImage.file)
+  // Calculate estimated hours from start and end time
+  const calculateEstimatedHours = (start: Date, end: Date): number => {
+    const diffInMs = end.getTime() - start.getTime()
+    const diffInHours = diffInMs / (1000 * 60 * 60)
+    return Math.round(diffInHours * 2) / 2 // Round to nearest 0.5 hour
+  }
 
-      try {
-        const response = await fetch(`/api/tasks/${taskId}/images`, {
-          method: 'POST',
-          body: formData
-        })
+  // Handle time planning mode change
+  const handleTimePlanningModeChange = (mode: "reporting" | "scheduled") => {
+    setTimePlanningMode(mode)
 
-        if (!response.ok) {
-          const errorData = await response.text()
-          console.error('Failed to upload image:', pendingImage.file.name, 'Status:', response.status, 'Error:', errorData)
-        }
-      } catch (error) {
-        console.error('Error uploading image:', error)
-      }
+    if (mode === "reporting") {
+      // Clear scheduled time fields when switching to reporting mode
+      setStartTime(undefined)
+      setEndTime(undefined)
+    } else {
+      // Clear estimated hours when switching to scheduled mode
+      setEstimatedHours("")
     }
   }
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
-
-    files.forEach(file => {
-      // Validate file type
-      if (!file.type.startsWith("image/")) {
-        setError("Wszystkie pliki muszą być obrazkami")
-        return
-      }
-
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setError("Rozmiar pliku nie może przekraczać 5MB")
-        return
-      }
-
-      // Create preview URL
-      const preview = URL.createObjectURL(file)
-      const id = Math.random().toString(36).substring(2, 11)
-
-      setPendingImages(prev => [...prev, { file, preview, id }])
-    })
-
-    // Reset input
-    e.target.value = ""
-  }
-
-  const removePendingImage = (id: string) => {
-    setPendingImages(prev => {
-      const imageToRemove = prev.find(img => img.id === id)
-      if (imageToRemove) {
-        URL.revokeObjectURL(imageToRemove.preview)
-      }
-      return prev.filter(img => img.id !== id)
-    })
-  }
-
-  const handleImageUpload = async (file: File): Promise<void> => {
-    if (!task) return
-
-    const formData = new FormData()
-    formData.append('file', file)
-
-    try {
-      const response = await fetch(`/api/tasks/${task.id}/images`, {
-        method: 'POST',
-        body: formData
-      })
-
-      if (response.ok) {
-        const newImage = await response.json()
-        setImages(prev => [...prev, newImage])
-      } else {
-        throw new Error('Nie udało się przesłać obrazu')
-      }
-    } catch (error) {
-      console.error('Błąd podczas przesyłania obrazu:', error)
-      setError('Nie udało się przesłać obrazu')
+  // Auto-calculate estimated hours when start/end time changes in scheduled mode
+  useEffect(() => {
+    if (timePlanningMode === "scheduled" && startTime && endTime && endTime > startTime) {
+      const calculatedHours = calculateEstimatedHours(startTime, endTime)
+      setEstimatedHours(hoursToSelectValue(calculatedHours))
+    } else if (timePlanningMode === "scheduled" && (!startTime || !endTime || endTime <= startTime)) {
+      // Clear estimated hours if times are invalid in scheduled mode
+      setEstimatedHours("")
     }
-  }
+  }, [startTime, endTime, timePlanningMode])
 
-  const handleImageDelete = async (imageId: string): Promise<void> => {
-    if (!task) return
-
-    try {
-      const response = await fetch(`/api/tasks/${task.id}/images?imageId=${imageId}`, {
-        method: 'DELETE'
-      })
-
-      if (response.ok) {
-        setImages(prev => prev.filter(img => img.id !== imageId))
-      } else {
-        throw new Error('Nie udało się usunąć obrazu')
-      }
-    } catch (error) {
-      console.error('Błąd podczas usuwania obrazu:', error)
-      setError('Nie udało się usunąć obrazu')
+  // Sync due date with start time in scheduled mode if due date is not set
+  useEffect(() => {
+    if (timePlanningMode === "scheduled" && startTime && !dueDate) {
+      setDueDate(dateToLocalDateString(startTime))
     }
-  }
+  }, [startTime, timePlanningMode, dueDate])
 
   const handleReminderChange = (enabled: boolean, type: string, value: number) => {
     setReminderEnabled(enabled)
@@ -313,6 +246,21 @@ export function TaskFormContent({
     e.preventDefault()
     setLoading(true)
     setError("")
+
+    // Validation for scheduled mode
+    if (timePlanningMode === "scheduled") {
+      if (!startTime || !endTime) {
+        setError("W trybie zaplanowanej pracy musisz podać czas rozpoczęcia i zakończenia.")
+        setLoading(false)
+        return
+      }
+
+      if (endTime <= startTime) {
+        setError("Czas zakończenia musi być późniejszy niż czas rozpoczęcia.")
+        setLoading(false)
+        return
+      }
+    }
 
     try {
       if (isCreateMode) {
@@ -328,12 +276,12 @@ export function TaskFormContent({
             projectId: (projectId || selectedProjectId) && (projectId || selectedProjectId) !== "no-project"
               ? (projectId || selectedProjectId)
               : undefined,
-            assigneeId: assigneeId && assigneeId !== "unassigned" ? assigneeId : undefined,
+            assigneeId: assigneeId || undefined,
             priority: priority || undefined,
             dueDate: dueDate || undefined,
             startTime: startTime ? startTime.toISOString() : undefined,
             endTime: endTime ? endTime.toISOString() : undefined,
-            estimatedHours: estimatedHours ? parseFloat(estimatedHours) : undefined,
+            estimatedHours: selectValueToHours(estimatedHours),
             statusId: statusId || undefined,
             reminderEnabled,
             reminderType: reminderEnabled ? reminderType : undefined,
@@ -342,12 +290,7 @@ export function TaskFormContent({
         })
 
         if (response.ok) {
-          const { task: newTask } = await response.json()
-
-          // Upload pending images
-          if (pendingImages.length > 0) {
-            await uploadPendingImages(newTask.id)
-          }
+          await response.json()
 
           onTaskCreated?.()
           handleClose()
@@ -366,12 +309,12 @@ export function TaskFormContent({
             title: title.trim(),
             description: description.trim() || undefined,
             statusId: statusId || undefined,
-            assigneeId: assigneeId === "unassigned" ? undefined : assigneeId,
+            assigneeId: assigneeId || undefined,
             priority: priority || undefined,
             dueDate: dueDate || undefined,
             startTime: startTime ? startTime.toISOString() : undefined,
             endTime: endTime ? endTime.toISOString() : undefined,
-            estimatedHours: estimatedHours === "none" ? undefined : parseFloat(estimatedHours),
+            estimatedHours: selectValueToHours(estimatedHours),
             projectId: selectedProjectId && selectedProjectId !== "no-project" ? selectedProjectId : undefined,
             reminderEnabled,
             reminderType: reminderEnabled ? reminderType : undefined,
@@ -380,11 +323,6 @@ export function TaskFormContent({
         })
 
         if (response.ok) {
-          // Upload pending images if any
-          if (pendingImages.length > 0) {
-            await uploadPendingImages(task.id)
-          }
-
           onTaskUpdated?.()
           handleClose()
         } else {
@@ -400,11 +338,20 @@ export function TaskFormContent({
   }
 
   const handleClose = () => {
-    // Clean up pending images
-    pendingImages.forEach(img => URL.revokeObjectURL(img.preview))
-    setPendingImages([])
     setError("")
     onClose?.()
+  }
+
+  // Check if form is valid
+  const isFormValid = () => {
+    if (!title.trim()) return false
+
+    if (timePlanningMode === "scheduled") {
+      if (!startTime || !endTime) return false
+      if (endTime <= startTime) return false
+    }
+
+    return true
   }
 
   // Check if there are changes in edit mode
@@ -412,13 +359,12 @@ export function TaskFormContent({
     title.trim() !== task.title ||
     (description.trim() || undefined) !== task.description ||
     statusId !== task.statusId ||
-    (assigneeId === "unassigned" ? undefined : assigneeId) !== task.assignee?.id ||
+    (assigneeId || undefined) !== task.assignee?.id ||
     (priority || undefined) !== task.priority ||
     (dueDate || undefined) !== (task.dueDate ? task.dueDate.split('T')[0] : undefined) ||
     (startTime ? startTime.toISOString() : undefined) !== task.startTime ||
     (endTime ? endTime.toISOString() : undefined) !== task.endTime ||
-    (estimatedHours === "none" ? undefined : parseFloat(estimatedHours)) !== task.estimatedHours ||
-    pendingImages.length > 0
+    selectValueToHours(estimatedHours) !== task.estimatedHours
   ) : true
 
   return (
@@ -465,29 +411,24 @@ export function TaskFormContent({
           </div>
 
           {/* Project selector */}
-          {showProjectSelector && (
+          {showProjectSelector && !isEditMode && (
             <div className="space-y-2">
               <Label htmlFor="project" className="text-sm font-medium">
                 Projekt
               </Label>
-              <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
-                <SelectTrigger className="h-10">
-                  <SelectValue placeholder="Wybierz projekt (opcjonalne)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="no-project">
-                    <span className="text-muted-foreground">Brak projektu</span>
-                  </SelectItem>
-                  {projects.map((project) => (
-                    <SelectItem key={project.id} value={project.id}>
-                      <div className="flex flex-col items-start">
-                        <span className="font-medium">{project.name}</span>
-                        <span className="text-xs text-muted-foreground">{project.team.name}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <select
+                id="project"
+                value={selectedProjectId || "no-project"}
+                onChange={(e) => setSelectedProjectId(e.target.value === "no-project" ? "" : e.target.value)}
+                className="h-10 w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                <option value="no-project">Brak projektu</option>
+                {projects.map((project) => (
+                  <option key={project.id} value={project.id}>
+                    {formatProjectDisplay(project)}
+                  </option>
+                ))}
+              </select>
             </div>
           )}
 
@@ -503,70 +444,87 @@ export function TaskFormContent({
               {(isCreateMode && !projectId && !currentProject) || forceAssignToCurrentUser ? (
                 <div className="h-10 px-3 py-2 border border-input bg-muted/50 rounded-md flex items-center space-x-2">
                   <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary">
-                    {session?.user?.name?.charAt(0).toUpperCase() || "U"}
+                    {formatAssignee(session?.user).initials}
                   </div>
                   <span className="text-sm text-muted-foreground">
-                    {session?.user?.name || "Aktualny użytkownik"}
+                    {formatAssignee(session?.user).displayName}
                   </span>
                 </div>
               ) : (
-                <Select value={assigneeId} onValueChange={setAssigneeId}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Wybierz przypisanego" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {isEditMode && (
-                      <SelectItem value="unassigned">Nieprzypisany</SelectItem>
-                    )}
-                    {availableTeamMembers.map((member) => (
-                      <SelectItem key={member.id} value={member.id}>
-                        <div className="flex items-center space-x-2">
-                          <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
-                            {member.name?.charAt(0).toUpperCase() || member.email?.charAt(0).toUpperCase()}
-                          </div>
-                          <span>{member.name || member.email}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <select
+                  id="assignee"
+                  value={assigneeId}
+                  onChange={(e) => setAssigneeId(e.target.value)}
+                  className="h-10 w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                >
+                  <option value="">Wybierz osobę</option>
+                  {availableTeamMembers.map((member) => {
+                    const assigneeInfo = formatAssignee(member)
+                    return (
+                      <option key={member.id} value={member.id}>
+                        {assigneeInfo.displayName}
+                      </option>
+                    )
+                  })}
+                </select>
               )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="priority" className="text-sm font-medium">Priorytet</Label>
-              <Select value={priority} onValueChange={setPriority}>
-                <SelectTrigger className="h-10">
-                  <SelectValue placeholder="Wybierz priorytet" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Low">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                      <span>Niski</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="Medium">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                      <span>Średni</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="High">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                      <span>Wysoki</span>
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <select
+                id="priority"
+                value={priority || "none"}
+                onChange={(e) => setPriority(e.target.value === "none" ? "" : e.target.value)}
+                className="h-10 w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                <option value="none">Brak priorytetu</option>
+                {getPriorityOptions().map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
+          </div>
+
+          {/* Time Planning Mode Selection */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Sposób planowania czasu</Label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant={timePlanningMode === "reporting" ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleTimePlanningModeChange("reporting")}
+                className="flex-1"
+              >
+                Raportowanie czasu
+              </Button>
+              <Button
+                type="button"
+                variant={timePlanningMode === "scheduled" ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleTimePlanningModeChange("scheduled")}
+                className="flex-1"
+              >
+                Zaplanowana praca
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {timePlanningMode === "reporting"
+                ? "Ustaw termin wykonania i szacowaną ilość godzin do przepracowania"
+                : "Ustaw zakres dat z godzinami - szacowany czas zostanie obliczony automatycznie"
+              }
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="dueDate" className="text-sm font-medium">Termin wykonania</Label>
-              <DatePicker
+              <Label htmlFor="dueDate" className="text-sm font-medium">
+                {timePlanningMode === "reporting" ? "Termin wykonania" : "Termin wykonania (opcjonalnie)"}
+              </Label>
+              <DateTimePicker
                 value={dueDate ? new Date(dueDate) : undefined}
                 onChange={(date) => setDueDate(date ? dateToLocalDateString(date) : '')}
                 className="rounded-lg border shadow-sm"
@@ -574,61 +532,65 @@ export function TaskFormContent({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="estimatedHours" className="text-sm font-medium">Szacowany czas</Label>
-              <Select value={estimatedHours} onValueChange={setEstimatedHours}>
-                <SelectTrigger className="h-10">
-                  <SelectValue placeholder="Wybierz szacowany czas" />
-                </SelectTrigger>
-                <SelectContent>
-                  {isEditMode && <SelectItem value="none">Brak szacunku</SelectItem>}
-                  <SelectItem value="0.5">30 minut</SelectItem>
-                  <SelectItem value="1">1 godzina</SelectItem>
-                  <SelectItem value="1.5">1.5 godziny</SelectItem>
-                  <SelectItem value="2">2 godziny</SelectItem>
-                  <SelectItem value="2.5">2.5 godziny</SelectItem>
-                  <SelectItem value="3">3 godziny</SelectItem>
-                  <SelectItem value="3.5">3.5 godziny</SelectItem>
-                  <SelectItem value="4">4 godziny</SelectItem>
-                  <SelectItem value="4.5">4.5 godziny</SelectItem>
-                  <SelectItem value="5">5 godzin</SelectItem>
-                  <SelectItem value="5.5">5.5 godziny</SelectItem>
-                  <SelectItem value="6">6 godzin</SelectItem>
-                  <SelectItem value="6.5">6.5 godziny</SelectItem>
-                  <SelectItem value="7">7 godzin</SelectItem>
-                  <SelectItem value="7.5">7.5 godziny</SelectItem>
-                  <SelectItem value="8">8 godzin</SelectItem>
-                  <SelectItem value="12">12 godzin</SelectItem>
-                  <SelectItem value="16">16 godzin</SelectItem>
-                  <SelectItem value="24">24 godziny</SelectItem>
-                  <SelectItem value="40">40 godzin</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="estimatedHours" className="text-sm font-medium">
+                Szacowany czas
+                {timePlanningMode === "scheduled" && " (wyliczane)"}
+              </Label>
+              {timePlanningMode === "reporting" ? (
+                <select
+                  id="estimatedHours"
+                  value={estimatedHours}
+                  onChange={(e) => setEstimatedHours(e.target.value)}
+                  className="h-10 w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                >
+                  {getEstimatedHoursOptions().map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="h-10 px-3 py-2 border border-input bg-muted/50 rounded-md flex items-center text-sm text-muted-foreground">
+                  {estimatedHours && estimatedHours !== "none"
+                    ? `${selectValueToHours(estimatedHours)}h`
+                    : "Wybierz czas rozpoczęcia i zakończenia"
+                  }
+                </div>
+              )}
             </div>
           </div>
 
           {/* Time Fields */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="startTime" className="text-sm font-medium">Czas rozpoczęcia</Label>
-              <DateTimePicker
-                value={startTime}
-                onChange={setStartTime}
-                placeholder="Wybierz czas rozpoczęcia"
-                className="rounded-lg border shadow-sm"
-              />
-            </div>
+          {timePlanningMode === "scheduled" && (
 
-            <div className="space-y-2">
-              <Label htmlFor="endTime" className="text-sm font-medium">Czas zakończenia</Label>
-              <DateTimePicker
-                value={endTime}
-                onChange={setEndTime}
-                placeholder="Wybierz czas zakończenia"
-                className="rounded-lg border shadow-sm"
-              />
-            </div>
-          </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="startTime" className="text-sm font-medium">
+                  Czas rozpoczęcia
+                  <span className="text-destructive"> *</span>
+                </Label>
+                <DateTimePicker
+                  value={startTime}
+                  onChange={setStartTime}
+                  placeholder="Wybierz czas rozpoczęcia"
+                  className="rounded-lg border shadow-sm"
+                />
+              </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="endTime" className="text-sm font-medium">
+                  Czas zakończenia
+                  <span className="text-destructive"> *</span>
+                </Label>
+                <DateTimePicker
+                  value={endTime}
+                  onChange={setEndTime}
+                  placeholder="Wybierz czas zakończenia"
+                  className="rounded-lg border shadow-sm"
+                />
+              </div>
+            </div>
+          )}
           {/* Reminder Settings */}
           <ReminderSettings
             reminderEnabled={reminderEnabled}
@@ -637,71 +599,6 @@ export function TaskFormContent({
             dueDate={dueDate}
             onReminderChange={handleReminderChange}
           />
-
-          {/* Images Section */}
-          {isCreateMode ? (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium">Załączniki</Label>
-                <div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleImageSelect}
-                    className="hidden"
-                    id="image-upload-task-form"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => document.getElementById('image-upload-task-form')?.click()}
-                    className="h-9"
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    Dodaj obrazki
-                  </Button>
-                </div>
-              </div>
-
-              {pendingImages.length > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-3 bg-muted/30 rounded-lg border border-dashed">
-                  {pendingImages.map((image) => (
-                    <div key={image.id} className="relative group">
-                      <div className="relative aspect-square overflow-hidden rounded-lg border bg-background shadow-sm">
-                        <Image
-                          src={image.preview}
-                          alt={image.file.name}
-                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                          fill
-                        />
-                      </div>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        className="absolute -top-2 -right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
-                        onClick={() => removePendingImage(image.id)}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                      <div className="mt-2 text-xs text-muted-foreground truncate px-1">
-                        {image.file.name}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : (
-            <ImageGallery
-              images={images}
-              onImageUpload={handleImageUpload}
-              onImageDelete={handleImageDelete}
-              editable={true}
-            />
-          )}
 
           {error && (
             <div className="p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
@@ -717,7 +614,7 @@ export function TaskFormContent({
           </Button>
           <Button
             type="submit"
-            disabled={loading || !title.trim() || (isEditMode && !hasChanges)}
+            disabled={loading || !isFormValid() || (isEditMode && !hasChanges)}
             className="h-10"
           >
             {loading ? (

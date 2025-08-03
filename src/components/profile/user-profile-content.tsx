@@ -28,6 +28,7 @@ import {
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { usePageHeader } from "@/contexts/header-context"
+import { getPriorityColor, getPriorityDisplayName, formatProjectDisplay } from "@/lib/task-format-utils"
 
 interface SlackUser {
   id: string
@@ -209,14 +210,6 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
     })
   }
 
-  const getPriorityColor = (priority: string | null) => {
-    switch (priority) {
-      case 'High': return 'bg-red-100 text-red-800'
-      case 'Medium': return 'bg-yellow-100 text-yellow-800'
-      case 'Low': return 'bg-green-100 text-green-800'
-      default: return 'bg-gray-100 text-gray-800'
-    }
-  }
 
   const fetchSlackUsers = async () => {
     try {
@@ -486,11 +479,11 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
 
                                 {task.priority && (
                                   <Badge variant="outline" className={getPriorityColor(task.priority)}>
-                                    {task.priority}
+                                    {getPriorityDisplayName(task.priority)}
                                   </Badge>
                                 )}
                                 <span className="text-xs text-muted-foreground">
-                                  {task.project.team.name} • {task.project.name}
+                                  {formatProjectDisplay(task.project)}
                                 </span>
                               </div>
                             </div>
@@ -642,8 +635,8 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
                             <div>
                               <h3 className="font-medium">Slack</h3>
                               <p className="text-sm text-muted-foreground">
-                                {userProfile.slackUserId 
-                                  ? "Połączone z kontem Slack" 
+                                {userProfile.slackUserId
+                                  ? "Połączone z kontem Slack"
                                   : "Połącz z kontem Slack aby otrzymywać powiadomienia"
                                 }
                               </p>

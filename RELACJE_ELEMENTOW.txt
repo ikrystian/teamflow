@@ -1,5 +1,82 @@
 # Relacje między elementami w Nexus
 
+## Ulepszenie tabeli zadań i sekcji przeglądu (2025-08-03):
+
+### Zmiany w tabeli zadań:
+1. **Kolumna "Osoba przypisana" jako dropdown**:
+   - Zmieniono z avatara z tooltipem na bezpośredni dropdown/select
+   - Dropdown wyświetla się od razu zamiast po kliknięciu
+   - Lepsze UX - użytkownik od razu widzi opcje przypisania
+   - Zachowano avatary w opcjach dropdown dla lepszej identyfikacji
+
+2. **Kolumna "Priorytet" jako dropdown**:
+   - Zmieniono z badge na bezpośredni dropdown/select
+   - Dropdown wyświetla się od razu z kolorowymi kropkami priorytetów
+   - Lepsze UX - szybka zmiana priorytetu bez klikania
+   - Zachowano kolory priorytetów w opcjach dropdown
+
+3. **Kolumna "Status" jako dropdown**:
+   - Zmieniono z tekstu na bezpośredni dropdown/select
+   - Dropdown wyświetla się od razu z kolorowymi kropkami statusów
+   - Lepsze UX - szybka zmiana statusu bez klikania
+   - Zachowano kolory statusów w opcjach dropdown
+
+4. **Kolumna "Data wykonania" jako date picker**:
+   - Zmieniono z tekstu na bezpośredni date picker
+   - Date picker wyświetla się od razu zamiast po kliknięciu
+   - Lepsze UX - szybka zmiana daty bez dodatkowych kroków
+   - Zachowano polskie formatowanie dat
+
+5. **Modyfikacja EditableCell**:
+   - Dla typów "user", "priority", "status", "date" kontrolki są zawsze widoczne
+   - Usunięto tryb edycji dla tych typów (nie jest potrzebny)
+   - Usunięto hover efekty dla kolumn z bezpośrednimi kontrolkami
+   - Dodano disabled state dla wszystkich kontrolek
+   - Usunięto nieużywane kody edytorów
+
+### Ulepszenie sekcji przeglądu zadań:
+1. **Sekcja "Najbliższe zadania"**:
+   - Przeprojektowano używając najnowszych komponentów shadcn/ui Card
+   - Dodano ikony (Clock) i lepsze wizualne oznaczenia
+   - Kolorowe kropki projektów z ring effect
+   - Avatary przypisanych osób w miniaturze
+   - Badge z terminem wykonania
+   - Hover efekty z animacjami
+   - Empty state z ikoną kalendarza
+   - Lepsze grupowanie informacji
+
+2. **Sekcja "Ostatnio zaktualizowane"**:
+   - Analogiczne przeprojektowanie z komponentami Card
+   - Dodano ikony (User) i lepsze wizualne oznaczenia
+   - Avatary autorów zadań
+   - Badge z datą utworzenia/aktualizacji
+   - Hover efekty z animacjami
+   - Empty state z ikoną zegara
+   - Spójny design z sekcją "Najbliższe zadania"
+
+3. **Wspólne ulepszenia**:
+   - Użycie najnowszej wersji shadcn/ui Card components
+   - Lepsze typography i spacing
+   - Animacje hover z transition-all
+   - Spójne kolory i ikony
+   - Responsywny design
+   - Lepsze empty states
+   - Maksymalna wysokość z scroll dla długich list
+
+### Pliki zmodyfikowane:
+- `src/components/dashboard/editable-cell.tsx` - zmiana typu "user" na dropdown
+- `src/components/dashboard/content.tsx` - przeprojektowanie sekcji przeglądu
+- `RELACJE_ELEMENTOW.txt` - aktualizacja dokumentacji
+
+### Korzyści:
+- **Lepsze UX**: Wszystkie kontrolki od razu widoczne, nie trzeba klikać
+- **Szybsza edycja**: Bezpośrednia zmiana wartości bez dodatkowych kroków
+- **Nowoczesny design**: Użycie najnowszych komponentów shadcn/ui
+- **Lepsze wizualne oznaczenia**: Ikony, kolory, animacje
+- **Spójność**: Jednolity design w całej aplikacji
+- **Responsywność**: Lepsze działanie na różnych urządzeniach
+- **Intuicyjność**: Użytkownik od razu widzi dostępne opcje
+
 ## Zabezpieczenia zarządzania użytkownikami (2025-08-01):
 
 ### Problem:

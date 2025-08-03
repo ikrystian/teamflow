@@ -41,6 +41,8 @@ import type { Task, TaskStatus } from "@/types"
 import type { Session } from "next-auth"
 import { toast } from "sonner"
 import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
+import { getPriorityColor, getPriorityDisplayName, formatProjectDisplay } from "@/lib/task-format-utils"
+import { formatEstimatedHours } from "@/lib/task-format-utils"
 
 interface TasksKanbanBoardProps {
   tasks: Task[]
@@ -65,18 +67,6 @@ interface StatusColumn extends TaskStatus {
   tasks: Task[]
 }
 
-const getPriorityColor = (priority?: string) => {
-  switch (priority) {
-    case "High":
-      return "bg-red-100 text-red-800 border-red-200"
-    case "Medium":
-      return "bg-yellow-100 text-yellow-800 border-yellow-200"
-    case "Low":
-      return "bg-green-100 text-green-800 border-green-200"
-    default:
-      return "bg-muted text-muted-foreground border-border"
-  }
-}
 
 
 
@@ -230,8 +220,8 @@ function SortableTaskCard({
 
             <div className="flex items-center gap-2 flex-wrap">
               {task.priority && (
-                <Badge variant="outline" className={`text-xs ${getPriorityColor(task.priority)}`} title={task.priority === "Low" ? "Niski" : task.priority === "Medium" ? "Średni" : "Wysoki"}>
-                  {(task.priority === "Low" ? "Niski" : task.priority === "Medium" ? "Średni" : "Wysoki").slice(0, 1)}
+                <Badge variant="outline" className={`text-xs ${getPriorityColor(task.priority)}`} title={getPriorityDisplayName(task.priority)}>
+                  {getPriorityDisplayName(task.priority).slice(0, 1)}
                 </Badge>
               )}
 
@@ -248,7 +238,7 @@ function SortableTaskCard({
               {task.estimatedHours && (
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Clock className="h-3 w-3" />
-                  {task.estimatedHours}h
+                  {formatEstimatedHours(task.estimatedHours)}
                 </div>
               )}
 
@@ -391,7 +381,7 @@ function QuickAddTask({
                 </SelectItem>
                 {projects.map((project) => (
                   <SelectItem key={project.id} value={project.id}>
-                    {project.name} • {project.team.name}
+                    {formatProjectDisplay(project)}
                   </SelectItem>
                 ))}
               </SelectContent>

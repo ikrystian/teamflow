@@ -77,10 +77,10 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate, onTaskDet
   // Function to check if current user can edit a task
   const canEditTask = useCallback((task: Task): boolean => {
     if (!currentUserId) return false
-    
+
     // Admin can edit all tasks
     if (isAdmin) return true
-    
+
     // User can edit tasks they created or are assigned to
     return task.createdBy?.id === currentUserId || task.assignee?.id === currentUserId
   }, [isAdmin, currentUserId])
@@ -637,6 +637,7 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate, onTaskDet
         return (
           <div className="flex items-center">
             {task.estimatedHours && <Clock className="h-3 w-3 text-muted-foreground" />}
+
             <EditableCell
               value={task.estimatedHours?.toString() || ""}
               type="number"

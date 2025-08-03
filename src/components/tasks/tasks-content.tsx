@@ -35,6 +35,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import type { Task, User } from "@/types"
 import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
+import { getPriorityColor, getPriorityDisplayName, formatProjectDisplay } from "@/lib/task-format-utils"
+import { formatEstimatedHours, formatAssignee } from "@/lib/task-format-utils"
 
 interface Project {
   id: string
@@ -298,18 +300,6 @@ export function TasksContent() {
     }
   }
 
-  const getPriorityColor = (priority?: string) => {
-    switch (priority) {
-      case "High":
-        return "bg-destructive/10 text-destructive"
-      case "Medium":
-        return "bg-yellow-500/10 text-yellow-600"
-      case "done":
-        return "bg-green-500/10 text-green-600"
-      default:
-        return "bg-muted text-muted-foreground"
-    }
-  }
 
   const getTaskStatus = (task: Task) => {
     if (task.statusId) {
@@ -572,7 +562,7 @@ export function TasksContent() {
                             <div className="flex items-center gap-2 ml-4">
                               {task.priority && (
                                 <Badge variant="outline" className={getPriorityColor(task.priority)}>
-                                  {task.priority === "Low" ? "Niski" : task.priority === "Medium" ? "Średni" : "Wysoki"}
+                                  {getPriorityDisplayName(task.priority)}
                                 </Badge>
                               )}
                               {(() => {
@@ -645,7 +635,7 @@ export function TasksContent() {
                                       name={task.assignee.name}
                                       size="md"
                                     />
-                                    <span className="text-sm text-muted-foreground">{task.assignee.name}</span>
+                                    <span className="text-sm text-muted-foreground">{formatAssignee(task.assignee).displayName}</span>
                                   </div>
                                 )}
 
@@ -667,7 +657,7 @@ export function TasksContent() {
                                   <span>{formatHours(getTotalTimeSpent(task))}</span>
                                   {task.estimatedHours && (
                                     <span className="text-muted-foreground/70">
-                                      / {formatHours(task.estimatedHours)} planowane
+                                      / {formatEstimatedHours(task.estimatedHours)} planowane
                                     </span>
                                   )}
                                 </div>

@@ -11,7 +11,7 @@ interface ProjectViewPreferences {
 const STORAGE_KEY = "Nexus-project-view-preferences"
 
 export function useProjectViewPreferences(projectId: string) {
-  const [viewMode, setViewMode] = useState<ViewMode>("list")
+  const [viewMode, setViewMode] = useState<ViewMode>("board")
   const [isLoaded, setIsLoaded] = useState(false)
 
   // Wczytaj preferencje z localStorage przy inicjalizacji

@@ -14,6 +14,7 @@ import { MessageCircle, Plus, Users, Search, ArrowLeft } from 'lucide-react'
 import { ChatRoom } from './chat-room'
 import { useSocket } from '@/components/providers/socket-provider'
 import { useIsMobile } from '@/hooks/use-media-query'
+import { ProjectIcon } from '@/components/projects/project-icon'
 
 interface AuthUser {
   id: string;
@@ -518,17 +519,22 @@ export function Chat() {
                       <AvatarImage src={getRoomAvatar(room) || undefined} />
                       <AvatarFallback
                         className="text-sm font-medium"
-                        style={{ backgroundColor: room.type === 'project' && room.project?.color ? room.project.color : undefined }}
                       >
                         {room.type === 'direct' ? (
                           getRoomDisplayName(room).charAt(0).toUpperCase()
                         ) : room.type === 'project' && getRoomIcon(room) ? (
-                          <span className="text-lg">{getRoomIcon(room)}</span>
+                          <ProjectIcon
+                            iconName={getRoomIcon(room) || 'Briefcase'}
+                            color={room.project?.color}
+                            className="h-6 w-6"
+                          />
                         ) : (
                           <Users className="h-5 w-5" />
                         )}
                       </AvatarFallback>
                     </Avatar>
+
+
                     {/* Online status indicator for direct messages */}
                     {room.type === 'direct' && (() => {
                       const otherUser = room.members.find(m => m.user.id !== (session?.user as AuthUser)?.id)

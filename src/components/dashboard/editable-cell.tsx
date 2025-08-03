@@ -5,10 +5,10 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+
+
 import { cn } from "@/lib/utils"
-import { getPriorityColor, getPriorityDisplayName, getPriorityOptions } from "@/lib/task-utils"
+import { getPriorityColor, getPriorityDisplayName, getPriorityOptions } from "@/lib/task-format-utils"
 import { formatTaskDueDateWithRelative, dateToLocalDateString } from "@/lib/date-utils"
 import type { User, TaskStatus } from "@/types"
 import { UserPlus } from "lucide-react"
@@ -77,63 +77,164 @@ export function EditableCell({
         return value || placeholder || "Kliknij aby edytować"
 
       case "date":
-        return value ? formatTaskDueDateWithRelative(String(value)) : placeholder || "Ustaw termin"
+        // Dla typu date zawsze wyświetlamy date picker zamiast tekstu
+        return (
+          <div className={disabled ? "opacity-60 pointer-events-none" : ""}>
+            <DatePicker
+              value={value ? new Date(value) : undefined}
+              onChange={(date) => {
+                if (!disabled) {
+                  const dateValue = date ? dateToLocalDateString(date) : ""
+                  onSave(dateValue)
+                }
+              }}
+              className="h-8 w-full"
+            />
+          </div>
+        )
 
       case "user":
-        if (value && users.length > 0) {
-          const user = users.find(u => u.id === value)
-          if (user) {
-            return (
-              <Tooltip>
-                <TooltipTrigger>
-                  <Avatar className="h-6 w-6 cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all duration-200">
-                    <AvatarImage src={user.avatarUrl || ""} alt={user.name} />
-                    <AvatarFallback className="text-xs">
-                      {user.name?.charAt(0) || "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <span className="font-medium">{user.name}</span>
-                </TooltipContent>
-              </Tooltip>
-            )
-          }
-        }
+        // Dla typu user zawsze wyświetlamy dropdown zamiast avatara
         return (
-          <Tooltip>
-            <TooltipTrigger>
-              <Avatar className="h-6 w-6 cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all duration-200">
-                <AvatarFallback className="text-xs">
-                  <UserPlus className="h-3 w-3" />
-                </AvatarFallback>
-              </Avatar>
-            </TooltipTrigger>
-            <TooltipContent>
-              <span>{placeholder || "Przypisz osobę"}</span>
-            </TooltipContent>
-          </Tooltip>
+          <Select
+            value={String(value || "unassigned")}
+            onValueChange={(newValue) => {
+              const finalValue = newValue === "unassigned" ? "" : newValue
+              onSave(finalValue)
+            }}
+            disabled={disabled}
+          >
+            <SelectTrigger className="h-8 w-full">
+              <SelectValue placeholder={placeholder || "Wybierz osobę"}>
+                {value && users.length > 0 ? (() => {
+                  const user = users.find(u => u.id === value)
+                  if (user) {
+                    return (
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-5 w-5">
+                          <AvatarImage src={user.avatarUrl || ""} alt={user.name} />
+                          <AvatarFallback className="text-xs">
+                            {user.name?.charAt(0) || "U"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="truncate">{user.name}</span>
+                      </div>
+                    )
+                  }
+                  return placeholder || "Wybierz osobę"
+                })() : (placeholder || "Wybierz osobę")}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="unassigned">
+                <div className="flex items-center gap-2">
+                  <div className="h-5 w-5 rounded-full bg-muted flex items-center justify-center">
+                    <UserPlus className="h-3 w-3 text-muted-foreground" />
+                  </div>
+                  <span>Nieprzypisany</span>
+                </div>
+              </SelectItem>
+              {users.map((user) => (
+                <SelectItem key={user.id} value={user.id}>
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-5 w-5">
+                      <AvatarImage src={user.avatarUrl || ""} alt={user.name} />
+                      <AvatarFallback className="text-xs">
+                        {user.name?.charAt(0) || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span>{user.name}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         )
 
       case "priority":
-        return value ? (
-          <Badge variant="outline" className={`text-xs ${getPriorityColor(String(value))}`}>
-            {getPriorityDisplayName(String(value))}
-          </Badge>
-        ) : (
-          <span className="text-muted-foreground text-sm">{placeholder || "Ustaw priorytet"}</span>
+        // Dla typu priority zawsze wyświetlamy dropdown zamiast badge
+        return (
+          <Select
+            value={String(value || "none")}
+            onValueChange={(newValue) => {
+              const finalValue = newValue === "none" ? "" : newValue
+              onSave(finalValue)
+            }}
+            disabled={disabled}
+          >
+            <SelectTrigger className="h-8 w-full">
+              <SelectValue placeholder={placeholder || "Wybierz priorytet"}>
+                {value ? (
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${getPriorityColor(String(value))}`} />
+                    <span className="text-sm">{getPriorityDisplayName(String(value))}</span>
+                  </div>
+                ) : (placeholder || "Wybierz priorytet")}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-muted" />
+                  <span>Brak priorytetu</span>
+                </div>
+              </SelectItem>
+              {getPriorityOptions().map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${option.color}`} />
+                    <span>{option.label}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         )
 
       case "status":
-        if (value && taskStatuses.length > 0) {
-          const status = taskStatuses.find(s => s.id === value)
-          if (status) {
-            return (
-              <span className="text-sm">{status.name}</span>
-            )
-          }
-        }
-        return <span className="text-muted-foreground text-sm">{placeholder || "Ustaw status"}</span>
+        // Dla typu status zawsze wyświetlamy dropdown zamiast tekstu
+        return (
+          <Select
+            value={String(value || "")}
+            onValueChange={(newValue) => {
+              onSave(newValue)
+            }}
+            disabled={disabled}
+          >
+            <SelectTrigger className="h-8 w-full">
+              <SelectValue placeholder={placeholder || "Wybierz status"}>
+                {value && taskStatuses.length > 0 ? (() => {
+                  const status = taskStatuses.find(s => s.id === value)
+                  if (status) {
+                    return (
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-2 h-2 rounded-full"
+                          style={{ backgroundColor: status.color || '#6B7280' }}
+                        />
+                        <span className="text-sm">{status.name}</span>
+                      </div>
+                    )
+                  }
+                  return placeholder || "Wybierz status"
+                })() : (placeholder || "Wybierz status")}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {taskStatuses.map((status) => (
+                <SelectItem key={status.id} value={status.id}>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: status.color || '#6B7280' }}
+                    />
+                    <span>{status.name}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )
 
       case "select":
         const option = options.find(o => o.value === value)
@@ -174,103 +275,7 @@ export function EditableCell({
           />
         )
 
-      case "date":
-        return (
-          <DatePicker
-            value={editValue ? new Date(editValue) : undefined}
-            onChange={(date) => {
-              const dateValue = date ? dateToLocalDateString(date) : ""
-              setEditValue(dateValue)
-              onSave(dateValue)
-              setIsEditing(false)
-            }}
-            className="h-8"
-          />
-        )
 
-      case "user":
-        return (
-          <Select
-            value={String(editValue || "unassigned")}
-            onValueChange={(value) => {
-              const finalValue = value === "unassigned" ? "" : value
-              setEditValue(finalValue)
-              onSave(finalValue)
-              setIsEditing(false)
-            }}
-          >
-            <SelectTrigger className="h-8">
-              <SelectValue placeholder="Wybierz osobę" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="unassigned">Nieprzypisany</SelectItem>
-              {users.map((user) => (
-                <SelectItem key={user.id} value={user.id}>
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-5 w-5">
-                      <AvatarImage src={user.avatarUrl || ""} alt={user.name} />
-                      <AvatarFallback className="text-xs">
-                        {user.name?.charAt(0) || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                    {user.name}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )
-
-      case "priority":
-        return (
-          <Select
-            value={String(editValue || "none")}
-            onValueChange={(value) => {
-              const finalValue = value === "none" ? "" : value
-              setEditValue(finalValue)
-              onSave(finalValue)
-              setIsEditing(false)
-            }}
-          >
-            <SelectTrigger className="h-8">
-              <SelectValue placeholder="Wybierz priorytet" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">Brak priorytetu</SelectItem>
-              {getPriorityOptions().map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${option.color}`} />
-                    {option.label}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )
-
-      case "status":
-        return (
-          <Select
-            value={String(editValue || "")}
-            onValueChange={(value) => {
-              setEditValue(value)
-              onSave(value)
-              setIsEditing(false)
-            }}
-          >
-            <SelectTrigger className="h-8">
-              <SelectValue placeholder="Wybierz status" />
-            </SelectTrigger>
-            <SelectContent>
-              {taskStatuses.map((status) => (
-                <SelectItem key={status.id} value={status.id}>
-                  {status.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )
 
       case "select":
         return (
@@ -298,6 +303,15 @@ export function EditableCell({
       default:
         return null
     }
+  }
+
+  // Dla typów z bezpośrednimi kontrolkami nie używamy trybu edycji
+  if (type === "user" || type === "priority" || type === "status" || type === "date") {
+    return (
+      <div className={cn("min-w-0", className)}>
+        {renderDisplayValue()}
+      </div>
+    )
   }
 
   if (isEditing) {

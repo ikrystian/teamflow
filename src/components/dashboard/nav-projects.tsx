@@ -58,7 +58,7 @@ interface NavProjectsProps {
 }
 
 // Helper function to render project icon
-function ProjectIcon({ iconName, color, className = "w-4 h-4" }: {
+function    ({ iconName, color, className = "w-4 h-4" }: {
   iconName?: string | null,
   color?: string,
   className?: string

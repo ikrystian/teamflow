@@ -11,13 +11,6 @@ import { Input } from "@/components/ui/input"
 import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { DatePicker } from "@/components/ui/date-picker"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
   Calendar,
   User as UserIcon,
   UserCheck,
@@ -37,6 +30,8 @@ import {
   Bell
 } from "lucide-react"
 import { ImageGallery } from "@/components/ui/image-gallery"
+import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import { TaskComments } from "@/components/tasks/task-comments"
 import { TaskTodos } from "@/components/tasks/task-todos"
 import { ClickableAvatar } from "@/components/ui/clickable-avatar"
@@ -48,6 +43,7 @@ import {
 import { SlackNotificationModal } from "@/components/tasks/slack-notification-modal"
 import type { Task, Todo, User } from "@/types"
 import { formatTaskDueDateWithRelative, formatCreatedDate, dateToLocalDateString } from "@/lib/date-utils"
+import { getPriorityColor, getPriorityDisplayName, formatProjectDisplay } from "@/lib/task-format-utils"
 
 interface TaskStatus {
   id: string
@@ -69,7 +65,7 @@ interface TaskDetailsContentProps {
 }
 
 export function TaskDetailsContent({
-  task,
+  task: initialTask,
   onEdit,
   onTimeTracking,
   onDelete,
@@ -78,8 +74,11 @@ export function TaskDetailsContent({
   onClose,
   showCommentsInTabs = true
 }: TaskDetailsContentProps) {
-  const [comments, setComments] = useState(task?.comments || [])
-  const [todos, setTodos] = useState(task?.todos || [])
+  const [comments, setComments] = useState(initialTask?.comments || [])
+  const { t } = useTranslation()
+  const [task, setTask] = useState(initialTask)
+  const [images, setImages] = useState(initialTask.images || [])
+  const [todos, setTodos] = useState(initialTask?.todos || [])
   const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
   const [teamMembers, setTeamMembers] = useState<User[]>([])
 
@@ -91,8 +90,17 @@ export function TaskDetailsContent({
   const [editDueDate, setEditDueDate] = useState(task.dueDate ? task.dueDate.split('T')[0] : "")
   const [editAssigneeId, setEditAssigneeId] = useState(task.assignee?.id || "unassigned")
   const [editEstimatedHours, setEditEstimatedHours] = useState(task.estimatedHours?.toString() || "none")
+  const [editProjectId, setEditProjectId] = useState(task.project?.id || "none")
   const [saving, setSaving] = useState(false)
   const [showNotificationModal, setShowNotificationModal] = useState(false)
+  const [projects, setProjects] = useState<Array<{
+    id: string
+    name: string
+    team: {
+      id: string
+      name: string
+    }
+  }>>([])
 
   // Fetch fresh task data when task changes
   useEffect(() => {
@@ -137,10 +145,23 @@ export function TaskDetailsContent({
       }
     }
 
+    const fetchProjects = async () => {
+      try {
+        const response = await fetch('/api/projects')
+        if (response.ok) {
+          const data = await response.json()
+          setProjects(data.projects || [])
+        }
+      } catch (error) {
+        console.error("Error fetching projects:", error)
+      }
+    }
+
     if (task?.id) {
       fetchTaskData()
       fetchTaskStatuses()
       fetchTeamMembers()
+      fetchProjects()
     } else {
       setComments(task?.comments || [])
       setTodos(task?.todos || [])
@@ -149,12 +170,18 @@ export function TaskDetailsContent({
 
   // Update local state when task changes
   useEffect(() => {
+    setTask(initialTask)
+    setImages(initialTask.images || [])
+  }, [initialTask])
+
+  useEffect(() => {
     setEditTitle(task.title)
     setEditDescription(task.description || "")
     setEditPriority(task.priority || "none")
     setEditDueDate(task.dueDate ? task.dueDate.split('T')[0] : "")
     setEditAssigneeId(task.assignee?.id || "unassigned")
     setEditEstimatedHours(task.estimatedHours?.toString() || "none")
+    setEditProjectId(task.project?.id || "none")
   }, [task])
 
   const handleCommentAdded = (newComment: { id: string; content: string; createdAt: string; author: { id: string; name: string; avatarUrl?: string } }) => {
@@ -168,7 +195,8 @@ export function TaskDetailsContent({
   const handleTodosChange = (updatedTodos: Todo[]) => {
     setTodos(updatedTodos)
     if (onTaskUpdated) {
-      onTaskUpdated()
+      onTaskUpdated?.()
+      toast.success(t('messages.todosUpdated'))
     }
   }
 
@@ -188,6 +216,14 @@ export function TaskDetailsContent({
       })
 
       if (response.ok) {
+        const updatedTask = await response.json()
+
+        // Update local task state immediately
+        setTask(prevTask => ({
+          ...prevTask,
+          ...updatedTask.task
+        }))
+
         setEditingField(null)
         onTaskUpdated?.()
       } else {
@@ -230,19 +266,6 @@ export function TaskDetailsContent({
     setEditingField(field)
   }
 
-  const getPriorityColor = (priority?: string) => {
-    switch (priority) {
-      case "High":
-        return "bg-red-100 text-red-800 border-red-200"
-      case "Medium":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200"
-      case "Low":
-        return "bg-green-100 text-green-800 border-green-200"
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200"
-    }
-  }
-
   const getTaskStatus = (task: Task) => {
     if (task.statusId) {
       return taskStatuses.find(status => status.id === task.statusId)
@@ -276,6 +299,43 @@ export function TaskDetailsContent({
   const totalLoggedHours = task.timeEntries?.reduce((sum, entry) => sum + entry.hours, 0) || 0
   const completedSubtasks = task.subtasks.filter(subtask => subtask.isCompleted).length
   const subtaskProgress = task.subtasks.length > 0 ? (completedSubtasks / task.subtasks.length) * 100 : 0
+
+  const handleImageUpload = async (file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      const response = await fetch(`/api/tasks/${task.id}/images`, {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) throw new Error('Upload failed')
+
+      const newImage = await response.json()
+      setImages(prev => [...prev, newImage])
+      onTaskUpdated?.()
+      toast.success(t('messages.imageUploaded'))
+    } catch (error) {
+      console.error('Image upload error:', error)
+      toast.error(t('errors.imageUploadFailed'))
+    }
+  }
+
+  const handleImageDelete = async (imageId: string) => {
+    try {
+      const response = await fetch(`/api/tasks/${task.id}/images?imageId=${imageId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) throw new Error('Delete failed')
+
+      setImages(prev => prev.filter(img => img.id !== imageId))
+      onTaskUpdated?.()
+    } catch (error) {
+      console.error('Image delete error:', error)
+    }
+  }
 
   return (
     <div className="overflow-y-auto">
@@ -339,32 +399,16 @@ export function TaskDetailsContent({
           )}
           {editingField === 'priority' ? (
             <div className="flex items-center gap-2">
-              <Select value={editPriority} onValueChange={setEditPriority}>
-                <SelectTrigger className="h-8 w-32">
-                  <SelectValue placeholder="Priorytet" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Brak priorytetu</SelectItem>
-                  <SelectItem value="Low">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                      <span>Niski</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="Medium">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                      <span>Średni</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="High">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                      <span>Wysoki</span>
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <select
+                value={editPriority}
+                onChange={(e) => setEditPriority(e.target.value)}
+                className="h-8 px-3 py-1 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                <option value="none">Brak priorytetu</option>
+                <option value="Low">Niski</option>
+                <option value="Medium">Średni</option>
+                <option value="High">Wysoki</option>
+              </select>
               <Button
                 size="sm"
                 variant="outline"
@@ -392,7 +436,7 @@ export function TaskDetailsContent({
                 onClick={() => startEdit('priority')}
                 title={canEdit ? "Kliknij aby zmienić priorytet" : undefined}
               >
-                {task.priority === "Low" ? "Niski" : task.priority === "Medium" ? "Średni" : "Wysoki"}
+                {getPriorityDisplayName(task.priority)}
               </Badge>
             ) : canEdit ? (
               <Badge
@@ -552,8 +596,10 @@ export function TaskDetailsContent({
                 </CardHeader>
                 <CardContent>
                   <ImageGallery
-                    images={task.images}
-                    editable={false}
+                    images={images}
+                    onImageUpload={handleImageUpload}
+                    onImageDelete={handleImageDelete}
+                    editable={true}
                   />
                 </CardContent>
               </Card>
@@ -574,24 +620,18 @@ export function TaskDetailsContent({
                     </div>
                     {editingField === 'assigneeId' ? (
                       <div className="space-y-2">
-                        <Select value={editAssigneeId} onValueChange={setEditAssigneeId}>
-                          <SelectTrigger className="h-10">
-                            <SelectValue placeholder="Wybierz przypisanego" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="unassigned">Nieprzypisany</SelectItem>
-                            {teamMembers.map((member) => (
-                              <SelectItem key={member.id} value={member.id}>
-                                <div className="flex items-center space-x-2">
-                                  <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
-                                    {member.name?.charAt(0).toUpperCase() || member.email?.charAt(0).toUpperCase()}
-                                  </div>
-                                  <span>{member.name || member.email}</span>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <select
+                          value={editAssigneeId}
+                          onChange={(e) => setEditAssigneeId(e.target.value)}
+                          className="h-10 w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                        >
+                          <option value="unassigned">Nieprzypisany</option>
+                          {teamMembers.map((member) => (
+                            <option key={member.id} value={member.id}>
+                              {member.name || member.email}
+                            </option>
+                          ))}
+                        </select>
                         <div className="flex items-center gap-2">
                           <Button
                             size="sm"
@@ -701,27 +741,9 @@ export function TaskDetailsContent({
                       <div className="space-y-2">
                         <DatePicker
                           value={editDueDate ? new Date(editDueDate) : undefined}
-                          onChange={(date) => setEditDueDate(date ? dateToLocalDateString(date) : '')}
+                          onChange={(date) => saveField('dueDate', date ? dateToLocalDateString(date) : '' )}
                           className="rounded-lg border shadow-sm"
                         />
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => saveField('dueDate', editDueDate || undefined)}
-                            disabled={saving}
-                          >
-                            <Check className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => cancelEdit('dueDate')}
-                            disabled={saving}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
                       </div>
                     ) : (
                       <div
@@ -753,34 +775,33 @@ export function TaskDetailsContent({
                     </div>
                     {editingField === 'estimatedHours' ? (
                       <div className="space-y-2">
-                        <Select value={editEstimatedHours} onValueChange={setEditEstimatedHours}>
-                          <SelectTrigger className="h-10">
-                            <SelectValue placeholder="Wybierz szacowany czas" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">Brak szacunku</SelectItem>
-                            <SelectItem value="0.5">30 minut</SelectItem>
-                            <SelectItem value="1">1 godzina</SelectItem>
-                            <SelectItem value="1.5">1.5 godziny</SelectItem>
-                            <SelectItem value="2">2 godziny</SelectItem>
-                            <SelectItem value="2.5">2.5 godziny</SelectItem>
-                            <SelectItem value="3">3 godziny</SelectItem>
-                            <SelectItem value="3.5">3.5 godziny</SelectItem>
-                            <SelectItem value="4">4 godziny</SelectItem>
-                            <SelectItem value="4.5">4.5 godziny</SelectItem>
-                            <SelectItem value="5">5 godzin</SelectItem>
-                            <SelectItem value="5.5">5.5 godziny</SelectItem>
-                            <SelectItem value="6">6 godzin</SelectItem>
-                            <SelectItem value="6.5">6.5 godziny</SelectItem>
-                            <SelectItem value="7">7 godzin</SelectItem>
-                            <SelectItem value="7.5">7.5 godziny</SelectItem>
-                            <SelectItem value="8">8 godzin</SelectItem>
-                            <SelectItem value="12">12 godzin</SelectItem>
-                            <SelectItem value="16">16 godzin</SelectItem>
-                            <SelectItem value="24">24 godziny</SelectItem>
-                            <SelectItem value="40">40 godzin</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <select
+                          value={editEstimatedHours}
+                          onChange={(e) => setEditEstimatedHours(e.target.value)}
+                          className="h-10 w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                        >
+                          <option value="none">Brak szacunku</option>
+                          <option value="0.5">30 minut</option>
+                          <option value="1">1 godzina</option>
+                          <option value="1.5">1.5 godziny</option>
+                          <option value="2">2 godziny</option>
+                          <option value="2.5">2.5 godziny</option>
+                          <option value="3">3 godziny</option>
+                          <option value="3.5">3.5 godziny</option>
+                          <option value="4">4 godziny</option>
+                          <option value="4.5">4.5 godziny</option>
+                          <option value="5">5 godzin</option>
+                          <option value="5.5">5.5 godziny</option>
+                          <option value="6">6 godzin</option>
+                          <option value="6.5">6.5 godziny</option>
+                          <option value="7">7 godzin</option>
+                          <option value="7.5">7.5 godziny</option>
+                          <option value="8">8 godzin</option>
+                          <option value="12">12 godzin</option>
+                          <option value="16">16 godzin</option>
+                          <option value="24">24 godziny</option>
+                          <option value="40">40 godzin</option>
+                        </select>
                         <div className="flex items-center gap-2">
                           <Button
                             size="sm"
@@ -819,6 +840,60 @@ export function TaskDetailsContent({
                           </div>
                         ) : (
                           <span className="text-muted-foreground">Brak szacunku</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Project */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                      <FileText className="h-4 w-4" />
+                      Projekt
+                    </div>
+                    {editingField === 'projectId' ? (
+                      <div className="space-y-2">
+                        <select
+                          value={editProjectId}
+                          onChange={(e) => setEditProjectId(e.target.value)}
+                          className="h-10 w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                        >
+                          <option value="none">Brak projektu</option>
+                          {projects.map((project) => (
+                            <option key={project.id} value={project.id}>
+                              {formatProjectDisplay(project)}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => saveField('projectId', editProjectId === 'none' ? null : editProjectId)}
+                            disabled={saving}
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => cancelEdit('projectId')}
+                            disabled={saving}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        className={`${canEdit ? 'cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors' : ''}`}
+                        onClick={() => startEdit('projectId')}
+                        title={canEdit ? "Kliknij aby zmienić projekt" : undefined}
+                      >
+                        {task.project ? (
+                          <span className="font-medium">{formatProjectDisplay(task.project)}</span>
+                        ) : (
+                          <span className="text-muted-foreground">Brak projektu</span>
                         )}
                       </div>
                     )}

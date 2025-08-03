@@ -315,7 +315,6 @@ export function ChatRoom({ room }: ChatRoomProps) {
                 <AvatarImage src={getRoomAvatar() || undefined} />
                 <AvatarFallback
                   className="text-sm font-semibold"
-                  style={{ backgroundColor: room.type === 'project' && room.project?.color ? room.project.color : undefined }}
                 >
                   {room.type === 'direct' ? (
                     getRoomDisplayName().charAt(0).toUpperCase()
@@ -344,11 +343,7 @@ export function ChatRoom({ room }: ChatRoomProps) {
             <div className="flex-1">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
-                  {room.type === 'project' && room.project?.icon && (
-                    <span className="text-2xl" style={{ color: room.project.color }}>
-                      {room.project.icon}
-                    </span>
-                  )}
+
                   <h3 className="text-lg font-semibold text-foreground">{getRoomDisplayName()}</h3>
                 </div>
                 {room.type === 'group' && (

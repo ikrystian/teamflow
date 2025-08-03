@@ -18,6 +18,7 @@ import {
 } from "lucide-react"
 import type { Task } from "@/types"
 import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
+import { getPriorityColor, getPriorityDisplayName, formatProjectDisplay } from "@/lib/task-format-utils"
 
 interface TaskStatus {
   id: string
@@ -69,18 +70,6 @@ export function TaskPopover({
     }
   }, [isOpen])
 
-  const getPriorityColor = (priority?: string) => {
-    switch (priority) {
-      case "High":
-        return "bg-red-100 text-red-800 border-red-200"
-      case "Medium":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200"
-      case "Low":
-        return "bg-green-100 text-green-800 border-green-200"
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200"
-    }
-  }
 
   const getTaskStatus = (task: Task) => {
     if (task.statusId) {
@@ -104,11 +93,11 @@ export function TaskPopover({
     const due = new Date(dueDate)
     today.setHours(0, 0, 0, 0)
     due.setHours(0, 0, 0, 0)
-    
+
     // Task is overdue one day after the due date
     const overdueDate = new Date(due)
     overdueDate.setDate(due.getDate() + 1)
-    
+
     return today >= overdueDate
   }
 
@@ -143,24 +132,13 @@ export function TaskPopover({
             </h3>
 
             <div className="flex items-center gap-2 flex-wrap">
-              {task.project ? (
-                <>
-                  <Badge variant="outline" className="text-xs">
-                    {task.project.name}
-                  </Badge>
-                  <Badge variant="outline" className="text-xs">
-                    {task.project.team.name}
-                  </Badge>
-                </>
-              ) : (
-                <Badge variant="outline" className="text-xs text-muted-foreground">
-                  Brak projektu
-                </Badge>
-              )}
+              <Badge variant="outline" className="text-xs">
+                {formatProjectDisplay(task.project)}
+              </Badge>
 
               {task.priority && (
                 <Badge variant="secondary" className={`text-xs ${getPriorityColor(task.priority)}`}>
-                  {task.priority === "Low" ? "Niski" : task.priority === "Medium" ? "Średni" : "Wysoki"}
+                  {getPriorityDisplayName(task.priority)}
                 </Badge>
               )}
 

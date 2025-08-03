@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, X } from "lucide-react"
 import { toast } from "sonner"
 import type { Session } from "next-auth"
+import { formatProjectDisplay } from "@/lib/task-format-utils"
 
 interface QuickAddTaskCalendarProps {
   date: Date
@@ -133,7 +134,7 @@ export function QuickAddTaskCalendar({
                 </SelectItem>
                 {projects.map((project) => (
                   <SelectItem key={project.id} value={project.id}>
-                    {project.name} • {project.team.name}
+                    {formatProjectDisplay(project)}
                   </SelectItem>
                 ))}
               </SelectContent>

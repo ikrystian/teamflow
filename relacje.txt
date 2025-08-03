@@ -23,7 +23,7 @@
 
 ### Widoki projektów
 - **list** - Lista zadań
-- **board** - Tablica Kanban
+- **board** - Tablica Kanban (DOMYŚLNY WIDOK)
 - **gantt** - Wykres Gantta
 - **daily** - Nowy widok dzienny z harmonogramem godzinowym
 
@@ -109,6 +109,33 @@
 3. **W API używaj `new Date()` do konwersji ISO string na Date object**
 4. **Używaj polskiej lokalizacji w komponentach dat: `locale: pl`**
 5. **Dla dat bez czasu ustaw godziny na 00:00:00: `setHours(0, 0, 0, 0)`**
+6. **Dla dat bez czasu używaj `dateToLocalDateString()` zamiast `date.toString()` aby uniknąć problemów ze strefą czasową**
+
+### Nowe funkcjonalności
+
+#### Tryby planowania czasu w zadaniach (2025-01-03)
+- **Funkcjonalność**: Dodano wybór między dwoma trybami planowania czasu przy tworzeniu/edycji zadań
+- **Tryb raportowania czasu**: Tradycyjny sposób - termin wykonania + szacowane godziny
+- **Tryb zaplanowanej pracy**: Zakres dat z godzinami + automatyczne obliczenie szacowanych godzin
+- **Lokalizacja**: `src/components/shared/task-form-content.tsx`
+- **Komponenty**:
+  - Przyciski toggle do wyboru trybu
+  - Automatyczne obliczanie godzin na podstawie różnicy czasu
+  - Walidacja wymaganych pól w trybie zaplanowanej pracy
+  - Synchronizacja terminu wykonania z czasem rozpoczęcia
+- **Logika**:
+  - `calculateEstimatedHours()` - oblicza różnicę między startTime a endTime
+  - `handleTimePlanningModeChange()` - przełącza tryby i czyści niepotrzebne pola
+  - Automatyczna synchronizacja dueDate z startTime w trybie zaplanowanej pracy
+  - Walidacja: w trybie zaplanowanej pracy wymagane są startTime i endTime
+
+### Naprawione błędy
+
+#### Problem z datą o jeden dzień mniejszą (2025-01-03)
+- **Problem**: W `task-details-content.tsx` używano `date?.toString()` do konwersji daty, co powodowało problemy ze strefą czasową
+- **Rozwiązanie**: Zamieniono na `dateToLocalDateString(date)` w linii 744
+- **Lokalizacja**: `src/components/tasks/task-details-content.tsx:744`
+- **Funkcja**: `dateToLocalDateString()` używa wartości lokalnych zamiast UTC, zapobiegając przesunięciu daty
 
 3. **Wyświetlanie widoku dziennego:**
    ProjectDetailsContent → ProjectDailyView → filtrowanie zadań → renderowanie harmonogramu

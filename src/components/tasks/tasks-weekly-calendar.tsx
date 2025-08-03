@@ -10,6 +10,7 @@ import { TaskPopover } from "./task-popover"
 import { QuickAddTaskCalendar } from "./quick-add-task-calendar"
 import type { Task, TaskStatus } from "@/types"
 import type { Session } from "next-auth"
+import { formatAssignee, getPriorityColor, getPriorityShortName } from "@/lib/task-format-utils"
 
 interface TasksWeeklyCalendarProps {
   tasks: Task[]
@@ -135,27 +136,14 @@ export function TasksWeeklyCalendar({
     const due = new Date(dueDate)
     today.setHours(0, 0, 0, 0)
     due.setHours(0, 0, 0, 0)
-    
+
     // Task is overdue one day after the due date
     const overdueDate = new Date(due)
     overdueDate.setDate(due.getDate() + 1)
-    
+
     return today >= overdueDate
   }
 
-  // Kolory priorytetów
-  const getPriorityColor = (priority?: string) => {
-    switch (priority) {
-      case "High":
-        return "bg-red-100 text-red-800 border-red-200"
-      case "Medium":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200"
-      case "Low":
-        return "bg-green-100 text-green-800 border-green-200"
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200"
-    }
-  }
 
   const weekStart = getWeekStart(currentWeek)
   const weekDays = getWeekDays(weekStart)
@@ -242,7 +230,7 @@ export function TasksWeeklyCalendar({
                                 <div className="flex items-center space-x-1">
                                   <User className="h-3 w-3 text-gray-400" />
                                   <span className="text-xs text-gray-500 truncate max-w-[60px]">
-                                    {task.assignee.name?.split(' ')[0]}
+                                    {formatAssignee(task.assignee).displayName.split(' ')[0]}
                                   </span>
                                 </div>
                               )}

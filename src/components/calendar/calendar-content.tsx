@@ -10,6 +10,7 @@ import { usePageHeader } from "@/contexts/header-context"
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react"
 import type { Task } from "@/types"
 import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
+import { getPriorityColor, getPriorityDisplayName, formatProjectDisplay } from "@/lib/task-format-utils"
 
 export function CalendarContent() {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -75,18 +76,6 @@ export function CalendarContent() {
     })
   }
 
-  const getPriorityColor = (priority?: string) => {
-    switch (priority) {
-      case "High":
-        return "bg-red-100 text-red-800"
-      case "Medium":
-        return "bg-yellow-100 text-yellow-800"
-      case "Low":
-        return "bg-green-100 text-green-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
 
   const monthNames = [
     "Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
@@ -217,13 +206,13 @@ export function CalendarContent() {
                             <div className="flex-1">
                               <h4 className="font-medium text-gray-900">{task.title}</h4>
                               <p className="text-sm text-gray-500">
-                                {task?.project?.name} • {task?.project?.team?.name}
+                                {formatProjectDisplay(task.project)}
                               </p>
                             </div>
                             <div className="flex items-center space-x-2">
                               {task.priority && (
                                 <Badge className={getPriorityColor(task.priority)}>
-                                  {task.priority === "High" ? "Wysoki" : task.priority === "Medium" ? "Średni" : "Niski"}
+                                  {getPriorityDisplayName(task.priority)}
                                 </Badge>
                               )}
                               <span className="text-sm text-gray-500">

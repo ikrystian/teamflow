@@ -50,18 +50,7 @@ interface KanbanBoardProps {
   canEditTask: (task: Task) => boolean
 }
 
-const getPriorityColor = (priority?: string) => {
-  switch (priority) {
-    case "High":
-      return "bg-red-100 text-red-800 border-red-200"
-    case "Medium":
-      return "bg-yellow-100 text-yellow-800 border-yellow-200"
-    case "Low":
-      return "bg-green-100 text-green-800 border-green-200"
-    default:
-      return "bg-muted text-muted-foreground border-border"
-  }
-}
+import { getPriorityColor, getPriorityShortName, getPriorityDisplayName } from "@/lib/task-format-utils"
 
 function SortableTaskCard({
   task,
@@ -188,8 +177,8 @@ function SortableTaskCard({
           <div className="space-y-2">
             <div className="flex items-center  gap-2 flex-wrap">
             {task.priority && (
-                <Badge variant="outline" className={`text-xs ${getPriorityColor(task.priority)}`} title={task.priority === "Low" ? "Niski" : task.priority === "Medium" ? "Średni" : "Wysoki"}>
-                  {(task.priority === "Low" ? "N" : task.priority === "Medium" ? "Ś" : "W")}
+                <Badge variant="outline" className={`text-xs ${getPriorityColor(task.priority)}`} title={getPriorityDisplayName(task.priority)}>
+                  {getPriorityShortName(task.priority)}
                 </Badge>
               )}
 

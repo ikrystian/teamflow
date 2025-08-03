@@ -62,9 +62,9 @@ export function ClickableAvatar({
   }
 
   const linkElement = (
-    <Link href={`/dashboard/profile/${userId}`} className="inline-block" onClick={(e) => e.stopPropagation()}>
+    <div className="inline-block">
       {avatarElement}
-    </Link>
+    </div>
   )
 
   return showTooltip ? (
