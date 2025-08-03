@@ -1,5 +1,7 @@
+import { Server as SocketIOServer } from 'socket.io'
+
 declare global {
-  var socketServer: any
+  var socketServer: SocketIOServer
   var userSockets: Map<string, string>
 }
 

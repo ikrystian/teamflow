@@ -126,7 +126,7 @@ export function DashboardContent() {
       if (!taskId || typeof taskId !== 'string') {
         throw new Error('Invalid task ID provided')
       }
-      
+
       if (!updates || typeof updates !== 'object') {
         throw new Error('Invalid updates provided')
       }
@@ -150,7 +150,7 @@ export function DashboardContent() {
           // If we can't parse the error response, use a default message
           errorData = 'Failed to parse error response'
         }
-        
+
         // Log error for debugging but don't throw console errors in production
         if (process.env.NODE_ENV === 'development') {
           console.warn("Task update failed:", {
@@ -161,7 +161,7 @@ export function DashboardContent() {
             error: errorData
           })
         }
-        
+
         // Throw error so optimistic update can handle it
         throw new Error(`Failed to update task: ${response.status} ${response.statusText}`)
       }
@@ -174,7 +174,7 @@ export function DashboardContent() {
           error: error instanceof Error ? error.message : error
         })
       }
-      
+
       // Re-throw error so optimistic update can handle it
       throw error
     }
@@ -197,37 +197,37 @@ export function DashboardContent() {
   // Get user's upcoming tasks (due in next 7 days)
   const upcomingTasks = tasks.filter(task => {
     if (!task.dueDate || !session?.user?.id) return false
-    
+
     // For admin, show all upcoming tasks; for user, show only assigned/created tasks
-    const hasAccess = isAdmin || 
-                     task.assigneeId === session.user.id || 
-                     task.createdById === session.user.id
-    
+    const hasAccess = isAdmin ||
+                     task.assignee?.id === session.user.id ||
+                     task.createdBy?.id === session.user.id
+
     if (!hasAccess) return false
-    
+
     const dueDate = new Date(task.dueDate)
     const today = new Date()
     const sevenDaysFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
-    
+
     return dueDate >= today && dueDate <= sevenDaysFromNow
   }).sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
 
   // Get recently updated tasks (updated in last 3 days)
   const recentlyUpdatedTasks = tasks.filter(task => {
-    if (!task.updatedAt || !session?.user?.id) return false
-    
+    if (!task.createdAt || !session?.user?.id) return false
+
     // For admin, show all recent tasks; for user, show only assigned/created tasks
-    const hasAccess = isAdmin || 
-                     task.assigneeId === session.user.id || 
-                     task.createdById === session.user.id
-    
+    const hasAccess = isAdmin ||
+                     task.assignee?.id === session.user.id ||
+                     task.createdBy?.id === session.user.id
+
     if (!hasAccess) return false
-    
-    const updatedDate = new Date(task.updatedAt)
+
+    const updatedDate = new Date(task.createdAt)
     const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
-    
+
     return updatedDate >= threeDaysAgo
-  }).sort((a, b) => new Date(b.updatedAt!).getTime() - new Date(a.updatedAt!).getTime()).slice(0, 10)
+  }).sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime()).slice(0, 10)
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
@@ -285,7 +285,7 @@ export function DashboardContent() {
                     <span className="text-sm font-medium truncate">{task.title}</span>
                   </div>
                   <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
-                    {new Date(task.updatedAt!).toLocaleDateString('pl-PL', { month: 'short', day: 'numeric' })}
+                    {new Date(task.createdAt!).toLocaleDateString('pl-PL', { month: 'short', day: 'numeric' })}
                   </span>
                 </div>
               ))}
