@@ -33,7 +33,9 @@ export function DashboardContent() {
             setIsAdmin(data.isAdmin)
           }
         } catch (error) {
-          console.error('Error checking admin status:', error)
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('Error checking admin status:', error)
+          }
         }
       }
     }
@@ -64,10 +66,20 @@ export function DashboardContent() {
       const response = await fetch("/api/tasks")
       if (response.ok) {
         const data = await response.json()
-        setTasks(data.tasks)
+        setTasks(data.tasks || [])
+      } else {
+        // Only log non-ok responses in development
+        if (process.env.NODE_ENV === 'development') {
+          console.warn("Failed to fetch tasks:", response.status, response.statusText)
+        }
+        setTasks([]) // Set empty array on error
       }
     } catch (error) {
-      console.error("Error fetching tasks:", error)
+      // Only log errors in development
+      if (process.env.NODE_ENV === 'development') {
+        console.warn("Error fetching tasks:", error instanceof Error ? error.message : error)
+      }
+      setTasks([]) // Set empty array on error
     }
   }, [])
 
@@ -79,7 +91,9 @@ export function DashboardContent() {
         setUsers(data.users)
       }
     } catch (error) {
-      console.error("Error fetching users:", error)
+      if (process.env.NODE_ENV === 'development') {
+        console.warn("Error fetching users:", error)
+      }
     }
   }
 
@@ -91,7 +105,9 @@ export function DashboardContent() {
         setTaskStatuses(data.taskStatuses)
       }
     } catch (error) {
-      console.error("Error fetching task statuses:", error)
+      if (process.env.NODE_ENV === 'development') {
+        console.warn("Error fetching task statuses:", error)
+      }
     }
   }
 
@@ -106,6 +122,15 @@ export function DashboardContent() {
 
   const handleTaskUpdate = async (taskId: string, updates: Partial<Task> & { assigneeId?: string }) => {
     try {
+      // Validate inputs
+      if (!taskId || typeof taskId !== 'string') {
+        throw new Error('Invalid task ID provided')
+      }
+      
+      if (!updates || typeof updates !== 'object') {
+        throw new Error('Invalid updates provided')
+      }
+
       const response = await fetch(`/api/tasks/${taskId}`, {
         method: "PATCH",
         headers: {
@@ -118,17 +143,38 @@ export function DashboardContent() {
         // Refresh tasks after update (in background for optimistic updates)
         await fetchTasks()
       } else {
-        const errorData = await response.text()
-        console.error("Failed to update task:", {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorData
-        })
+        let errorData = 'Unknown error'
+        try {
+          errorData = await response.text()
+        } catch {
+          // If we can't parse the error response, use a default message
+          errorData = 'Failed to parse error response'
+        }
+        
+        // Log error for debugging but don't throw console errors in production
+        if (process.env.NODE_ENV === 'development') {
+          console.warn("Task update failed:", {
+            taskId,
+            updates,
+            status: response.status,
+            statusText: response.statusText,
+            error: errorData
+          })
+        }
+        
         // Throw error so optimistic update can handle it
         throw new Error(`Failed to update task: ${response.status} ${response.statusText}`)
       }
     } catch (error) {
-      console.error("Error updating task:", error)
+      // Only log in development to avoid console spam in production
+      if (process.env.NODE_ENV === 'development') {
+        console.warn("Error updating task:", {
+          taskId,
+          updates,
+          error: error instanceof Error ? error.message : error
+        })
+      }
+      
       // Re-throw error so optimistic update can handle it
       throw error
     }

@@ -155,10 +155,8 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
         </header>
         <DashboardBreadcrumbs />
         <main className={`flex-1 transition-all duration-300 ${rightSidebarVisible ? 'pr-[400px]' : ''}`}>
-          <div className="min-w-0 w-full overflow-x-hidden">
-            <div >
+          <div className="min-w-0 w-full h-[calc(100vh-101px)] ">
               {children}
-            </div>
           </div>
         </main>
       </SidebarInset>

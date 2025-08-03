@@ -338,7 +338,7 @@ export function ChatRoom({ room }: ChatRoomProps) {
 
       {/* Messages Area */}
       <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-b from-background to-muted/20">
-        <ScrollArea ref={scrollAreaRef} className="flex-1 px-6 py-4">
+        <ScrollArea ref={scrollAreaRef} className="flex-1 px-3 py-4 h-[calc(100vh-200px)]">
           {loading ? (
             <div className="space-y-6">
               {[...Array(3)].map((_, i) => (

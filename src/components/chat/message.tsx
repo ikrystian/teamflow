@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { CheckCheck } from 'lucide-react'
+// import { formatDistanceToNow } from 'date-fns' // This line was removed
 
 interface User {
   id: string
@@ -39,8 +40,9 @@ export function Message({ message, showAvatar, isOwn }: MessageProps) {
 
   return (
     <div className={cn(
-      "flex gap-4 group hover:bg-muted/30 transition-colors duration-200 rounded-lg p-2 -mx-2",
-      isOwn ? "flex-row-reverse" : "flex-row"
+      "flex gap-4 group transition-colors duration-200 rounded-lg p-1 mb-0",
+      isOwn ? "flex-row-reverse" : "flex-row",
+      showAvatar ? 'mt-4' : ''
     )}>
       <div className="flex-shrink-0">
         {showAvatar ? (
@@ -96,7 +98,7 @@ export function Message({ message, showAvatar, isOwn }: MessageProps) {
         )}
 
         <div className={cn(
-          "relative group/message rounded-2xl px-4 py-3 text-sm shadow-sm border",
+          "relative group/message rounded-2xl px-4 py-3 text-sm border",
           isOwn
             ? "bg-primary text-primary-foreground border-primary/20 rounded-br-md ml-8"
             : "bg-card text-card-foreground border-border rounded-bl-md mr-8"
@@ -106,18 +108,7 @@ export function Message({ message, showAvatar, isOwn }: MessageProps) {
           {/* Message status indicators for own messages */}
           {isOwn && (
             <div className="absolute -bottom-1 -right-1 opacity-0 group-hover/message:opacity-100 transition-opacity">
-              <div className="bg-background rounded-full p-1 shadow-sm border">
-                <CheckCheck className="h-3 w-3 text-green-600" />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {!showAvatar && (
-          <div className={cn(
-            "flex items-center gap-2 mt-1 opacity-0 group-hover:opacity-100 transition-opacity",
-            isOwn ? "justify-end" : "justify-start"
-          )}>
+              <div className="bg-background rounded-full p-1 px-2 shadow-sm border">
             <Popover>
               <PopoverTrigger asChild>
                 <span className="text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
@@ -139,12 +130,11 @@ export function Message({ message, showAvatar, isOwn }: MessageProps) {
                   </p>
                 </div>
               </PopoverContent>
-            </Popover>
-            {isOwn && (
-              <CheckCheck className="h-3 w-3 text-green-600" />
-            )}
-          </div>
-        )}
+            </Popover>              </div>
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   )
