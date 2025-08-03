@@ -4,6 +4,7 @@ import { useState, KeyboardEvent, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Send, Paperclip, Smile, AtSign } from 'lucide-react'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 interface ChatInputProps {
   onSendMessage: (content: string) => void
@@ -12,7 +13,15 @@ interface ChatInputProps {
 
 export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
   const [message, setMessage] = useState('')
+  const [isEmojiOpen, setIsEmojiOpen] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Common emojis for quick access
+  const commonEmojis = [
+    '😊', '😂', '😍', '🤔', '😎', '😢', '😡', '😱', 
+    '👍', '👎', '❤️', '🔥', '💯', '✨', '🎉', '👏',
+    '💪', '🙏', '👀', '🤝', '✅', '❌', '⚡', '🚀'
+  ]
 
   const handleSend = () => {
     if (message.trim()) {
@@ -47,6 +56,20 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
     }
   }
 
+  const handleEmojiSelect = (emoji: string) => {
+    const newMessage = message + emoji
+    setMessage(newMessage)
+    setIsEmojiOpen(false)
+    
+    // Focus textarea after emoji selection
+    if (textareaRef.current) {
+      textareaRef.current.focus()
+    }
+    
+    // Trigger typing
+    onTyping()
+  }
+
   return (
     <div className="relative">
       <div className="flex items-end gap-3 p-3 bg-muted/30 rounded-2xl border border-border/50 focus-within:border-primary/50 focus-within:bg-background transition-all duration-200">
@@ -76,13 +99,35 @@ export function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
         
         {/* Action buttons on the right */}
         <div className="flex items-center gap-1 pb-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-          >
-            <Smile className="h-4 w-4" />
-          </Button>
+          <Popover open={isEmojiOpen} onOpenChange={setIsEmojiOpen}>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              >
+                <Smile className="h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-3" side="top" align="end">
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Wybierz emoji</p>
+                <div className="grid grid-cols-8 gap-1">
+                  {commonEmojis.map((emoji, index) => (
+                    <Button
+                      key={index}
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 hover:bg-muted text-lg"
+                      onClick={() => handleEmojiSelect(emoji)}
+                    >
+                      {emoji}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
           <Button 
             variant="ghost" 
             size="icon" 

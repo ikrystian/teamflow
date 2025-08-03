@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import { CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -72,6 +72,7 @@ export function Chat() {
   const [selectedProject, setSelectedProject] = useState<string>('')
   const [groupName, setGroupName] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+  const [roomSearchTerm, setRoomSearchTerm] = useState('')
   const [loading, setLoading] = useState(true)
 
   const fetchChatRooms = useCallback(async () => {
@@ -124,6 +125,22 @@ export function Chat() {
       fetchProjects()
     }
   }, [session?.user, fetchChatRooms, fetchUsers, fetchProjects])
+
+  // Auto-select last conversation on initial load
+  useEffect(() => {
+    if (chatRooms.length > 0 && !selectedRoom && !loading) {
+      // Sort by last message timestamp and select the most recent
+      const sortedRooms = [...chatRooms].sort((a, b) => {
+        const aTime = a.messages[0]?.createdAt ? new Date(a.messages[0].createdAt).getTime() : 0
+        const bTime = b.messages[0]?.createdAt ? new Date(b.messages[0].createdAt).getTime() : 0
+        return bTime - aTime
+      })
+      
+      if (sortedRooms.length > 0) {
+        setSelectedRoom(sortedRooms[0])
+      }
+    }
+  }, [chatRooms, selectedRoom, loading])
 
   useEffect(() => {
     if (socket && isConnected) {
@@ -227,7 +244,7 @@ export function Chat() {
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const getRoomDisplayName = (room: ChatRoomData) => {
+  const getRoomDisplayName = useCallback((room: ChatRoomData) => {
     if (room.type === 'direct') {
       const otherUser = room.members.find(m => m.user.id !== (session?.user as AuthUser)?.id)
       return otherUser?.user.name || otherUser?.user.email || 'Unknown User'
@@ -236,7 +253,49 @@ export function Chat() {
       return room.project.name
     }
     return room.name || 'Group Chat'
-  }
+  }, [session?.user])
+
+  // Filter chat rooms based on search term
+  const filteredChatRooms = useMemo(() => chatRooms.filter(room => {
+    if (!roomSearchTerm) return true
+    
+    try {
+      const searchLower = roomSearchTerm.toLowerCase()
+      const roomName = getRoomDisplayName(room).toLowerCase()
+      
+      // Search in room name
+      if (roomName.includes(searchLower)) return true
+      
+      // Search in recent messages
+      if (room.messages && room.messages.length > 0) {
+        const lastMessage = room.messages[0]
+        if (lastMessage && lastMessage.content && lastMessage.sender) {
+          const messageContent = lastMessage.content.toLowerCase()
+          const senderName = (lastMessage.sender.name || lastMessage.sender.email || '').toLowerCase()
+          
+          if (messageContent.includes(searchLower) || senderName.includes(searchLower)) {
+            return true
+          }
+        }
+      }
+      
+      // Search in member names for group chats
+      if (room.type !== 'direct' && room.members) {
+        return room.members.some(member => 
+          member?.user?.name?.toLowerCase().includes(searchLower) ||
+          member?.user?.email?.toLowerCase().includes(searchLower)
+        )
+      }
+      
+      return false
+    } catch (error) {
+      // If any error occurs during filtering, include the room by default
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Error filtering chat room:', error)
+      }
+      return true
+    }
+  }), [chatRooms, roomSearchTerm, getRoomDisplayName])
 
   const getRoomAvatar = (room: ChatRoomData) => {
     if (room.type === 'direct') {
@@ -416,6 +475,8 @@ export function Chat() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Szukaj rozmów..."
+              value={roomSearchTerm}
+              onChange={(e) => setRoomSearchTerm(e.target.value)}
               className="pl-9 h-9 bg-muted/50 border-0 focus-visible:ring-0 focus-visible:ring-primary"
             />
           </div>
@@ -424,7 +485,7 @@ export function Chat() {
         <div className="flex-1 overflow-y-auto">
           <ScrollArea className="h-full">
             <div className="p-3 space-y-1">
-              {chatRooms.map((room) => (
+              {filteredChatRooms.map((room) => (
                 <div
                   key={room.id}
                   className={`group relative flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 hover:scale-[1.02] ${

@@ -6,7 +6,9 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Users, Hash, MessageCircle, Settings, Phone, Video } from 'lucide-react'
+import { Users, Hash, MessageCircle, Settings, Phone, Video, MoreVertical, UserX, Volume2, VolumeX } from 'lucide-react'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Separator } from '@/components/ui/separator'
 import { Message } from './message'
 import { ChatInput } from './chat-input'
 import { useSocket } from '@/components/providers/socket-provider'
@@ -64,23 +66,52 @@ export function ChatRoom({ room }: ChatRoomProps) {
   const [messages, setMessages] = useState<MessageData[]>([])
   const [loading, setLoading] = useState(true)
   const [typingUsers, setTypingUsers] = useState<Array<{ userId: string; userName: string }>>([])
+  const [isMuted, setIsMuted] = useState(false)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const typingTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
+  
+  // Optimization: Limit messages to prevent memory issues
+  const MAX_MESSAGES = 100
+  
+  // Simple cache for messages to reduce server requests
+  const messageCache = useRef<{ [roomId: string]: { messages: MessageData[], timestamp: number } }>({})
+  const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
-  const fetchMessages = useCallback(async () => {
+  const fetchMessages = useCallback(async (forceRefresh = false) => {
     try {
       setLoading(true)
+      
+      // Check cache first
+      const cached = messageCache.current[room.id]
+      const now = Date.now()
+      
+      if (!forceRefresh && cached && (now - cached.timestamp < CACHE_DURATION)) {
+        setMessages(cached.messages)
+        setLoading(false)
+        return
+      }
+      
       const response = await fetch(`/api/chat/rooms/${room.id}/messages`)
       if (response.ok) {
         const data = await response.json()
-        setMessages(data.messages || [])
+        const messages = data.messages || []
+        
+        // Update cache
+        messageCache.current[room.id] = {
+          messages,
+          timestamp: now
+        }
+        
+        setMessages(messages)
       }
     } catch (error) {
-      console.error('Error fetching messages:', error)
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Error fetching messages:', error)
+      }
     } finally {
       setLoading(false)
     }
-  }, [room.id])
+  }, [room.id, CACHE_DURATION])
 
   useEffect(() => {
     if (room.id) {
@@ -107,7 +138,11 @@ export function ChatRoom({ room }: ChatRoomProps) {
             if (exists) {
               return prev
             }
-            return [...prev, message]
+            // Limit messages to prevent memory issues
+            const newMessages = [...prev, message]
+            return newMessages.length > MAX_MESSAGES 
+              ? newMessages.slice(-MAX_MESSAGES) 
+              : newMessages
           })
           scrollToBottom()
         }
@@ -121,7 +156,11 @@ export function ChatRoom({ room }: ChatRoomProps) {
             if (exists) {
               return prev
             }
-            return [...prev, message]
+            // Limit messages to prevent memory issues
+            const newMessages = [...prev, message]
+            return newMessages.length > MAX_MESSAGES 
+              ? newMessages.slice(-MAX_MESSAGES) 
+              : newMessages
           })
           scrollToBottom()
         }
@@ -132,6 +171,10 @@ export function ChatRoom({ room }: ChatRoomProps) {
           setTypingUsers(prev => {
             const existing = prev.find(u => u.userId === data.userId)
             if (!existing) {
+              // Auto cleanup typing after 5 seconds to prevent memory leaks
+              setTimeout(() => {
+                setTypingUsers(current => current.filter(u => u.userId !== data.userId))
+              }, 5000)
               return [...prev, { userId: data.userId, userName: data.userName }]
             }
             return prev
@@ -329,16 +372,70 @@ export function ChatRoom({ room }: ChatRoomProps) {
             <Button variant="ghost" size="icon" className="h-9 w-9">
               <Users className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-9 w-9">
-              <Settings className="h-4 w-4" />
-            </Button>
+            
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9">
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56" side="bottom" align="end">
+                <div className="space-y-1">
+                  <div className="px-2 py-1.5">
+                    <h4 className="font-medium">Ustawienia konwersacji</h4>
+                    <p className="text-xs text-muted-foreground">
+                      {getRoomDisplayName()}
+                    </p>
+                  </div>
+                  <Separator />
+                  
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-2 h-8"
+                    onClick={() => setIsMuted(!isMuted)}
+                  >
+                    {isMuted ? (
+                      <>
+                        <VolumeX className="h-4 w-4" />
+                        Włącz powiadomienia
+                      </>
+                    ) : (
+                      <>
+                        <Volume2 className="h-4 w-4" />
+                        Wycisz powiadomienia
+                      </>
+                    )}
+                  </Button>
+                  
+                  {room.type === 'group' && (
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start gap-2 h-8 text-destructive hover:text-destructive"
+                    >
+                      <UserX className="h-4 w-4" />
+                      Opuść grupę
+                    </Button>
+                  )}
+                  
+                  <Separator />
+                  
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-2 h-8"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                    Więcej opcji
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
       </div>
 
       {/* Messages Area */}
       <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-b from-background to-muted/20">
-        <ScrollArea ref={scrollAreaRef} className="flex-1 px-3 py-4 h-[calc(100vh-200px)]">
+        <ScrollArea ref={scrollAreaRef} className="flex-1 px-3 py-4 pb-0 h-[calc(100vh-200px)]">
           {loading ? (
             <div className="space-y-6">
               {[...Array(3)].map((_, i) => (

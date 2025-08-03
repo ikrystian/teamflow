@@ -148,3 +148,6 @@
   height: 0;
 }
 
+.flex-row-reverse  + .flex-row-reverse {
+  margin-top: 0rem;
+}
