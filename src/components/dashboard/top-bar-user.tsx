@@ -14,8 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
-  Settings,
-  LogOut,
+  Settings
 } from "lucide-react"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { LogoutButton } from "@/components/auth/logout-button"

@@ -1,12 +1,12 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     const session = await getServerSession(authOptions)
-    
-    if (!session) {
+
+    if (!session?.user) {
       return NextResponse.json({ error: "No active session" }, { status: 401 })
     }
 
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     // - Invalidate refresh tokens if using them
 
     // Create response that clears NextAuth cookies
-    const response = NextResponse.json({ 
+    const response = NextResponse.json({
       message: "Logout successful",
       redirectUrl: "/auth/signin"
     })
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     // Clear NextAuth cookies
     const cookiesToClear = [
       "next-auth.session-token",
-      "next-auth.csrf-token", 
+      "next-auth.csrf-token",
       "next-auth.callback-url",
       "__Secure-next-auth.session-token",
       "__Host-next-auth.csrf-token"

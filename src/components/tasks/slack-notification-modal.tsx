@@ -136,7 +136,7 @@ export function SlackNotificationModal({
             Powiadom użytkownika
           </DialogTitle>
           <DialogDescription>
-            Wybierz użytkownika Slack, który ma otrzymać powiadomienie o zadaniu "{task.title}"
+            Wybierz użytkownika Slack, który ma otrzymać powiadomienie o zadaniu <strong>{task.title}</strong>
           </DialogDescription>
         </DialogHeader>
 

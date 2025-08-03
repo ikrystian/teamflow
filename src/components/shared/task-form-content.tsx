@@ -71,7 +71,6 @@ export function TaskFormContent({
   forceAssignToCurrentUser = false,
   task,
   mode,
-  variant = "dialog" // Reserved for future layout customizations
 }: TaskFormContentProps) {
   const { data: session } = useSession() as { data: Session | null }
 
@@ -187,9 +186,9 @@ export function TaskFormContent({
       setStartTime(task.startTime ? new Date(task.startTime) : undefined)
       setEndTime(task.endTime ? new Date(task.endTime) : undefined)
       setEstimatedHours(task.estimatedHours ? task.estimatedHours.toString() : "none")
-      setReminderEnabled((task as any).reminderEnabled || false)
-      setReminderType((task as any).reminderType || "hours")
-      setReminderValue((task as any).reminderValue || 1)
+      setReminderEnabled(task.reminderEnabled || false)
+      setReminderType(task.reminderType || "hours")
+      setReminderValue(task.reminderValue || 1)
       setImages(task.images || [])
       setPendingImages([])
       setError("")

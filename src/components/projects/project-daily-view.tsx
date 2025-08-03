@@ -15,7 +15,7 @@ import {
   Plus
 } from "lucide-react"
 import { type Task } from "@/types"
-import { format, addDays, subDays, startOfDay, endOfDay, isSameDay } from "date-fns"
+import { format, addDays, subDays, isSameDay } from "date-fns"
 import { pl } from "date-fns/locale"
 import {
   DndContext,
@@ -61,7 +61,7 @@ export function ProjectDailyView({
 }: ProjectDailyViewProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [activeTask, setActiveTask] = useState<TaskWithTime | null>(null)
-  const [isDragging, setIsDragging] = useState(false)
+  const [, setIsDragging] = useState(false)
   const [optimisticTasks, setOptimisticTasks] = useState<Task[]>(tasks)
   const [updatingTasks, setUpdatingTasks] = useState<Set<string>>(new Set())
 

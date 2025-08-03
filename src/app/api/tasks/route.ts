@@ -3,13 +3,12 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { isAdmin } from "@/lib/admin"
-import type { Session } from "next-auth"
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions) as Session | null
+    const session = await getServerSession(authOptions)
 
-    if (!session?.user?.id) {
+    if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -176,9 +175,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions) as Session | null
+    const session = await getServerSession(authOptions)
 
-    if (!session?.user?.id) {
+    if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -274,7 +273,7 @@ export async function POST(request: NextRequest) {
         reminderType: reminderEnabled ? reminderType : null,
         reminderValue: reminderEnabled ? reminderValue : null,
         reminderTime
-      } as any,
+      },
       include: {
         project: {
           select: {
@@ -289,7 +288,8 @@ export async function POST(request: NextRequest) {
             id: true,
             name: true,
             email: true,
-            avatarUrl: true
+            avatarUrl: true,
+            slackUserId: true
           }
         },
         createdBy: {
@@ -302,6 +302,83 @@ export async function POST(request: NextRequest) {
         }
       }
     })
+
+    // Send automatic Slack notification if assignee has Slack connected
+    if (assigneeId && task.assignee?.slackUserId) {
+      try {
+        const slackToken = process.env.SLACK_BOT_TOKEN
+        if (slackToken) {
+          const blocks = [
+            {
+              type: "header",
+              text: {
+                type: "plain_text",
+                text: "🆕 Nowe zadanie zostało Ci przypisane"
+              }
+            },
+            {
+              type: "section",
+              fields: [
+                {
+                  type: "mrkdwn",
+                  text: `*Zadanie:*\n${title}`
+                },
+                {
+                  type: "mrkdwn",
+                  text: `*Projekt:*\n${task.project?.name || "Brak projektu"}`
+                }
+              ]
+            }
+          ]
+
+          if (description) {
+            blocks.push({
+              type: "section",
+              text: {
+                type: "mrkdwn",
+                text: `*Opis:*\n${description.replace(/<[^>]*>/g, '').substring(0, 200)}${description.length > 200 ? '...' : ''}`
+              }
+            })
+          }
+
+          if (priority) {
+            blocks.push({
+              type: "section",
+              text: {
+                type: "mrkdwn",
+                text: `*Priorytet:* ${priority}`
+              }
+            })
+          }
+
+          if (dueDate) {
+            blocks.push({
+              type: "section",
+              text: {
+                type: "mrkdwn",
+                text: `*Termin:* ${new Date(dueDate).toLocaleDateString('pl-PL')}`
+              }
+            })
+          }
+
+          await fetch('https://slack.com/api/chat.postMessage', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${slackToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              channel: task.assignee.slackUserId,
+              text: `Nowe zadanie: ${title}`,
+              blocks: blocks
+            }),
+          })
+        }
+      } catch (error) {
+        // Don't fail task creation if Slack notification fails
+        console.error("Failed to send Slack notification:", error)
+      }
+    }
 
     return NextResponse.json({ task }, { status: 201 })
   } catch (error) {

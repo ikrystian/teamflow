@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next" 
+import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { startOfDay, endOfDay, subDays, format, startOfWeek, endOfWeek, eachWeekOfInterval } from "date-fns"
@@ -15,18 +15,17 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get("startDate")
     const endDate = searchParams.get("endDate")
     const projectId = searchParams.get("projectId")
-    const userId = searchParams.get("userId")
     const teamId = searchParams.get("teamId")
     const comparisonPeriod = searchParams.get("comparisonPeriod") || "3m"
 
     // Calculate date range
     const endDateTime = endDate ? new Date(endDate) : new Date()
-    const startDateTime = startDate 
-      ? new Date(startDate) 
+    const startDateTime = startDate
+      ? new Date(startDate)
       : subDays(endDateTime, comparisonPeriod === "1m" ? 30 : comparisonPeriod === "6m" ? 180 : 90)
 
     // Build filters
-    const filters: any = {
+    const filters: Record<string, unknown> = {
       createdAt: {
         gte: startOfDay(startDateTime),
         lte: endOfDay(endDateTime)
@@ -46,7 +45,7 @@ export async function GET(request: NextRequest) {
     // Get team members
     const teamMembers = await prisma.user.findMany({
       where: {
-        tasks: {
+        assignedTasks: {
           some: {
             createdAt: {
               gte: startOfDay(startDateTime),
@@ -56,17 +55,18 @@ export async function GET(request: NextRequest) {
         }
       },
       include: {
-        tasks: {
+        assignedTasks: {
           where: filters,
           include: {
             timeEntries: true,
-            comments: true
+            comments: true,
+            taskStatus: true
           }
         },
         timeEntries: {
           where: {
             createdAt: {
-              gte: startOfDay(startDateTime), 
+              gte: startOfDay(startDateTime),
               lte: endOfDay(endDateTime)
             }
           }
@@ -76,53 +76,53 @@ export async function GET(request: NextRequest) {
 
     // Calculate team overview
     const totalMembers = teamMembers.length
-    const activeMembers = teamMembers.filter(member => 
-      member.tasks.some(task => 
+    const activeMembers = teamMembers.filter(member =>
+      member.assignedTasks.some(task =>
         task.updatedAt >= subDays(new Date(), 7)
       )
     ).length
 
-    const totalTasksCompleted = teamMembers.reduce((sum, member) => 
-      sum + member.tasks.filter(task => task.status?.name === "Done").length, 0
+    const totalTasksCompleted = teamMembers.reduce((sum, member) =>
+      sum + member.assignedTasks.filter(task => task.taskStatus?.name === "Done").length, 0
     )
 
-    const totalHoursLogged = teamMembers.reduce((sum, member) => 
-      sum + member.timeEntries.reduce((timeSum, entry) => timeSum + entry.duration, 0), 0
+    const totalHoursLogged = teamMembers.reduce((sum, member) =>
+      sum + member.timeEntries.reduce((timeSum, entry) => timeSum + entry.hours, 0), 0
     )
 
-    const averageProductivity = totalMembers > 0 ? 
+    const averageProductivity = totalMembers > 0 ?
       teamMembers.reduce((sum, member) => {
-        const memberTasks = member.tasks.length
-        const memberCompleted = member.tasks.filter(task => task.status?.name === "Done").length
+        const memberTasks = member.assignedTasks.length
+        const memberCompleted = member.assignedTasks.filter(task => task.taskStatus?.name === "Done").length
         return sum + (memberTasks > 0 ? (memberCompleted / memberTasks) * 100 : 0)
       }, 0) / totalMembers : 0
 
-    const teamVelocity = Math.round(totalTasksCompleted / Math.max(1, 
+    const teamVelocity = Math.round(totalTasksCompleted / Math.max(1,
       Math.ceil((endDateTime.getTime() - startDateTime.getTime()) / (7 * 24 * 60 * 60 * 1000))
     ))
 
     // Generate member performance data
     const memberPerformance = teamMembers.map(member => {
-      const tasksCompleted = member.tasks.filter(task => task.status?.name === "Done").length
-      const totalTasks = member.tasks.length
-      const hoursLogged = member.timeEntries.reduce((sum, entry) => sum + entry.duration, 0)
-      
+      const tasksCompleted = member.assignedTasks.filter(task => task.taskStatus?.name === "Done").length
+      const totalTasks = member.assignedTasks.length
+      const hoursLogged = member.timeEntries.reduce((sum, entry) => sum + entry.hours, 0)
+
       const productivity = totalTasks > 0 ? Math.round((tasksCompleted / totalTasks) * 100) : 0
-      const velocity = Math.round(tasksCompleted / Math.max(1, 
+      const velocity = Math.round(tasksCompleted / Math.max(1,
         Math.ceil((endDateTime.getTime() - startDateTime.getTime()) / (7 * 24 * 60 * 60 * 1000))
       ))
-      
+
       // Mock quality and collaboration scores (in real app, calculate from reviews, bug reports, etc.)
       const quality = Math.min(100, Math.max(60, productivity + Math.random() * 20 - 10))
-      const collaboration = Math.min(100, Math.max(50, 
-        member.tasks.reduce((sum, task) => sum + task.comments.length, 0) * 5 + Math.random() * 30
+      const collaboration = Math.min(100, Math.max(50,
+        member.assignedTasks.reduce((sum, task) => sum + task.comments.length, 0) * 5 + Math.random() * 30
       ))
-      
+
       const consistency = Math.min(100, Math.max(40, productivity + Math.random() * 40 - 20))
-      const onTimeDelivery = Math.min(100, Math.max(50, 
-        member.tasks.filter(task => 
+      const onTimeDelivery = Math.min(100, Math.max(50,
+        member.assignedTasks.filter(task =>
           !task.dueDate || (task.updatedAt <= new Date(task.dueDate))
-        ).length / Math.max(1, member.tasks.length) * 100
+        ).length / Math.max(1, member.assignedTasks.length) * 100
       ))
 
       // Generate weekly progress
@@ -130,15 +130,15 @@ export async function GET(request: NextRequest) {
       const weeklyProgress = weeks.map(week => {
         const weekStart = startOfWeek(week)
         const weekEnd = endOfWeek(week)
-        
-        const weekTasks = member.tasks.filter(task => 
+
+        const weekTasks = member.assignedTasks.filter(task =>
           task.updatedAt >= weekStart && task.updatedAt <= weekEnd &&
-          task.status?.name === "Done"
+          task.taskStatus?.name === "Done"
         ).length
-        
+
         const weekHours = member.timeEntries.filter(entry =>
-          entry.createdAt >= weekStart && entry.createdAt <= weekEnd
-        ).reduce((sum, entry) => sum + entry.duration, 0)
+          entry.date >= weekStart && entry.date <= weekEnd
+        ).reduce((sum, entry) => sum + entry.hours, 0)
 
         return {
           week: format(week, 'yyyy-MM-dd'),
@@ -204,7 +204,7 @@ export async function GET(request: NextRequest) {
       for (let j = i + 1; j < memberPerformance.length; j++) {
         const member1 = memberPerformance[i]
         const member2 = memberPerformance[j]
-        
+
         // Mock collaboration calculation based on shared projects/tasks
         const collaborationIndex = Math.round(Math.random() * 100)
         const sharedTasks = Math.round(Math.random() * 10)
@@ -224,10 +224,10 @@ export async function GET(request: NextRequest) {
 
     // Generate skills matrix (mock)
     const skills = [
-      'React/Frontend', 'Node.js/Backend', 'Database Design', 
+      'React/Frontend', 'Node.js/Backend', 'Database Design',
       'DevOps/CI/CD', 'Project Management', 'UI/UX Design'
     ]
-    
+
     const skillsMatrix = skills.map(skill => ({
       skill,
       members: memberPerformance.map(member => ({
@@ -272,8 +272,8 @@ export async function GET(request: NextRequest) {
       currentLoad: Math.min(100, Math.round((member.metrics.hoursLogged / 40) * 100)), // assuming 40h/week
       capacity: 100,
       efficiency: member.metrics.productivity,
-      burnoutRisk: Math.max(0, Math.min(100, 
-        (member.metrics.hoursLogged > 45 ? 60 : 20) + 
+      burnoutRisk: Math.max(0, Math.min(100,
+        (member.metrics.hoursLogged > 45 ? 60 : 20) +
         (member.metrics.productivity < 60 ? 30 : 0) +
         Math.random() * 20
       ))

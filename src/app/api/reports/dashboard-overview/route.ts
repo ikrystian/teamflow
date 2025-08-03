@@ -7,7 +7,7 @@ import { startOfDay, endOfDay, subDays, format, eachDayOfInterval } from "date-f
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session) {
+    if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -21,12 +21,12 @@ export async function GET(request: NextRequest) {
 
     // Calculate date range
     const endDateTime = endDate ? new Date(endDate) : new Date()
-    const startDateTime = startDate 
-      ? new Date(startDate) 
+    const startDateTime = startDate
+      ? new Date(startDate)
       : subDays(endDateTime, timeframe === "7d" ? 7 : timeframe === "90d" ? 90 : 30)
 
     // Build filters
-    const filters: any = {
+    const filters: Record<string, unknown> = {
       createdAt: {
         gte: startOfDay(startDateTime),
         lte: endOfDay(endDateTime)
@@ -51,18 +51,18 @@ export async function GET(request: NextRequest) {
     const [
       totalTasks,
       completedTasks,
-      overdueTasks, 
+      overdueTasks,
       inProgressTasks,
       totalProjects,
       activeUsers,
       timeEntries
     ] = await Promise.all([
       prisma.task.count({ where: filters }),
-      prisma.task.count({ 
-        where: { 
-          ...filters, 
+      prisma.task.count({
+        where: {
+          ...filters,
           taskStatus: { name: "Done" }
-        } 
+        }
       }),
       prisma.task.count({
         where: {
@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
       }),
       prisma.user.count({
         where: {
-          tasks: {
+          assignedTasks: {
             some: {
               updatedAt: {
                 gte: subDays(new Date(), 7)
@@ -128,7 +128,7 @@ export async function GET(request: NextRequest) {
       dateRange.map(async (date) => {
         const dayStart = startOfDay(date)
         const dayEnd = endOfDay(date)
-        
+
         const [tasksCreated, tasksCompleted, dayTimeEntries] = await Promise.all([
           prisma.task.count({
             where: {
@@ -155,7 +155,7 @@ export async function GET(request: NextRequest) {
         ])
 
         const dayHours = dayTimeEntries.reduce((sum, entry) => sum + entry.hours, 0)
-        
+
         return {
           date: format(date, 'yyyy-MM-dd'),
           tasksCreated,
@@ -187,7 +187,7 @@ export async function GET(request: NextRequest) {
       project: project.name,
       tasks: project.tasks.length,
       completed: project.tasks.filter(t => t.taskStatus?.name === "Done").length,
-      hours: project.tasks.reduce((sum, task) => 
+      hours: project.tasks.reduce((sum, task) =>
         sum + task.timeEntries.reduce((timeSum, entry) => timeSum + entry.hours, 0), 0
       ),
       color: project.color || '#3B82F6'
@@ -196,7 +196,7 @@ export async function GET(request: NextRequest) {
     // User performance
     const users = await prisma.user.findMany({
       include: {
-        tasks: {
+        assignedTasks: {
           where: filters,
           include: {
             timeEntries: true,
@@ -207,15 +207,15 @@ export async function GET(request: NextRequest) {
     })
 
     const userPerformance = users
-      .filter(user => user.tasks.length > 0)
+      .filter(user => user.assignedTasks.length > 0)
       .map(user => ({
         user: user.name || user.email,
-        completedTasks: user.tasks.filter(t => t.taskStatus?.name === "Done").length,
-        hoursLogged: user.tasks.reduce((sum, task) => 
+        completedTasks: user.assignedTasks.filter(t => t.taskStatus?.name === "Done").length,
+        hoursLogged: user.assignedTasks.reduce((sum, task) =>
           sum + task.timeEntries.reduce((timeSum, entry) => timeSum + entry.hours, 0), 0
         ),
-        efficiency: user.tasks.length > 0 ? 
-          Math.round((user.tasks.filter(t => t.taskStatus?.name === "Done").length / user.tasks.length) * 100) : 0,
+        efficiency: user.assignedTasks.length > 0 ?
+          Math.round((user.assignedTasks.filter(t => t.taskStatus?.name === "Done").length / user.assignedTasks.length) * 100) : 0,
         avatar: user.avatarUrl
       }))
       .sort((a, b) => b.completedTasks - a.completedTasks)
@@ -249,7 +249,7 @@ export async function GET(request: NextRequest) {
         return {
           priority,
           count,
-          color: priority === 'High' ? '#EF4444' : 
+          color: priority === 'High' ? '#EF4444' :
                 priority === 'Medium' ? '#F59E0B' : '#10B981'
         }
       })

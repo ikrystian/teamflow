@@ -27,7 +27,7 @@ import {
   Timer,
   AlertCircle,
   CheckCircle2,
-  Image,
+  Image as ImageIcon,
   Trash2,
   FileText,
   MessageSquare,
@@ -82,7 +82,7 @@ export function TaskDetailsContent({
   const [todos, setTodos] = useState(task?.todos || [])
   const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
   const [teamMembers, setTeamMembers] = useState<User[]>([])
-  
+
   // Inline editing state
   const [editingField, setEditingField] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState(task.title)
@@ -172,9 +172,9 @@ export function TaskDetailsContent({
     }
   }
 
-  const saveField = async (field: string, value: string | number | undefined) => {
+  const saveField = async (field: string, value: string | number | undefined | null) => {
     if (!canEdit) return
-    
+
     setSaving(true)
     try {
       const response = await fetch(`/api/tasks/${task.id}`, {
@@ -314,7 +314,7 @@ export function TaskDetailsContent({
             </Button>
           </div>
         ) : (
-          <h2 
+          <h2
             className={`text-2xl font-bold line-clamp-2 ${canEdit ? 'cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors' : ''}`}
             onClick={() => startEdit('title')}
             title={canEdit ? "Kliknij aby edytować tytuł" : undefined}
@@ -376,7 +376,7 @@ export function TaskDetailsContent({
               </Button>
               <Button
                 size="sm"
-                variant="outline" 
+                variant="outline"
                 onClick={() => cancelEdit('priority')}
                 disabled={saving}
                 className="h-7 w-7 p-0"
@@ -386,8 +386,8 @@ export function TaskDetailsContent({
             </div>
           ) : (
             task.priority ? (
-              <Badge 
-                variant="secondary" 
+              <Badge
+                variant="secondary"
                 className={`${getPriorityColor(task.priority)} ${canEdit ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
                 onClick={() => startEdit('priority')}
                 title={canEdit ? "Kliknij aby zmienić priorytet" : undefined}
@@ -395,8 +395,8 @@ export function TaskDetailsContent({
                 {task.priority === "Low" ? "Niski" : task.priority === "Medium" ? "Średni" : "Wysoki"}
               </Badge>
             ) : canEdit ? (
-              <Badge 
-                variant="outline" 
+              <Badge
+                variant="outline"
                 className="cursor-pointer hover:bg-muted/50 transition-colors text-muted-foreground"
                 onClick={() => startEdit('priority')}
                 title="Kliknij aby ustawić priorytet"
@@ -546,7 +546,7 @@ export function TaskDetailsContent({
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <Image className="h-5 w-5" />
+                    <ImageIcon className="h-5 w-5" />
                     Załączniki ({task.images.length})
                   </CardTitle>
                 </CardHeader>
@@ -612,7 +612,7 @@ export function TaskDetailsContent({
                         </div>
                       </div>
                     ) : (
-                      <div 
+                      <div
                         className={`${canEdit ? 'cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors' : ''}`}
                         onClick={() => startEdit('assigneeId')}
                         title={canEdit ? "Kliknij aby zmienić przypisanego" : undefined}
@@ -724,7 +724,7 @@ export function TaskDetailsContent({
                         </div>
                       </div>
                     ) : (
-                      <div 
+                      <div
                         className={`${canEdit ? 'cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors' : ''}`}
                         onClick={() => startEdit('dueDate')}
                         title={canEdit ? "Kliknij aby zmienić termin" : undefined}
@@ -801,7 +801,7 @@ export function TaskDetailsContent({
                         </div>
                       </div>
                     ) : (
-                      <div 
+                      <div
                         className={`${canEdit ? 'cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors' : ''}`}
                         onClick={() => startEdit('estimatedHours')}
                         title={canEdit ? "Kliknij aby zmienić szacowany czas" : undefined}
@@ -945,7 +945,7 @@ export function TaskDetailsContent({
           </TabsContent>
         </div>
       </Tabs>
-      
+
       {/* Slack Notification Modal */}
       <SlackNotificationModal
         open={showNotificationModal}

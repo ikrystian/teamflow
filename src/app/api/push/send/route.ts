@@ -2,22 +2,21 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import type { Session } from "next-auth"
 
 // Funkcja do wysyłania powiadomień push (placeholder - wymaga web-push library)
-async function sendPushNotification(subscription: any, payload: any) {
+async function sendPushNotification(subscription: object, payload: string) {
   // W rzeczywistej implementacji użyj biblioteki web-push
   console.log('Sending push notification:', { subscription, payload })
-  
+
   // Placeholder - w produkcji zaimplementuj rzeczywiste wysyłanie
   return Promise.resolve()
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions) as Session | null
+    const session = await getServerSession(authOptions)
 
-    if (!session?.user?.id) {
+    if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -58,9 +57,9 @@ export async function POST(request: NextRequest) {
     })
 
     if (subscriptions.length === 0) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         message: "No push subscriptions found for user",
-        sent: 0 
+        sent: 0
       })
     }
 
@@ -83,7 +82,7 @@ export async function POST(request: NextRequest) {
             p256dh: subscription.p256dh,
             auth: subscription.auth
           }
-        }, payload)
+        }, JSON.stringify(payload))
         sentCount++
       } catch (error) {
         console.error('Failed to send push notification:', error)
@@ -96,7 +95,7 @@ export async function POST(request: NextRequest) {
 
     await Promise.all(sendPromises)
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: "Push notifications sent",
       sent: sentCount,
       total: subscriptions.length

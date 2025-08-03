@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -23,26 +23,14 @@ import {
   ComposedChart,
   ScatterChart,
   Scatter,
-  PieChart,
-  Pie,
-  Cell
 } from "recharts"
 import {
   AlertTriangle,
-  TrendingUp,
-  TrendingDown,
   Users,
-  Clock,
-  Activity,
   Target,
   Zap,
-  Calendar,
-  Brain,
-  Heart,
-  Shield,
-  Settings
 } from "lucide-react"
-import { format, startOfWeek, endOfWeek } from "date-fns"
+import { format } from "date-fns"
 import { pl } from "date-fns/locale"
 
 interface WorkloadAnalyticsReportProps {
@@ -165,7 +153,7 @@ export interface WorkloadAnalyticsData {
 
 const RISK_COLORS = {
   low: '#10B981',
-  medium: '#F59E0B', 
+  medium: '#F59E0B',
   high: '#EF4444'
 }
 
@@ -182,10 +170,10 @@ export function WorkloadAnalyticsReport({ filters, onDataLoaded }: WorkloadAnaly
   const [selectedMember, setSelectedMember] = useState<string>("")
   const [viewType, setViewType] = useState<"current" | "trends" | "predictions">("current")
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true)
     setError(null)
-    
+
     try {
       const queryParams = new URLSearchParams({
         ...filters,
@@ -193,7 +181,7 @@ export function WorkloadAnalyticsReport({ filters, onDataLoaded }: WorkloadAnaly
       })
 
       const response = await fetch(`/api/reports/workload-analytics?${queryParams}`)
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch workload analytics data')
       }
@@ -206,11 +194,11 @@ export function WorkloadAnalyticsReport({ filters, onDataLoaded }: WorkloadAnaly
     } finally {
       setLoading(false)
     }
-  }
+  }, [filters, onDataLoaded])
 
   useEffect(() => {
     fetchData()
-  }, [filters])
+  }, [filters, fetchData])
 
   if (loading) {
     return (
@@ -251,7 +239,7 @@ export function WorkloadAnalyticsReport({ filters, onDataLoaded }: WorkloadAnaly
     return 'Przeciążony'
   }
 
-  const selectedMemberData = selectedMember 
+  const selectedMemberData = selectedMember
     ? data.memberWorkload.find(m => m.user.id === selectedMember)
     : null
 
@@ -387,14 +375,14 @@ export function WorkloadAnalyticsReport({ filters, onDataLoaded }: WorkloadAnaly
                   <ScatterChart data={data.memberWorkload.map(m => ({
                     name: m.user.name,
                     workload: m.currentWorkload.utilizationRate,
-                    burnoutRisk: m.burnoutIndicators.riskLevel === 'high' ? 80 : 
+                    burnoutRisk: m.burnoutIndicators.riskLevel === 'high' ? 80 :
                                 m.burnoutIndicators.riskLevel === 'medium' ? 50 : 20,
                     efficiency: m.currentWorkload.efficiencyScore
                   }))}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="workload" name="Obciążenie %" />
                     <YAxis dataKey="burnoutRisk" name="Ryzyko wypalenia" />
-                    <Tooltip 
+                    <Tooltip
                       cursor={{ strokeDasharray: '3 3' }}
                       content={({ active, payload }) => {
                         if (active && payload && payload[0]) {
@@ -458,8 +446,8 @@ export function WorkloadAnalyticsReport({ filters, onDataLoaded }: WorkloadAnaly
                         </td>
                         <td className="text-right p-2">
                           <div className="flex items-center gap-2 justify-end">
-                            <Progress 
-                              value={member.currentWorkload.utilizationRate} 
+                            <Progress
+                              value={member.currentWorkload.utilizationRate}
                               className="w-16 h-2"
                             />
                             <span className="text-sm font-medium">
@@ -483,24 +471,24 @@ export function WorkloadAnalyticsReport({ filters, onDataLoaded }: WorkloadAnaly
                           </Badge>
                         </td>
                         <td className="text-right p-2">
-                          <Badge 
-                            variant={member.burnoutIndicators.riskLevel === 'high' ? 'destructive' : 
+                          <Badge
+                            variant={member.burnoutIndicators.riskLevel === 'high' ? 'destructive' :
                                    member.burnoutIndicators.riskLevel === 'medium' ? 'secondary' : 'outline'}
                           >
-                            {member.burnoutIndicators.riskLevel === 'high' ? 'Wysokie' : 
+                            {member.burnoutIndicators.riskLevel === 'high' ? 'Wysokie' :
                              member.burnoutIndicators.riskLevel === 'medium' ? 'Średnie' : 'Niskie'}
                           </Badge>
                         </td>
                         <td className="text-right p-2">
-                          <Badge 
+                          <Badge
                             style={{ backgroundColor: getWorkloadColor(member.currentWorkload.utilizationRate) }}
                           >
                             {getWorkloadStatus(member.currentWorkload.utilizationRate)}
                           </Badge>
                         </td>
                         <td className="text-right p-2">
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             variant="outline"
                             onClick={() => setSelectedMember(member.user.id)}
                           >
@@ -540,7 +528,7 @@ export function WorkloadAnalyticsReport({ filters, onDataLoaded }: WorkloadAnaly
                   </SelectContent>
                 </Select>
               </div>
-              
+
               {selectedMemberData && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Daily Hours Trend */}
@@ -551,7 +539,7 @@ export function WorkloadAnalyticsReport({ filters, onDataLoaded }: WorkloadAnaly
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="date" tickFormatter={(value) => format(new Date(value), 'dd/MM')} />
                         <YAxis />
-                        <Tooltip 
+                        <Tooltip
                           labelFormatter={(value) => format(new Date(value), 'dd MMMM yyyy', { locale: pl })}
                         />
                         <Area dataKey="planned" stackId="1" stroke="#94A3B8" fill="#94A3B8" fillOpacity={0.3} name="Planowane" />
@@ -622,11 +610,11 @@ export function WorkloadAnalyticsReport({ filters, onDataLoaded }: WorkloadAnaly
                       <div className="text-sm text-muted-foreground">
                         Przewidywane: {prediction.predictedHours.toFixed(1)}h
                       </div>
-                      <Badge 
-                        variant={prediction.riskLevel === 'high' ? 'destructive' : 
+                      <Badge
+                        variant={prediction.riskLevel === 'high' ? 'destructive' :
                                prediction.riskLevel === 'medium' ? 'secondary' : 'outline'}
                       >
-                        {prediction.riskLevel === 'high' ? 'Wysokie ryzyko' : 
+                        {prediction.riskLevel === 'high' ? 'Wysokie ryzyko' :
                          prediction.riskLevel === 'medium' ? 'Średnie ryzyko' : 'Niskie ryzyko'}
                       </Badge>
                     </div>
@@ -686,13 +674,13 @@ export function WorkloadAnalyticsReport({ filters, onDataLoaded }: WorkloadAnaly
               {data.recommendations.immediate.map((rec, index) => (
                 <div key={index} className="p-3 border rounded-lg">
                   <div className="flex justify-between items-start mb-2">
-                    <Badge variant={rec.priority === 'high' ? 'destructive' : 
+                    <Badge variant={rec.priority === 'high' ? 'destructive' :
                                   rec.priority === 'medium' ? 'secondary' : 'outline'}>
-                      {rec.priority === 'high' ? 'Wysoki priorytet' : 
+                      {rec.priority === 'high' ? 'Wysoki priorytet' :
                        rec.priority === 'medium' ? 'Średni priorytet' : 'Niski priorytet'}
                     </Badge>
                     <Badge variant="outline">
-                      Wysiłek: {rec.effort === 'high' ? 'Wysoki' : 
+                      Wysiłek: {rec.effort === 'high' ? 'Wysoki' :
                                rec.effort === 'medium' ? 'Średni' : 'Niski'}
                     </Badge>
                   </div>

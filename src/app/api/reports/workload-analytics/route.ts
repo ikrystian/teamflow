@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     const startDateTime = startDate ? new Date(startDate) : subDays(endDateTime, 30)
 
     // Build filters
-    const filters: any = {
+    const filters: Record<string, unknown> = {
       createdAt: {
         gte: startOfDay(startDateTime),
         lte: endOfDay(endDateTime)
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
       where: {
         OR: [
           {
-            tasks: {
+            assignedTasks: {
               some: {
                 createdAt: {
                   gte: startOfDay(startDateTime),
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
           {
             timeEntries: {
               some: {
-                createdAt: {
+                date: {
                   gte: startOfDay(startDateTime),
                   lte: endOfDay(endDateTime)
                 }
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
         ]
       },
       include: {
-        tasks: {
+        assignedTasks: {
           where: {
             OR: [
               filters,
@@ -81,7 +81,8 @@ export async function GET(request: NextRequest) {
             ]
           },
           include: {
-            timeEntries: true
+            timeEntries: true,
+            taskStatus: true
           },
           orderBy: {
             dueDate: 'asc'
@@ -89,7 +90,7 @@ export async function GET(request: NextRequest) {
         },
         timeEntries: {
           where: {
-            createdAt: {
+            date: {
               gte: startOfDay(startDateTime),
               lte: endOfDay(endDateTime)
             }
@@ -102,17 +103,17 @@ export async function GET(request: NextRequest) {
     })
 
     // Calculate overview metrics
-    const totalWorkload = teamMembers.reduce((sum, member) => 
-      sum + member.timeEntries.reduce((timeSum, entry) => timeSum + entry.duration, 0), 0
+    const totalWorkload = teamMembers.reduce((sum, member) =>
+      sum + member.timeEntries.reduce((timeSum, entry) => timeSum + entry.hours, 0), 0
     )
 
     const memberWorkloads = teamMembers.map(member => {
-      const weeklyHours = member.timeEntries.reduce((sum, entry) => sum + entry.duration, 0) / 3600
+      const weeklyHours = member.timeEntries.reduce((sum, entry) => sum + entry.hours, 0)
       const contractHours = 40 // Mock - in real app get from user profile
       return weeklyHours / contractHours * 100
     })
 
-    const averageWorkload = memberWorkloads.length > 0 ? 
+    const averageWorkload = memberWorkloads.length > 0 ?
       memberWorkloads.reduce((sum, w) => sum + w, 0) / memberWorkloads.length : 0
 
     const overloadedMembers = memberWorkloads.filter(w => w > 100).length
@@ -120,7 +121,7 @@ export async function GET(request: NextRequest) {
 
     // Determine burnout risk level
     const highRiskMembers = memberWorkloads.filter(w => w > 120).length
-    const burnoutRiskLevel = highRiskMembers > 0 ? "high" : 
+    const burnoutRiskLevel = highRiskMembers > 0 ? "high" :
                            overloadedMembers > teamMembers.length / 2 ? "medium" : "low"
 
     const teamCapacityUtilization = Math.round(averageWorkload)
@@ -128,8 +129,8 @@ export async function GET(request: NextRequest) {
       (Math.max(...memberWorkloads) - Math.min(...memberWorkloads)) / 100 * 100
     ))
     const efficiencyScore = Math.round(teamMembers.reduce((sum, member) => {
-      const tasksCompleted = member.tasks.filter(t => t.status?.name === "Done").length
-      const totalTasks = member.tasks.length
+      const tasksCompleted = member.assignedTasks.filter(t => t.taskStatus?.name === "Done").length
+      const totalTasks = member.assignedTasks.length
       return sum + (totalTasks > 0 ? (tasksCompleted / totalTasks) * 100 : 0)
     }, 0) / Math.max(1, teamMembers.length))
 
@@ -139,24 +140,24 @@ export async function GET(request: NextRequest) {
       const optimalHours = contractHours * 0.85 // 85% utilization is optimal
       const maxHours = contractHours * 1.2 // 20% overtime max
 
-      const hoursWorked = member.timeEntries.reduce((sum, entry) => sum + entry.duration, 0) / 3600
-      const hoursAllocated = member.tasks.reduce((sum, task) => 
+      const hoursWorked = member.timeEntries.reduce((sum, entry) => sum + entry.hours, 0)
+      const hoursAllocated = member.assignedTasks.reduce((sum, task) =>
         sum + (task.estimatedHours || 0), 0
       )
 
-      const tasksAssigned = member.tasks.length
-      const tasksInProgress = member.tasks.filter(t => 
-        t.status?.name === "In Progress" || t.status?.name === "To Do"
+      const tasksAssigned = member.assignedTasks.length
+      const tasksInProgress = member.assignedTasks.filter(t =>
+        t.taskStatus?.name === "In Progress" || t.taskStatus?.name === "To Do"
       ).length
 
       const utilizationRate = Math.round((hoursWorked / contractHours) * 100)
-      const efficiencyScore = tasksAssigned > 0 ? 
-        Math.round((member.tasks.filter(t => t.status?.name === "Done").length / tasksAssigned) * 100) : 0
+      const efficiencyScore = tasksAssigned > 0 ?
+        Math.round((member.assignedTasks.filter(t => t.taskStatus?.name === "Done").length / tasksAssigned) * 100) : 0
 
       // Calculate burnout indicators
       const overtimeHours = Math.max(0, hoursWorked - contractHours)
       const consecutiveHighWorkloadDays = Math.round(Math.random() * 7) // Mock
-      
+
       const stressSignals = []
       if (overtimeHours > 10) {
         stressSignals.push({
@@ -188,14 +189,14 @@ export async function GET(request: NextRequest) {
       const dailyHours = dateRange.map(date => {
         const dayStart = startOfDay(date)
         const dayEnd = endOfDay(date)
-        
+
         const dayEntries = member.timeEntries.filter(entry =>
-          entry.createdAt >= dayStart && entry.createdAt <= dayEnd
+          entry.date >= dayStart && entry.date <= dayEnd
         )
-        
-        const hours = dayEntries.reduce((sum, entry) => sum + entry.duration, 0) / 3600
+
+        const hours = dayEntries.reduce((sum, entry) => sum + entry.hours, 0)
         const planned = 8 // Mock planned hours per day
-        
+
         return {
           date: format(date, 'yyyy-MM-dd'),
           hours,
@@ -207,13 +208,13 @@ export async function GET(request: NextRequest) {
       const weeklyWorkload = weeks.map(week => {
         const weekStart = startOfWeek(week)
         const weekEnd = endOfWeek(week)
-        
+
         const weekEntries = member.timeEntries.filter(entry =>
-          entry.createdAt >= weekStart && entry.createdAt <= weekEnd
+          entry.date >= weekStart && entry.date <= weekEnd
         )
-        
-        const workload = weekEntries.reduce((sum, entry) => sum + entry.duration, 0) / 3600
-        
+
+        const workload = weekEntries.reduce((sum, entry) => sum + entry.hours, 0)
+
         return {
           week: format(week, 'yyyy-MM-dd'),
           workload,
@@ -227,7 +228,7 @@ export async function GET(request: NextRequest) {
       }))
 
       // Upcoming deadlines
-      const upcomingDeadlines = member.tasks
+      const upcomingDeadlines = member.assignedTasks
         .filter(task => task.dueDate && new Date(task.dueDate) > new Date())
         .slice(0, 5)
         .map(task => ({
@@ -287,11 +288,11 @@ export async function GET(request: NextRequest) {
 
       const dayEntries = teamMembers.flatMap(member =>
         member.timeEntries.filter(entry =>
-          entry.createdAt >= dayStart && entry.createdAt <= dayEnd
+          entry.date >= dayStart && entry.date <= dayEnd
         )
       )
 
-      const totalHours = dayEntries.reduce((sum, entry) => sum + entry.duration, 0) / 3600
+      const totalHours = dayEntries.reduce((sum, entry) => sum + entry.hours, 0)
       const plannedHours = teamMembers.length * 8 // 8 hours per person
       const actualHours = totalHours
       const utilizationRate = plannedHours > 0 ? Math.round((actualHours / plannedHours) * 100) : 0
@@ -334,14 +335,14 @@ export async function GET(request: NextRequest) {
 
     const projectWorkload = projects.map(project => {
       const totalHours = project.tasks.reduce((sum, task) =>
-        sum + task.timeEntries.reduce((timeSum, entry) => timeSum + entry.duration, 0), 0
-      ) / 3600
+        sum + task.timeEntries.reduce((timeSum, entry) => timeSum + entry.hours, 0), 0
+      )
 
       const teamMembersCount = project.team.members.length
       const averageWorkload = teamMembersCount > 0 ? totalHours / teamMembersCount : 0
-      
+
       // Mock deadline stress calculation
-      const upcomingDeadlines = project.tasks.filter(task => 
+      const upcomingDeadlines = project.tasks.filter(task =>
         task.dueDate && new Date(task.dueDate) <= addDays(new Date(), 14)
       ).length
       const deadlineStress = Math.min(100, upcomingDeadlines * 10)
@@ -360,7 +361,7 @@ export async function GET(request: NextRequest) {
     const nextWeekWorkload = memberWorkload.map(member => {
       const currentUtilization = member.currentWorkload.utilizationRate
       const trend = member.trends.weeklyWorkload.slice(-2)
-      
+
       let predictedHours = member.currentWorkload.hoursWorked
       if (trend.length === 2) {
         const weeklyChange = trend[1].workload - trend[0].workload
@@ -397,7 +398,7 @@ export async function GET(request: NextRequest) {
     const burnoutRisk = memberWorkload.map(member => {
       const currentRisk = member.burnoutIndicators.riskLevel === "high" ? 80 :
                          member.burnoutIndicators.riskLevel === "medium" ? 50 : 20
-      
+
       const utilizationTrend = member.currentWorkload.utilizationRate > 100 ? 10 : -5
       const projectedRisk = Math.min(100, Math.max(0, currentRisk + utilizationTrend))
 

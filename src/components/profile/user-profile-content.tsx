@@ -9,6 +9,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {  LoadingCard } from "@/components/ui/loading-skeleton"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { toast } from "sonner"
 import {
   MapPin,
   Briefcase,
@@ -19,10 +21,26 @@ import {
   MessageSquare,
   Users,
   TrendingUp,
-  ArrowLeft
+  ArrowLeft,
+  Settings,
+  Link,
+  Unlink
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { usePageHeader } from "@/contexts/header-context"
+
+interface SlackUser {
+  id: string
+  name: string
+  real_name?: string
+  profile?: {
+    image_24?: string
+    image_32?: string
+    image_48?: string
+    image_72?: string
+    display_name?: string
+  }
+}
 
 interface UserProfile {
   id: string
@@ -34,6 +52,7 @@ interface UserProfile {
   jobTitle: string | null
   company: string | null
   website: string | null
+  slackUserId: string | null
   createdAt: string
   teams: Array<{
     id: string
@@ -109,6 +128,8 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [slackUsers, setSlackUsers] = useState<SlackUser[]>([])
+  const [connectingSlack, setConnectingSlack] = useState(false)
 
   const isOwnProfile = session?.user?.id === userId
 
@@ -194,6 +215,80 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
       case 'Medium': return 'bg-yellow-100 text-yellow-800'
       case 'Low': return 'bg-green-100 text-green-800'
       default: return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  const fetchSlackUsers = async () => {
+    try {
+      const response = await fetch('/api/slack/users')
+      if (response.ok) {
+        const data = await response.json()
+        setSlackUsers(data.users || [])
+      } else {
+        const error = await response.json()
+        toast.error(error.message || "Błąd podczas pobierania użytkowników Slack")
+      }
+    } catch (error) {
+      console.error("Error fetching Slack users:", error)
+      toast.error("Błąd podczas łączenia ze Slack")
+    }
+  }
+
+  const connectSlackAccount = async (slackUserId: string) => {
+    setConnectingSlack(true)
+    try {
+      const response = await fetch(`/api/users/${userId}/slack-connection`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ slackUserId }),
+      })
+
+      if (response.ok) {
+        toast.success("Konto Slack zostało połączone")
+        // Refresh user profile
+        const profileResponse = await fetch(`/api/users/${userId}`)
+        if (profileResponse.ok) {
+          const profile = await profileResponse.json()
+          setUserProfile(profile)
+        }
+      } else {
+        const error = await response.json()
+        toast.error(error.message || "Błąd podczas łączenia konta Slack")
+      }
+    } catch (error) {
+      console.error("Error connecting Slack account:", error)
+      toast.error("Błąd podczas łączenia konta Slack")
+    } finally {
+      setConnectingSlack(false)
+    }
+  }
+
+  const disconnectSlackAccount = async () => {
+    setConnectingSlack(true)
+    try {
+      const response = await fetch(`/api/users/${userId}/slack-connection`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        toast.success("Konto Slack zostało odłączone")
+        // Refresh user profile
+        const profileResponse = await fetch(`/api/users/${userId}`)
+        if (profileResponse.ok) {
+          const profile = await profileResponse.json()
+          setUserProfile(profile)
+        }
+      } else {
+        const error = await response.json()
+        toast.error(error.message || "Błąd podczas odłączania konta Slack")
+      }
+    } catch (error) {
+      console.error("Error disconnecting Slack account:", error)
+      toast.error("Błąd podczas odłączania konta Slack")
+    } finally {
+      setConnectingSlack(false)
     }
   }
 
@@ -365,6 +460,7 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
                 <TabsTrigger value="teams">Zespoły</TabsTrigger>
                 <TabsTrigger value="activity">Aktywność</TabsTrigger>
                 <TabsTrigger value="time">Czas pracy</TabsTrigger>
+                {isOwnProfile && <TabsTrigger value="settings">Ustawienia</TabsTrigger>}
               </TabsList>
 
               <TabsContent value="tasks" className="space-y-4">
@@ -520,6 +616,108 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
                   </CardContent>
                 </Card>
               </TabsContent>
+
+              {isOwnProfile && (
+                <TabsContent value="settings" className="space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Settings className="h-5 w-5" />
+                        Integracje
+                      </CardTitle>
+                      <CardDescription>
+                        Zarządzaj połączeniami z zewnętrznymi usługami
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      {/* Slack Integration */}
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-purple-100 rounded-lg">
+                              <svg className="h-6 w-6 text-purple-600" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M6.527 10.211c0 1.06-.862 1.923-1.922 1.923S2.683 11.27 2.683 10.21c0-1.06.862-1.922 1.922-1.922s1.922.862 1.922 1.922zm8.45-.001c0 1.06-.862 1.923-1.922 1.923s-1.922-.862-1.922-1.922c0-1.06.862-1.922 1.922-1.922s1.922.862 1.922 1.922zm-4.225 4.226c0 1.06-.862 1.922-1.922 1.922s-1.922-.862-1.922-1.922c0-1.06.862-1.922 1.922-1.922s1.922.862 1.922 1.922z"/>
+                              </svg>
+                            </div>
+                            <div>
+                              <h3 className="font-medium">Slack</h3>
+                              <p className="text-sm text-muted-foreground">
+                                {userProfile.slackUserId 
+                                  ? "Połączone z kontem Slack" 
+                                  : "Połącz z kontem Slack aby otrzymywać powiadomienia"
+                                }
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {userProfile.slackUserId ? (
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="text-green-600 border-green-600">
+                                  <Link className="h-3 w-3 mr-1" />
+                                  Połączone
+                                </Badge>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={disconnectSlackAccount}
+                                  disabled={connectingSlack}
+                                >
+                                  {connectingSlack ? (
+                                    <>
+                                      <Clock className="h-4 w-4 mr-2 animate-spin" />
+                                      Odłączanie...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Unlink className="h-4 w-4 mr-2" />
+                                      Odłącz
+                                    </>
+                                  )}
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <Select onValueChange={connectSlackAccount}>
+                                  <SelectTrigger className="w-48">
+                                    <SelectValue placeholder="Wybierz konto Slack..." />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {slackUsers.map((user) => (
+                                      <SelectItem key={user.id} value={user.id}>
+                                        <div className="flex items-center space-x-2">
+                                          <Avatar className="h-5 w-5">
+                                            <AvatarImage src={user.profile?.image_32} />
+                                            <AvatarFallback className="text-xs">
+                                              {(user.profile?.display_name || user.real_name || user.name).charAt(0).toUpperCase()}
+                                            </AvatarFallback>
+                                          </Avatar>
+                                          <span>{user.profile?.display_name || user.real_name || user.name}</span>
+                                        </div>
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={fetchSlackUsers}
+                                  disabled={connectingSlack}
+                                >
+                                  {connectingSlack ? (
+                                    <Clock className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    "Załaduj"
+                                  )}
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              )}
             </Tabs>
     </div>
   )

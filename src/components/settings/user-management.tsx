@@ -36,6 +36,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { useSession } from "next-auth/react"
+import { Session } from "next-auth"
 import {
   Users,
   Search,
@@ -81,7 +82,7 @@ interface PaginationData {
 }
 
 export function UserManagement() {
-  const { data: session } = useSession()
+  const { data: session } = useSession() as { data: Session | null }
   const [users, setUsers] = useState<UserData[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
@@ -310,7 +311,7 @@ export function UserManagement() {
                           variant="outline"
                           size="sm"
                           onClick={() => setUserToDelete(user)}
-                          disabled={user.id === session?.user?.id}
+                          disabled={user.id === (session?.user as Session['user'])?.id}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -421,7 +422,7 @@ export function UserManagement() {
                   <Select
                     value={editForm.role}
                     onValueChange={(value) => setEditForm(prev => ({ ...prev, role: value }))}
-                    disabled={editingUser?.id === session?.user?.id}
+                    disabled={editingUser?.id === (session?.user as Session['user'])?.id}
                   >
                     <SelectTrigger>
                       <SelectValue />

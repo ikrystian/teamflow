@@ -14,6 +14,12 @@ const eslintConfig = [
     ignores: [".next/**"],
   },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
+  {
+    files: ["src/lib/auth.ts"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
 ];
 
 export default eslintConfig;

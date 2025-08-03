@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -15,8 +15,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  LineChart,
-  Line,
   RadarChart,
   PolarGrid,
   PolarAngleAxis,
@@ -24,9 +22,6 @@ import {
   Radar,
   ScatterChart,
   Scatter,
-  ComposedChart,
-  Area,
-  AreaChart
 } from "recharts"
 import {
   Users,
@@ -34,12 +29,10 @@ import {
   TrendingDown,
   Award,
   Target,
-  Clock,
   CheckSquare,
   AlertCircle,
   Star,
   Zap,
-  Activity
 } from "lucide-react"
 import { format } from "date-fns"
 import { pl } from "date-fns/locale"
@@ -130,7 +123,7 @@ export interface TeamPerformanceData {
 
 const PERFORMANCE_COLORS = {
   excellent: '#10B981',
-  good: '#3B82F6', 
+  good: '#3B82F6',
   average: '#F59E0B',
   poor: '#EF4444'
 }
@@ -150,10 +143,10 @@ export function TeamPerformanceReport({ filters, onDataLoaded }: TeamPerformance
   const [selectedMember, setSelectedMember] = useState<string>("")
   const [comparisonPeriod, setComparisonPeriod] = useState<"1m" | "3m" | "6m">("3m")
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true)
     setError(null)
-    
+
     try {
       const queryParams = new URLSearchParams({
         ...filters,
@@ -162,7 +155,7 @@ export function TeamPerformanceReport({ filters, onDataLoaded }: TeamPerformance
       })
 
       const response = await fetch(`/api/reports/team-performance?${queryParams}`)
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch team performance data')
       }
@@ -175,11 +168,11 @@ export function TeamPerformanceReport({ filters, onDataLoaded }: TeamPerformance
     } finally {
       setLoading(false)
     }
-  }
+  }, [filters, comparisonPeriod, onDataLoaded])
 
   useEffect(() => {
     fetchData()
-  }, [filters, comparisonPeriod])
+  }, [filters, comparisonPeriod, fetchData])
 
   if (loading) {
     return (
@@ -222,7 +215,7 @@ export function TeamPerformanceReport({ filters, onDataLoaded }: TeamPerformance
     return 'Wymaga poprawy'
   }
 
-  const selectedMemberData = selectedMember 
+  const selectedMemberData = selectedMember
     ? data.memberPerformance.find(m => m.user.id === selectedMember)
     : null
 
@@ -448,7 +441,7 @@ export function TeamPerformanceReport({ filters, onDataLoaded }: TeamPerformance
                         <td className="text-right p-2">
                           {member.trends.productivityTrend.length > 1 && (
                             <div className="flex items-center justify-end">
-                              {member.trends.productivityTrend[member.trends.productivityTrend.length - 1].score > 
+                              {member.trends.productivityTrend[member.trends.productivityTrend.length - 1].score >
                                member.trends.productivityTrend[0].score ? (
                                 <TrendingUp className="h-4 w-4 text-green-500" />
                               ) : (
@@ -483,7 +476,7 @@ export function TeamPerformanceReport({ filters, onDataLoaded }: TeamPerformance
                         <div key={member.userId} className="flex items-center justify-between p-3 border rounded-lg">
                           <span className="text-sm">{member.userName}</span>
                           <div className="flex items-center gap-2">
-                            <Badge 
+                            <Badge
                               style={{ backgroundColor: SKILL_LEVELS[member.proficiency as keyof typeof SKILL_LEVELS]?.color }}
                             >
                               {SKILL_LEVELS[member.proficiency as keyof typeof SKILL_LEVELS]?.label}
@@ -544,7 +537,7 @@ export function TeamPerformanceReport({ filters, onDataLoaded }: TeamPerformance
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="currentLoad" name="Obecne obciążenie" />
                   <YAxis dataKey="efficiency" name="Efektywność" />
-                  <Tooltip 
+                  <Tooltip
                     cursor={{ strokeDasharray: '3 3' }}
                     content={({ active, payload }) => {
                       if (active && payload && payload[0]) {
@@ -617,17 +610,17 @@ export function TeamPerformanceReport({ filters, onDataLoaded }: TeamPerformance
                 {data.milestones.map((milestone, index) => (
                   <div key={index} className="flex items-start gap-4 p-4 border rounded-lg">
                     <Award className={`h-6 w-6 mt-1 ${
-                      milestone.impact === 'high' ? 'text-green-500' : 
+                      milestone.impact === 'high' ? 'text-green-500' :
                       milestone.impact === 'medium' ? 'text-yellow-500' : 'text-blue-500'
                     }`} />
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
                         <h4 className="font-medium">{milestone.achievement}</h4>
                         <Badge variant={
-                          milestone.impact === 'high' ? 'default' : 
+                          milestone.impact === 'high' ? 'default' :
                           milestone.impact === 'medium' ? 'secondary' : 'outline'
                         }>
-                          {milestone.impact === 'high' ? 'Wysoki wpływ' : 
+                          {milestone.impact === 'high' ? 'Wysoki wpływ' :
                            milestone.impact === 'medium' ? 'Średni wpływ' : 'Niski wpływ'}
                         </Badge>
                       </div>

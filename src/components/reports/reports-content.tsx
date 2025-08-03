@@ -17,11 +17,7 @@ import {
   FileText,
   BarChart3,
   Users,
-  Activity,
-  Target,
-  PieChart,
-  LineChart,
-  Zap
+  Activity
 } from "lucide-react"
 import { TimeTrackingReport, type TimeTrackingData } from "./time-tracking-report"
 import { ProjectProgressReport, type ProjectProgressData } from "./project-progress-report"

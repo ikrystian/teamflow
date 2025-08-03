@@ -30,6 +30,7 @@ export async function GET(
         jobTitle: true,
         company: true,
         website: true,
+        slackUserId: session.user.id === userId, // Only include slackUserId for own profile
         createdAt: true,
         // Don't include phone for privacy
         teams: {

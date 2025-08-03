@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -18,14 +18,11 @@ import {
   Cell,
   LineChart,
   Line,
-  Area,
-  AreaChart,
   ComposedChart
 } from "recharts"
 import {
   Activity,
   TrendingUp,
-  TrendingDown,
   Users,
   FolderOpen,
   CheckSquare,
@@ -35,7 +32,7 @@ import {
   Calendar,
   Zap
 } from "lucide-react"
-import { format, subDays, startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns"
+import { format} from "date-fns"
 import { pl } from "date-fns/locale"
 
 interface DashboardOverviewReportProps {
@@ -101,25 +98,16 @@ export interface DashboardOverviewData {
   }>
 }
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D']
-const STATUS_COLORS = {
-  'To Do': '#64748B',
-  'In Progress': '#F59E0B',
-  'Done': '#10B981',  
-  'Blocked': '#EF4444',
-  'Review': '#8B5CF6'
-}
-
 export function DashboardOverviewReport({ filters, onDataLoaded }: DashboardOverviewReportProps) {
   const [data, setData] = useState<DashboardOverviewData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [timeframe, setTimeframe] = useState<"7d" | "30d" | "90d">("30d")
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true)
     setError(null)
-    
+
     try {
       const queryParams = new URLSearchParams({
         ...filters,
@@ -128,7 +116,7 @@ export function DashboardOverviewReport({ filters, onDataLoaded }: DashboardOver
       })
 
       const response = await fetch(`/api/reports/dashboard-overview?${queryParams}`)
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch dashboard overview data')
       }
@@ -141,11 +129,11 @@ export function DashboardOverviewReport({ filters, onDataLoaded }: DashboardOver
     } finally {
       setLoading(false)
     }
-  }
+  }, [filters, timeframe, onDataLoaded])
 
   useEffect(() => {
     fetchData()
-  }, [filters, timeframe])
+  }, [filters, timeframe, fetchData])
 
   if (loading) {
     return (
@@ -179,15 +167,10 @@ export function DashboardOverviewReport({ filters, onDataLoaded }: DashboardOver
 
   if (!data) return null
 
-  const { kpis, trends, projectDistribution, userPerformance, taskStatusDistribution, priorityDistribution, burndownData } = data
+  const { kpis, trends, projectDistribution, userPerformance, taskStatusDistribution, burndownData } = data
 
   const formatHours = (hours: number) => {
     return `${hours.toFixed(1)}h`
-  }
-
-  const getPercentageChange = (current: number, previous: number) => {
-    if (previous === 0) return current > 0 ? 100 : 0
-    return ((current - previous) / previous) * 100
   }
 
   return (
@@ -353,7 +336,7 @@ export function DashboardOverviewReport({ filters, onDataLoaded }: DashboardOver
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" tickFormatter={(value) => format(new Date(value), 'dd/MM')} />
                 <YAxis />
-                <Tooltip 
+                <Tooltip
                   labelFormatter={(value) => format(new Date(value), 'dd MMMM yyyy', { locale: pl })}
                   formatter={(value: number, name: string) => [
                     value,
@@ -413,7 +396,7 @@ export function DashboardOverviewReport({ filters, onDataLoaded }: DashboardOver
                 <XAxis dataKey="date" tickFormatter={(value) => format(new Date(value), 'dd/MM')} />
                 <YAxis yAxisId="left" />
                 <YAxis yAxisId="right" orientation="right" />
-                <Tooltip 
+                <Tooltip
                   labelFormatter={(value) => format(new Date(value), 'dd MMMM yyyy', { locale: pl })}
                 />
                 <Bar yAxisId="left" dataKey="score" fill="#3B82F6" name="Wydajność %" />
