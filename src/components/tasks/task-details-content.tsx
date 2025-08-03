@@ -459,7 +459,7 @@ export function TaskDetailsContent({
             )
           })()}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mb-2">
           {onTimeTracking && (
             <Button
               variant="outline"

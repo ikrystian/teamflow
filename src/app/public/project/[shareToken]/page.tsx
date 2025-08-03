@@ -7,21 +7,19 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
-import { 
-  Zap, 
-  LayoutGrid, 
-  Calendar as CalendarIcon, 
-  Users, 
+import {
+  Zap,
+  LayoutGrid,
+  Calendar as CalendarIcon,
+  Users,
   Clock,
   AlertCircle,
-  Eye,
-  ExternalLink
+  Eye
 } from "lucide-react"
 import { ReadOnlyKanbanBoard } from "@/components/public/read-only-kanban-board"
 import { ReadOnlyTaskCalendar } from "@/components/public/read-only-task-calendar"
 import { ReadOnlyTaskDetails } from "@/components/public/read-only-task-details"
 import type { Task, TaskStatus } from "@/types"
-import { toast } from "sonner"
 
 interface ProjectData {
   project: {
@@ -45,7 +43,7 @@ interface ProjectData {
 export default function PublicProjectPage() {
   const params = useParams()
   const shareToken = params.shareToken as string
-  
+
   const [projectData, setProjectData] = useState<ProjectData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -57,7 +55,7 @@ export default function PublicProjectPage() {
       try {
         setLoading(true)
         const response = await fetch(`/api/public/projects/${shareToken}`)
-        
+
         if (!response.ok) {
           if (response.status === 404) {
             setError("Projekt nie został znaleziony lub udostępnianie zostało wyłączone.")
@@ -126,14 +124,14 @@ export default function PublicProjectPage() {
 
   // Calculate project statistics
   const totalTasks = tasks.length
-  const completedTasks = tasks.filter(task => 
-    task.taskStatus?.name.toLowerCase().includes('done') || 
+  const completedTasks = tasks.filter(task =>
+    task.taskStatus?.name.toLowerCase().includes('done') ||
     task.taskStatus?.name.toLowerCase().includes('completed')
   ).length
   const tasksWithDueDate = tasks.filter(task => task.dueDate).length
   const overdueTasks = tasks.filter(task => {
     if (!task.dueDate) return false
-    return new Date(task.dueDate) < new Date() && 
+    return new Date(task.dueDate) < new Date() &&
            !task.taskStatus?.name.toLowerCase().includes('done') &&
            !task.taskStatus?.name.toLowerCase().includes('completed')
   }).length
@@ -154,7 +152,7 @@ export default function PublicProjectPage() {
               <Separator orientation="vertical" className="h-6" />
               <div className="flex items-center gap-2">
                 {project.icon && (
-                  <div 
+                  <div
                     className="w-6 h-6 rounded flex items-center justify-center text-white text-sm"
                     style={{ backgroundColor: project.color }}
                   >
@@ -191,7 +189,7 @@ export default function PublicProjectPage() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
@@ -203,7 +201,7 @@ export default function PublicProjectPage() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
@@ -215,7 +213,7 @@ export default function PublicProjectPage() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">

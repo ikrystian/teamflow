@@ -8,9 +8,7 @@ import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
 import {
   Calendar,
-  User as UserIcon,
   Clock,
-  AlertCircle,
   CheckCircle2,
   FileText,
   Paperclip,

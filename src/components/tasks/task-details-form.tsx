@@ -9,7 +9,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { CalendarIcon, Check, X, Edit3 } from "lucide-react"
+import { CalendarIcon, Check, X } from "lucide-react"
 import { format } from "date-fns"
 import { pl } from "date-fns/locale"
 import { cn } from "@/lib/utils"
@@ -63,7 +63,7 @@ export function TaskDetailsForm({
 
     try {
       const updates: TaskUpdateData = {}
-      
+
       // Only include changed fields
       if (formData.assigneeId !== (task.assignee?.id || "")) {
         updates.assigneeId = formData.assigneeId || undefined
@@ -174,9 +174,9 @@ export function TaskDetailsForm({
               mode="single"
               selected={selectedDate}
               onSelect={(date) => {
-                setFormData(prev => ({ 
-                  ...prev, 
-                  dueDate: date ? date.toISOString().split('T')[0] : "" 
+                setFormData(prev => ({
+                  ...prev,
+                  dueDate: date ? date.toISOString().split('T')[0] : ""
                 }))
                 setIsCalendarOpen(false)
               }}

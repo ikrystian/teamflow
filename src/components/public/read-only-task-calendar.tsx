@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, User, Eye } from "lucide-react"
+import { ChevronLeft, ChevronRight, Clock, User, Eye } from "lucide-react"
 import type { Task } from "@/types"
 import { formatAssignee, getPriorityColor } from "@/lib/task-format-utils"
 
