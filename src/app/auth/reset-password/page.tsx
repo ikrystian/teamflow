@@ -19,7 +19,6 @@ function ResetPasswordContent() {
   const [isPasswordReset, setIsPasswordReset] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get("token")
 

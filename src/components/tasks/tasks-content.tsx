@@ -43,6 +43,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
+import Link from "next/link"
 
 interface Project {
   id: string
@@ -577,7 +578,7 @@ export function TasksContent() {
                     Organizuj zadania w ramach projektów zespołowych. Każdy projekt może mieć własną tablicę zadań i kalendarz.
                   </p>
                   <Button variant="link" size="sm" className="p-0 h-auto text-blue-600" asChild>
-                    <a href="/dashboard/projects">Przejdź do projektów →</a>
+                    <Link href="/dashboard/projects">Przejdź do projektów →</Link>
                   </Button>
                 </div>
                 <div>

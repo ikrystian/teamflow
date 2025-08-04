@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
+import {  NextResponse } from "next/server"
 import { getAdminSession } from "@/lib/admin"
 
 // GET /api/admin/smtp-settings - Pobierz ustawienia SMTP z .env (admin only)
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getAdminSession()
 

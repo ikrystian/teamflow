@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server"
+import {  NextResponse } from "next/server"
 import { getAdminSession } from "@/lib/admin"
 import { testSMTPConnection } from "@/lib/email"
 
 // POST /api/admin/smtp-settings/test - Testuj połączenie SMTP (admin only)
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     const session = await getAdminSession()
 

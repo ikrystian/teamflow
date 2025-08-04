@@ -165,7 +165,6 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { taskId } = await params
     const { searchParams } = new URL(request.url)
     const attachmentId = searchParams.get('attachmentId')
 

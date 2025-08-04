@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
+import {  NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
 
     for (const userChatRoom of userChatRooms) {
       const { chatRoom, lastReadAt } = userChatRoom
-      
+
       // Count unread messages
       const unreadCount = await prisma.message.count({
         where: {
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
 
       if (unreadCount > 0 && chatRoom.messages.length > 0) {
         const lastMessage = chatRoom.messages[0]
-        
+
         // Get chat room display name
         let chatRoomName = chatRoom.name
         if (chatRoom.type === 'direct') {
