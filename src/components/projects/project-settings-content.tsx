@@ -105,6 +105,20 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
     setLoading(false)
   }, [projectId, fetchProject])
 
+  // Share settings functions
+  const loadShareSettings = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}/share`)
+      if (response.ok) {
+        const data = await response.json()
+        setShareToken(data.shareToken)
+        setShareUrl(data.shareUrl)
+      }
+    } catch (error) {
+      console.error('Error loading share settings:', error)
+    }
+  }, [projectId])
+
   useEffect(() => {
     if (project) {
       // Parse credentials from JSON if exists
@@ -132,21 +146,7 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
       // Load share settings
       loadShareSettings()
     }
-  }, [project])
-
-  // Share settings functions
-  const loadShareSettings = async () => {
-    try {
-      const response = await fetch(`/api/projects/${projectId}/share`)
-      if (response.ok) {
-        const data = await response.json()
-        setShareToken(data.shareToken)
-        setShareUrl(data.shareUrl)
-      }
-    } catch (error) {
-      console.error('Error loading share settings:', error)
-    }
-  }
+  }, [project, loadShareSettings])
 
   const generateShareLink = async () => {
     setGeneratingShare(true)

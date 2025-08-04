@@ -530,7 +530,7 @@ export async function main() {
   ]
 
   // Tworzenie wszystkich zadań
-  const createdTasks = {}
+  const createdTasks: Record<string, any> = {}
   for (const taskData of tasks) {
     console.log(`Tworzenie zadania: ${taskData.title}, assigneeId: ${taskData.assigneeId}, createdById: ${taskData.createdById}`)
     const { id, ...createData } = taskData

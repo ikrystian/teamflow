@@ -157,7 +157,7 @@ export async function POST(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ taskId: string }> }
+  {  }: { params: Promise<{ taskId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)

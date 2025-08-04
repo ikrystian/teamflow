@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -255,9 +255,9 @@ export function SettingsContent() {
   }
 
   // Available tabs based on user role
-  const availableTabs = isAdmin
+  const availableTabs = useMemo(() => isAdmin
     ? ['profile', 'security', 'notifications', 'privacy', 'appearance', 'task-statuses', 'smtp', 'users']
-    : ['profile', 'security', 'notifications', 'privacy', 'appearance', 'task-statuses']
+    : ['profile', 'security', 'notifications', 'privacy', 'appearance', 'task-statuses'], [isAdmin])
 
   // Validate current tab and redirect if invalid
   useEffect(() => {

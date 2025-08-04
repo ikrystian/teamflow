@@ -18,7 +18,7 @@ import {
 } from "lucide-react"
 import type { Task } from "@/types"
 import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
-import { getPriorityColor, getPriorityDisplayName, formatAssignee } from "@/lib/task-format-utils"
+import { getPriorityColor, getPriorityDisplayName } from "@/lib/task-format-utils"
 
 interface ReadOnlyTaskDetailsProps {
   open: boolean

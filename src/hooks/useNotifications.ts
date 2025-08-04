@@ -34,6 +34,7 @@ interface UseNotificationsReturn extends NotificationState {
 export function useNotifications(): UseNotificationsReturn {
   const { data: session } = useSession()
   const { socket, isConnected } = useSocket()
+  const userId = (session?.user as { id: string })?.id
 
   const [state, setState] = useState<NotificationState>({
     notifications: [],
@@ -44,7 +45,7 @@ export function useNotifications(): UseNotificationsReturn {
 
   // Fetch notifications from API
   const fetchNotifications = useCallback(async () => {
-    if (!(session?.user as { id: string })?.id) return
+    if (!userId) return
 
     setState(prev => ({ ...prev, isLoading: true, error: null }))
 
@@ -71,7 +72,7 @@ export function useNotifications(): UseNotificationsReturn {
         isLoading: false
       }))
     }
-  }, [(session?.user as { id: string })?.id])
+  }, [userId])
 
   // Mark specific chat room as read
   const markAsRead = useCallback(async (chatRoomId: string) => {
@@ -231,14 +232,14 @@ export function useNotifications(): UseNotificationsReturn {
 
   // Initial fetch on mount
   useEffect(() => {
-    if ((session?.user as { id: string })?.id) {
+    if (userId) {
       fetchNotifications()
     }
-  }, [(session?.user as { id: string })?.id, fetchNotifications])
+  }, [userId, fetchNotifications])
 
   // Socket listeners for real-time updates
   useEffect(() => {
-    if (!socket || !isConnected || !(session?.user as { id: string })?.id) return
+    if (!socket || !isConnected || !userId) return
 
     const handleNewMessage = (messageData: {
       senderId: string;
@@ -247,7 +248,7 @@ export function useNotifications(): UseNotificationsReturn {
       content: string
     }) => {
       // Only process if user is not the sender
-      if (messageData.senderId !== (session?.user as { id: string })?.id) {
+      if (messageData.senderId !== userId) {
         const isPageVisible = !document.hidden
 
         if (isPageVisible) {
@@ -274,12 +275,12 @@ export function useNotifications(): UseNotificationsReturn {
       socket.off('new-message', handleNewMessage)
       socket.off('new-chat-room', handleChatRoomCreated)
     }
-  }, [socket, isConnected, (session?.user as { id: string })?.id, updateNotificationForRoom, sendPushNotification, fetchNotifications])
+  }, [socket, isConnected, userId, updateNotificationForRoom, sendPushNotification, fetchNotifications])
 
   // Listen for page visibility changes to refresh notifications
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (!document.hidden && (session?.user as { id: string })?.id) {
+      if (!document.hidden && userId) {
         // Refresh notifications when user returns to the page
         fetchNotifications()
       }
@@ -290,7 +291,7 @@ export function useNotifications(): UseNotificationsReturn {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [fetchNotifications, (session?.user as { id: string })?.id])
+  }, [fetchNotifications, userId])
 
   return {
     ...state,
