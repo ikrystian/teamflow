@@ -4,13 +4,13 @@ import bcrypt from 'bcryptjs'
 const prisma = new PrismaClient()
 
 export async function main() {
-  console.log('🌱 Seeding database with IT company data...')
+  console.log('🌱 Seedowanie bazy danych danymi firmy IT...')
 
-  // Create users with different roles and profiles for an IT company
+  // Tworzenie użytkowników z różnymi rolami i profilami dla firmy IT
   const hashedPassword = await bcrypt.hash('password123', 10)
   const adminPassword = await bcrypt.hash('admin123', 12)
 
-  // Admin user
+  // Użytkownik Admin
   const adminUser = await prisma.user.upsert({
     where: { email: 'admin@techsolutions.com' },
     update: {},
@@ -19,7 +19,7 @@ export async function main() {
       name: 'Anna Kowalska',
       password: adminPassword,
       role: 'admin',
-      jobTitle: 'CEO & Lead Architect',
+      jobTitle: 'CEO i Główny Architekt',
       company: 'TechSolutions Inc.',
       location: 'Warszawa, Polska',
       bio: 'Założycielka i główny architekt w TechSolutions, z pasją do innowacyjnych rozwiązań IT.',
@@ -27,8 +27,9 @@ export async function main() {
       website: 'https://techsolutions.com',
     },
   })
+  console.log(`Utworzono adminUser: ${adminUser.id} (${adminUser.email})`)
 
-  // Project Manager
+  // Menedżer Projektu
   const user1 = await prisma.user.upsert({
     where: { email: 'marek.nowak@techsolutions.com' },
     update: {},
@@ -37,15 +38,16 @@ export async function main() {
       name: 'Marek Nowak',
       password: hashedPassword,
       role: 'user',
-      jobTitle: 'Senior Project Manager',
+      jobTitle: 'Starszy Menedżer Projektu',
       company: 'TechSolutions Inc.',
       location: 'Kraków, Polska',
-      bio: 'Doświadczony Project Manager z sukcesami w prowadzeniu złożonych projektów software\'owych.',
+      bio: 'Doświadczony Menedżer Projektu z sukcesami w prowadzeniu złożonych projektów software\'owych.',
       phone: '+48 600 200 300',
     },
   })
+  console.log(`Utworzono user1: ${user1.id} (${user1.email})`)
 
-  // Senior Frontend Developer
+  // Starszy Programista Frontend
   const user2 = await prisma.user.upsert({
     where: { email: 'zofia.wisniewska@techsolutions.com' },
     update: {},
@@ -54,7 +56,7 @@ export async function main() {
       name: 'Zofia Wiśniewska',
       password: hashedPassword,
       role: 'user',
-      jobTitle: 'Senior Frontend Developer',
+      jobTitle: 'Starszy Programista Frontend',
       company: 'TechSolutions Inc.',
       location: 'Gdańsk, Polska',
       bio: 'Specjalistka od nowoczesnych technologii frontendowych i optymalizacji UX.',
@@ -62,8 +64,9 @@ export async function main() {
       website: 'https://zofia.dev',
     },
   })
+  console.log(`Utworzono user2: ${user2.id} (${user2.email})`)
 
-  // Senior Backend Developer
+  // Starszy Programista Backend
   const user3 = await prisma.user.upsert({
     where: { email: 'piotr.dabrowski@techsolutions.com' },
     update: {},
@@ -72,15 +75,16 @@ export async function main() {
       name: 'Piotr Dąbrowski',
       password: hashedPassword,
       role: 'user',
-      jobTitle: 'Senior Backend Developer',
+      jobTitle: 'Starszy Programista Backend',
       company: 'TechSolutions Inc.',
       location: 'Wrocław, Polska',
       bio: 'Architekt systemów backendowych, ekspert w skalowalnych rozwiązaniach chmurowych.',
       phone: '+48 800 400 500',
     },
   })
+  console.log(`Utworzono user3: ${user3.id} (${user3.email})`)
 
-  // QA Engineer
+  // Inżynier QA
   const user4 = await prisma.user.upsert({
     where: { email: 'katarzyna.zielinska@techsolutions.com' },
     update: {},
@@ -89,15 +93,16 @@ export async function main() {
       name: 'Katarzyna Zielińska',
       password: hashedPassword,
       role: 'user',
-      jobTitle: 'QA Engineer',
+      jobTitle: 'Inżynier QA',
       company: 'TechSolutions Inc.',
       location: 'Poznań, Polska',
       bio: 'Pasjonatka testowania oprogramowania, dbająca o najwyższą jakość produktów.',
       phone: '+48 900 500 600',
     },
   })
+  console.log(`Utworzono user4: ${user4.id} (${user4.email})`)
 
-  // DevOps Engineer
+  // Inżynier DevOps
   const user5 = await prisma.user.upsert({
     where: { email: 'tomasz.wojcik@techsolutions.com' },
     update: {},
@@ -106,7 +111,7 @@ export async function main() {
       name: 'Tomasz Wójcik',
       password: hashedPassword,
       role: 'user',
-      jobTitle: 'DevOps Engineer',
+      jobTitle: 'Inżynier DevOps',
       company: 'TechSolutions Inc.',
       location: 'Łódź, Polska',
       bio: 'Automatyzacja, infrastruktura jako kod i ciągłe dostarczanie to jego specjalność.',
@@ -114,14 +119,15 @@ export async function main() {
       website: 'https://tomasz-devops.com',
     },
   })
+  console.log(`Utworzono user5: ${user5.id} (${user5.email})`)
 
-  // Create teams for an IT company
+  // Tworzenie zespołów dla firmy IT
   const frontendTeam = await prisma.team.upsert({
     where: { id: 'team-frontend' },
     update: {},
     create: {
       id: 'team-frontend',
-      name: 'Frontend Development',
+      name: 'Zespół Rozwoju Frontend',
       members: {
         connect: [
           { id: adminUser.id },
@@ -138,7 +144,7 @@ export async function main() {
     update: {},
     create: {
       id: 'team-backend',
-      name: 'Backend Services',
+      name: 'Zespół Usług Backendowych',
       members: {
         connect: [
           { id: adminUser.id },
@@ -155,7 +161,7 @@ export async function main() {
     update: {},
     create: {
       id: 'team-devops',
-      name: 'DevOps & Cloud',
+      name: 'Zespół DevOps i Chmury',
       members: {
         connect: [
           { id: adminUser.id },
@@ -166,62 +172,37 @@ export async function main() {
     },
   })
 
-  // Create task statuses first - check if they exist to avoid conflicts
-  const existingStatuses = await prisma.taskStatus.findMany()
+  // Tworzenie statusów zadań - najpierw sprawdź, czy istnieją, aby uniknąć konfliktów
+  const statusData = [
+    { name: 'Backlog', color: '#6B7280', order: 0, isDefault: true },
+    { name: 'W Trakcie', color: '#3B82F6', order: 1, isDefault: false },
+    { name: 'Code Review', color: '#F59E0B', order: 2, isDefault: false },
+    { name: 'Testowanie', color: '#8B5CF6', order: 3, isDefault: false },
+    { name: 'Zakończone', color: '#10B981', order: 4, isDefault: false },
+    { name: 'Zablokowane', color: '#EF4444', order: 5, isDefault: false },
+  ]
+
   let taskStatuses = []
-
-  if (existingStatuses.length === 0) {
-    // Create default statuses if none exist
-    const statusData = [
-      { name: 'Backlog', color: '#6B7280', order: 0, isDefault: true },
-      { name: 'In Progress', color: '#3B82F6', order: 1, isDefault: false },
-      { name: 'Code Review', color: '#F59E0B', order: 2, isDefault: false },
-      { name: 'Testing', color: '#8B5CF6', order: 3, isDefault: false },
-      { name: 'Done', color: '#10B981', order: 4, isDefault: false },
-      { name: 'Blocked', color: '#EF4444', order: 5, isDefault: false },
-    ]
-
-    for (const status of statusData) {
-      const createdStatus = await prisma.taskStatus.create({ data: status })
-      taskStatuses.push(createdStatus)
-    }
-  } else {
-    // Use existing statuses
-    taskStatuses = existingStatuses.sort((a, b) => a.order - b.order)
-
-    // Ensure we have all required statuses
-    const requiredStatuses = ['Backlog', 'In Progress', 'Code Review', 'Testing', 'Done', 'Blocked']
-    for (const statusName of requiredStatuses) {
-      if (!taskStatuses.find(s => s.name === statusName)) {
-        const maxOrder = Math.max(...taskStatuses.map(s => s.order), -1)
-        const newStatus = await prisma.taskStatus.create({
-          data: {
-            name: statusName,
-            color: statusName === 'Backlog' ? '#6B7280' :
-                   statusName === 'In Progress' ? '#3B82F6' :
-                   statusName === 'Code Review' ? '#F59E0B' :
-                   statusName === 'Testing' ? '#8B5CF6' :
-                   statusName === 'Done' ? '#10B981' : '#EF4444',
-            order: maxOrder + 1,
-            isDefault: statusName === 'Backlog',
-          }
-        })
-        taskStatuses.push(newStatus)
-      }
-    }
-    taskStatuses.sort((a, b) => a.order - b.order)
+  for (const status of statusData) {
+    const upsertedStatus = await prisma.taskStatus.upsert({
+      where: { name: status.name },
+      update: { color: status.color, order: status.order, isDefault: status.isDefault },
+      create: status,
+    })
+    taskStatuses.push(upsertedStatus)
   }
+  taskStatuses.sort((a, b) => a.order - b.order)
 
-  // Create IT-focused projects
+  // Tworzenie projektów skoncentrowanych na IT
   const project1 = await prisma.project.upsert({
     where: { id: 'project-ecommerce' },
     update: {},
     create: {
       id: 'project-ecommerce',
-      name: 'E-commerce Platform Relaunch',
+      name: 'Przebudowa Platformy E-commerce',
       description: 'Kompleksowa przebudowa platformy e-commerce dla klienta detalicznego, z nowym UX/UI i skalowalnym backendem.',
-      readme: '# E-commerce Relaunch\n\nProjekt przebudowy platformy e-commerce...',
-      status: 'In Progress',
+      readme: '# Przebudowa E-commerce\n\nProjekt przebudowy platformy e-commerce...',
+      status: 'W Trakcie',
       color: '#3B82F6',
       icon: '🛒',
       repositoryUrl: 'https://github.com/techsolutions/ecommerce-platform',
@@ -240,10 +221,10 @@ export async function main() {
     update: {},
     create: {
       id: 'project-mobile-banking',
-      name: 'Mobile Banking App Development',
+      name: 'Rozwój Aplikacji Bankowości Mobilnej',
       description: 'Rozwój nowej aplikacji mobilnej dla banku, z naciskiem na bezpieczeństwo i intuicyjny interfejs.',
-      readme: '# Mobile Banking App\n\nAplikacja mobilna React Native dla sektora bankowego...',
-      status: 'Planning',
+      readme: '# Aplikacja Bankowości Mobilnej\n\nAplikacja mobilna React Native dla sektora bankowego...',
+      status: 'Planowanie',
       color: '#10B981',
       icon: '🏦',
       repositoryUrl: 'https://github.com/techsolutions/mobile-banking-app',
@@ -256,10 +237,10 @@ export async function main() {
     update: {},
     create: {
       id: 'project-ai-chatbot',
-      name: 'AI Chatbot Integration',
+      name: 'Integracja Chatbota AI',
       description: 'Integracja zaawansowanego chatbota opartego na AI z systemem obsługi klienta.',
-      readme: '# AI Chatbot\n\nProjekt integracji chatbota AI...',
-      status: 'In Progress',
+      readme: '# Chatbot AI\n\nProjekt integracji chatbota AI...',
+      status: 'W Trakcie',
       color: '#8B5CF6',
       icon: '🤖',
       repositoryUrl: 'https://github.com/techsolutions/ai-chatbot',
@@ -274,10 +255,10 @@ export async function main() {
     update: {},
     create: {
       id: 'project-cloud-migration',
-      name: 'Cloud Infrastructure Migration',
+      name: 'Migracja Infrastruktury do Chmury',
       description: 'Migracja istniejącej infrastruktury klienta do chmury AWS, z optymalizacją kosztów i wydajności.',
-      readme: '# Cloud Migration\n\nMigracja do AWS...',
-      status: 'Maintenance',
+      readme: '# Migracja do Chmury\n\nMigracja do AWS...',
+      status: 'Utrzymanie',
       color: '#F59E0B',
       icon: '☁️',
       repositoryUrl: 'https://github.com/techsolutions/cloud-migration',
@@ -286,40 +267,40 @@ export async function main() {
     },
   })
 
-  // Create diverse tasks with different statuses and priorities for IT projects
+  // Tworzenie różnorodnych zadań z różnymi statusami i priorytetami dla projektów IT
   const tasks = [
-    // E-commerce Platform Relaunch tasks
+    // Zadania Przebudowy Platformy E-commerce
     {
       id: 'task-ecommerce-frontend',
-      title: 'Develop new product listing page (Frontend)',
-      description: 'Implement responsive and performant product listing page with filtering and sorting capabilities.',
-      statusId: taskStatuses[1].id, // In Progress
-      priority: 'High',
+      title: 'Opracowanie nowej strony listy produktów (Frontend)',
+      description: 'Implementacja responsywnej i wydajnej strony listy produktów z funkcjami filtrowania i sortowania.',
+      statusId: taskStatuses[1].id, // W Trakcie
+      priority: 'Wysoki',
       estimatedHours: 24,
       projectId: project1.id,
-      assigneeId: user2.id, // Zofia Wiśniewska (Senior FE)
+      assigneeId: user2.id, // Zofia Wiśniewska (Starszy FE)
       createdById: user1.id, // Marek Nowak (PM)
       dueDate: new Date('2025-08-15T17:00:00Z'),
       startTime: new Date('2025-08-05T09:00:00Z'),
     },
     {
       id: 'task-ecommerce-backend-api',
-      title: 'Build Product API endpoints (Backend)',
-      description: 'Create RESTful API for product data, including search, categories, and detailed product views.',
+      title: 'Budowa endpointów API produktów (Backend)',
+      description: 'Stworzenie RESTful API dla danych produktów, w tym wyszukiwania, kategorii i szczegółowych widoków produktów.',
       statusId: taskStatuses[0].id, // Backlog
-      priority: 'High',
+      priority: 'Wysoki',
       estimatedHours: 32,
       projectId: project1.id,
-      assigneeId: user3.id, // Piotr Dąbrowski (Senior BE)
+      assigneeId: user3.id, // Piotr Dąbrowski (Starszy BE)
       createdById: user1.id, // Marek Nowak (PM)
       dueDate: new Date('2025-08-20T18:00:00Z'),
     },
     {
       id: 'task-ecommerce-qa',
-      title: 'Perform UAT for checkout process',
-      description: 'Conduct User Acceptance Testing for the redesigned checkout flow, identify and report bugs.',
-      statusId: taskStatuses[3].id, // Testing
-      priority: 'Medium',
+      title: 'Przeprowadzenie testów UAT dla procesu płatności',
+      description: 'Przeprowadzenie testów akceptacyjnych użytkownika dla przeprojektowanego procesu płatności, identyfikacja i zgłaszanie błędów.',
+      statusId: taskStatuses[3].id, // Testowanie
+      priority: 'Średni',
       estimatedHours: 16,
       projectId: project1.id,
       assigneeId: user4.id, // Katarzyna Zielińska (QA)
@@ -329,10 +310,10 @@ export async function main() {
     },
     {
       id: 'task-ecommerce-deployment',
-      title: 'Prepare production deployment script',
-      description: 'Automate deployment process for the new e-commerce platform to AWS production environment.',
+      title: 'Przygotowanie skryptu wdrożeniowego na produkcję',
+      description: 'Automatyzacja procesu wdrożenia nowej platformy e-commerce do środowiska produkcyjnego AWS.',
       statusId: taskStatuses[0].id, // Backlog
-      priority: 'Low',
+      priority: 'Niski',
       estimatedHours: 12,
       projectId: project1.id,
       assigneeId: user5.id, // Tomasz Wójcik (DevOps)
@@ -340,16 +321,16 @@ export async function main() {
       dueDate: new Date('2025-08-25T17:00:00Z'),
     },
 
-    // Mobile Banking App Development tasks
+    // Zadania Rozwoju Aplikacji Bankowości Mobilnej
     {
       id: 'task-mobile-banking-ux',
-      title: 'Design user flow for fund transfers',
-      description: 'Create intuitive and secure user experience for transferring funds between accounts.',
-      statusId: taskStatuses[4].id, // Done
-      priority: 'High',
+      title: 'Projektowanie przepływu użytkownika dla przelewów środków',
+      description: 'Stworzenie intuicyjnego i bezpiecznego doświadczenia użytkownika dla przelewania środków między kontami.',
+      statusId: taskStatuses[4].id, // Zakończone
+      priority: 'Wysoki',
       estimatedHours: 16,
       projectId: project2.id,
-      assigneeId: user2.id, // Zofia Wiśniewska (Senior FE - also UX focused)
+      assigneeId: user2.id, // Zofia Wiśniewska (Starszy FE - również zorientowana na UX)
       createdById: user1.id, // Marek Nowak (PM)
       dueDate: new Date('2025-07-30T17:00:00Z'),
       startTime: new Date('2025-07-25T09:00:00Z'),
@@ -357,52 +338,52 @@ export async function main() {
     },
     {
       id: 'task-mobile-banking-security',
-      title: 'Implement biometric authentication',
-      description: 'Integrate Face ID/Touch ID for secure login and transaction authorization.',
-      statusId: taskStatuses[1].id, // In Progress
-      priority: 'High',
+      title: 'Implementacja uwierzytelniania biometrycznego',
+      description: 'Integracja Face ID/Touch ID dla bezpiecznego logowania i autoryzacji transakcji.',
+      statusId: taskStatuses[1].id, // W Trakcie
+      priority: 'Wysoki',
       estimatedHours: 20,
       projectId: project2.id,
-      assigneeId: user3.id, // Piotr Dąbrowski (Senior BE)
+      assigneeId: user3.id, // Piotr Dąbrowski (Starszy BE)
       createdById: user1.id, // Marek Nowak (PM)
       dueDate: new Date('2025-08-12T16:00:00Z'),
       startTime: new Date('2025-08-01T09:00:00Z'),
     },
 
-    // AI Chatbot Integration tasks
+    // Zadania Integracji Chatbota AI
     {
       id: 'task-chatbot-nlp',
-      title: 'Develop Natural Language Processing module',
-      description: 'Train and fine-tune NLP models for understanding customer queries and intent recognition.',
-      statusId: taskStatuses[1].id, // In Progress
-      priority: 'High',
+      title: 'Opracowanie modułu przetwarzania języka naturalnego (NLP)',
+      description: 'Trenowanie i dostrajanie modeli NLP do rozumienia zapytań klientów i rozpoznawania intencji.',
+      statusId: taskStatuses[1].id, // W Trakcie
+      priority: 'Wysoki',
       estimatedHours: 40,
       projectId: project3.id,
-      assigneeId: user3.id, // Piotr Dąbrowski (Senior BE)
+      assigneeId: user3.id, // Piotr Dąbrowski (Starszy BE)
       createdById: adminUser.id, // Anna Kowalska (CEO)
       dueDate: new Date('2025-08-20T18:00:00Z'),
       startTime: new Date('2025-08-01T09:00:00Z'),
     },
     {
       id: 'task-chatbot-frontend',
-      title: 'Integrate chatbot UI into client portal',
-      description: 'Embed the chatbot widget into the existing client web portal and ensure seamless user experience.',
+      title: 'Integracja interfejsu chatbota z portalem klienta',
+      description: 'Osadzenie widżetu chatbota w istniejącym portalu internetowym klienta i zapewnienie płynnego doświadczenia użytkownika.',
       statusId: taskStatuses[0].id, // Backlog
-      priority: 'Medium',
+      priority: 'Średni',
       estimatedHours: 20,
       projectId: project3.id,
-      assigneeId: user2.id, // Zofia Wiśniewska (Senior FE)
+      assigneeId: user2.id, // Zofia Wiśniewska (Starszy FE)
       createdById: user1.id, // Marek Nowak (PM)
       dueDate: new Date('2025-08-28T17:00:00Z'),
     },
 
-    // Cloud Infrastructure Migration tasks
+    // Zadania Migracji Infrastruktury do Chmury
     {
       id: 'task-cloud-audit',
-      title: 'Perform current infrastructure audit',
-      description: 'Analyze existing on-premise infrastructure, identify dependencies and migration strategy.',
-      statusId: taskStatuses[4].id, // Done
-      priority: 'High',
+      title: 'Przeprowadzenie audytu obecnej infrastruktury',
+      description: 'Analiza istniejącej infrastruktury on-premise, identyfikacja zależności i strategii migracji.',
+      statusId: taskStatuses[4].id, // Zakończone
+      priority: 'Wysoki',
       estimatedHours: 24,
       projectId: project4.id,
       assigneeId: user5.id, // Tomasz Wójcik (DevOps)
@@ -413,10 +394,10 @@ export async function main() {
     },
     {
       id: 'task-cloud-vpc',
-      title: 'Design and implement AWS VPC network',
-      description: 'Set up secure and scalable Virtual Private Cloud (VPC) with subnets, routing, and security groups.',
-      statusId: taskStatuses[1].id, // In Progress
-      priority: 'High',
+      title: 'Projektowanie i implementacja sieci AWS VPC',
+      description: 'Konfiguracja bezpiecznej i skalowalnej sieci Virtual Private Cloud (VPC) z podsieciami, routingiem i grupami bezpieczeństwa.',
+      statusId: taskStatuses[1].id, // W Trakcie
+      priority: 'Wysoki',
       estimatedHours: 30,
       projectId: project4.id,
       assigneeId: user5.id, // Tomasz Wójcik (DevOps)
@@ -425,67 +406,199 @@ export async function main() {
       startTime: new Date('2025-08-01T09:00:00Z'),
     },
 
-    // Blocked task example
+    // Przykład zablokowanego zadania
     {
       id: 'task-blocked-legal',
-      title: 'Legal review for data privacy policy',
-      description: 'Obtain legal approval for updated data privacy policy before deploying new features.',
-      statusId: taskStatuses[5].id, // Blocked
-      priority: 'High',
+      title: 'Przegląd prawny polityki prywatności danych',
+      description: 'Uzyskanie zgody prawnej na zaktualizowaną politykę prywatności danych przed wdrożeniem nowych funkcji.',
+      statusId: taskStatuses[5].id, // Zablokowane
+      priority: 'Wysoki',
       estimatedHours: 8,
       projectId: project1.id,
       assigneeId: user1.id, // Marek Nowak (PM)
       createdById: adminUser.id, // Anna Kowalska (CEO)
       dueDate: new Date('2025-08-30T15:00:00Z'),
       isBlocked: true,
-      blockReason: 'Waiting for legal department approval on GDPR compliance.',
+      blockReason: 'Oczekiwanie na zgodę działu prawnego w sprawie zgodności z RODO.',
       blockedAt: new Date('2025-08-01T10:00:00Z'),
       blockedById: adminUser.id,
     },
+
+    // Zadania przypisane bezpośrednio do administratora
+    {
+      id: 'task-admin-strategy',
+      title: 'Opracowanie strategii technologicznej na 2025',
+      description: 'Przygotowanie kompleksowej strategii technologicznej firmy na nadchodzący rok, uwzględniającej trendy AI, cloud computing i cyberbezpieczeństwo.',
+      statusId: taskStatuses[1].id, // W Trakcie
+      priority: 'Krytyczny',
+      estimatedHours: 32,
+      projectId: project1.id,
+      assigneeId: adminUser.id, // Anna Kowalska (CEO)
+      createdById: adminUser.id,
+      dueDate: new Date('2025-08-12T18:00:00Z'),
+      startTime: new Date('2025-08-01T09:00:00Z'),
+    },
+    {
+      id: 'task-admin-budget',
+      title: 'Przegląd budżetu IT na Q4 2025',
+      description: 'Analiza wydatków IT w trzecim kwartale i planowanie budżetu na czwarty kwartał z uwzględnieniem nowych projektów.',
+      statusId: taskStatuses[0].id, // Backlog
+      priority: 'Wysoki',
+      estimatedHours: 16,
+      projectId: project4.id,
+      assigneeId: adminUser.id, // Anna Kowalska (CEO)
+      createdById: adminUser.id,
+      dueDate: new Date('2025-08-20T17:00:00Z'),
+    },
+    {
+      id: 'task-admin-team-review',
+      title: 'Przeprowadzenie rocznych ocen zespołu',
+      description: 'Przegląd wydajności zespołu, ustalenie celów rozwojowych i planowanie awansów na nadchodzący rok.',
+      statusId: taskStatuses[2].id, // Do Przeglądu
+      priority: 'Średni',
+      estimatedHours: 24,
+      projectId: project2.id,
+      assigneeId: adminUser.id, // Anna Kowalska (CEO)
+      createdById: adminUser.id,
+      dueDate: new Date('2025-08-25T16:00:00Z'),
+    },
+    {
+      id: 'task-admin-security-audit',
+      title: 'Koordynacja audytu bezpieczeństwa systemów',
+      description: 'Nadzorowanie zewnętrznego audytu bezpieczeństwa wszystkich systemów firmy i implementacja zaleceń.',
+      statusId: taskStatuses[1].id, // W Trakcie
+      priority: 'Krytyczny',
+      estimatedHours: 20,
+      projectId: project4.id,
+      assigneeId: adminUser.id, // Anna Kowalska (CEO)
+      createdById: adminUser.id,
+      dueDate: new Date('2025-08-15T17:00:00Z'),
+      startTime: new Date('2025-08-03T10:00:00Z'),
+    },
+    {
+      id: 'task-admin-client-meeting',
+      title: 'Spotkanie z kluczowymi klientami - Q4 roadmap',
+      description: 'Prezentacja planów rozwoju produktu na Q4 dla najważniejszych klientów i zebranie feedbacku.',
+      statusId: taskStatuses[0].id, // Backlog
+      priority: 'Wysoki',
+      estimatedHours: 8,
+      projectId: project1.id,
+      assigneeId: adminUser.id, // Anna Kowalska (CEO)
+      createdById: adminUser.id,
+      dueDate: new Date('2025-08-18T14:00:00Z'),
+    },
+    {
+      id: 'task-admin-innovation',
+      title: 'Badanie nowych technologii AI dla produktów',
+      description: 'Analiza możliwości implementacji najnowszych rozwiązań AI w istniejących produktach firmy.',
+      statusId: taskStatuses[1].id, // W Trakcie
+      priority: 'Średni',
+      estimatedHours: 28,
+      projectId: project3.id,
+      assigneeId: adminUser.id, // Anna Kowalska (CEO)
+      createdById: adminUser.id,
+      dueDate: new Date('2025-08-22T16:00:00Z'),
+      startTime: new Date('2025-08-02T09:00:00Z'),
+    },
+    {
+      id: 'task-admin-partnership',
+      title: 'Negocjacje partnerstwa strategicznego',
+      description: 'Finalizacja umowy partnerskiej z Microsoft Azure dla rozszerzenia oferty cloud computing.',
+      statusId: taskStatuses[3].id, // Testowanie
+      priority: 'Krytyczny',
+      estimatedHours: 12,
+      projectId: project4.id,
+      assigneeId: adminUser.id, // Anna Kowalska (CEO)
+      createdById: adminUser.id,
+      dueDate: new Date('2025-08-10T15:00:00Z'),
+      startTime: new Date('2025-07-28T10:00:00Z'),
+    },
+    {
+      id: 'task-admin-completed',
+      title: 'Wdrożenie nowego systemu HR',
+      description: 'Zakończona implementacja nowego systemu zarządzania zasobami ludzkimi z integracją z istniejącymi systemami.',
+      statusId: taskStatuses[4].id, // Zakończone
+      priority: 'Wysoki',
+      estimatedHours: 40,
+      projectId: project2.id,
+      assigneeId: adminUser.id, // Anna Kowalska (CEO)
+      createdById: adminUser.id,
+      dueDate: new Date('2025-07-30T17:00:00Z'),
+      startTime: new Date('2025-07-15T09:00:00Z'),
+      endTime: new Date('2025-07-30T17:00:00Z'),
+    },
   ]
 
-  // Create all tasks
+  // Tworzenie wszystkich zadań
+  const createdTasks = {}
   for (const taskData of tasks) {
-    await prisma.task.upsert({
-      where: { id: taskData.id },
+    console.log(`Tworzenie zadania: ${taskData.title}, assigneeId: ${taskData.assigneeId}, createdById: ${taskData.createdById}`)
+    const { id, ...createData } = taskData
+    const task = await prisma.task.upsert({
+      where: { id: id },
       update: {},
-      create: taskData,
+      create: createData,
     })
+    createdTasks[id] = task
   }
 
-  // Create subtasks for complex tasks
+  // Tworzenie podzadań dla złożonych zadań
   const subtasks = [
-    // E-commerce Frontend subtasks
-    { title: 'Implement product card component', isCompleted: true, taskId: 'task-ecommerce-frontend' },
-    { title: 'Develop filtering logic (price, category, brand)', isCompleted: false, taskId: 'task-ecommerce-frontend' },
-    { title: 'Integrate with backend product API', isCompleted: false, taskId: 'task-ecommerce-frontend' },
+    // Podzadania Frontend E-commerce
+    { title: 'Implementacja komponentu karty produktu', isCompleted: true, taskId: 'task-ecommerce-frontend' },
+    { title: 'Opracowanie logiki filtrowania (cena, kategoria, marka)', isCompleted: false, taskId: 'task-ecommerce-frontend' },
+    { title: 'Integracja z backendowym API produktów', isCompleted: false, taskId: 'task-ecommerce-frontend' },
 
-    // E-commerce QA subtasks
-    { title: 'Test user registration and login', isCompleted: true, taskId: 'task-ecommerce-qa' },
-    { title: 'Verify shopping cart functionality', isCompleted: true, taskId: 'task-ecommerce-qa' },
-    { title: 'Test payment gateway integration', isCompleted: false, taskId: 'task-ecommerce-qa' },
+    // Podzadania QA E-commerce
+    { title: 'Testowanie rejestracji i logowania użytkowników', isCompleted: true, taskId: 'task-ecommerce-qa' },
+    { title: 'Weryfikacja funkcjonalności koszyka zakupowego', isCompleted: true, taskId: 'task-ecommerce-qa' },
+    { title: 'Testowanie integracji bramki płatności', isCompleted: false, taskId: 'task-ecommerce-qa' },
 
-    // Mobile Banking UX subtasks
-    { title: 'Sketch wireframes for transfer flow', isCompleted: true, taskId: 'task-mobile-banking-ux' },
-    { title: 'Create high-fidelity mockups', isCompleted: true, taskId: 'task-mobile-banking-ux' },
-    { title: 'Conduct user testing sessions', isCompleted: false, taskId: 'task-mobile-banking-ux' },
+    // Podzadania UX Bankowości Mobilnej
+    { title: 'Szkicowanie wireframe\'ów dla przepływu przelewów', isCompleted: true, taskId: 'task-mobile-banking-ux' },
+    { title: 'Tworzenie makiet wysokiej wierności', isCompleted: true, taskId: 'task-mobile-banking-ux' },
+    { title: 'Przeprowadzenie sesji testów użytkowników', isCompleted: false, taskId: 'task-mobile-banking-ux' },
 
-    // AI Chatbot NLP subtasks
-    { title: 'Collect and preprocess training data', isCompleted: true, taskId: 'task-chatbot-nlp' },
-    { title: 'Choose and configure NLP model (e.g., BERT)', isCompleted: false, taskId: 'task-chatbot-nlp' },
-    { title: 'Develop intent classification module', isCompleted: false, taskId: 'task-chatbot-nlp' },
+    // Podzadania NLP Chatbota AI
+    { title: 'Zbieranie i wstępne przetwarzanie danych treningowych', isCompleted: true, taskId: 'task-chatbot-nlp' },
+    { title: 'Wybór i konfiguracja modelu NLP (np. BERT)', isCompleted: false, taskId: 'task-chatbot-nlp' },
+    { title: 'Opracowanie modułu klasyfikacji intencji', isCompleted: false, taskId: 'task-chatbot-nlp' },
 
-    // Cloud Infrastructure Audit subtasks
-    { title: 'Document existing server configurations', isCompleted: true, taskId: 'task-cloud-audit' },
-    { title: 'Map network topology', isCompleted: true, taskId: 'task-cloud-audit' },
-    { title: 'Identify critical applications and databases', isCompleted: true, taskId: 'task-cloud-audit' },
+    // Podzadania Audytu Infrastruktury Chmurowej
+    { title: 'Dokumentowanie istniejących konfiguracji serwerów', isCompleted: true, taskId: 'task-cloud-audit' },
+    { title: 'Mapowanie topologii sieci', isCompleted: true, taskId: 'task-cloud-audit' },
+    { title: 'Identyfikacja krytycznych aplikacji i baz danych', isCompleted: true, taskId: 'task-cloud-audit' },
+
+    // Podzadania dla zadań administratora
+    { title: 'Analiza trendów technologicznych na 2025', isCompleted: true, taskId: 'task-admin-strategy' },
+    { title: 'Konsultacje z liderami zespołów', isCompleted: true, taskId: 'task-admin-strategy' },
+    { title: 'Opracowanie roadmapy technologicznej', isCompleted: false, taskId: 'task-admin-strategy' },
+    { title: 'Prezentacja strategii dla zarządu', isCompleted: false, taskId: 'task-admin-strategy' },
+
+    { title: 'Przegląd wydatków Q3', isCompleted: false, taskId: 'task-admin-budget' },
+    { title: 'Planowanie inwestycji w nowe technologie', isCompleted: false, taskId: 'task-admin-budget' },
+    { title: 'Konsultacje z CFO', isCompleted: false, taskId: 'task-admin-budget' },
+
+    { title: 'Przygotowanie formularzy oceny', isCompleted: true, taskId: 'task-admin-team-review' },
+    { title: 'Indywidualne rozmowy z zespołem', isCompleted: false, taskId: 'task-admin-team-review' },
+    { title: 'Ustalenie celów rozwojowych', isCompleted: false, taskId: 'task-admin-team-review' },
+
+    { title: 'Koordynacja z firmą audytorską', isCompleted: true, taskId: 'task-admin-security-audit' },
+    { title: 'Przegląd wyników wstępnych', isCompleted: true, taskId: 'task-admin-security-audit' },
+    { title: 'Implementacja zaleceń bezpieczeństwa', isCompleted: false, taskId: 'task-admin-security-audit' },
   ]
 
   for (const subtask of subtasks) {
-    await prisma.subtask.create({ data: subtask })
+    const taskId = createdTasks[subtask.taskId]?.id || subtask.taskId
+    await prisma.subtask.create({ 
+      data: {
+        ...subtask,
+        taskId: taskId
+      }
+    })
   }
 
-  // Create comments for tasks
+  // Tworzenie komentarzy do zadań
   const comments = [
     {
       content: 'Frontend dla strony produktu idzie zgodnie z planem. Potrzebuję tylko finalnej specyfikacji API.',
@@ -500,7 +613,7 @@ export async function main() {
       createdAt: new Date('2025-08-07T14:15:00Z'),
     },
     {
-      content: 'Testy UAT dla procesu checkoutu wykazały kilka drobnych błędów. Zgłosiłem je w JIRA.',
+      content: 'Testy UAT dla procesu płatności wykazały kilka drobnych błędów. Zgłosiłem je w JIRA.',
       taskId: 'task-ecommerce-qa',
       authorId: user4.id,
       createdAt: new Date('2025-08-08T09:45:00Z'),
@@ -512,7 +625,7 @@ export async function main() {
       createdAt: new Date('2025-07-31T11:20:00Z'),
     },
     {
-      content: 'NLP module wymaga jeszcze sporo pracy nad precyzją. Zwiększam estymację czasu.',
+      content: 'Moduł NLP wymaga jeszcze sporo pracy nad precyzją. Zwiększam estymację czasu.',
       taskId: 'task-chatbot-nlp',
       authorId: user3.id,
       createdAt: new Date('2025-08-05T16:00:00Z'),
@@ -532,106 +645,202 @@ export async function main() {
   ]
 
   for (const comment of comments) {
-    await prisma.comment.create({ data: comment })
+    const taskId = createdTasks[comment.taskId]?.id || comment.taskId
+    await prisma.comment.create({ 
+      data: {
+        ...comment,
+        taskId: taskId
+      }
+    })
   }
 
-  // Create comprehensive time entries
+  // Tworzenie kompleksowych wpisów czasu
   const timeEntries = [
-    // E-commerce Frontend task
+    // Zadanie Frontend E-commerce
     {
       hours: 8.0,
-      description: 'Initial setup and component scaffolding for product listing page.',
+      description: 'Wstępna konfiguracja i tworzenie komponentów dla strony listy produktów.',
       date: new Date('2025-08-05'),
       taskId: 'task-ecommerce-frontend',
       userId: user2.id,
     },
     {
       hours: 6.0,
-      description: 'Implemented basic product card layout and styling.',
+      description: 'Implementacja podstawowego układu karty produktu i stylizacji.',
       date: new Date('2025-08-06'),
       taskId: 'task-ecommerce-frontend',
       userId: user2.id,
     },
 
-    // E-commerce QA task
+    // Zadanie QA E-commerce
     {
       hours: 5.0,
-      description: 'Tested user registration and login flows, reported minor UI bugs.',
+      description: 'Testowanie przepływów rejestracji i logowania użytkowników, zgłoszenie drobnych błędów UI.',
       date: new Date('2025-08-01'),
       taskId: 'task-ecommerce-qa',
       userId: user4.id,
     },
     {
       hours: 4.0,
-      description: 'Verified shopping cart functionality and item addition/removal.',
+      description: 'Weryfikacja funkcjonalności koszyka zakupowego i dodawania/usuwania przedmiotów.',
       date: new Date('2025-08-02'),
       taskId: 'task-ecommerce-qa',
       userId: user4.id,
     },
 
-    // Mobile Banking UX task
+    // Zadanie UX Bankowości Mobilnej
     {
       hours: 8.0,
-      description: 'Researched best practices for secure fund transfer UX in banking apps.',
+      description: 'Badanie najlepszych praktyk dla bezpiecznego UX przelewów środków w aplikacjach bankowych.',
       date: new Date('2025-07-25'),
       taskId: 'task-mobile-banking-ux',
       userId: user2.id,
     },
     {
       hours: 8.0,
-      description: 'Created wireframes and initial mockups for fund transfer flow.',
+      description: 'Tworzenie wireframe\'ów i wstępnych makiet dla przepływu przelewów.',
       date: new Date('2025-07-26'),
       taskId: 'task-mobile-banking-ux',
       userId: user2.id,
     },
 
-    // AI Chatbot NLP task
+    // Zadanie NLP Chatbota AI
     {
       hours: 10.0,
-      description: 'Collected and preprocessed initial dataset for NLP model training.',
+      description: 'Zebrano i wstępnie przetworzono początkowy zestaw danych do trenowania modelu NLP.',
       date: new Date('2025-08-01'),
       taskId: 'task-chatbot-nlp',
       userId: user3.id,
     },
     {
       hours: 8.0,
-      description: 'Experimented with different NLP models (BERT, GPT-3) for intent recognition.',
+      description: 'Eksperymentowano z różnymi modelami NLP (BERT, GPT-3) do rozpoznawania intencji.',
       date: new Date('2025-08-02'),
       taskId: 'task-chatbot-nlp',
       userId: user3.id,
     },
 
-    // Cloud Infrastructure Audit task
+    // Zadanie Audytu Infrastruktury Chmurowej
     {
       hours: 8.0,
-      description: 'Documented existing server configurations and software versions.',
+      description: 'Udokumentowano istniejące konfiguracje serwerów i wersje oprogramowania.',
       date: new Date('2025-07-15'),
       taskId: 'task-cloud-audit',
       userId: user5.id,
     },
     {
       hours: 8.0,
-      description: 'Mapped network topology and identified critical dependencies.',
+      description: 'Zmapowano topologię sieci i zidentyfikowano krytyczne zależności.',
       date: new Date('2025-07-16'),
       taskId: 'task-cloud-audit',
       userId: user5.id,
     },
     {
       hours: 8.0,
-      description: 'Prepared migration strategy document and cost analysis.',
+      description: 'Przygotowano dokument strategii migracji i analizę kosztów.',
       date: new Date('2025-07-17'),
       taskId: 'task-cloud-audit',
       userId: user5.id,
     },
+
+    // Wpisy czasu dla zadań administratora (Anna Kowalska)
+    {
+      hours: 4.0,
+      description: 'Analiza trendów technologicznych na 2025 - badanie AI, blockchain i quantum computing.',
+      date: new Date('2025-08-01'),
+      taskId: 'task-admin-strategy',
+      userId: adminUser.id,
+    },
+    {
+      hours: 6.0,
+      description: 'Konsultacje z liderami zespołów technicznych i zbieranie wymagań.',
+      date: new Date('2025-08-02'),
+      taskId: 'task-admin-strategy',
+      userId: adminUser.id,
+    },
+    {
+      hours: 3.0,
+      description: 'Przygotowanie wstępnej roadmapy technologicznej.',
+      date: new Date('2025-08-03'),
+      taskId: 'task-admin-strategy',
+      userId: adminUser.id,
+    },
+    {
+      hours: 2.0,
+      description: 'Koordynacja z firmą audytorską - ustalenie zakresu audytu.',
+      date: new Date('2025-08-03'),
+      taskId: 'task-admin-security-audit',
+      userId: adminUser.id,
+    },
+    {
+      hours: 3.0,
+      description: 'Przegląd wyników wstępnego audytu bezpieczeństwa.',
+      date: new Date('2025-08-04'),
+      taskId: 'task-admin-security-audit',
+      userId: adminUser.id,
+    },
+    {
+      hours: 5.0,
+      description: 'Badanie rozwiązań AI dla platformy e-commerce - analiza ChatGPT, Claude.',
+      date: new Date('2025-08-02'),
+      taskId: 'task-admin-innovation',
+      userId: adminUser.id,
+    },
+    {
+      hours: 4.0,
+      description: 'Analiza konkurencji w obszarze AI i machine learning.',
+      date: new Date('2025-08-03'),
+      taskId: 'task-admin-innovation',
+      userId: adminUser.id,
+    },
+    {
+      hours: 3.0,
+      description: 'Negocjacje warunków partnerstwa strategicznego z Microsoft.',
+      date: new Date('2025-07-28'),
+      taskId: 'task-admin-partnership',
+      userId: adminUser.id,
+    },
+    {
+      hours: 2.0,
+      description: 'Przegląd umowy partnerskiej z zespołem prawnym.',
+      date: new Date('2025-07-29'),
+      taskId: 'task-admin-partnership',
+      userId: adminUser.id,
+    },
+    {
+      hours: 8.0,
+      description: 'Implementacja systemu HR - konfiguracja i migracja danych.',
+      date: new Date('2025-07-15'),
+      taskId: 'task-admin-completed',
+      userId: adminUser.id,
+    },
+    {
+      hours: 6.0,
+      description: 'Konfiguracja integracji z istniejącymi systemami.',
+      date: new Date('2025-07-20'),
+      taskId: 'task-admin-completed',
+      userId: adminUser.id,
+    },
+    {
+      hours: 4.0,
+      description: 'Testy końcowe systemu HR i wdrożenie produkcyjne.',
+      date: new Date('2025-07-30'),
+      taskId: 'task-admin-completed',
+      userId: adminUser.id,
+    },
   ]
 
   for (const entry of timeEntries) {
+    const taskId = createdTasks[entry.taskId]?.id || entry.taskId
     await prisma.timeEntry.create({
-      data: entry,
+      data: {
+        ...entry,
+        taskId: taskId
+      },
     })
   }
 
-  // Create project documents
+  // Tworzenie dokumentów projektowych
   const documents = [
     {
       filename: 'ecommerce-requirements.pdf',
@@ -639,7 +848,7 @@ export async function main() {
       mimeType: 'application/pdf',
       size: 3072000,
       description: 'Szczegółowe wymagania biznesowe i techniczne dla nowej platformy e-commerce.',
-      category: 'Requirements',
+      category: 'Wymagania',
       projectId: project1.id,
       uploadedById: adminUser.id,
     },
@@ -649,7 +858,7 @@ export async function main() {
       mimeType: 'application/json',
       size: 768000,
       description: 'Specyfikacja OpenAPI dla API produktów i zamówień.',
-      category: 'Documentation',
+      category: 'Dokumentacja',
       projectId: project1.id,
       uploadedById: user3.id,
     },
@@ -659,7 +868,7 @@ export async function main() {
       mimeType: 'application/figma',
       size: 20480000,
       description: 'Kompletne przepływy użytkownika i prototypy dla aplikacji bankowej.',
-      category: 'Design',
+      category: 'Projektowanie',
       projectId: project2.id,
       uploadedById: user2.id,
     },
@@ -669,7 +878,7 @@ export async function main() {
       mimeType: 'text/csv',
       size: 10240000,
       description: 'Zbiór danych treningowych dla modułu NLP chatbota.',
-      category: 'Data',
+      category: 'Dane',
       projectId: project3.id,
       uploadedById: user3.id,
     },
@@ -679,7 +888,7 @@ export async function main() {
       mimeType: 'application/pdf',
       size: 4096000,
       description: 'Szczegółowy plan migracji infrastruktury do AWS.',
-      category: 'Planning',
+      category: 'Planowanie',
       projectId: project4.id,
       uploadedById: user5.id,
     },
@@ -689,7 +898,7 @@ export async function main() {
       mimeType: 'application/pdf',
       size: 1536000,
       description: 'Raport z audytu bezpieczeństwa dla istniejącej infrastruktury.',
-      category: 'Security',
+      category: 'Bezpieczeństwo',
       projectId: project4.id,
       uploadedById: user5.id,
     },
@@ -699,7 +908,7 @@ export async function main() {
     await prisma.projectDocument.create({ data: doc })
   }
 
-  // Create system changes for the changelog
+  // Tworzenie zmian systemowych dla dziennika zmian
   const systemChanges = [
     {
       title: 'Nowy moduł zarządzania projektami',
@@ -755,7 +964,7 @@ export async function main() {
     await prisma.systemChange.create({ data: change })
   }
 
-  // Create some todos for tasks
+  // Tworzenie zadań do wykonania (todos)
   const todos = [
     { title: 'Przygotować testy jednostkowe dla modułu koszyka', isCompleted: false, taskId: 'task-ecommerce-frontend' },
     { title: 'Zaktualizować dokumentację API dla produktów', isCompleted: true, taskId: 'task-ecommerce-backend-api' },
@@ -765,16 +974,45 @@ export async function main() {
     { title: 'Zoptymalizować model NLP pod kątem wydajności', isCompleted: false, taskId: 'task-chatbot-nlp' },
     { title: 'Przygotować prezentację z audytu infrastruktury dla klienta', isCompleted: true, taskId: 'task-cloud-audit' },
     { title: 'Zaprojektować podsieci VPC', isCompleted: false, taskId: 'task-cloud-vpc' },
+
+    // Todos dla zadań administratora
+    { title: 'Przygotować prezentację strategii dla zarządu', isCompleted: false, taskId: 'task-admin-strategy' },
+    { title: 'Zaplanować budżet na nowe technologie', isCompleted: false, taskId: 'task-admin-strategy' },
+    { title: 'Ustalić timeline wdrożenia strategii', isCompleted: false, taskId: 'task-admin-strategy' },
+
+    { title: 'Przeanalizować wydatki Q3 w szczegółach', isCompleted: false, taskId: 'task-admin-budget' },
+    { title: 'Przygotować propozycje oszczędności', isCompleted: false, taskId: 'task-admin-budget' },
+
+    { title: 'Zaplanować indywidualne rozmowy z zespołem', isCompleted: false, taskId: 'task-admin-team-review' },
+    { title: 'Przygotować cele rozwojowe na 2025', isCompleted: false, taskId: 'task-admin-team-review' },
+
+    { title: 'Wdrożyć zalecenia z audytu bezpieczeństwa', isCompleted: false, taskId: 'task-admin-security-audit' },
+    { title: 'Zaplanować szkolenia z cyberbezpieczeństwa', isCompleted: false, taskId: 'task-admin-security-audit' },
+
+    { title: 'Przygotować agendę spotkania z klientami', isCompleted: false, taskId: 'task-admin-client-meeting' },
+    { title: 'Zebrać feedback od zespołów produktowych', isCompleted: false, taskId: 'task-admin-client-meeting' },
+
+    { title: 'Przetestować narzędzia AI w środowisku dev', isCompleted: false, taskId: 'task-admin-innovation' },
+    { title: 'Przygotować business case dla AI', isCompleted: false, taskId: 'task-admin-innovation' },
+
+    { title: 'Finalizować szczegóły umowy partnerskiej', isCompleted: false, taskId: 'task-admin-partnership' },
+    { title: 'Zaplanować kick-off meeting z Microsoft', isCompleted: false, taskId: 'task-admin-partnership' },
   ]
 
   for (const todo of todos) {
-    await prisma.todo.create({ data: todo })
+    const taskId = createdTasks[todo.taskId]?.id || todo.taskId
+    await prisma.todo.create({ 
+      data: {
+        ...todo,
+        taskId: taskId
+      }
+    })
   }
 
-  // Create chat rooms and messages
-  console.log('Creating chat rooms and messages...')
+  // Tworzenie pokoi czatu i wiadomości
+  console.log('Tworzenie pokoi czatu i wiadomości...')
 
-  // 1. General team chat room
+  // 1. Ogólny pokój czatu zespołu
   const generalChatRoom = await prisma.chatRoom.upsert({
     where: { id: 'chat-general-it' },
     update: {},
@@ -786,7 +1024,7 @@ export async function main() {
     },
   })
 
-  // Add all users to general chat
+  // Dodaj wszystkich użytkowników do ogólnego czatu
   const allUsers = [adminUser, user1, user2, user3, user4, user5]
   for (const user of allUsers) {
     await prisma.userChatRoom.upsert({
@@ -806,20 +1044,20 @@ export async function main() {
     })
   }
 
-  // 2. Project-specific chat rooms
+  // 2. Pokoje czatu specyficzne dla projektu
   const ecommerceProjectChat = await prisma.chatRoom.upsert({
     where: { id: 'chat-ecommerce-project' },
     update: {},
     create: {
       id: 'chat-ecommerce-project',
-      name: 'E-commerce Relaunch - Dyskusja',
+      name: 'Przebudowa E-commerce - Dyskusja',
       type: 'project',
       projectId: project1.id,
       createdById: user1.id,
     },
   })
 
-  // Add relevant team members to E-commerce project chat
+  // Dodaj odpowiednich członków zespołu do czatu projektu E-commerce
   const ecommerceTeamMembers = [adminUser, user1, user2, user3, user4, user5]
   for (const user of ecommerceTeamMembers) {
     await prisma.userChatRoom.upsert({
@@ -844,14 +1082,14 @@ export async function main() {
     update: {},
     create: {
       id: 'chat-mobile-banking',
-      name: 'Mobile Banking - Sprint Planning',
+      name: 'Bankowość Mobilna - Planowanie Sprintu',
       type: 'project',
       projectId: project2.id,
       createdById: user1.id,
     },
   })
 
-  // Add mobile banking team members
+  // Dodaj członków zespołu bankowości mobilnej
   const mobileBankingTeamMembers = [user1, user2, user3, user4]
   for (const user of mobileBankingTeamMembers) {
     await prisma.userChatRoom.upsert({
@@ -871,19 +1109,19 @@ export async function main() {
     })
   }
 
-  // 3. DevOps team chat
+  // 3. Czat zespołu DevOps
   const devopsTeamChat = await prisma.chatRoom.upsert({
     where: { id: 'chat-devops-team' },
     update: {},
     create: {
       id: 'chat-devops-team',
-      name: 'DevOps & Cloud Team',
+      name: 'Zespół DevOps i Chmury',
       type: 'group',
       createdById: user5.id,
     },
   })
 
-  // Add devops team members
+  // Dodaj członków zespołu DevOps
   const devopsMembers = [user5, user1, adminUser]
   for (const user of devopsMembers) {
     await prisma.userChatRoom.upsert({
@@ -903,19 +1141,19 @@ export async function main() {
     })
   }
 
-  // 4. Direct message chat between admin and PM
+  // 4. Czat bezpośredni między adminem a PM
   const directChat = await prisma.chatRoom.upsert({
     where: { id: 'chat-direct-admin-pm' },
     update: {},
     create: {
       id: 'chat-direct-admin-pm',
-      name: null, // Direct chats don't have names
+      name: null, // Czaty bezpośrednie nie mają nazw
       type: 'direct',
       createdById: adminUser.id,
     },
   })
 
-  // Add both users to direct chat
+  // Dodaj obu użytkowników do czatu bezpośredniego
   for (const user of [adminUser, user1]) {
     await prisma.userChatRoom.upsert({
       where: {
@@ -934,10 +1172,10 @@ export async function main() {
     })
   }
 
-  // Create messages for chat rooms
-  console.log('Creating chat messages...')
+  // Tworzenie wiadomości czatu
+  console.log('Tworzenie wiadomości czatu...')
 
-  // Messages for general chat room
+  // Wiadomości dla ogólnego pokoju czatu
   const generalMessages = [
     {
       content: 'Witajcie w TechSolutions! 👋 Cieszę się, że możemy razem tworzyć innowacje.',
@@ -952,41 +1190,41 @@ export async function main() {
       createdAt: new Date('2025-07-20T09:20:00Z'),
     },
     {
-      content: 'Hej wszystkim! Zofia Wiśniewska, Senior Frontend. Liczę na owocną współpracę! ✨',
+      content: 'Hej wszystkim! Zofia Wiśniewska, Starszy Programista Frontend. Liczę na owocną współpracę! ✨',
       senderId: user2.id,
       chatRoomId: generalChatRoom.id,
       createdAt: new Date('2025-07-20T09:25:00Z'),
     },
     {
-      content: 'Witam! Piotr Dąbrowski, Senior Backend. Cieszę się, że dołączam do zespołu! 💻',
+      content: 'Witam! Piotr Dąbrowski, Starszy Programista Backend. Cieszę się, że dołączam do zespołu! 💻',
       senderId: user3.id,
       chatRoomId: generalChatRoom.id,
       createdAt: new Date('2025-07-20T09:30:00Z'),
     },
     {
-      content: 'Cześć! Katarzyna Zielińska, QA. Zadbajmy o jakość! ✅',
+      content: 'Cześć! Katarzyna Zielińska, Inżynier QA. Zadbajmy o jakość! ✅',
       senderId: user4.id,
       chatRoomId: generalChatRoom.id,
       createdAt: new Date('2025-07-20T09:35:00Z'),
     },
     {
-      content: 'Tomasz Wójcik, DevOps. Jestem tu, aby ułatwić Wam życie z infrastrukturą! ⚙️',
+      content: 'Tomasz Wójcik, Inżynier DevOps. Jestem tu, aby ułatwić Wam życie z infrastrukturą! ⚙️',
       senderId: user5.id,
       chatRoomId: generalChatRoom.id,
       createdAt: new Date('2025-07-20T09:40:00Z'),
     },
     {
-      content: 'Przypominam o dzisiejszym daily standup o 9:00. Przygotujcie updates! ⏰',
+      content: 'Przypominam o dzisiejszym daily standup o 9:00. Przygotujcie aktualizacje! ⏰',
       senderId: adminUser.id,
       chatRoomId: generalChatRoom.id,
       createdAt: new Date('2025-08-04T08:45:00Z'),
     },
   ]
 
-  // Messages for E-commerce project chat
+  // Wiadomości dla czatu projektu E-commerce
   const ecommerceMessages = [
     {
-      content: 'Rozpoczynamy sprint 1 dla projektu E-commerce Relaunch! Skupiamy się na stronie produktu.',
+      content: 'Rozpoczynamy sprint 1 dla projektu Przebudowa Platformy E-commerce! Skupiamy się na stronie produktu.',
       senderId: user1.id,
       chatRoomId: ecommerceProjectChat.id,
       createdAt: new Date('2025-07-25T10:15:00Z'),
@@ -1023,10 +1261,10 @@ export async function main() {
     },
   ]
 
-  // Messages for mobile banking chat
+  // Wiadomości dla czatu bankowości mobilnej
   const mobileBankingMessages = [
     {
-      content: 'Sprint planning dla Mobile Banking App! Skupiamy się na module przelewów.',
+      content: 'Planowanie sprintu dla Aplikacji Bankowości Mobilnej! Skupiamy się na module przelewów.',
       senderId: user1.id,
       chatRoomId: mobileBankingChat.id,
       createdAt: new Date('2025-07-28T11:15:00Z'),
@@ -1057,16 +1295,16 @@ export async function main() {
     },
   ]
 
-  // Messages for devops team chat
+  // Wiadomości dla czatu zespołu DevOps
   const devopsMessages = [
     {
-      content: 'Witajcie w kanale DevOps & Cloud Team! ☁️ Tutaj będziemy omawiać migracje i infrastrukturę.',
+      content: 'Witajcie w kanale Zespół DevOps i Chmury! ☁️ Tutaj będziemy omawiać migracje i infrastrukturę.',
       senderId: user5.id,
       chatRoomId: devopsTeamChat.id,
       createdAt: new Date('2025-07-29T12:15:00Z'),
     },
     {
-      content: 'Tomasz, jak poszedł audyt infrastruktury dla projektu Cloud Migration?',
+      content: 'Tomasz, jak poszedł audyt infrastruktury dla projektu Migracja Infrastruktury do Chmury?',
       senderId: user1.id,
       chatRoomId: devopsTeamChat.id,
       createdAt: new Date('2025-07-30T10:00:00Z'),
@@ -1091,10 +1329,10 @@ export async function main() {
     },
   ]
 
-  // Messages for direct chat
+  // Wiadomości dla czatu bezpośredniego
   const directMessages = [
     {
-      content: 'Cześć Marek! Masz chwilę na rozmowę o priorytetach projektu E-commerce?',
+      content: 'Cześć Marek! Masz chwilę na rozmowę o priorytetach projektu Przebudowa Platformy E-commerce?',
       senderId: adminUser.id,
       chatRoomId: directChat.id,
       createdAt: new Date('2025-07-30T13:15:00Z'),
@@ -1130,7 +1368,7 @@ export async function main() {
       createdAt: new Date('2025-08-04T10:00:00Z'),
     },
     {
-      content: 'Niestety, nadal czekamy. Wysłałem kolejne przypomnienie. To blokuje nam deployment.',
+      content: 'Niestety, nadal czekamy. Wysłałem kolejne przypomnienie. To blokuje nam wdrożenie.',
       senderId: user1.id,
       chatRoomId: directChat.id,
       createdAt: new Date('2025-08-04T10:05:00Z'),
@@ -1143,7 +1381,7 @@ export async function main() {
     },
   ]
 
-  // Create all messages
+  // Tworzenie wszystkich wiadomości
   const allMessages = [
     ...generalMessages,
     ...ecommerceMessages,
@@ -1158,7 +1396,7 @@ export async function main() {
     })
   }
 
-  // Update chat rooms with latest activity
+  // Aktualizacja pokoi czatu z najnowszą aktywnością
   await prisma.chatRoom.update({
     where: { id: generalChatRoom.id },
     data: { updatedAt: new Date('2025-08-04T08:45:00Z') },
@@ -1184,40 +1422,40 @@ export async function main() {
     data: { updatedAt: new Date('2025-08-04T10:10:00Z') },
   })
 
-  console.log('✅ Database seeded successfully with IT company data!')
-  console.log('\n📊 Created data summary:')
-  console.log(`👥 Users: ${allUsers.length}`)
-  console.log(`🏢 Teams: ${[frontendTeam.name, backendTeam.name, devopsTeam.name].length}`)
-  console.log(`📁 Projects: ${[project1.name, project2.name, project3.name, project4.name].length}`)
-  console.log(`📋 Tasks: ${tasks.length}`)
-  console.log(`📝 Subtasks: ${subtasks.length}`)
-  console.log(`💬 Comments: ${comments.length}`)
-  console.log(`⏱️ Time entries: ${timeEntries.length}`)
-  console.log(`📄 Documents: ${documents.length}`)
-  console.log(`🔄 System changes: ${systemChanges.length}`)
-  console.log(`✅ Todos: ${todos.length}`)
-  console.log(`🏷️ Task statuses: ${taskStatuses.length}`)
-  console.log(`💭 Chat rooms: 5 (General, E-commerce Project, Mobile Banking, DevOps Team, Direct)`)
-  console.log(`📨 Chat messages: ${allMessages.length}`)
+  console.log('✅ Baza danych zasiedlona pomyślnie danymi firmy IT!')
+  console.log('\n📊 Podsumowanie utworzonych danych:')
+  console.log(`👥 Użytkownicy: ${allUsers.length}`)
+  console.log(`🏢 Zespoły: ${[frontendTeam.name, backendTeam.name, devopsTeam.name].length}`)
+  console.log(`📁 Projekty: ${[project1.name, project2.name, project3.name, project4.name].length}`)
+  console.log(`📋 Zadania: ${tasks.length}`)
+  console.log(`📝 Podzadania: ${subtasks.length}`)
+  console.log(`💬 Komentarze: ${comments.length}`)
+  console.log(`⏱️ Wpisy czasu: ${timeEntries.length}`)
+  console.log(`📄 Dokumenty: ${documents.length}`)
+  console.log(`🔄 Zmiany systemowe: ${systemChanges.length}`)
+  console.log(`✅ Zadania do wykonania: ${todos.length}`)
+  console.log(`🏷️ Statusy zadań: ${taskStatuses.length}`)
+  console.log(`💭 Pokoje czatu: 5 (Ogólny, Projekt E-commerce, Bankowość Mobilna, Zespół DevOps, Bezpośredni)`)
+  console.log(`📨 Wiadomości czatu: ${allMessages.length}`)
 
-  console.log('\n🔑 Login credentials:')
+  console.log('\n🔑 Dane logowania:')
   console.log('Admin: admin@techsolutions.com / admin123')
-  console.log('Users: marek.nowak@techsolutions.com, zofia.wisniewska@techsolutions.com, piotr.dabrowski@techsolutions.com, katarzyna.zielinska@techsolutions.com, tomasz.wojcik@techsolutions.com / password123')
+  console.log('Użytkownicy: marek.nowak@techsolutions.com, zofia.wisniewska@techsolutions.com, piotr.dabrowski@techsolutions.com, katarzyna.zielinska@techsolutions.com, tomasz.wojcik@techsolutions.com / password123')
 
-  console.log('\n🎯 Sample data includes:')
-  console.log('• IT-focused user roles and detailed profiles')
-  console.log('• Teams reflecting IT departments (Frontend, Backend, DevOps)')
-  console.log('• Diverse IT projects (E-commerce, Mobile Banking, AI Chatbot, Cloud Migration)')
-  console.log('• Tasks in various IT development stages (Backlog, In Progress, Code Review, Testing, Done, Blocked)')
-  console.log('• Comprehensive time tracking entries for IT tasks')
-  console.log('• Subtasks and todos relevant to software development')
-  console.log('• Comments and collaboration examples in an IT context')
-  console.log('• Project documents like requirements, API specs, UX flows, migration plans')
-  console.log('• System changelog entries for IT system updates')
-  console.log('• Real-world IT scenarios including blocked tasks and completed work')
-  console.log('• Chat rooms: general IT team chat, project-specific chats, DevOps team, direct messages')
-  console.log('• Chat messages with mentions, emojis, and realistic IT team conversations')
-  console.log('• User participation in multiple chat rooms with read status tracking')
+  console.log('\n🎯 Przykładowe dane zawierają:')
+  console.log('• Role użytkowników i szczegółowe profile skoncentrowane na IT')
+  console.log('• Zespoły odzwierciedlające działy IT (Frontend, Backend, DevOps)')
+  console.log('• Różnorodne projekty IT (E-commerce, Bankowość Mobilna, Chatbot AI, Migracja do Chmury)')
+  console.log('• Zadania w różnych etapach rozwoju IT (Backlog, W Trakcie, Code Review, Testowanie, Zakończone, Zablokowane)')
+  console.log('• Kompleksowe wpisy czasu dla zadań IT')
+  console.log('• Podzadania i zadania do wykonania istotne dla rozwoju oprogramowania')
+  console.log('• Komentarze i przykłady współpracy w kontekście IT')
+  console.log('• Dokumenty projektowe, takie jak wymagania, specyfikacje API, przepływy UX, plany migracji')
+  console.log('• Wpisy dziennika zmian systemu dla aktualizacji systemu IT')
+  console.log('• Scenariusze IT z życia wzięte, w tym zablokowane zadania i ukończone prace')
+  console.log('• Pokoje czatu: ogólny czat zespołu IT, czaty specyficzne dla projektu, zespół DevOps, wiadomości bezpośrednie')
+  console.log('• Wiadomości czatu z wzmiankami, emoji i realistycznymi rozmowami zespołu IT')
+  console.log('• Udział użytkowników w wielu pokojach czatu ze śledzeniem statusu przeczytania')
 }
 
 main()

@@ -37,6 +37,12 @@ import type { Task, User, TaskUpdateData } from "@/types"
 import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
 import { getPriorityColor, getPriorityDisplayName } from "@/lib/task-format-utils"
 import { formatEstimatedHours, formatAssignee } from "@/lib/task-format-utils"
+import { Info, Lightbulb, TrendingUp, Target, Users, Calendar as CalendarIcon, Clock as ClockIcon } from "lucide-react"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 
 interface Project {
   id: string
@@ -72,6 +78,7 @@ export function TasksContent() {
   const [deletingTask, setDeletingTask] = useState(false)
   const [activeTab, setActiveTab] = useState("board")
   const [isAdmin, setIsAdmin] = useState(false)
+  const [showHelpSection, setShowHelpSection] = useState(false)
 
   // Check if user is admin
   useEffect(() => {
@@ -423,6 +430,170 @@ export function TasksContent() {
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 h-full">
+
+      {/* Help Section */}
+      <Collapsible open={showHelpSection} onOpenChange={setShowHelpSection}>
+        <CollapsibleTrigger asChild>
+          <Card className="cursor-pointer hover:shadow-md transition-shadow border-blue-200 bg-blue-50/50">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Lightbulb className="h-5 w-5 text-blue-600" />
+                  <CardTitle className="text-lg text-blue-900">
+                    Wskazówki dotyczące zarządzania zadaniami
+                  </CardTitle>
+                </div>
+                <Button variant="ghost" size="sm" className="text-blue-600">
+                  {showHelpSection ? "Zwiń" : "Rozwiń"}
+                </Button>
+              </div>
+              <CardDescription className="text-blue-700">
+                Poznaj najlepsze praktyki i funkcje, które pomogą Ci efektywnie zarządzać zadaniami
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </CollapsibleTrigger>
+
+        <CollapsibleContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Tip 1: Organizacja zadań */}
+            <Card className="border-green-200 bg-green-50/50">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <Target className="h-4 w-4 text-green-600" />
+                  <CardTitle className="text-sm text-green-900">Organizacja zadań</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <ul className="text-sm text-green-800 space-y-1">
+                  <li>• Używaj <strong>priorytetów</strong> do oznaczania ważnych zadań</li>
+                  <li>• Ustaw <strong>terminy wykonania</strong> dla lepszego planowania</li>
+                  <li>• Dodawaj <strong>opisy</strong> z szczegółami implementacji</li>
+                  <li>• Wykorzystuj <strong>podzadania</strong> do dzielenia dużych zadań</li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            {/* Tip 2: Współpraca zespołowa */}
+            <Card className="border-purple-200 bg-purple-50/50">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-purple-600" />
+                  <CardTitle className="text-sm text-purple-900">Współpraca zespołowa</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <ul className="text-sm text-purple-800 space-y-1">
+                  <li>• <strong>Przypisuj zadania</strong> konkretnym osobom</li>
+                  <li>• Używaj <strong>komentarzy</strong> do komunikacji</li>
+                  <li>• Dodawaj <strong>załączniki</strong> z dokumentacją</li>
+                  <li>• Śledź <strong>postępy</strong> przez statusy zadań</li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            {/* Tip 3: Śledzenie czasu */}
+            <Card className="border-orange-200 bg-orange-50/50">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <ClockIcon className="h-4 w-4 text-orange-600" />
+                  <CardTitle className="text-sm text-orange-900">Śledzenie czasu</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <ul className="text-sm text-orange-800 space-y-1">
+                  <li>• <strong>Loguj czas</strong> spędzony nad zadaniami</li>
+                  <li>• Ustaw <strong>szacowany czas</strong> wykonania</li>
+                  <li>• Używaj <strong>przypomnień</strong> o terminach</li>
+                  <li>• Analizuj <strong>raporty czasu</strong> dla lepszego planowania</li>
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Quick Actions */}
+          <Card className="border-indigo-200 bg-indigo-50/50">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-indigo-600" />
+                <CardTitle className="text-indigo-900">Szybkie akcje</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="justify-start text-indigo-700 border-indigo-300 hover:bg-indigo-100"
+                  onClick={() => setCreateDialogOpen(true)}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nowe zadanie
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="justify-start text-indigo-700 border-indigo-300 hover:bg-indigo-100"
+                  onClick={() => setActiveTab("calendar")}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  Widok kalendarza
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="justify-start text-indigo-700 border-indigo-300 hover:bg-indigo-100"
+                  onClick={() => setFilter(filter === "assigned" ? "all" : "assigned")}
+                >
+                  <Filter className="mr-2 h-4 w-4" />
+                  {filter === "assigned" ? "Wszystkie" : "Moje zadania"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="justify-start text-indigo-700 border-indigo-300 hover:bg-indigo-100"
+                  onClick={() => setActiveTab("board")}
+                >
+                  <LayoutGrid className="mr-2 h-4 w-4" />
+                  Tablica Kanban
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Related Features */}
+          <Card className="border-gray-200 bg-gray-50/50">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <Info className="h-5 w-5 text-gray-600" />
+                <CardTitle className="text-gray-900">Powiązane funkcje</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">Zarządzanie projektami</h4>
+                  <p className="text-sm text-gray-700 mb-2">
+                    Organizuj zadania w ramach projektów zespołowych. Każdy projekt może mieć własną tablicę zadań i kalendarz.
+                  </p>
+                  <Button variant="link" size="sm" className="p-0 h-auto text-blue-600" asChild>
+                    <a href="/dashboard/projects">Przejdź do projektów →</a>
+                  </Button>
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">Zespoły i współpraca</h4>
+                  <p className="text-sm text-gray-700 mb-2">
+                    Twórz zespoły, zapraszaj członków i współpracuj nad zadaniami. Używaj czatu zespołowego do komunikacji.
+                  </p>
+                  <Button variant="link" size="sm" className="p-0 h-auto text-blue-600" asChild>
+                    <a href="/dashboard/teams">Zarządzaj zespołami →</a>
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 h-full">

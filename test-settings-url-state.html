@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test URL State w Ustawieniach - TeamFlow</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 4px solid #007cba;
+        }
+        .success {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+        .warning {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+        }
+        .info {
+            background: #d1ecf1;
+            border-left-color: #17a2b8;
+        }
+        .link-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .test-link {
+            display: block;
+            padding: 15px;
+            background: white;
+            border: 2px solid #007cba;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #007cba;
+            font-weight: bold;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .test-link:hover {
+            background: #007cba;
+            color: white;
+            transform: translateY(-2px);
+        }
+        .admin-link {
+            border-color: #dc3545;
+            color: #dc3545;
+        }
+        .admin-link:hover {
+            background: #dc3545;
+            color: white;
+        }
+        .checklist {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        .checklist h4 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .checklist ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f8f9fa;
+        }
+        .checklist li:before {
+            content: "☐ ";
+            font-size: 16px;
+            margin-right: 8px;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-success { background: #28a745; }
+        .status-warning { background: #ffc107; }
+        .status-error { background: #dc3545; }
+        .status-info { background: #17a2b8; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Test URL State w Panelu Ustawień</h1>
+    
+    <div class="test-section info">
+        <h3>📋 Instrukcje testowania</h3>
+        <p>Ten test sprawdza czy panel ustawień poprawnie zapisuje stan zakładek w URL. Kliknij w linki poniżej, aby przetestować różne scenariusze.</p>
+        <p><strong>Aplikacja musi być uruchomiona na:</strong> <code>http://localhost:3001</code></p>
+    </div>
+
+    <div class="test-section">
+        <h3>🔗 Test 1: Bezpośrednie linki do zakładek</h3>
+        <p>Kliknij w linki poniżej. Każdy powinien otworzyć odpowiednią zakładkę w ustawieniach:</p>
+        
+        <div class="link-grid">
+            <a href="http://localhost:3001/dashboard/settings?tab=profile" class="test-link" target="_blank">
+                👤 Profil
+            </a>
+            <a href="http://localhost:3001/dashboard/settings?tab=security" class="test-link" target="_blank">
+                🔐 Bezpieczeństwo
+            </a>
+            <a href="http://localhost:3001/dashboard/settings?tab=notifications" class="test-link" target="_blank">
+                🔔 Powiadomienia
+            </a>
+            <a href="http://localhost:3001/dashboard/settings?tab=privacy" class="test-link" target="_blank">
+                🛡️ Prywatność
+            </a>
+            <a href="http://localhost:3001/dashboard/settings?tab=appearance" class="test-link" target="_blank">
+                🎨 Wygląd
+            </a>
+            <a href="http://localhost:3001/dashboard/settings?tab=task-statuses" class="test-link" target="_blank">
+                ⚙️ Statusy zadań
+            </a>
+        </div>
+
+        <h4>🔴 Linki tylko dla administratorów:</h4>
+        <div class="link-grid">
+            <a href="http://localhost:3001/dashboard/settings?tab=smtp" class="test-link admin-link" target="_blank">
+                📧 SMTP (Admin)
+            </a>
+            <a href="http://localhost:3001/dashboard/settings?tab=users" class="test-link admin-link" target="_blank">
+                👥 Użytkownicy (Admin)
+            </a>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>⚠️ Test 2: Walidacja nieprawidłowych parametrów</h3>
+        <p>Te linki powinny przekierować do zakładki "Profil":</p>
+        
+        <div class="link-grid">
+            <a href="http://localhost:3001/dashboard/settings?tab=invalid" class="test-link" target="_blank">
+                ❌ Nieprawidłowa zakładka
+            </a>
+            <a href="http://localhost:3001/dashboard/settings?tab=" class="test-link" target="_blank">
+                🔄 Pusty parametr
+            </a>
+            <a href="http://localhost:3001/dashboard/settings?tab=admin-only" class="test-link" target="_blank">
+                🚫 Nieistniejąca zakładka
+            </a>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>🧪 Test 3: Domyślne zachowanie</h3>
+        <p>Ten link powinien otworzyć zakładkę "Profil" (domyślną):</p>
+        
+        <div class="link-grid">
+            <a href="http://localhost:3001/dashboard/settings" class="test-link" target="_blank">
+                🏠 Ustawienia (bez parametru)
+            </a>
+        </div>
+    </div>
+
+    <div class="test-section success">
+        <h3>✅ Lista kontrolna testów</h3>
+        <div class="checklist">
+            <h4>Po kliknięciu w każdy link sprawdź:</h4>
+            <ul>
+                <li>Czy otwiera się odpowiednia zakładka w ustawieniach</li>
+                <li>Czy URL w pasku adresu zawiera prawidłowy parametr ?tab=</li>
+                <li>Czy zakładka jest wizualnie aktywna (podświetlona)</li>
+                <li>Czy zawartość zakładki się wyświetla</li>
+            </ul>
+
+            <h4>Test nawigacji w przeglądarce:</h4>
+            <ul>
+                <li>Przejdź przez kilka zakładek klikając w nie</li>
+                <li>Użyj przycisku "Wstecz" w przeglądarce</li>
+                <li>Sprawdź czy wraca do poprzedniej zakładki</li>
+                <li>Użyj przycisku "Wprzód" w przeglądarce</li>
+            </ul>
+
+            <h4>Test odświeżenia strony:</h4>
+            <ul>
+                <li>Przejdź do dowolnej zakładki (np. Powiadomienia)</li>
+                <li>Odśwież stronę (F5 lub Ctrl+R)</li>
+                <li>Sprawdź czy pozostajesz w tej samej zakładce</li>
+                <li>Sprawdź czy URL się nie zmienił</li>
+            </ul>
+
+            <h4>Test uprawnień (jeśli nie jesteś adminem):</h4>
+            <ul>
+                <li>Kliknij link "SMTP (Admin)"</li>
+                <li>Sprawdź czy przekierowuje do zakładki "Profil"</li>
+                <li>Kliknij link "Użytkownicy (Admin)"</li>
+                <li>Sprawdź czy przekierowuje do zakładki "Profil"</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-section warning">
+        <h3>🔍 Debugowanie</h3>
+        <h4>Jeśli coś nie działa:</h4>
+        <ul>
+            <li><strong>Sprawdź console przeglądarki</strong> (F12) - czy są błędy JavaScript</li>
+            <li><strong>Sprawdź Network tab</strong> - czy są błędy 404 lub 500</li>
+            <li><strong>Sprawdź czy jesteś zalogowany</strong> - ustawienia wymagają uwierzytelnienia</li>
+            <li><strong>Sprawdź URL</strong> - czy zawiera prawidłowy parametr ?tab=</li>
+        </ul>
+
+        <h4>Oczekiwane zachowania:</h4>
+        <ul>
+            <li><span class="status-indicator status-success"></span>Prawidłowe zakładki otwierają się bezpośrednio</li>
+            <li><span class="status-indicator status-info"></span>URL aktualizuje się przy zmianie zakładki</li>
+            <li><span class="status-indicator status-warning"></span>Nieprawidłowe parametry przekierowują do "Profil"</li>
+            <li><span class="status-indicator status-error"></span>Zakładki admin-only są niedostępne dla zwykłych użytkowników</li>
+        </ul>
+    </div>
+
+    <div class="test-section info">
+        <h3>📊 Wyniki testów</h3>
+        <p>Po przeprowadzeniu wszystkich testów, URL state management w panelu ustawień powinien:</p>
+        <ul>
+            <li>✅ Zapisywać aktualną zakładkę w URL</li>
+            <li>✅ Pozwalać na bezpośrednie linkowanie do zakładek</li>
+            <li>✅ Zachowywać stan po odświeżeniu strony</li>
+            <li>✅ Obsługiwać nawigację wstecz/wprzód</li>
+            <li>✅ Walidować uprawnienia użytkownika</li>
+            <li>✅ Przekierowywać nieprawidłowe parametry</li>
+        </ul>
+    </div>
+
+    <script>
+        // Dodaj informacje o statusie aplikacji
+        window.addEventListener('load', () => {
+            const statusDiv = document.createElement('div');
+            statusDiv.className = 'test-section info';
+            statusDiv.innerHTML = `
+                <h3>🚀 Status aplikacji</h3>
+                <p id="app-status">Sprawdzanie połączenia z aplikacją...</p>
+            `;
+            document.body.insertBefore(statusDiv, document.body.firstChild.nextSibling);
+
+            // Test połączenia z aplikacją
+            fetch('http://localhost:3001/api/auth/session')
+                .then(response => {
+                    if (response.ok) {
+                        document.getElementById('app-status').innerHTML = 
+                            '<span class="status-indicator status-success"></span>Aplikacja jest dostępna na http://localhost:3001';
+                    } else {
+                        document.getElementById('app-status').innerHTML = 
+                            '<span class="status-indicator status-warning"></span>Aplikacja odpowiada, ale może wymagać logowania';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('app-status').innerHTML = 
+                        '<span class="status-indicator status-error"></span>Nie można połączyć się z aplikacją. Sprawdź czy działa na porcie 3001';
+                });
+        });
+    </script>
+</body>
+</html>

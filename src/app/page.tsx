@@ -13,27 +13,27 @@ export default async function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100 overflow-x-hidden selection:bg-blue-500/20">
+    <div className="min-h-screen bg-white text-gray-800 overflow-x-hidden selection:bg-blue-500/20">
       {/* Navigation */}
-      <nav className="fixed top-0 w-full glass-effect-dark border-b border-white/10 z-50 transition-all duration-300">
+      <nav className="fixed top-0 w-full bg-white/95 backdrop-blur-sm border-b border-gray-200 z-50 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2 animate-fade-in-left">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center animate-pulse-glow">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                 <Zap className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">Nexus</span>
+              <span className="text-xl font-bold text-gray-900">Nexus</span>
             </div>
-            <div className="hidden md:flex items-center space-x-8 animate-fade-in-right">
-              <a href="#features" className="text-slate-300 hover:text-white transition-all duration-300 hover:scale-105">Funkcje</a>
-              <a href="#benefits" className="text-slate-300 hover:text-white transition-all duration-300 hover:scale-105">Korzyści</a>
+            <div className="hidden md:flex items-center space-x-8">
+              <a href="#features" className="text-gray-600 hover:text-blue-600 transition-colors duration-300">Funkcje</a>
+              <a href="#benefits" className="text-gray-600 hover:text-blue-600 transition-colors duration-300">Korzyści</a>
               <Link href="/auth/signin">
-                <Button variant="ghost" className="text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300">
+                <Button variant="ghost" className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300">
                   Zaloguj się
                 </Button>
               </Link>
               <Link href="/auth/signup">
-                <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 hover:scale-105">
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md transition-all duration-300">
                   Rozpocznij za darmo
                 </Button>
               </Link>
@@ -42,79 +42,70 @@ export default async function Home() {
         </div>
       </nav>
 
-      {/* Hero Section - Modern Asymmetrical Layout */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-        {/* Background Elements */}
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/20 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl animate-pulse" style={{animationDelay: '2s'}}></div>
-        </div>
-        
-        <div className="max-w-7xl mx-auto relative">
+      {/* Hero Section - Trello-inspired Clean Layout */}
+      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-blue-50 to-white">
+        <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Column - Text Content */}
             <div className="space-y-8">
               <div className="space-y-6">
-                <div className="animate-fade-in-up">
-                  <span className="inline-flex items-center gap-2 px-4 py-2 glass-effect rounded-full text-sm font-medium text-cyan-400 mb-6 border border-cyan-500/30">
+                <div>
+                  <span className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 rounded-full text-sm font-medium text-blue-600 mb-6">
                     <Sparkles className="w-4 h-4" />
                     Nowoczesna platforma do zarządzania projektami
                   </span>
                 </div>
-                <h1 className="text-5xl md:text-7xl font-bold leading-tight animate-fade-in-up" style={{animationDelay: '0.2s'}}>
-                  <span className="text-white">Zoptymalizuj </span>
-                  <span className="text-white">zarządzanie</span>
+                <h1 className="text-4xl md:text-6xl font-bold leading-tight text-gray-900">
+                  Zoptymalizuj zarządzanie
                   <br />
-                  <span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent animate-gradient-shift">
-                    projektami zespołu
-                  </span>
+                  <span className="text-blue-600">projektami zespołu</span>
                 </h1>
-                <p className="text-xl text-slate-400 max-w-2xl leading-relaxed animate-fade-in-up" style={{animationDelay: '0.4s'}}>
+                <p className="text-xl text-gray-600 max-w-2xl leading-relaxed">
                   Od śledzenia zadań po współpracę zespołową - Nexus łączy wszystko
                   w jednej intuicyjnej platformie stworzonej dla nowoczesnych zespołów.
                 </p>
               </div>
               
-              <div className="flex flex-col sm:flex-row gap-4 animate-fade-in-up" style={{animationDelay: '0.6s'}}>
+              <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/auth/signup">
-                  <Button size="lg" className="group w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-lg px-8 py-4 rounded-lg shadow-xl shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 hover:scale-105">
+                  <Button size="lg" className="group w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white text-lg px-8 py-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-300">
                     Rozpocznij darmowy okres próbny
                     <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
                   </Button>
                 </Link>
                 <Link href="#demo">
-                  <Button size="lg" variant="outline" className="group w-full sm:w-auto text-lg px-8 py-4 rounded-lg border-slate-600 text-slate-300 hover:bg-white/5 glass-effect hover:border-white/30 transition-all duration-300">
-                    <Play className="mr-2 w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
+                  <Button size="lg" variant="outline" className="group w-full sm:w-auto text-lg px-8 py-4 rounded-lg border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-300">
+                    <Play className="mr-2 w-5 h-5" />
                     Zobacz demo
                   </Button>
                 </Link>
               </div>
 
               {/* Quick Stats */}
-              <div className="grid grid-cols-3 gap-6 pt-8 animate-fade-in-up" style={{animationDelay: '0.8s'}}>
+              <div className="grid grid-cols-3 gap-6 pt-8">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-white">10k+</div>
-                  <div className="text-sm text-slate-400">Aktywni użytkownicy</div>
+                  <div className="text-2xl font-bold text-gray-900">10k+</div>
+                  <div className="text-sm text-gray-600">Aktywni użytkownicy</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-white">50k+</div>
-                  <div className="text-sm text-slate-400">Ukończone projekty</div>
+                  <div className="text-2xl font-bold text-gray-900">50k+</div>
+                  <div className="text-sm text-gray-600">Ukończone projekty</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-cyan-400">98%</div>
-                  <div className="text-sm text-slate-400">Zadowolenie</div>
+                  <div className="text-2xl font-bold text-blue-600">98%</div>
+                  <div className="text-sm text-gray-600">Zadowolenie</div>
                 </div>
               </div>
             </div>
 
-            {/* Right Column - Interactive Dashboard Preview */}
-            <div className="relative animate-fade-in-right" style={{animationDelay: '0.4s'}}>
-              <div className="glass-effect-dark rounded-3xl p-8 border border-white/10 shadow-2xl animate-float">
+            {/* Right Column - Dashboard Preview */}
+            <div className="relative">
+              <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-xl">
                 {/* Mock Dashboard Header */}
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg"></div>
-                    <span className="font-semibold text-white">Panel główny</span>
+                    <div className="w-8 h-8 bg-blue-600 rounded-lg"></div>
+                    <span className="font-semibold text-gray-900">Panel główny</span>
                   </div>
                   <div className="flex gap-2">
                     <div className="w-3 h-3 bg-red-500 rounded-full"></div>
@@ -123,29 +114,29 @@ export default async function Home() {
                   </div>
                 </div>
 
-                {/* Mock Bento Grid */}
+                {/* Mock Cards Grid */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="col-span-2 bg-gradient-to-r from-blue-600/20 to-indigo-600/20 rounded-lg p-4 border border-blue-500/30">
+                  <div className="col-span-2 bg-blue-50 rounded-lg p-4 border border-blue-200">
                     <div className="flex items-center gap-2 mb-2">
-                      <TrendingUp className="w-4 h-4 text-cyan-400" />
-                      <span className="text-sm text-white font-medium">Wydajność zespołu</span>
+                      <TrendingUp className="w-4 h-4 text-blue-600" />
+                      <span className="text-sm text-gray-900 font-medium">Wydajność zespołu</span>
                     </div>
-                    <div className="text-2xl font-bold text-white">+24%</div>
-                    <div className="text-xs text-slate-400">vs. poprzedni miesiąc</div>
+                    <div className="text-2xl font-bold text-gray-900">+24%</div>
+                    <div className="text-xs text-gray-600">vs. poprzedni miesiąc</div>
                   </div>
-                  <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                     <div className="flex items-center gap-2 mb-2">
-                      <Target className="w-4 h-4 text-green-400" />
-                      <span className="text-xs text-slate-300">Zadania</span>
+                      <Target className="w-4 h-4 text-gray-600" />
+                      <span className="text-xs text-gray-600">Zadania</span>
                     </div>
-                    <div className="text-lg font-bold text-white">127</div>
+                    <div className="text-lg font-bold text-gray-900">127</div>
                   </div>
-                  <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                     <div className="flex items-center gap-2 mb-2">
-                      <Layers className="w-4 h-4 text-purple-400" />
-                      <span className="text-xs text-slate-300">Projekty</span>
+                      <Layers className="w-4 h-4 text-gray-600" />
+                      <span className="text-xs text-gray-600">Projekty</span>
                     </div>
-                    <div className="text-lg font-bold text-white">12</div>
+                    <div className="text-lg font-bold text-gray-900">12</div>
                   </div>
                 </div>
               </div>
@@ -155,96 +146,101 @@ export default async function Home() {
 
         {/* Scroll Indicator */}
         <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-          <ChevronDown className="w-6 h-6 text-slate-400" />
+          <ChevronDown className="w-6 h-6 text-gray-400" />
         </div>
       </section>
 
-      {/* Features Bento Grid */}
-      <section id="features" className="py-24 px-4 sm:px-6 lg:px-8 fade-in-section">
+      {/* Features Section */}
+      <section id="features" className="py-24 px-4 sm:px-6 lg:px-8 bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-6xl font-bold text-white mb-4">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
               Wszystko, czego potrzebujesz
             </h2>
-            <p className="text-xl text-slate-400 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Potężne funkcje w nowoczesnym, intuicyjnym interfejsie
             </p>
           </div>
 
-          {/* Modern Bento Grid Layout */}
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-6 auto-rows-auto">
-            {/* Large Feature Card */}
-            <div className="md:col-span-3 md:row-span-2 group glass-effect-dark rounded-3xl p-8 border border-white/10 hover:border-blue-500/50 transition-all duration-500 hover:scale-[1.02] cursor-pointer">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                  <CheckCircle className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-white">Zarządzanie zadaniami</h3>
-                  <p className="text-slate-400">Kompleksowe narzędzie</p>
-                </div>
+          {/* Clean Grid Layout */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Feature Cards */}
+            <div className="group bg-white rounded-2xl p-8 border border-gray-200 hover:border-blue-300 transition-all duration-300 hover:shadow-lg cursor-pointer">
+              <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <CheckCircle className="w-8 h-8 text-white" />
               </div>
-              <p className="text-slate-300 text-lg leading-relaxed">
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">Zarządzanie zadaniami</h3>
+              <p className="text-gray-600 leading-relaxed">
                 Twórz, przypisuj i śledź zadania z potężnymi tablicami kanban, 
                 niestandardowymi przepływami pracy i automatyzacją procesów.
               </p>
-              <div className="mt-6 flex items-center gap-2 text-cyan-400 group-hover:text-cyan-300 transition-colors duration-300">
-                <span className="text-sm font-medium">Poznaj więcej</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
-              </div>
             </div>
 
-            {/* Medium Feature Cards */}
-            <div className="md:col-span-3 group glass-effect-dark rounded-3xl p-6 border border-white/10 hover:border-purple-500/50 transition-all duration-500 hover:scale-[1.02] cursor-pointer">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                <Users className="w-6 h-6 text-white" />
+            <div className="group bg-white rounded-2xl p-8 border border-gray-200 hover:border-blue-300 transition-all duration-300 hover:shadow-lg cursor-pointer">
+              <div className="w-16 h-16 bg-purple-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Users className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">Współpraca zespołowa</h3>
-              <p className="text-slate-400">
-                Współpraca w czasie rzeczywistym z komentarzami i dyskusjami.
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">Współpraca zespołowa</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Współpraca w czasie rzeczywistym z komentarzami, dyskusjami 
+                i udostępnianiem plików w jednym miejscu.
               </p>
             </div>
 
-            <div className="md:col-span-2 group glass-effect-dark rounded-3xl p-6 border border-white/10 hover:border-green-500/50 transition-all duration-500 hover:scale-[1.02] cursor-pointer">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-400 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                <Clock className="w-6 h-6 text-white" />
+            <div className="group bg-white rounded-2xl p-8 border border-gray-200 hover:border-blue-300 transition-all duration-300 hover:shadow-lg cursor-pointer">
+              <div className="w-16 h-16 bg-green-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Clock className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-lg font-bold text-white mb-2">Śledzenie czasu</h3>
-              <p className="text-slate-400 text-sm">
-                Dokładne raporty czasowe
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">Śledzenie czasu</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Dokładne raporty czasowe i analityka produktywności 
+                z automatycznym śledzeniem aktywności.
               </p>
             </div>
 
-            <div className="md:col-span-2 group glass-effect-dark rounded-3xl p-6 border border-white/10 hover:border-orange-500/50 transition-all duration-500 hover:scale-[1.02] cursor-pointer">
-              <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                <Calendar className="w-6 h-6 text-white" />
+            <div className="group bg-white rounded-2xl p-8 border border-gray-200 hover:border-blue-300 transition-all duration-300 hover:shadow-lg cursor-pointer">
+              <div className="w-16 h-16 bg-orange-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Calendar className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-lg font-bold text-white mb-2">Widok kalendarza</h3>
-              <p className="text-slate-400 text-sm">
-                Wizualizacja terminów
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">Widok kalendarza</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Wizualizacja terminów, kamieni milowych i harmonogramów 
+                projektów w przejrzystym kalendarzu.
               </p>
             </div>
 
-            <div className="md:col-span-2 group glass-effect-dark rounded-3xl p-6 border border-white/10 hover:border-indigo-500/50 transition-all duration-500 hover:scale-[1.02] cursor-pointer">
-              <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-blue-500 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                <BarChart3 className="w-6 h-6 text-white" />
+            <div className="group bg-white rounded-2xl p-8 border border-gray-200 hover:border-blue-300 transition-all duration-300 hover:shadow-lg cursor-pointer">
+              <div className="w-16 h-16 bg-indigo-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <BarChart3 className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-lg font-bold text-white mb-2">Analityka</h3>
-              <p className="text-slate-400 text-sm">
-                Szczegółowe raporty
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">Analityka</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Szczegółowe raporty i metryki wydajności 
+                z inteligentными wglądami w produktywność zespołu.
+              </p>
+            </div>
+
+            <div className="group bg-white rounded-2xl p-8 border border-gray-200 hover:border-blue-300 transition-all duration-300 hover:shadow-lg cursor-pointer">
+              <div className="w-16 h-16 bg-cyan-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Shield className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">Bezpieczeństwo</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Zabezpieczenia na poziomie enterprise z szyfrowaniem danych 
+                i kontrolą dostępu opartą na rolach.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Interactive Benefits Section */}
-      <section id="benefits" className="py-24 px-4 sm:px-6 lg:px-8 fade-in-section">
+      {/* Benefits Section */}
+      <section id="benefits" className="py-24 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             {/* Left Column - Benefits List */}
             <div className="space-y-8">
-              <h2 className="text-4xl md:text-5xl font-bold text-white">
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900">
                 Zbudowany dla nowoczesnych zespołów
               </h2>
               
@@ -254,40 +250,39 @@ export default async function Home() {
                     icon: Lightbulb,
                     title: "Intuicyjny w użyciu",
                     description: "Nowoczesny interfejs, który nie wymaga szkolenia",
-                    color: "from-yellow-500 to-orange-500"
+                    color: "bg-yellow-600"
                   },
                   {
                     icon: TrendingUp,
                     title: "Skalowalny",
                     description: "Rozwija się razem z Twoim zespołem od 2 do 2000+ członków",
-                    color: "from-green-500 to-emerald-500"
+                    color: "bg-green-600"
                   },
                   {
                     icon: Shield,
                     title: "Bezpieczny",
                     description: "Zabezpieczenia na poziomie enterprise z szyfrowaniem danych",
-                    color: "from-blue-500 to-cyan-500"
+                    color: "bg-blue-600"
                   },
                   {
                     icon: Star,
                     title: "Przystępny cenowo",
                     description: "Konkurencyjne ceny bez ukrytych kosztów",
-                    color: "from-purple-500 to-pink-500"
+                    color: "bg-purple-600"
                   }
                 ].map((benefit, index) => (
                   <div 
                     key={index}
-                    className="flex items-start space-x-4 group cursor-pointer p-4 rounded-2xl hover:bg-white/5 transition-all duration-300"
-                    style={{animationDelay: `${index * 0.1}s`}}
+                    className="flex items-start space-x-4 group cursor-pointer p-4 rounded-2xl hover:bg-gray-50 transition-all duration-300"
                   >
-                    <div className={`mt-1 w-12 h-12 bg-gradient-to-br ${benefit.color} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                    <div className={`mt-1 w-12 h-12 ${benefit.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
                       <benefit.icon className="w-6 h-6 text-white" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-bold text-white text-xl mb-1 group-hover:text-cyan-400 transition-colors duration-300">
+                      <h3 className="font-bold text-gray-900 text-xl mb-1 group-hover:text-blue-600 transition-colors duration-300">
                         {benefit.title}
                       </h3>
-                      <p className="text-slate-400 leading-relaxed">
+                      <p className="text-gray-600 leading-relaxed">
                         {benefit.description}
                       </p>
                     </div>
@@ -296,22 +291,22 @@ export default async function Home() {
               </div>
             </div>
 
-            {/* Right Column - Interactive Stats Card */}
+            {/* Right Column - Stats Card */}
             <div className="relative">
-              <div className="glass-effect-dark rounded-3xl p-8 border border-white/10 shadow-2xl">
-                <h3 className="font-bold text-white mb-6 text-2xl">Nasze osiągnięcia</h3>
+              <div className="bg-gray-50 rounded-2xl p-8 border border-gray-200 shadow-lg">
+                <h3 className="font-bold text-gray-900 mb-6 text-2xl">Nasze osiągnięcia</h3>
                 <div className="space-y-6">
                   {[
-                    { label: "Aktywni użytkownicy", value: "10,000+", color: "text-blue-400" },
-                    { label: "Ukończone projekty", value: "50,000+", color: "text-green-400" },
-                    { label: "Zadowolenie klientów", value: "98%", color: "text-cyan-400" },
-                    { label: "Czas działania", value: "99.9%", color: "text-purple-400" }
+                    { label: "Aktywni użytkownicy", value: "10,000+", color: "text-blue-600" },
+                    { label: "Ukończone projekty", value: "50,000+", color: "text-green-600" },
+                    { label: "Zadowolenie klientów", value: "98%", color: "text-purple-600" },
+                    { label: "Czas działania", value: "99.9%", color: "text-orange-600" }
                   ].map((stat, index) => (
                     <div 
                       key={index}
-                      className="flex justify-between items-center group cursor-pointer p-3 rounded-lg hover:bg-white/5 transition-all duration-300"
+                      className="flex justify-between items-center group cursor-pointer p-3 rounded-lg hover:bg-white transition-all duration-300"
                     >
-                      <span className="text-slate-400 group-hover:text-slate-300 transition-colors duration-300">
+                      <span className="text-gray-600 group-hover:text-gray-900 transition-colors duration-300">
                         {stat.label}
                       </span>
                       <span className={`font-bold text-xl ${stat.color} group-hover:scale-110 transition-transform duration-300`}>
@@ -326,29 +321,26 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Modern CTA Section */}
-      <section className="py-24 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 via-cyan-500/20 to-purple-600/20 animate-gradient-shift"></div>
-        <div className="absolute inset-0 glass-effect"></div>
-        
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <div className="space-y-8 animate-fade-in-up">
-            <h2 className="text-4xl md:text-6xl font-bold text-white">
+      {/* CTA Section */}
+      <section className="py-24 bg-blue-600">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="space-y-8">
+            <h2 className="text-4xl md:text-5xl font-bold text-white">
               Gotowy na transformację?
             </h2>
-            <p className="text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-xl text-blue-100 max-w-2xl mx-auto leading-relaxed">
               Dołącz do tysięcy zespołów, które już korzystają z Nexus, aby realizować projekty 
               szybciej i bardziej efektywnie niż kiedykolwiek wcześniej.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/auth/signup">
-                <Button size="lg" className="group w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-lg px-8 py-4 rounded-lg shadow-xl shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 hover:scale-105">
+                <Button size="lg" className="group w-full sm:w-auto bg-white hover:bg-gray-50 text-blue-600 text-lg px-8 py-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300">
                   Rozpocznij darmowy okres próbny
                   <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
                 </Button>
               </Link>
             </div>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-blue-200">
               Nie wymagamy karty kredytowej • 14-dniowy darmowy okres próbny • Możesz anulować w każdej chwili
             </p>
           </div>
@@ -356,17 +348,17 @@ export default async function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="glass-effect-dark border-t border-white/10">
+      <footer className="bg-gray-900 border-t border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="grid md:grid-cols-4 gap-8 mb-12">
             <div className="space-y-4">
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                   <Zap className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">Nexus</span>
+                <span className="text-xl font-bold text-white">Nexus</span>
               </div>
-              <p className="text-slate-400">
+              <p className="text-gray-400">
                 Nowoczesne zarządzanie projektami dla nowoczesnych zespołów.
               </p>
             </div>
@@ -390,7 +382,7 @@ export default async function Home() {
                 <ul className="space-y-2">
                   {section.links.map((link, linkIndex) => (
                     <li key={linkIndex}>
-                      <a href="#" className="text-slate-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transform inline-block">
+                      <a href="#" className="text-gray-400 hover:text-white transition-colors duration-300">
                         {link}
                       </a>
                     </li>
@@ -400,7 +392,7 @@ export default async function Home() {
             ))}
           </div>
           
-          <div className="border-t border-white/10 pt-8 text-center text-slate-400">
+          <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
             <p>&copy; 2025 Nexus. Wszystkie prawa zastrzeżone.</p>
           </div>
         </div>

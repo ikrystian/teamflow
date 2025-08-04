@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -77,6 +78,12 @@ export function SettingsContent() {
     unsubscribe: unsubscribePush
   } = usePushNotifications()
 
+  // Router for URL state management
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Get current tab from URL or default to 'profile'
+  const currentTab = searchParams.get('tab') || 'profile'
 
   // Form state for profile data
   const [formData, setFormData] = useState({
@@ -247,6 +254,27 @@ export function SettingsContent() {
     } : null)
   }
 
+  // Available tabs based on user role
+  const availableTabs = isAdmin
+    ? ['profile', 'security', 'notifications', 'privacy', 'appearance', 'task-statuses', 'smtp', 'users']
+    : ['profile', 'security', 'notifications', 'privacy', 'appearance', 'task-statuses']
+
+  // Validate current tab and redirect if invalid
+  useEffect(() => {
+    if (!availableTabs.includes(currentTab)) {
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('tab', 'profile')
+      router.replace(`/dashboard/settings?${params.toString()}`)
+    }
+  }, [currentTab, availableTabs, router, searchParams])
+
+  // Handle tab change with URL update
+  const handleTabChange = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('tab', value)
+    router.push(`/dashboard/settings?${params.toString()}`)
+  }
+
   if (isLoadingProfile) {
     return (
       <div className="container mx-auto py-6 px-4">
@@ -263,7 +291,7 @@ export function SettingsContent() {
   return (
     <div className="container mx-auto py-6 px-4">
 
-        <Tabs defaultValue="profile" className="space-y-6">
+        <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-6">
           <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-8' : 'grid-cols-6'}`}>
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="h-4 w-4" />
@@ -488,7 +516,7 @@ export function SettingsContent() {
                       <Label>Przypisanie zadania</Label>
                       <p className="text-sm text-gray-500">Gdy zostaniesz przypisany do zadania</p>
                     </div>
-                    <Switch disabled
+                    <Switch
                       checked={otherSettings.notifications.taskAssigned}
                       onCheckedChange={(checked) => handleNotificationChange("taskAssigned", checked)}
                     />

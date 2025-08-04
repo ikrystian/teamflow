@@ -4,47 +4,101 @@ const prisma = new PrismaClient()
 
 async function resetAndSeed() {
   try {
-    console.log('🗑️ Clearing existing data...')
+    console.log('🗑️ Czyszczenie istniejących danych...')
 
-    // Delete all data in correct order to respect foreign key constraints
+    // Usuń wszystkie dane w prawidłowej kolejności, aby przestrzegać ograniczeń kluczy obcych
+    console.log('Usuwanie wiadomości...')
+    await prisma.message.deleteMany() // Zależy od User i ChatRoom
+    console.log('Wiadomości usunięte.')
+
+    console.log('Usuwanie UserChatRoom...')
+    await prisma.userChatRoom.deleteMany() // Zależy od User i ChatRoom
+    console.log('UserChatRoom usunięte.')
+
+    console.log('Usuwanie Todo...')
     await prisma.todo.deleteMany()
-    await prisma.comment.deleteMany()
-    await prisma.subtask.deleteMany()
-    await prisma.timeEntry.deleteMany()
-    await prisma.taskImage.deleteMany()
-    await prisma.task.deleteMany()
-    await prisma.projectDocument.deleteMany()
-    await prisma.project.deleteMany()
-    await prisma.taskStatus.deleteMany()
-    await prisma.systemChange.deleteMany()
-    await prisma.session.deleteMany()
-    await prisma.account.deleteMany()
+    console.log('Todo usunięte.')
 
-    // Skip VerificationToken as it may cause issues with some PostgreSQL configurations
+    console.log('Usuwanie komentarzy...')
+    await prisma.comment.deleteMany()
+    console.log('Komentarze usunięte.')
+
+    console.log('Usuwanie podzadań...')
+    await prisma.subtask.deleteMany()
+    console.log('Podzadania usunięte.')
+
+    console.log('Usuwanie wpisów czasu...')
+    await prisma.timeEntry.deleteMany()
+    console.log('Wpisy czasu usunięte.')
+
+    console.log('Usuwanie obrazków zadań...')
+    await prisma.taskImage.deleteMany()
+    console.log('Obrazki zadań usunięte.')
+
+    console.log('Usuwanie zadań...')
+    await prisma.task.deleteMany()
+    console.log('Zadania usunięte.')
+
+    console.log('Usuwanie dokumentów projektów...')
+    await prisma.projectDocument.deleteMany()
+    console.log('Dokumenty projektów usunięte.')
+
+    console.log('Usuwanie projektów...')
+    await prisma.project.deleteMany()
+    console.log('Projekty usunięte.')
+
+    console.log('Usuwanie statusów zadań...')
+    await prisma.taskStatus.deleteMany()
+    console.log('Statusy zadań usunięte.')
+
+    console.log('Usuwanie zmian systemowych...')
+    await prisma.systemChange.deleteMany()
+    console.log('Zmiany systemowe usunięte.')
+
+    console.log('Usuwanie sesji...')
+    await prisma.session.deleteMany()
+    console.log('Sesje usunięte.')
+
+    console.log('Usuwanie kont...')
+    await prisma.account.deleteMany()
+    console.log('Konta usunięte.')
+
+    console.log('Usuwanie pokoi czatu...')
+    await prisma.chatRoom.deleteMany() // Zależy od User (createdById)
+    console.log('Pokoje czatu usunięte.')
+
+    // Pomiń VerificationToken, ponieważ może powodować problemy z niektórymi konfiguracjami PostgreSQL
     try {
       await prisma.verificationToken.deleteMany()
     } catch (error) {
-      console.log('⚠️ Skipping VerificationToken cleanup (not critical)')
+      console.log('⚠️ Pomijanie czyszczenia VerificationToken (niekrytyczne)')
     }
 
-    // Clear many-to-many relationships
+    // Wyczyść relacje wiele-do-wielu
+    console.log('Usuwanie relacji _TeamMembers...')
     await prisma.$executeRaw`DELETE FROM "_TeamMembers"`
+    console.log('Relacje _TeamMembers usunięte.')
 
+    console.log('Usuwanie zespołów...')
     await prisma.team.deleteMany()
+    console.log('Zespoły usunięte.')
+
+    console.log('Usuwanie użytkowników...')
     await prisma.user.deleteMany()
+    console.log('Użytkownicy usunięci.')
 
-    console.log('✅ Database cleared successfully!')
+    console.log('✅ Baza danych wyczyszczona pomyślnie!')
 
-    console.log('🌱 Running seed script...')
+    console.log('🌱 Uruchamianie skryptu seedującego...')
 
-    // Import and run the main seed function
+    // Importuj i uruchom główną funkcję seedującą
     const { main } = await import('../prisma/seed')
     await main()
 
-    console.log('🎉 Database reset and seeded successfully!')
+    console.log('🎉 Baza danych zresetowana i zasiedlona pomyślnie!')
 
   } catch (error) {
-    console.error('❌ Error during reset and seed:', error)
+    console.error('❌ Błąd podczas resetowania i seedowania:', error)
     throw error
   } finally {
     await prisma.$disconnect()

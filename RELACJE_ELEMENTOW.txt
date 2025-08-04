@@ -335,6 +335,39 @@ System umożliwia użytkownikom ustawienie powiadomień push przeglądarki, któ
 - `src/app/api/tasks/[taskId]/route.ts` - rozszerzenie o pola przypomnienia
 - `docs/task-reminders.md` - dokumentacja funkcjonalności
 
+## Sekcja Pomocy na Stronie Zadań (2025-08-04):
+
+### Opis:
+Dodano rozwijalną sekcję pomocy na stronie `/dashboard/tasks` zawierającą wskazówki dotyczące zarządzania zadaniami, najlepsze praktyki oraz powiązane treści z innych sekcji aplikacji.
+
+### Pliki dodane/zmodyfikowane:
+- `src/components/ui/collapsible.tsx` - nowy komponent UI (utworzony)
+- `src/components/tasks/tasks-content.tsx` - dodano sekcję pomocy
+- `docs/tasks-help-section.md` - dokumentacja funkcjonalności
+- `README.md` - aktualizacja z nową funkcjonalnością
+- `package.json` - dodano zależność @radix-ui/react-collapsible
+
+### Struktura sekcji pomocy:
+- **Główna karta** - rozwijalna sekcja z tytułem i opisem
+- **Organizacja zadań** - wskazówki dotyczące priorytetów, terminów, opisów
+- **Współpraca zespołowa** - porady o przypisywaniu, komentarzach, załącznikach
+- **Śledzenie czasu** - informacje o logowaniu czasu i przypomnieniach
+- **Szybkie akcje** - przyciski do najczęściej używanych funkcji
+- **Powiązane funkcje** - linki do projektów i zespołów
+
+### Funkcjonalności:
+- Rozwijanie/zwijanie sekcji
+- Szybkie akcje (nowe zadanie, zmiana widoku, filtrowanie)
+- Nawigacja do powiązanych sekcji
+- Responsywny design z grid layout
+- Kolorowe karty dla różnych kategorii
+
+### Korzyści:
+- Onboarding nowych użytkowników
+- Edukacja o dostępnych funkcjach
+- Szybki dostęp do często używanych akcji
+- Powiązanie treści z innych sekcji aplikacji
+
 ## Kompleksowe Seeds - Dane Testowe (2025-08-01):
 
 ### Przygotowano rozszerzone seeds w `prisma/seed.ts` zawierające:

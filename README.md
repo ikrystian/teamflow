@@ -81,6 +81,8 @@ Nexus to nowoczesna aplikacja internetowa do zarządzania zadaniami i projektami
 - **Publiczne udostępnianie projektów** - Możliwość generowania specjalnych linków do udostępnienia tablicy zadań osobom bez konta w systemie, widok tylko do odczytu z tablicą Kanban i kalendarzem
 - **System wysyłania maili** - Konfiguracja SMTP przez panel administratora, maile powitalne po rejestracji, resetowanie hasła przez email
 - **Powiadomienia o wiadomościach chatu** - Notification bell w header z licznikiem nieprzeczytanych wiadomości, automatyczne push notifications gdy karta nie jest aktywna, real-time aktualizacje przez Socket.IO
+- **URL State Management w ustawieniach** - Panel ustawień zapisuje aktualną zakładkę w URL, umożliwiając bezpośrednie linkowanie do konkretnych sekcji, zachowanie stanu po odświeżeniu i lepszą nawigację
+- **Sekcja pomocy na stronie zadań** - Rozwijalna sekcja z wskazówkami dotyczącymi zarządzania zadaniami, najlepszymi praktykami, szybkimi akcjami i powiązanymi treściami z innych sekcji aplikacji
 
 ### 🔄 Planowane funkcjonalności
 - ✅ ~~Zaproszenia do zespołów przez email~~ - **CZĘŚCIOWO ZAIMPLEMENTOWANE** (system SMTP gotowy)
@@ -252,7 +254,7 @@ Tworzy kompleksowe dane testowe:
 - **Członkostwo w pokojach** z różnymi poziomami aktywności
 
 **Konta testowe:**
-- Administrator: `krystian@bpcoders.pl` / `admin123`
+- Administrator: `admin@techsolutions.com` / `admin123`
 - Użytkownicy: `john@example.com`, `jane@example.com`, `bob@example.com`, `alice@example.com`, `charlie@example.com` / `password123`
 
 ## 📱 Responsywność
