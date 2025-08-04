@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Push Notifications</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #005a87;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border: 1px solid #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Push Notifications - TeamFlow</h1>
+    
+    <div id="status" class="status info">
+        Sprawdzanie wsparcia dla powiadomień push...
+    </div>
+
+    <div>
+        <button id="requestPermission" disabled>Poproś o uprawnienia</button>
+        <button id="subscribe" disabled>Subskrybuj powiadomienia</button>
+        <button id="sendTest" disabled>Wyślij testowe powiadomienie</button>
+        <button id="unsubscribe" disabled>Anuluj subskrypcję</button>
+    </div>
+
+    <h3>Informacje o subskrypcji:</h3>
+    <pre id="subscriptionInfo">Brak subskrypcji</pre>
+
+    <h3>Logi:</h3>
+    <pre id="logs"></pre>
+
+    <script>
+        const statusDiv = document.getElementById('status');
+        const logsDiv = document.getElementById('logs');
+        const subscriptionInfoDiv = document.getElementById('subscriptionInfo');
+        
+        const requestPermissionBtn = document.getElementById('requestPermission');
+        const subscribeBtn = document.getElementById('subscribe');
+        const sendTestBtn = document.getElementById('sendTest');
+        const unsubscribeBtn = document.getElementById('unsubscribe');
+
+        let swRegistration = null;
+        let subscription = null;
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logsDiv.textContent += `[${timestamp}] ${message}\n`;
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function updateStatus(message, type = 'info') {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        function updateButtons() {
+            const permission = Notification.permission;
+            const hasSubscription = subscription !== null;
+
+            requestPermissionBtn.disabled = permission === 'granted';
+            subscribeBtn.disabled = permission !== 'granted' || hasSubscription;
+            sendTestBtn.disabled = !hasSubscription;
+            unsubscribeBtn.disabled = !hasSubscription;
+        }
+
+        function updateSubscriptionInfo() {
+            if (subscription) {
+                subscriptionInfoDiv.textContent = JSON.stringify(subscription, null, 2);
+            } else {
+                subscriptionInfoDiv.textContent = 'Brak subskrypcji';
+            }
+        }
+
+        async function initializeServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                try {
+                    swRegistration = await navigator.serviceWorker.register('/sw.js');
+                    log('Service Worker zarejestrowany pomyślnie');
+                    return true;
+                } catch (error) {
+                    log(`Błąd rejestracji Service Worker: ${error.message}`);
+                    return false;
+                }
+            } else {
+                log('Service Worker nie jest obsługiwany');
+                return false;
+            }
+        }
+
+        async function checkPushSupport() {
+            if (!('PushManager' in window)) {
+                updateStatus('Push notifications nie są obsługiwane', 'error');
+                log('PushManager nie jest dostępny');
+                return false;
+            }
+
+            const swInitialized = await initializeServiceWorker();
+            if (!swInitialized) {
+                updateStatus('Nie udało się zainicjalizować Service Worker', 'error');
+                return false;
+            }
+
+            updateStatus('Push notifications są obsługiwane', 'success');
+            log('Push notifications są obsługiwane');
+            
+            // Sprawdź obecną subskrypcję
+            try {
+                subscription = await swRegistration.pushManager.getSubscription();
+                if (subscription) {
+                    log('Znaleziono istniejącą subskrypcję');
+                    updateSubscriptionInfo();
+                }
+            } catch (error) {
+                log(`Błąd sprawdzania subskrypcji: ${error.message}`);
+            }
+
+            updateButtons();
+            return true;
+        }
+
+        async function requestPermission() {
+            try {
+                const permission = await Notification.requestPermission();
+                log(`Uprawnienia: ${permission}`);
+                
+                if (permission === 'granted') {
+                    updateStatus('Uprawnienia przyznane', 'success');
+                } else {
+                    updateStatus('Uprawnienia odrzucone', 'error');
+                }
+                
+                updateButtons();
+                return permission === 'granted';
+            } catch (error) {
+                log(`Błąd żądania uprawnień: ${error.message}`);
+                updateStatus('Błąd żądania uprawnień', 'error');
+                return false;
+            }
+        }
+
+        async function subscribeUser() {
+            try {
+                // Pobierz klucz publiczny VAPID
+                const response = await fetch('http://localhost:3000/api/push/vapid-key');
+                const { publicKey } = await response.json();
+                log(`Klucz publiczny VAPID: ${publicKey}`);
+
+                // Konwertuj klucz do formatu Uint8Array
+                const applicationServerKey = urlBase64ToUint8Array(publicKey);
+
+                // Subskrybuj
+                subscription = await swRegistration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: applicationServerKey
+                });
+
+                log('Subskrypcja utworzona pomyślnie');
+                updateStatus('Subskrypcja aktywna', 'success');
+                updateSubscriptionInfo();
+                updateButtons();
+
+                // Wyślij subskrypcję na serwer
+                await sendSubscriptionToServer(subscription);
+
+            } catch (error) {
+                log(`Błąd subskrypcji: ${error.message}`);
+                updateStatus('Błąd subskrypcji', 'error');
+            }
+        }
+
+        async function sendSubscriptionToServer(subscription) {
+            try {
+                const response = await fetch('http://localhost:3000/api/push/subscribe', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(subscription)
+                });
+
+                if (response.ok) {
+                    log('Subskrypcja wysłana na serwer');
+                } else {
+                    log(`Błąd wysyłania subskrypcji: ${response.status}`);
+                }
+            } catch (error) {
+                log(`Błąd komunikacji z serwerem: ${error.message}`);
+            }
+        }
+
+        async function sendTestNotification() {
+            try {
+                const response = await fetch('http://localhost:3000/api/notifications/push', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        type: 'chat_message',
+                        title: 'Test powiadomienia',
+                        body: 'To jest testowe powiadomienie push z TeamFlow!',
+                        data: {
+                            chatRoomId: 'test-room',
+                            senderId: 'test-user'
+                        }
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    log(`Powiadomienie wysłane: ${JSON.stringify(result)}`);
+                    updateStatus('Testowe powiadomienie wysłane', 'success');
+                } else {
+                    const error = await response.text();
+                    log(`Błąd wysyłania powiadomienia: ${response.status} - ${error}`);
+                    updateStatus('Błąd wysyłania powiadomienia', 'error');
+                }
+            } catch (error) {
+                log(`Błąd: ${error.message}`);
+                updateStatus('Błąd wysyłania powiadomienia', 'error');
+            }
+        }
+
+        async function unsubscribeUser() {
+            try {
+                if (subscription) {
+                    await subscription.unsubscribe();
+                    subscription = null;
+                    log('Subskrypcja anulowana');
+                    updateStatus('Subskrypcja anulowana', 'info');
+                    updateSubscriptionInfo();
+                    updateButtons();
+                }
+            } catch (error) {
+                log(`Błąd anulowania subskrypcji: ${error.message}`);
+                updateStatus('Błąd anulowania subskrypcji', 'error');
+            }
+        }
+
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding)
+                .replace(/-/g, '+')
+                .replace(/_/g, '/');
+
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+
+            for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+        }
+
+        // Event listeners
+        requestPermissionBtn.addEventListener('click', requestPermission);
+        subscribeBtn.addEventListener('click', subscribeUser);
+        sendTestBtn.addEventListener('click', sendTestNotification);
+        unsubscribeBtn.addEventListener('click', unsubscribeUser);
+
+        // Inicjalizacja
+        checkPushSupport();
+    </script>
+</body>
+</html>

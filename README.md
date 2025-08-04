@@ -80,6 +80,7 @@ Nexus to nowoczesna aplikacja internetowa do zarządzania zadaniami i projektami
 - **Przypomnienia Push** - System powiadomień push przeglądarki z możliwością ustawienia przypomnienia na wybrane godziny/dni przed terminem zadania
 - **Publiczne udostępnianie projektów** - Możliwość generowania specjalnych linków do udostępnienia tablicy zadań osobom bez konta w systemie, widok tylko do odczytu z tablicą Kanban i kalendarzem
 - **System wysyłania maili** - Konfiguracja SMTP przez panel administratora, maile powitalne po rejestracji, resetowanie hasła przez email
+- **Powiadomienia o wiadomościach chatu** - Notification bell w header z licznikiem nieprzeczytanych wiadomości, automatyczne push notifications gdy karta nie jest aktywna, real-time aktualizacje przez Socket.IO
 
 ### 🔄 Planowane funkcjonalności
 - ✅ ~~Zaproszenia do zespołów przez email~~ - **CZĘŚCIOWO ZAIMPLEMENTOWANE** (system SMTP gotowy)
@@ -152,16 +153,35 @@ Aplikacja będzie dostępna pod adresem `http://localhost:3000`
 
 ## 📧 Konfiguracja SMTP (Opcjonalna)
 
-Aby włączyć funkcjonalność wysyłania maili (powitalne, resetowanie hasła):
+Aby włączyć funkcjonalność wysyłania maili (powitalne, resetowanie hasła), skonfiguruj zmienne środowiskowe w pliku `.env`:
+
+```bash
+# SMTP Configuration
+SMTP_HOST="smtp.gmail.com"
+SMTP_PORT="587"
+SMTP_SECURE="false"
+SMTP_USER="your-email@gmail.com"
+SMTP_PASSWORD="your-app-password"
+SMTP_FROM_EMAIL="noreply@yourcompany.com"
+SMTP_FROM_NAME="Nexus"
+```
+
+### Popularne ustawienia SMTP:
+
+- **Gmail**:
+  - Host: `smtp.gmail.com`, Port: `587`, Secure: `false`
+  - Wymaga hasła aplikacji (nie hasła konta)
+- **Outlook**:
+  - Host: `smtp-mail.outlook.com`, Port: `587`, Secure: `false`
+- **SendGrid**:
+  - Host: `smtp.sendgrid.net`, Port: `587`, Secure: `false`
+  - Użyj API key jako hasła
+
+### Testowanie konfiguracji:
 
 1. **Zaloguj się jako administrator** (krystian@bpcoders.pl / admin123)
 2. **Przejdź do Ustawień** → zakładka "SMTP"
-3. **Skonfiguruj ustawienia SMTP**:
-   - **Gmail**: smtp.gmail.com, port 587, TLS, hasło aplikacji
-   - **Outlook**: smtp-mail.outlook.com, port 587, TLS
-   - **SendGrid**: smtp.sendgrid.net, port 587, TLS, API key jako hasło
-4. **Przetestuj połączenie** przyciskiem "Testuj połączenie"
-5. **Zapisz ustawienia**
+3. **Sprawdź obecne ustawienia** i **przetestuj połączenie**
 
 Po konfiguracji SMTP:
 - Nowi użytkownicy otrzymają mail powitalny po rejestracji

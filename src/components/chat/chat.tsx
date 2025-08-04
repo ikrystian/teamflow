@@ -76,6 +76,40 @@ export function Chat() {
   const [roomSearchTerm, setRoomSearchTerm] = useState('')
   const [loading, setLoading] = useState(true)
 
+  // Handle URL parameter for room selection
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const roomId = urlParams.get('room')
+
+    if (roomId && chatRooms.length > 0) {
+      const room = chatRooms.find(r => r.id === roomId)
+      if (room) {
+        setSelectedRoom(room)
+        // Clear URL parameter after selecting room
+        const newUrl = window.location.pathname
+        window.history.replaceState({}, '', newUrl)
+      }
+    }
+  }, [chatRooms])
+
+  // Handle service worker messages for navigation
+  useEffect(() => {
+    const handleServiceWorkerMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'NAVIGATE_TO_CHAT' && event.data?.chatRoomId) {
+        const room = chatRooms.find(r => r.id === event.data.chatRoomId)
+        if (room) {
+          setSelectedRoom(room)
+        }
+      }
+    }
+
+    navigator.serviceWorker?.addEventListener('message', handleServiceWorkerMessage)
+
+    return () => {
+      navigator.serviceWorker?.removeEventListener('message', handleServiceWorkerMessage)
+    }
+  }, [chatRooms])
+
   const fetchChatRooms = useCallback(async () => {
     try {
       const response = await fetch('/api/chat/rooms')

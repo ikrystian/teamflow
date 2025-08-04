@@ -33,6 +33,7 @@ import { NavProjects } from "@/components/dashboard/nav-projects"
 import { NavAdmin } from "@/components/dashboard/nav-admin"
 import { TeamSwitcher } from "@/components/dashboard/team-switcher"
 import { DashboardBreadcrumbs } from "@/components/dashboard/breadcrumbs"
+import { NotificationBell } from "@/components/notifications/notification-bell"
 import { EditProjectSheet } from "@/components/projects/edit-project-sheet"
 import { RightSidebar } from "@/components/dashboard/right-sidebar"
 import { RecentChanges } from "@/components/dashboard/recent-changes"
@@ -150,6 +151,9 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
             <Separator orientation="vertical" className="mr-2 h-4" />
             <div className="flex-1">
               {headerContent}
+            </div>
+            <div className="flex items-center gap-2">
+              <NotificationBell />
             </div>
           </div>
         </header>

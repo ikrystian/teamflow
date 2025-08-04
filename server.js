@@ -96,8 +96,16 @@ app.prepare().then(() => {
 
     socket.on('send-message', (data) => {
       console.log('Message received:', data)
+
+      // Emit to all users in the chat room except sender
       socket.to(data.chatRoomId).emit('new-message', data)
+
+      // Emit back to sender for confirmation
       socket.emit('message-sent', data)
+
+      // Send notification to offline users or users not currently viewing the chat
+      // This will be handled by the notification bell component on the client side
+      // The component will check if the page is visible and send push notifications if needed
     })
 
     socket.on('typing', (data) => {

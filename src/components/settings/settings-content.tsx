@@ -32,6 +32,7 @@ import { PasswordChangeForm } from "./password-change-form"
 import { ActiveSessions } from "./active-sessions"
 import { UserManagement } from "./user-management"
 import { SMTPSettings } from "./smtp-settings"
+import { usePushNotifications } from "@/hooks/usePushNotifications"
 
 interface UserProfile {
   id: string
@@ -64,6 +65,17 @@ export function SettingsContent() {
 
   // Check if user is admin
   const isAdmin = session?.user?.role === 'admin' || session?.user?.email === 'krystian@bpcoders.pl'
+
+  // Push notifications hook
+  const {
+    isSupported: pushSupported,
+    permission: pushPermission,
+    isSubscribed: pushSubscribed,
+    isLoading: pushLoading,
+    requestPermission,
+    subscribe: subscribePush,
+    unsubscribe: unsubscribePush
+  } = usePushNotifications()
 
 
   // Form state for profile data
@@ -162,7 +174,46 @@ export function SettingsContent() {
     }
   }
 
-  const handleNotificationChange = (key: string, value: boolean) => {
+  const handleNotificationChange = async (key: string, value: boolean) => {
+    if (key === 'push') {
+      if (value) {
+        // Włączanie powiadomień push
+        if (!pushSupported) {
+          toast.error("Twoja przeglądarka nie obsługuje powiadomień push")
+          return
+        }
+
+        if (pushPermission !== 'granted') {
+          const granted = await requestPermission()
+          if (!granted) {
+            toast.error("Musisz zezwolić na powiadomienia, aby włączyć powiadomienia push")
+            return
+          }
+        }
+
+        if (!pushSubscribed) {
+          const subscription = await subscribePush()
+          if (!subscription) {
+            toast.error("Nie udało się skonfigurować powiadomień push")
+            return
+          }
+        }
+
+        toast.success("Powiadomienia push zostały włączone")
+      } else {
+        // Wyłączanie powiadomień push
+        if (pushSubscribed) {
+          const success = await unsubscribePush()
+          if (success) {
+            toast.success("Powiadomienia push zostały wyłączone")
+          } else {
+            toast.error("Nie udało się wyłączyć powiadomień push")
+            return
+          }
+        }
+      }
+    }
+
     setOtherSettings(prev => ({
       ...prev,
       notifications: {
@@ -416,10 +467,16 @@ export function SettingsContent() {
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label>Powiadomienia push</Label>
-                      <p className="text-sm text-gray-500">Otrzymuj powiadomienia w przeglądarce</p>
+                      <p className="text-sm text-gray-500">
+                        {!pushSupported
+                          ? "Twoja przeglądarka nie obsługuje powiadomień push"
+                          : "Otrzymuj powiadomienia w przeglądarce"
+                        }
+                      </p>
                     </div>
-                    <Switch disabled
-                      checked={otherSettings.notifications.push}
+                    <Switch
+                      disabled={!pushSupported || pushLoading}
+                      checked={pushSubscribed}
                       onCheckedChange={(checked) => handleNotificationChange("push", checked)}
                     />
                   </div>

@@ -16,7 +16,7 @@ self.addEventListener('activate', (event) => {
 // Obsługa powiadomień push
 self.addEventListener('push', (event) => {
   console.log('Service Worker: Push received');
-  
+
   let data = {};
   if (event.data) {
     try {
@@ -54,25 +54,40 @@ self.addEventListener('push', (event) => {
 // Obsługa kliknięć w powiadomienia
 self.addEventListener('notificationclick', (event) => {
   console.log('Service Worker: Notification clicked');
-  
+
   event.notification.close();
-  
+
   if (event.action === 'view') {
-    // Otwórz aplikację i przejdź do zadania
-    const taskId = event.notification.data?.taskId;
-    const url = taskId ? `/tasks?taskId=${taskId}` : '/tasks';
-    
+    // Sprawdź typ powiadomienia i przejdź do odpowiedniej sekcji
+    const data = event.notification.data || {};
+    let url = '/dashboard';
+    let messageType = 'NAVIGATE';
+
+    if (data.chatRoomId) {
+      // Powiadomienie o wiadomości w chacie
+      url = `/dashboard/chat?room=${data.chatRoomId}`;
+      messageType = 'NAVIGATE_TO_CHAT';
+    } else if (data.taskId) {
+      // Powiadomienie o zadaniu
+      url = `/tasks?taskId=${data.taskId}`;
+      messageType = 'NAVIGATE_TO_TASK';
+    }
+
     event.waitUntil(
       clients.matchAll({ type: 'window' }).then((clientList) => {
         // Sprawdź czy aplikacja jest już otwarta
         for (const client of clientList) {
           if (client.url.includes(self.location.origin) && 'focus' in client) {
             client.focus();
-            client.postMessage({ type: 'NAVIGATE_TO_TASK', taskId });
+            client.postMessage({
+              type: messageType,
+              chatRoomId: data.chatRoomId,
+              taskId: data.taskId
+            });
             return;
           }
         }
-        
+
         // Jeśli aplikacja nie jest otwarta, otwórz nową kartę
         if (clients.openWindow) {
           return clients.openWindow(url);

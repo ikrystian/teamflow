@@ -30,19 +30,19 @@ System wysyłania maili w TeamFlow umożliwia:
 
 === KONFIGURACJA SMTP ===
 
-Ustawienia SMTP przechowywane w tabeli SystemSettings:
-- smtp_host: Adres serwera SMTP (np. smtp.gmail.com)
-- smtp_port: Port serwera SMTP (np. 587)
-- smtp_secure: Czy używać SSL/TLS (true/false)
-- smtp_user: Nazwa użytkownika SMTP (email)
-- smtp_password: Hasło SMTP (oznaczone jako zaszyfrowane)
-- smtp_from_email: Adres email nadawcy
-- smtp_from_name: Nazwa nadawcy (domyślnie "TeamFlow")
+Ustawienia SMTP przechowywane w zmiennych środowiskowych (.env):
+- SMTP_HOST: Adres serwera SMTP (np. smtp.gmail.com)
+- SMTP_PORT: Port serwera SMTP (np. 587)
+- SMTP_SECURE: Czy używać SSL/TLS (true/false)
+- SMTP_USER: Nazwa użytkownika SMTP (email)
+- SMTP_PASSWORD: Hasło SMTP
+- SMTP_FROM_EMAIL: Adres email nadawcy
+- SMTP_FROM_NAME: Nazwa nadawcy (domyślnie "Nexus")
 
 === BIBLIOTEKA EMAIL (src/lib/email.ts) ===
 
 1. FUNKCJE GŁÓWNE:
-   - getSMTPSettings(): Pobiera ustawienia SMTP z bazy danych
+   - getSMTPSettings(): Pobiera ustawienia SMTP ze zmiennych środowiskowych
    - createTransporter(): Tworzy transporter nodemailer
    - sendWelcomeEmail(): Wysyła mail powitalny po rejestracji
    - sendPasswordResetEmail(): Wysyła mail z linkiem resetującym hasło
@@ -55,8 +55,7 @@ Ustawienia SMTP przechowywane w tabeli SystemSettings:
 === API ENDPOINTS ===
 
 1. USTAWIENIA SMTP (ADMIN ONLY):
-   - GET /api/admin/smtp-settings - Pobiera ustawienia SMTP
-   - POST /api/admin/smtp-settings - Zapisuje ustawienia SMTP
+   - GET /api/admin/smtp-settings - Pobiera ustawienia SMTP z .env (tylko do odczytu)
    - POST /api/admin/smtp-settings/test - Testuje połączenie SMTP
 
 2. RESETOWANIE HASŁA:
@@ -80,9 +79,9 @@ Ustawienia SMTP przechowywane w tabeli SystemSettings:
    - Obsługuje nieprawidłowe/wygasłe tokeny
 
 3. /dashboard/settings (zakładka SMTP - admin only)
-   - Konfiguracja ustawień SMTP
+   - Podgląd obecnych ustawień SMTP z .env (tylko do odczytu)
    - Test połączenia SMTP
-   - Popularne ustawienia dla różnych providerów
+   - Instrukcje konfiguracji .env z przykładami
 
 === PRZEPŁYW RESETOWANIA HASŁA ===
 
@@ -223,9 +222,60 @@ BAZA DANYCH:
 
 Dodano kompletny system wysyłania maili z:
 - Konfiguracją SMTP przez panel administratora
-- Mailem powitalnym po rejestracji
+- Mailem powitalnym po rejestracji z informacjami o systemie
 - Resetowaniem hasła przez email
 - Bezpieczną obsługą tokenów
-- Responsywnymi szablonami maili
+- Responsywnymi szablonami maili z nowoczesnym designem
 - Testowaniem połączenia SMTP
 - Pełną walidacją i obsługą błędów
+- Dostosowaniem layoutu stron resetowania hasła do stylu logowania/rejestracji
+
+=== SZABLON MAILA POWITALNEGO ===
+
+Nowy szablon maila powitalnego zawiera:
+- Nowoczesny design z gradientami i glassmorphism
+- Informacje o platformie Nexus z landing page
+- Statystyki: 10,000+ użytkowników, 50,000+ projektów, 98% zadowolenie
+- Szczegółowe opisy głównych funkcji:
+  * Zarządzanie zadaniami z tablicami kanban
+  * Współpraca zespołowa w czasie rzeczywistym
+  * Śledzenie czasu i analiza produktywności
+  * Widok kalendarza i planowanie
+  * Analityka i szczegółowe raporty
+- Korzyści platformy (intuicyjność, skalowalność, bezpieczeństwo, cena)
+- Atrakcyjny przycisk CTA do logowania
+- Responsywny design działający w różnych klientach email
+
+=== MIGRACJA USTAWIEŃ SMTP DO .ENV (2025-08-03) ===
+
+Ustawienia SMTP zostały przeniesione z bazy danych do zmiennych środowiskowych:
+
+POWODY MIGRACJI:
+- Lepsze bezpieczeństwo (hasła nie w bazie danych)
+- Łatwiejsze zarządzanie środowiskami (dev/staging/prod)
+- Zgodność z best practices dla aplikacji 12-factor
+- Prostsze deployment i konfiguracja
+
+ZMIANY W KODZIE:
+- src/lib/email.ts: getSMTPSettings() czyta z process.env
+- src/app/api/admin/smtp-settings/route.ts: tylko GET (odczyt z .env)
+- src/components/settings/smtp-settings.tsx: interfejs tylko do odczytu
+- .env: dodane zmienne SMTP_*
+
+KONFIGURACJA:
+Dodaj do pliku .env:
+```
+SMTP_HOST="smtp.gmail.com"
+SMTP_PORT="587"
+SMTP_SECURE="false"
+SMTP_USER="your-email@gmail.com"
+SMTP_PASSWORD="your-app-password"
+SMTP_FROM_EMAIL="noreply@yourcompany.com"
+SMTP_FROM_NAME="Nexus"
+```
+
+INTERFEJS ADMINISTRATORA:
+- Pokazuje obecne ustawienia z .env (tylko do odczytu)
+- Umożliwia testowanie połączenia SMTP
+- Zawiera instrukcje konfiguracji z przykładami
+- Kod przykładowy .env z kolorowym podświetleniem

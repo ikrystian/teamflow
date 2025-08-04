@@ -79,6 +79,17 @@ export function ChatRoom({ room, users }: ChatRoomProps) {
   const messageCache = useRef<{ [roomId: string]: { messages: MessageData[], timestamp: number } }>({})
   const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
+  // Mark messages as read when room is viewed
+  const markRoomAsRead = useCallback(async () => {
+    try {
+      await fetch(`/api/notifications/chat/${room.id}/read`, {
+        method: 'POST'
+      })
+    } catch (error) {
+      console.error('Error marking room as read:', error)
+    }
+  }, [room.id])
+
   const fetchMessages = useCallback(async (forceRefresh = false) => {
     try {
       setLoading(true)
@@ -118,6 +129,7 @@ export function ChatRoom({ room, users }: ChatRoomProps) {
   useEffect(() => {
     if (room.id) {
       fetchMessages()
+      markRoomAsRead() // Mark as read when entering room
       if (socket && isConnected) {
         socket.emit('join-room', room.id)
       }
@@ -128,7 +140,7 @@ export function ChatRoom({ room, users }: ChatRoomProps) {
         socket.emit('leave-room', room.id)
       }
     }
-  }, [room.id, socket, isConnected, fetchMessages])
+  }, [room.id, socket, isConnected, fetchMessages, markRoomAsRead])
 
   useEffect(() => {
     if (socket && isConnected) {
@@ -147,6 +159,11 @@ export function ChatRoom({ room, users }: ChatRoomProps) {
               : newMessages
           })
           scrollToBottom()
+
+          // Mark as read when receiving new message in active room
+          if (message.senderId !== (session?.user as { id: string })?.id) {
+            markRoomAsRead()
+          }
         }
       }
 
@@ -202,7 +219,7 @@ export function ChatRoom({ room, users }: ChatRoomProps) {
         socket.off('user-stop-typing', handleUserStopTyping)
       }
     }
-  }, [socket, isConnected, room.id, session?.user])
+  }, [socket, isConnected, room.id, session?.user, markRoomAsRead])
 
   useEffect(() => {
     scrollToBottom()
