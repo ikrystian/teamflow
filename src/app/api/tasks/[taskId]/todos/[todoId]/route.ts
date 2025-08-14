@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
+import { isAdmin } from "@/lib/admin"
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ taskId: string, todoId: string }> }) {
   const session = await getServerSession(authOptions)
@@ -39,9 +40,52 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ t
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { todoId } = await params
+  const { taskId, todoId } = await params
 
   try {
+    // Check if user is admin
+    const userIsAdmin = await isAdmin()
+
+    // Verify user has access to the task (unless admin)
+    if (!userIsAdmin) {
+      const task = await prisma.task.findFirst({
+        where: {
+          id: taskId,
+          OR: [
+            { createdById: session.user.id },
+            { assigneeId: session.user.id },
+            {
+              project: {
+                team: {
+                  members: {
+                    some: {
+                      id: session.user.id
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      })
+
+      if (!task) {
+        return NextResponse.json({ error: 'Task not found or access denied' }, { status: 404 })
+      }
+    }
+
+    // Verify todo exists and belongs to the task
+    const todo = await prisma.todo.findFirst({
+      where: {
+        id: todoId,
+        taskId: taskId
+      }
+    })
+
+    if (!todo) {
+      return NextResponse.json({ error: 'Todo not found' }, { status: 404 })
+    }
+
     await prisma.todo.delete({
       where: { id: todoId },
     })

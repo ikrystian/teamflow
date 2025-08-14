@@ -25,6 +25,7 @@ export function CalendarContent() {
     avatarUrl?: string
   }>>([])
   const [session, setSession] = useState<{ user?: { id: string } } | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   // Set page header content
   usePageHeader(
@@ -74,6 +75,18 @@ export function CalendarContent() {
     }
   }
 
+  const checkAdminStatus = async () => {
+    try {
+      const response = await fetch('/api/user/admin-status')
+      if (response.ok) {
+        const data = await response.json()
+        setIsAdmin(data.isAdmin)
+      }
+    } catch (error) {
+      console.error('Error checking admin status:', error)
+    }
+  }
+
   const handleTaskUpdate = async (taskId: string, updates: TaskUpdateData) => {
     try {
       const response = await fetch(`/api/tasks/${taskId}`, {
@@ -103,6 +116,7 @@ export function CalendarContent() {
     fetchTasks()
     fetchUsers()
     fetchSession()
+    checkAdminStatus()
   }, [])
 
   const getDaysInMonth = (date: Date) => {
@@ -171,6 +185,9 @@ export function CalendarContent() {
   // Check if user can edit task
   const canEditTask = (task: Task) => {
     if (!session?.user?.id) return false
+
+    // Admin can edit all tasks
+    if (isAdmin) return true
 
     // User can edit tasks they created or are assigned to
     return task.createdBy?.id === session.user.id || task.assignee?.id === session.user.id

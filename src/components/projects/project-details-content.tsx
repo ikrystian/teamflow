@@ -84,6 +84,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   const { viewMode, updateViewMode, isLoaded: viewPreferencesLoaded } = useProjectViewPreferences(projectId)
   const [taskFilter, setTaskFilter] = useState<"all" | "mine" | string>("all")
   const [deletingTask, setDeletingTask] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
   const router = useRouter()
   const { projects } = useProjects()
 
@@ -103,9 +104,24 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     }
   }, [projectId, router])
 
+  const checkAdminStatus = useCallback(async () => {
+    if (session?.user) {
+      try {
+        const response = await fetch('/api/user/admin-status')
+        if (response.ok) {
+          const data = await response.json()
+          setIsAdmin(data.isAdmin)
+        }
+      } catch (error) {
+        console.error('Error checking admin status:', error)
+      }
+    }
+  }, [session])
+
   useEffect(() => {
     fetchProject()
-  }, [fetchProject])
+    checkAdminStatus()
+  }, [fetchProject, checkAdminStatus])
 
   // Set page header content
   usePageHeader(
@@ -255,9 +271,21 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     }
   }
 
-  const canEditTask = () => {
+  const canEditTask = (task?: Task) => {
+    if (!session?.user?.id) return false
+
+    // Admin can edit all tasks
+    if (isAdmin) return true
+
+    // If no specific task provided, check if user is team member
+    if (!task) {
+      return project?.team.members.some(member => member.id === session.user.id) || false
+    }
+
     // User can edit if they are the assignee, creator, or team member
-    return true // Simplified for now
+    return task.createdBy?.id === session.user.id ||
+           task.assignee?.id === session.user.id ||
+           project?.team.members.some(member => member.id === session.user.id) || false
   }
 
 
@@ -588,7 +616,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         onTimeTracking={handleTimeTracking}
         onDelete={handleDeleteTask}
         onTaskUpdated={handleTaskUpdated}
-        canEdit={selectedTask ? canEditTask() : false}
+        canEdit={selectedTask ? canEditTask(selectedTask) : false}
       />
 
       <TaskFormSheet

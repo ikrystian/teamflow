@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
+import { isAdmin } from "@/lib/admin"
 
 export async function DELETE(
   request: Request,
@@ -24,7 +25,9 @@ export async function DELETE(
       return NextResponse.json({ error: "Comment not found" }, { status: 404 })
     }
 
-    if (comment.authorId !== session.user.id) {
+    // Check if user can delete this comment (author or admin)
+    const userIsAdmin = await isAdmin()
+    if (comment.authorId !== session.user.id && !userIsAdmin) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 

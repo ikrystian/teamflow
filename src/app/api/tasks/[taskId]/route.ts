@@ -519,7 +519,9 @@ export async function DELETE(
     }
 
     // Check if user has permission to delete the task
+    const userIsAdmin = await isAdmin()
     const canDelete =
+      userIsAdmin || // Admin can delete any task
       existingTask.createdById === session.user.id || // Task creator
       existingTask.assigneeId === session.user.id || // Assigned user
       (existingTask.project && existingTask.project.team.members.some(member => member.id === session.user.id)) // Team member (only for tasks with projects)

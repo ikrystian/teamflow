@@ -47,6 +47,7 @@ export function TasksWeeklyCalendar({
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [taskDetailsDialogOpen, setTaskDetailsDialogOpen] = useState(false)
   const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
+  const [isAdmin, setIsAdmin] = useState(false)
 
   const fetchTaskStatuses = useCallback(async () => {
     try {
@@ -60,9 +61,24 @@ export function TasksWeeklyCalendar({
     }
   }, [])
 
+  const checkAdminStatus = useCallback(async () => {
+    if (session?.user) {
+      try {
+        const response = await fetch('/api/user/admin-status')
+        if (response.ok) {
+          const data = await response.json()
+          setIsAdmin(data.isAdmin)
+        }
+      } catch (error) {
+        console.error('Error checking admin status:', error)
+      }
+    }
+  }, [session])
+
   useEffect(() => {
     fetchTaskStatuses()
-  }, [fetchTaskStatuses])
+    checkAdminStatus()
+  }, [fetchTaskStatuses, checkAdminStatus])
 
   // Funkcja do pobierania początku tygodnia (poniedziałek)
   const getWeekStart = (date: Date) => {
@@ -120,6 +136,9 @@ export function TasksWeeklyCalendar({
   // Check if user can edit task
   const canEditTask = (task: Task) => {
     if (!session?.user?.id) return false
+
+    // Admin can edit all tasks
+    if (isAdmin) return true
 
     // User can edit tasks they created or are assigned to
     return task.createdBy?.id === session.user.id || task.assignee?.id === session.user.id

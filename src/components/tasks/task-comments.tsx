@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { Button } from "@/components/ui/button"
@@ -53,6 +53,25 @@ export function TaskComments({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [commentToDelete, setCommentToDelete] = useState<string | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  // Check if user is admin
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (session?.user) {
+        try {
+          const response = await fetch('/api/user/admin-status')
+          if (response.ok) {
+            const data = await response.json()
+            setIsAdmin(data.isAdmin)
+          }
+        } catch (error) {
+          console.error('Error checking admin status:', error)
+        }
+      }
+    }
+    checkAdminStatus()
+  }, [session])
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -196,7 +215,7 @@ export function TaskComments({
                       {formatDate(comment.createdAt)}
                     </span>
                   </div>
-                  {(session?.user as { id: string })?.id === comment.author.id && (
+                  {((session?.user as { id: string })?.id === comment.author.id || isAdmin) && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button

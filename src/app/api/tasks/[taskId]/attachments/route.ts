@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { isAdmin } from "@/lib/admin"
 import { writeFile, mkdir } from "fs/promises"
 import { join } from "path"
 import { existsSync } from "fs"
@@ -197,7 +198,9 @@ export async function DELETE(
     }
 
     // Check if user can delete this attachment
-    const canDelete = attachment.uploadedById === session.user.id ||
+    const userIsAdmin = await isAdmin()
+    const canDelete = userIsAdmin || // Admin can delete any attachment
+      attachment.uploadedById === session.user.id ||
       attachment.task.createdById === session.user.id ||
       attachment.task.assigneeId === session.user.id ||
       (!attachment.task.project ||

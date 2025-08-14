@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { isAdmin } from "@/lib/admin"
 import type { Session } from "next-auth"
 
 export async function GET(
@@ -63,7 +64,7 @@ export async function GET(
     // Calculate total time spent
     const totalHours = timeEntries.reduce((sum, entry) => sum + entry.hours, 0)
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       timeEntries,
       totalHours,
       estimatedHours: task.estimatedHours
@@ -174,18 +175,37 @@ export async function DELETE(
       )
     }
 
-    // Verify user owns the time entry and has access to the task
+    // Check if user is admin
+    const userIsAdmin = await isAdmin()
+
+    // Find the time entry with different conditions based on admin status
     const timeEntry = await prisma.timeEntry.findFirst({
       where: {
         id: entryId,
         taskId: taskId,
-        userId: session.user.id,
+        ...(userIsAdmin ? {} : { userId: session.user.id }), // Admin can access any time entry
         task: {
           project: {
             team: {
               members: {
                 some: {
                   id: session.user.id
+                }
+              }
+            }
+          }
+        }
+      },
+      include: {
+        user: true,
+        task: {
+          include: {
+            project: {
+              include: {
+                team: {
+                  include: {
+                    members: true
+                  }
                 }
               }
             }
@@ -198,6 +218,14 @@ export async function DELETE(
       return NextResponse.json(
         { error: "Time entry not found or access denied" },
         { status: 404 }
+      )
+    }
+
+    // Additional permission check: user must own the entry or be admin
+    if (!userIsAdmin && timeEntry.userId !== session.user.id) {
+      return NextResponse.json(
+        { error: "You don't have permission to delete this time entry" },
+        { status: 403 }
       )
     }
 

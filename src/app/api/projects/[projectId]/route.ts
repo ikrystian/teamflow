@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { isAdmin } from "@/lib/admin"
 import type { Session } from "next-auth"
 
 export async function GET(
@@ -230,17 +231,22 @@ export async function DELETE(
 
     const { projectId } = await params
 
-    // Verify user has access to the project
+    // Check if user is admin
+    const userIsAdmin = await isAdmin()
+
+    // Verify user has access to the project (unless admin)
     const existingProject = await prisma.project.findFirst({
       where: {
         id: projectId,
-        team: {
-          members: {
-            some: {
-              id: session.user.id
+        ...(userIsAdmin ? {} : {
+          team: {
+            members: {
+              some: {
+                id: session.user.id
+              }
             }
           }
-        }
+        })
       }
     })
 
