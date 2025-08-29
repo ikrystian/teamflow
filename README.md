@@ -83,6 +83,7 @@ Nexus to nowoczesna aplikacja internetowa do zarządzania zadaniami i projektami
 - **Powiadomienia o wiadomościach chatu** - Notification bell w header z licznikiem nieprzeczytanych wiadomości, automatyczne push notifications gdy karta nie jest aktywna, real-time aktualizacje przez Socket.IO
 - **URL State Management w ustawieniach** - Panel ustawień zapisuje aktualną zakładkę w URL, umożliwiając bezpośrednie linkowanie do konkretnych sekcji, zachowanie stanu po odświeżeniu i lepszą nawigację
 - **Sekcja pomocy na stronie zadań** - Rozwijalna sekcja z wskazówkami dotyczącymi zarządzania zadaniami, najlepszymi praktykami, szybkimi akcjami i powiązanymi treściami z innych sekcji aplikacji
+- **Backup i restore bazy danych przez interfejs** - Panel administratora z przyciskami do eksportu i importu bazy danych, listą dostępnych backup-ów, wyświetlaniem statusu operacji i wskazówkami dotyczącymi zarządzania
 
 ### 🔄 Planowane funkcjonalności
 - ✅ ~~Zaproszenia do zespołów przez email~~ - **CZĘŚCIOWO ZAIMPLEMENTOWANE** (system SMTP gotowy)
@@ -234,6 +235,29 @@ npm run db:seed
 # Pełny reset bazy danych (może nie działać ze wszystkimi konfiguracjami PostgreSQL)
 npm run db:reset
 ```
+
+### Backup i przywracanie bazy danych:
+
+#### Przez interfejs administratora:
+1. **Zaloguj się jako administrator**
+2. **Przejdź do Ustawień** → zakładka "Baza danych"
+3. **Eksport:** Kliknij "Eksportuj bazę" - backup zostanie utworzony automatycznie
+4. **Import:** Kliknij "Importuj bazę", wybierz plik backup i potwierdź operację
+5. **Sprawdź status** - interfejs pokaże informacje o ostatnich operacjach
+
+#### Przez terminal:
+```bash
+# Eksport bazy danych (tworzy backup z timestampem)
+npm run db:export
+
+# Import bazy danych (przywracanie z backup)
+npm run db:import
+
+# Czyszczenie starych backup-ów (zachowuje 5 najnowszych)
+npm run db:cleanup
+```
+
+> **Uwaga:** Pliki backup są zapisywane w folderze `backups/` z nazwą zawierającą timestamp (np. `database_backup_2025-08-29_10-03-13.sql`). Import bazy danych **całkowicie zastępuje** obecną bazę danych, więc zawsze rób backup przed ważnymi operacjami!
 
 > **Uwaga:** Skrypt `db:seed` używa operacji `upsert`, więc można go bezpiecznie uruchamiać wielokrotnie. Istniejące dane zostaną zachowane lub zaktualizowane.
 
