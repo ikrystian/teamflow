@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
     // Check if user is admin
     const adminStatus = await isAdmin()
-    
+
     // Admins can see all changes, regular users only see visible ones
     const whereClause = adminStatus ? {} : { isVisible: true }
 
@@ -96,13 +96,12 @@ export async function POST() {
           userId: session.user.id,
           changeId: change.id
         })),
-        skipDuplicates: true
       })
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      markedAsRead: unreadChanges.length 
+    return NextResponse.json({
+      success: true,
+      markedAsRead: unreadChanges.length
     })
   } catch (error) {
     console.error("Error marking system changes as read:", error)

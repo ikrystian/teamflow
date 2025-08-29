@@ -185,8 +185,8 @@ export async function main() {
   let taskStatuses = []
   for (const status of statusData) {
     const upsertedStatus = await prisma.taskStatus.upsert({
-      where: { name: status.name },
-      update: { color: status.color, order: status.order, isDefault: status.isDefault },
+      where: { order: status.order },
+      update: { name: status.name, color: status.color, order: status.order, isDefault: status.isDefault },
       create: status,
     })
     taskStatuses.push(upsertedStatus)

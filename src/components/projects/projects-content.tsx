@@ -450,7 +450,7 @@ export function ProjectsContent() {
           <AlertDialogHeader>
             <AlertDialogTitle>Czy na pewno chcesz usunąć projekt?</AlertDialogTitle>
             <AlertDialogDescription>
-              Ta akcja jest nieodwracalna. Projekt "{projectToDelete?.name}" oraz wszystkie powiązane z nim dane
+              Ta akcja jest nieodwracalna. Projekt {projectToDelete?.name} oraz wszystkie powiązane z nim dane
               (zadania, komentarze, załączniki, dokumenty) zostaną trwale usunięte z systemu.
             </AlertDialogDescription>
           </AlertDialogHeader>
