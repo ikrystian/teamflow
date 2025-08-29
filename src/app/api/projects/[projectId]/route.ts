@@ -3,7 +3,33 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { isAdmin } from "@/lib/admin"
+import { unlink, rmdir } from "fs/promises"
+import { join } from "path"
+import { existsSync } from "fs"
 import type { Session } from "next-auth"
+
+// Helper function to safely delete files and directories
+async function deleteFilesSafely(paths: string[]) {
+  for (const path of paths) {
+    try {
+      if (existsSync(path)) {
+        await unlink(path)
+      }
+    } catch (error) {
+      console.warn(`Failed to delete file ${path}:`, error)
+    }
+  }
+}
+
+async function deleteDirectorySafely(dirPath: string) {
+  try {
+    if (existsSync(dirPath)) {
+      await rmdir(dirPath, { recursive: true })
+    }
+  } catch (error) {
+    console.warn(`Failed to delete directory ${dirPath}:`, error)
+  }
+}
 
 export async function GET(
   request: NextRequest,
@@ -234,7 +260,7 @@ export async function DELETE(
     // Check if user is admin
     const userIsAdmin = await isAdmin()
 
-    // Verify user has access to the project (unless admin)
+    // Verify user has access to the project and get all related data (unless admin)
     const existingProject = await prisma.project.findFirst({
       where: {
         id: projectId,
@@ -247,6 +273,15 @@ export async function DELETE(
             }
           }
         })
+      },
+      include: {
+        documents: true,
+        tasks: {
+          include: {
+            images: true,
+            attachments: true
+          }
+        }
       }
     })
 
@@ -257,14 +292,73 @@ export async function DELETE(
       )
     }
 
-    // Delete project (this will cascade delete tasks, subtasks, comments)
+    // Collect all files to delete
+    const filesToDelete: string[] = []
+    const directoriesToDelete: string[] = []
+
+    // 1. Delete project image if exists
+    if (existingProject.imageUrl && existingProject.imageUrl.startsWith("/uploads/projects/")) {
+      const projectImagePath = join(process.cwd(), "public", existingProject.imageUrl)
+      filesToDelete.push(projectImagePath)
+    }
+
+    // 2. Delete project documents
+    for (const document of existingProject.documents) {
+      if (document.url.startsWith("/uploads/projects/")) {
+        const documentPath = join(process.cwd(), "public", document.url)
+        filesToDelete.push(documentPath)
+      }
+    }
+
+    // 3. Delete task-related files
+    for (const task of existingProject.tasks) {
+      // Delete task images
+      for (const image of task.images) {
+        if (image.url.startsWith("/uploads/tasks/")) {
+          const imagePath = join(process.cwd(), "public", image.url)
+          filesToDelete.push(imagePath)
+        }
+      }
+
+      // Delete task attachments
+      for (const attachment of task.attachments) {
+        if (attachment.url.startsWith("/uploads/tasks/")) {
+          const attachmentPath = join(process.cwd(), "public", attachment.url)
+          filesToDelete.push(attachmentPath)
+        }
+      }
+
+      // Add task directories to delete list
+      const taskImagesDir = join(process.cwd(), "public", "uploads", "tasks", task.id)
+      const taskAttachmentsDir = join(process.cwd(), "public", "uploads", "tasks", task.id, "attachments")
+      directoriesToDelete.push(taskAttachmentsDir, taskImagesDir)
+    }
+
+    // 4. Add project directories to delete list
+    const projectDocumentsDir = join(process.cwd(), "public", "uploads", "projects", projectId, "documents")
+    const projectDir = join(process.cwd(), "public", "uploads", "projects", projectId)
+    directoriesToDelete.push(projectDocumentsDir, projectDir)
+
+    // Delete all files first
+    await deleteFilesSafely(filesToDelete)
+
+    // Delete directories
+    for (const dir of directoriesToDelete) {
+      await deleteDirectorySafely(dir)
+    }
+
+    // Delete project from database (this will cascade delete tasks, subtasks, comments, etc.)
     await prisma.project.delete({
       where: {
         id: projectId
       }
     })
 
-    return NextResponse.json({ message: "Project deleted successfully" })
+    return NextResponse.json({
+      message: "Project and all associated files deleted successfully",
+      deletedFiles: filesToDelete.length,
+      deletedDirectories: directoriesToDelete.length
+    })
   } catch (error) {
     console.error("Error deleting project:", error)
     return NextResponse.json(

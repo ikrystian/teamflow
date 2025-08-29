@@ -36,6 +36,16 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 // Import all possible project icons
 import * as LucideIcons from "lucide-react"
@@ -55,6 +65,7 @@ interface Project {
 interface NavProjectsProps {
   projects: Project[]
   onEditProject?: (project: Project) => void
+  onDeleteProject?: (project: Project) => void
 }
 
 // Helper function to render project icon
@@ -94,12 +105,15 @@ function ProjectIcon({ iconName, color, className = "w-4 h-4" }: {
   )
 }
 
-export function NavProjects({ projects, onEditProject }: NavProjectsProps) {
+export function NavProjects({ projects, onEditProject, onDeleteProject }: NavProjectsProps) {
   const { isMobile } = useSidebar()
   const pathname = usePathname()
   const [showArchived, setShowArchived] = useState(false)
   const [archivedProjects, setArchivedProjects] = useState<Project[]>([])
   const [archivedProjectsLoaded, setArchivedProjectsLoaded] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Filtruj projekty na aktywne i archiwizowane
   const activeProjects = projects.filter(project => !project.archived)
@@ -138,6 +152,44 @@ export function NavProjects({ projects, onEditProject }: NavProjectsProps) {
   const archivedCount = archivedProjectsFromProps.length > 0
     ? archivedProjectsFromProps.length
     : archivedProjects.length
+
+  const handleDeleteProject = (project: Project) => {
+    setProjectToDelete(project)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDeleteProject = async () => {
+    if (!projectToDelete) return
+
+    setIsDeleting(true)
+    try {
+      const response = await fetch(`/api/projects/${projectToDelete.id}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        // Wywołaj callback jeśli jest dostępny
+        if (onDeleteProject) {
+          onDeleteProject(projectToDelete)
+        }
+
+        // Usuń projekt z lokalnego stanu
+        setArchivedProjects(prev => prev.filter(p => p.id !== projectToDelete.id))
+
+        setDeleteDialogOpen(false)
+        setProjectToDelete(null)
+      } else {
+        const errorData = await response.json()
+        console.error("Failed to delete project:", errorData.error)
+        alert("Nie udało się usunąć projektu. Spróbuj ponownie.")
+      }
+    } catch (error) {
+      console.error("Error deleting project:", error)
+      alert("Wystąpił błąd podczas usuwania projektu.")
+    } finally {
+      setIsDeleting(false)
+    }
+  }
 
   return (
     <SidebarGroup>
@@ -308,7 +360,10 @@ export function NavProjects({ projects, onEditProject }: NavProjectsProps) {
                   Przywróć projekt
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem disabled className="text-destructive">
+                <DropdownMenuItem
+                  onClick={() => handleDeleteProject(project)}
+                  className="text-destructive focus:text-destructive"
+                >
                   <Trash2 className="mr-2 h-4 w-4" />
                   Usuń projekt
                 </DropdownMenuItem>
@@ -317,6 +372,28 @@ export function NavProjects({ projects, onEditProject }: NavProjectsProps) {
           </SidebarMenuItem>
         ))}
       </SidebarMenu>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Czy na pewno chcesz usunąć projekt?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ta akcja jest nieodwracalna. Projekt "{projectToDelete?.name}" oraz wszystkie powiązane z nim dane
+              (zadania, komentarze, załączniki, dokumenty) zostaną trwale usunięte z systemu.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Anuluj</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteProject}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Usuwanie..." : "Usuń projekt"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SidebarGroup>
   )
 }

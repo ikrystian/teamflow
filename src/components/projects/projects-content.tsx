@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
-import { Plus, FolderOpen, Calendar, Users, ImageIcon, Edit, MoreVertical, Archive, ArchiveX } from "lucide-react"
+import { Plus, FolderOpen, Calendar, Users, ImageIcon, Edit, MoreVertical, Archive, ArchiveX, Trash2 } from "lucide-react"
 import { CreateProjectSheet } from "./create-project-sheet"
 import { EditProjectSheet } from "./edit-project-sheet"
 import { usePageHeader } from "@/contexts/header-context"
@@ -14,8 +14,19 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import {
   Select,
   SelectContent,
@@ -72,6 +83,9 @@ export function ProjectsContent() {
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
   const [projectFilter, setProjectFilter] = useState<ProjectFilter>("active")
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Używamy hook do pobierania projektów z filtrowaniem
   const { projects } = useProjectsWithFilter(projectFilter)
@@ -139,6 +153,37 @@ export function ProjectsContent() {
   const handleFilterChange = (filter: ProjectFilter) => {
     setProjectFilter(filter)
     // useProjectsWithFilter automatycznie pobierze projekty z nowym filtrem
+  }
+
+  const handleDeleteProject = (project: Project) => {
+    setProjectToDelete(project)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDeleteProject = async () => {
+    if (!projectToDelete) return
+
+    setIsDeleting(true)
+    try {
+      const response = await fetch(`/api/projects/${projectToDelete.id}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        refreshProjects()
+        setDeleteDialogOpen(false)
+        setProjectToDelete(null)
+      } else {
+        const errorData = await response.json()
+        console.error("Failed to delete project:", errorData.error)
+        alert("Nie udało się usunąć projektu. Spróbuj ponownie.")
+      }
+    } catch (error) {
+      console.error("Error deleting project:", error)
+      alert("Wystąpił błąd podczas usuwania projektu.")
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   // Set page header content
@@ -287,6 +332,18 @@ export function ProjectsContent() {
                           </>
                         )}
                       </DropdownMenuItem>
+                      {project.archived && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => handleDeleteProject(project)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Usuń projekt
+                          </DropdownMenuItem>
+                        </>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -387,6 +444,28 @@ export function ProjectsContent() {
         project={selectedProject}
         teams={teams}
       />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Czy na pewno chcesz usunąć projekt?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ta akcja jest nieodwracalna. Projekt "{projectToDelete?.name}" oraz wszystkie powiązane z nim dane
+              (zadania, komentarze, załączniki, dokumenty) zostaną trwale usunięte z systemu.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Anuluj</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteProject}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Usuwanie..." : "Usuń projekt"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
