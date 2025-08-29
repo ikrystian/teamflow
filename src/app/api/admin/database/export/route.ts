@@ -38,16 +38,37 @@ export async function POST() {
       .replace(/\./g, '-')
       .replace('T', '_')
       .slice(0, 19) // YYYY-MM-DD_HH-MM-SS
-    
+
     const backupFileName = `database_backup_${timestamp}.sql`
     const backupPath = path.join(backupsDir, backupFileName)
 
     console.log(`💾 Exporting database to: ${backupFileName}`)
 
-    // Wykonaj dump bazy danych SQLite
-    const command = `sqlite3 "${dbPath}" .dump > "${backupPath}"`
-    
+    // Sprawdź ile danych jest w bazie przed eksportem
+    const tableCountsCommand = `sqlite3 "${dbPath}" "SELECT 'User: ' || COUNT(*) FROM User UNION ALL SELECT 'Team: ' || COUNT(*) FROM Team UNION ALL SELECT 'Project: ' || COUNT(*) FROM Project UNION ALL SELECT 'Task: ' || COUNT(*) FROM Task UNION ALL SELECT 'Todo: ' || COUNT(*) FROM Todo UNION ALL SELECT 'Comment: ' || COUNT(*) FROM Comment UNION ALL SELECT 'TimeEntry: ' || COUNT(*) FROM TimeEntry;"`
+
+    try {
+      const { stdout: tableCounts } = await execAsync(tableCountsCommand)
+      console.log('📊 Data counts before export:')
+      tableCounts.split('\n').filter(line => line.trim()).forEach(line => {
+        console.log(`   ${line}`)
+      })
+    } catch (error) {
+      console.log('⚠️ Could not get table counts:', error)
+    }
+
+    // Wykonaj pełny dump bazy danych SQLite (struktura + wszystkie dane)
+    const command = `sqlite3 "${dbPath}" ".dump" > "${backupPath}"`
+
     await execAsync(command)
+
+    // Sprawdź ile INSERT statements zostało wyeksportowanych
+    try {
+      const { stdout: insertCount } = await execAsync(`grep -c "INSERT INTO" "${backupPath}" || echo "0"`)
+      console.log(`📝 Exported ${insertCount.trim()} INSERT statements (data records)`)
+    } catch (error) {
+      console.log('⚠️ Could not count INSERT statements')
+    }
 
     // Sprawdź rozmiar pliku
     const { stdout } = await execAsync(`ls -lh "${backupPath}"`)
@@ -57,17 +78,27 @@ export async function POST() {
     console.log(`📄 Backup file: ${backupPath}`)
     console.log(`📊 File size: ${fileSize}`)
 
+    // Pobierz liczbę wyeksportowanych rekordów dla odpowiedzi
+    let exportedRecords = 0
+    try {
+      const { stdout: insertCount } = await execAsync(`grep -c "INSERT INTO" "${backupPath}" || echo "0"`)
+      exportedRecords = parseInt(insertCount.trim()) || 0
+    } catch (error) {
+      console.log('⚠️ Could not count exported records for response')
+    }
+
     return NextResponse.json({
       success: true,
-      message: "Baza danych została pomyślnie wyeksportowana",
+      message: "Baza danych została pomyślnie wyeksportowana (struktura + wszystkie dane)",
       fileName: backupFileName,
       fileSize: fileSize,
+      exportedRecords: exportedRecords,
       timestamp: new Date().toISOString()
     })
 
   } catch (error) {
     console.error('❌ Error during database export:', error)
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: "Błąd podczas eksportu bazy danych",
       details: error instanceof Error ? error.message : "Unknown error"
     }, { status: 500 })

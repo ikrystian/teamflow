@@ -29,16 +29,37 @@ async function exportDatabase() {
       .replace(/\./g, '-')
       .replace('T', '_')
       .slice(0, 19) // YYYY-MM-DD_HH-MM-SS
-    
+
     const backupFileName = `database_backup_${timestamp}.sql`
     const backupPath = path.join(backupsDir, backupFileName)
 
     console.log(`💾 Eksportuję bazę danych do: ${backupFileName}`)
 
-    // Wykonaj dump bazy danych SQLite
-    const command = `sqlite3 "${dbPath}" .dump > "${backupPath}"`
-    
+    // Sprawdź ile danych jest w bazie przed eksportem
+    const tableCountsCommand = `sqlite3 "${dbPath}" "SELECT 'User: ' || COUNT(*) FROM User UNION ALL SELECT 'Team: ' || COUNT(*) FROM Team UNION ALL SELECT 'Project: ' || COUNT(*) FROM Project UNION ALL SELECT 'Task: ' || COUNT(*) FROM Task UNION ALL SELECT 'Todo: ' || COUNT(*) FROM Todo UNION ALL SELECT 'Comment: ' || COUNT(*) FROM Comment UNION ALL SELECT 'TimeEntry: ' || COUNT(*) FROM TimeEntry;"`
+
+    try {
+      const { stdout: tableCounts } = await execAsync(tableCountsCommand)
+      console.log('📊 Liczba rekordów w tabelach przed eksportem:')
+      tableCounts.split('\n').filter(line => line.trim()).forEach(line => {
+        console.log(`   ${line}`)
+      })
+    } catch (error) {
+      console.log('⚠️ Nie można pobrać liczby rekordów:', error)
+    }
+
+    // Wykonaj pełny dump bazy danych SQLite (struktura + wszystkie dane)
+    const command = `sqlite3 "${dbPath}" ".dump" > "${backupPath}"`
+
     await execAsync(command)
+
+    // Sprawdź ile INSERT statements zostało wyeksportowanych
+    try {
+      const { stdout: insertCount } = await execAsync(`grep -c "INSERT INTO" "${backupPath}" || echo "0"`)
+      console.log(`📝 Wyeksportowano ${insertCount.trim()} instrukcji INSERT (rekordów danych)`)
+    } catch (error) {
+      console.log('⚠️ Nie można policzyć instrukcji INSERT')
+    }
 
     console.log('✅ Eksport bazy danych zakończony pomyślnie!')
     console.log(`📄 Plik backup: ${backupPath}`)

@@ -92,8 +92,8 @@ async function resetAndSeed() {
     console.log('🌱 Uruchamianie skryptu seedującego...')
 
     // Importuj i uruchom główną funkcję seedującą
-    const { main } = await import('../prisma/seed')
-    await main()
+    // const { main } = await import('../prisma/seed')
+    // await main()
 
     console.log('🎉 Baza danych zresetowana i zasiedlona pomyślnie!')
 

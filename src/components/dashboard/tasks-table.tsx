@@ -12,7 +12,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { ArrowUpDown, ChevronDown, MoreHorizontal, Clock, Eye, EyeOff } from "lucide-react"
+import { ArrowUpDown, ChevronDown, MoreHorizontal, Clock, Eye, EyeOff, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -57,11 +57,12 @@ interface TasksTableProps {
   taskStatuses: TaskStatus[]
   onTaskUpdate: (taskId: string, updates: TaskUpdateData) => Promise<void>
   onTaskDetails?: (task: Task) => void
+  onTaskDelete?: (task: Task) => void
   isAdmin?: boolean
   currentUserId?: string
 }
 
-export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate, onTaskDetails, isAdmin = false, currentUserId }: TasksTableProps) {
+export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate, onTaskDetails, onTaskDelete, isAdmin = false, currentUserId }: TasksTableProps) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [rowSelection, setRowSelection] = useState({})
@@ -82,6 +83,17 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate, onTaskDet
     if (isAdmin) return true
 
     // User can edit tasks they created or are assigned to
+    return task.createdBy?.id === currentUserId || task.assignee?.id === currentUserId
+  }, [isAdmin, currentUserId])
+
+  // Function to check if current user can delete a task
+  const canDeleteTask = useCallback((task: Task): boolean => {
+    if (!currentUserId) return false
+
+    // Admin can delete all tasks
+    if (isAdmin) return true
+
+    // User can delete tasks they created or are assigned to
     return task.createdBy?.id === currentUserId || task.assignee?.id === currentUserId
   }, [isAdmin, currentUserId])
 
@@ -729,12 +741,24 @@ export function TasksTable({ tasks, users, taskStatuses, onTaskUpdate, onTaskDet
               <DropdownMenuItem onClick={() => onTaskDetails?.(task)}>
                 Zobacz szczegóły
               </DropdownMenuItem>
+              {canDeleteTask(task) && onTaskDelete && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => onTaskDelete(task)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Usuń zadanie
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )
       },
     },
-  ], [users, taskStatuses, handleOptimisticTaskUpdate, onTaskDetails, canEditTask])
+  ], [users, taskStatuses, handleOptimisticTaskUpdate, onTaskDetails, canEditTask, canDeleteTask, onTaskDelete])
 
   // Sortuj kolumny według zapisanej kolejności
   const sortedColumns = useMemo(() => sortColumnsByOrder(columns), [columns, sortColumnsByOrder])

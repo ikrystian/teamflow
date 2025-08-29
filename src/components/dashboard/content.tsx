@@ -190,6 +190,23 @@ export function DashboardContent() {
     setDetailsDialogOpen(true)
   }
 
+  const handleTaskDelete = async (task: Task) => {
+    try {
+      const response = await fetch(`/api/tasks/${task.id}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        fetchTasks() // Refresh the task list
+      } else {
+        const data = await response.json()
+        console.error("Error deleting task:", data.error || "Nie udało się usunąć zadania")
+      }
+    } catch (error) {
+      console.error("Error deleting task:", error)
+    }
+  }
+
   const handleTaskUpdated = () => {
     fetchTasks()
     setSelectedTask(null)
@@ -380,6 +397,7 @@ export function DashboardContent() {
         taskStatuses={taskStatuses}
         onTaskUpdate={handleTaskUpdate}
         onTaskDetails={handleTaskDetails}
+        onTaskDelete={handleTaskDelete}
         isAdmin={isAdmin}
         currentUserId={session?.user?.id}
       />

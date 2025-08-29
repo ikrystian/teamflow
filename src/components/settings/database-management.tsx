@@ -88,8 +88,9 @@ export function DatabaseManagement() {
           timestamp: data.timestamp
         })
 
+        const recordsInfo = data.exportedRecords ? ` • ${data.exportedRecords} rekordów danych` : ''
         toast.success("Eksport bazy danych zakończony pomyślnie!", {
-          description: `Plik: ${data.fileName} (${data.fileSize})`
+          description: `Plik: ${data.fileName} (${data.fileSize})${recordsInfo}`
         })
 
         // Odśwież listę backup-ów po eksporcie
