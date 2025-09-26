@@ -17,13 +17,13 @@ export async function GET() {
     }
 
     const backupsDir = path.join(process.cwd(), 'backups')
-    
+
     if (!existsSync(backupsDir)) {
       return NextResponse.json({ backups: [] })
     }
 
     const files = readdirSync(backupsDir)
-      .filter(file => file.endsWith('.sql') && file.startsWith('database_backup_'))
+      .filter(file => file.startsWith('database_backup_') && (file.endsWith('.sql') || file.endsWith('.db')))
       .map(file => {
         const filePath = path.join(backupsDir, file)
         const stats = statSync(filePath)
@@ -40,7 +40,7 @@ export async function GET() {
 
   } catch (error) {
     console.error('❌ Error listing backup files:', error)
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: "Błąd podczas pobierania listy plików backup",
       details: error instanceof Error ? error.message : "Unknown error"
     }, { status: 500 })
@@ -75,14 +75,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Sprawdź czy nazwa pliku jest bezpieczna (tylko pliki backup)
-    if (!fileName.endsWith('.sql') || !fileName.startsWith('database_backup_')) {
+    const isSql = fileName.endsWith('.sql')
+    const isDb = fileName.endsWith('.db')
+    if (!fileName.startsWith('database_backup_') || (!isSql && !isDb)) {
       return NextResponse.json({ error: "Nieprawidłowy format pliku backup" }, { status: 400 })
     }
 
     const dbPath = path.join(process.cwd(), 'prisma', 'dev.db')
 
     console.log('🗑️ Removing current database...')
-    
+
     // Usuń obecną bazę danych
     if (existsSync(dbPath)) {
       await execAsync(`rm "${dbPath}"`)
@@ -91,9 +93,14 @@ export async function POST(request: NextRequest) {
 
     console.log('📥 Importing data from backup...')
 
-    // Importuj dane z pliku backup
-    const command = `sqlite3 "${dbPath}" < "${backupPath}"`
-    await execAsync(command)
+    if (isSql) {
+      // Importuj dane z pliku SQL dump
+      const command = `sqlite3 "${dbPath}" < "${backupPath}"`
+      await execAsync(command)
+    } else {
+      // Przywróć binarny plik .db przez skopiowanie
+      await execAsync(`cp "${backupPath}" "${dbPath}"`)
+    }
 
     console.log('🔄 Regenerating Prisma client...')
 
@@ -104,14 +111,16 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Baza danych została pomyślnie przywrócona z backup",
+      message: isSql
+        ? "Baza danych została pomyślnie przywrócona z SQL dump"
+        : "Baza danych została pomyślnie przywrócona z binarnego pliku .db",
       fileName: fileName,
       timestamp: new Date().toISOString()
     })
 
   } catch (error) {
     console.error('❌ Error during database import:', error)
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: "Błąd podczas importu bazy danych",
       details: error instanceof Error ? error.message : "Unknown error"
     }, { status: 500 })

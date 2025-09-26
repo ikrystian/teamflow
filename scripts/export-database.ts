@@ -16,6 +16,9 @@ async function exportDatabase() {
       process.exit(1)
     }
 
+    // Ustal format eksportu
+    const format: 'sql' | 'db' = (process.env.DB_BACKUP_FORMAT === 'db') ? 'db' : 'sql'
+
     // Utwórz folder backups jeśli nie istnieje
     const backupsDir = path.join(process.cwd(), 'backups')
     if (!existsSync(backupsDir)) {
@@ -30,10 +33,10 @@ async function exportDatabase() {
       .replace('T', '_')
       .slice(0, 19) // YYYY-MM-DD_HH-MM-SS
 
-    const backupFileName = `database_backup_${timestamp}.sql`
+    const backupFileName = `database_backup_${timestamp}.${format}`
     const backupPath = path.join(backupsDir, backupFileName)
 
-    console.log(`💾 Eksportuję bazę danych do: ${backupFileName}`)
+    console.log(`💾 Eksportuję bazę danych do: ${backupFileName} (format: ${format})`)
 
     // Sprawdź ile danych jest w bazie przed eksportem
     const tableCountsCommand = `sqlite3 "${dbPath}" "SELECT 'User: ' || COUNT(*) FROM User UNION ALL SELECT 'Team: ' || COUNT(*) FROM Team UNION ALL SELECT 'Project: ' || COUNT(*) FROM Project UNION ALL SELECT 'Task: ' || COUNT(*) FROM Task UNION ALL SELECT 'Todo: ' || COUNT(*) FROM Todo UNION ALL SELECT 'Comment: ' || COUNT(*) FROM Comment UNION ALL SELECT 'TimeEntry: ' || COUNT(*) FROM TimeEntry;"`
@@ -48,17 +51,27 @@ async function exportDatabase() {
       console.log('⚠️ Nie można pobrać liczby rekordów:', error)
     }
 
-    // Wykonaj pełny dump bazy danych SQLite (struktura + wszystkie dane)
-    const command = `sqlite3 "${dbPath}" ".dump" > "${backupPath}"`
+    if (format === 'sql') {
+      // Wykonaj pełny dump bazy danych SQLite (struktura + wszystkie dane)
+      const command = `sqlite3 "${dbPath}" ".dump" > "${backupPath}"`
+      await execAsync(command)
 
-    await execAsync(command)
-
-    // Sprawdź ile INSERT statements zostało wyeksportowanych
-    try {
-      const { stdout: insertCount } = await execAsync(`grep -c "INSERT INTO" "${backupPath}" || echo "0"`)
-      console.log(`📝 Wyeksportowano ${insertCount.trim()} instrukcji INSERT (rekordów danych)`)
-    } catch (error) {
-      console.log('⚠️ Nie można policzyć instrukcji INSERT')
+      // Sprawdź ile INSERT statements zostało wyeksportowanych
+      try {
+        const { stdout: insertCount } = await execAsync(`grep -c \"INSERT INTO\" \"${backupPath}\" || echo \"0\"`)
+        console.log(`📝 Wyeksportowano ${insertCount.trim()} instrukcji INSERT (rekordów danych)`)
+      } catch (error) {
+        console.log('⚠️ Nie można policzyć instrukcji INSERT')
+      }
+    } else {
+      // Binarny backup bazy (szybsze przywracanie)
+      try {
+        // Preferuj .backup
+        await execAsync(`sqlite3 \"${dbPath}\" \".backup '${backupPath}'\"`)
+      } catch (e) {
+        console.log('⚠️ .backup nie powiodło się, próba VACUUM INTO...', e instanceof Error ? e.message : e)
+        await execAsync(`sqlite3 \"${dbPath}\" \"VACUUM INTO '${backupPath}'\"`)
+      }
     }
 
     console.log('✅ Eksport bazy danych zakończony pomyślnie!')

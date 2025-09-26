@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { getAdminSession } from "@/lib/admin"
 import { exec } from 'child_process'
 import { promisify } from 'util'
@@ -8,7 +8,7 @@ import path from 'path'
 const execAsync = promisify(exec)
 
 // POST /api/admin/database/export - Export database (admin only)
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
     const session = await getAdminSession()
 
@@ -16,7 +16,14 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 })
     }
 
-    console.log('🔐 Admin database export initiated by:', session.user.email)
+    // Odczytaj format z body (domyślnie 'sql')
+    let format: 'sql' | 'db' = 'sql'
+    try {
+      const body = await request.json().catch(() => null as any)
+      if (body?.format === 'db') format = 'db'
+    } catch {}
+
+    console.log('🔐 Admin database export initiated by:', session.user.email, '| format:', format)
 
     // Sprawdź czy istnieje plik bazy danych
     const dbPath = path.join(process.cwd(), 'prisma', 'dev.db')
@@ -39,12 +46,12 @@ export async function POST() {
       .replace('T', '_')
       .slice(0, 19) // YYYY-MM-DD_HH-MM-SS
 
-    const backupFileName = `database_backup_${timestamp}.sql`
+    const backupFileName = `database_backup_${timestamp}.${format}`
     const backupPath = path.join(backupsDir, backupFileName)
 
     console.log(`💾 Exporting database to: ${backupFileName}`)
 
-    // Sprawdź ile danych jest w bazie przed eksportem
+    // Sprawdź ile danych jest w bazie przed eksportem (log)
     const tableCountsCommand = `sqlite3 "${dbPath}" "SELECT 'User: ' || COUNT(*) FROM User UNION ALL SELECT 'Team: ' || COUNT(*) FROM Team UNION ALL SELECT 'Project: ' || COUNT(*) FROM Project UNION ALL SELECT 'Task: ' || COUNT(*) FROM Task UNION ALL SELECT 'Todo: ' || COUNT(*) FROM Todo UNION ALL SELECT 'Comment: ' || COUNT(*) FROM Comment UNION ALL SELECT 'TimeEntry: ' || COUNT(*) FROM TimeEntry;"`
 
     try {
@@ -57,17 +64,28 @@ export async function POST() {
       console.log('⚠️ Could not get table counts:', error)
     }
 
-    // Wykonaj pełny dump bazy danych SQLite (struktura + wszystkie dane)
-    const command = `sqlite3 "${dbPath}" ".dump" > "${backupPath}"`
+    if (format === 'sql') {
+      // Pełny dump bazy SQLite (struktura + dane)
+      const command = `sqlite3 "${dbPath}" ".dump" > "${backupPath}"`
+      await execAsync(command)
 
-    await execAsync(command)
-
-    // Sprawdź ile INSERT statements zostało wyeksportowanych
-    try {
-      const { stdout: insertCount } = await execAsync(`grep -c "INSERT INTO" "${backupPath}" || echo "0"`)
-      console.log(`📝 Exported ${insertCount.trim()} INSERT statements (data records)`)
-    } catch (error) {
-      console.log('⚠️ Could not count INSERT statements')
+      // Sprawdź ile INSERT statements zostało wyeksportowanych
+      try {
+        const { stdout: insertCount } = await execAsync(`grep -c "INSERT INTO" "${backupPath}" || echo "0"`)
+        console.log(`📝 Exported ${insertCount.trim()} INSERT statements (data records)`)
+      } catch (error) {
+        console.log('⚠️ Could not count INSERT statements')
+      }
+    } else {
+      // Binarny backup bazy (szybsze przywracanie)
+      try {
+        // Preferuj .backup
+        await execAsync(`sqlite3 "${dbPath}" ".backup '${backupPath}'"`)
+      } catch (e) {
+        console.log('⚠️ .backup failed, trying VACUUM INTO...', e instanceof Error ? e.message : e)
+        // Fallback do VACUUM INTO (SQLite 3.27+)
+        await execAsync(`sqlite3 "${dbPath}" "VACUUM INTO '${backupPath}'"`)
+      }
     }
 
     // Sprawdź rozmiar pliku
@@ -78,21 +96,26 @@ export async function POST() {
     console.log(`📄 Backup file: ${backupPath}`)
     console.log(`📊 File size: ${fileSize}`)
 
-    // Pobierz liczbę wyeksportowanych rekordów dla odpowiedzi
+    // Pobierz liczbę wyeksportowanych rekordów dla odpowiedzi (tylko dla SQL dump)
     let exportedRecords = 0
-    try {
-      const { stdout: insertCount } = await execAsync(`grep -c "INSERT INTO" "${backupPath}" || echo "0"`)
-      exportedRecords = parseInt(insertCount.trim()) || 0
-    } catch (error) {
-      console.log('⚠️ Could not count exported records for response')
+    if (format === 'sql') {
+      try {
+        const { stdout: insertCount } = await execAsync(`grep -c "INSERT INTO" "${backupPath}" || echo "0"`)
+        exportedRecords = parseInt(insertCount.trim()) || 0
+      } catch (error) {
+        console.log('⚠️ Could not count exported records for response')
+      }
     }
 
     return NextResponse.json({
       success: true,
-      message: "Baza danych została pomyślnie wyeksportowana (struktura + wszystkie dane)",
+      message: format === 'sql'
+        ? "Baza danych została pomyślnie wyeksportowana (SQL dump: struktura + dane)"
+        : "Baza danych została pomyślnie wyeksportowana (binarny plik .db)",
       fileName: backupFileName,
       fileSize: fileSize,
       exportedRecords: exportedRecords,
+      format,
       timestamp: new Date().toISOString()
     })
 

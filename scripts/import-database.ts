@@ -9,14 +9,14 @@ const execAsync = promisify(exec)
 // Funkcja do wyboru pliku backup
 async function selectBackupFile(): Promise<string> {
   const backupsDir = path.join(process.cwd(), 'backups')
-  
+
   if (!existsSync(backupsDir)) {
     console.error('❌ Folder backups nie istnieje. Najpierw wykonaj eksport bazy danych.')
     process.exit(1)
   }
 
   const files = readdirSync(backupsDir)
-    .filter(file => file.endsWith('.sql'))
+    .filter(file => file.startsWith('database_backup_') && (file.endsWith('.sql') || file.endsWith('.db')))
     .map(file => {
       const filePath = path.join(backupsDir, file)
       const stats = statSync(filePath)
@@ -47,7 +47,7 @@ async function selectBackupFile(): Promise<string> {
   return new Promise((resolve) => {
     rl.question('\n🔢 Wybierz numer pliku do importu (lub naciśnij Enter dla najnowszego): ', (answer) => {
       rl.close()
-      
+
       if (!answer.trim()) {
         resolve(files[0].path) // Najnowszy plik
       } else {
@@ -96,7 +96,7 @@ async function importDatabase() {
     const dbPath = path.join(process.cwd(), 'prisma', 'dev.db')
 
     console.log('\n🗑️ Usuwam obecną bazę danych...')
-    
+
     // Usuń obecną bazę danych
     if (existsSync(dbPath)) {
       await execAsync(`rm "${dbPath}"`)
@@ -105,9 +105,16 @@ async function importDatabase() {
 
     console.log('📥 Importuję dane z backup...')
 
-    // Importuj dane z pliku backup
-    const command = `sqlite3 "${dbPath}" < "${backupPath}"`
-    await execAsync(command)
+    // Importuj dane z pliku backup (.sql) lub przywróć .db
+    if (backupPath.endsWith('.sql')) {
+      const command = `sqlite3 "${dbPath}" < "${backupPath}"`
+      await execAsync(command)
+    } else if (backupPath.endsWith('.db')) {
+      await execAsync(`cp "${backupPath}" "${dbPath}"`)
+    } else {
+      console.error('❌ Nieobsługiwany format pliku backup:', backupPath)
+      process.exit(1)
+    }
 
     console.log('✅ Import bazy danych zakończony pomyślnie!')
     console.log('🔄 Uruchamiam generowanie klienta Prisma...')
