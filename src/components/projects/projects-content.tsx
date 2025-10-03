@@ -45,9 +45,14 @@ interface Project {
   archived?: boolean
   imageUrl?: string
   createdAt?: string
-  team: {
+  team?: {
     id: string
     name: string
+  }
+  createdBy?: {
+    id: string
+    name: string | null
+    email: string
   }
   tasks?: {
     id: string
@@ -203,7 +208,7 @@ export function ProjectsContent() {
             <SelectItem value="all">Wszystkie projekty</SelectItem>
           </SelectContent>
         </Select>
-        <Button onClick={() => setCreateDialogOpen(true)} disabled={teams.length === 0}>
+        <Button onClick={() => setCreateDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Utwórz projekt
         </Button>
@@ -257,23 +262,7 @@ export function ProjectsContent() {
     <div className="space-y-6 p-4 md:p-8 pt-6">
 
 
-      {teams.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Users className="h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Brak dostępnych zespołów</h3>
-            <p className="text-gray-500 text-center mb-4">
-              Musisz utworzyć lub dołączyć do zespołu, zanim będziesz mógł tworzyć projekty
-            </p>
-            <Link href="/dashboard/teams">
-              <Button>
-                <Users className="mr-2 h-4 w-4" />
-                Przejdź do zespołów
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      ) : getFilteredProjects().length === 0 ? (
+      {getFilteredProjects().length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <FolderOpen className="h-12 w-12 text-gray-400 mb-4" />
@@ -391,7 +380,7 @@ export function ProjectsContent() {
                     <div className="space-y-4">
                       <div className="flex items-center text-sm text-gray-600">
                         <Users className="h-4 w-4 mr-2" />
-                        {project.team.name}
+                        {project.team ? project.team.name : (project.createdBy ? `Projekt osobisty (${project.createdBy.name || project.createdBy.email})` : 'Projekt osobisty')}
                       </div>
 
                       <div className="space-y-2">

@@ -30,19 +30,56 @@ export async function GET(request: NextRequest) {
       where: {
         ...(teamId && { teamId }),
         ...archivedCondition,
-        team: {
-          members: {
-            some: {
-              id: session.user.id
+        OR: [
+          // Projects where user is a team member
+          {
+            team: {
+              members: {
+                some: {
+                  id: session.user.id
+                }
+              }
             }
+          },
+          // Projects where user is a direct project member
+          {
+            members: {
+              some: {
+                userId: session.user.id
+              }
+            }
+          },
+          // Projects created by the user
+          {
+            createdById: session.user.id
           }
-        }
+        ]
       },
       include: {
         team: {
           select: {
             id: true,
             name: true
+          }
+        },
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatarUrl: true
+          }
+        },
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                avatarUrl: true
+              }
+            }
           }
         },
         tasks: {
@@ -91,47 +128,76 @@ export async function POST(request: NextRequest) {
 
     const { name, description, teamId, imageUrl, color, icon } = await request.json()
 
-    if (!name || !teamId) {
+    if (!name) {
       return NextResponse.json(
-        { error: "Name and team ID are required" },
+        { error: "Name is required" },
         { status: 400 }
       )
     }
 
-    // Verify user is member of the team
-    const team = await prisma.team.findFirst({
-      where: {
-        id: teamId,
-        members: {
-          some: {
-            id: session.user.id
+    // Verify user is member of the team if teamId is provided
+    if (teamId) {
+      const team = await prisma.team.findFirst({
+        where: {
+          id: teamId,
+          members: {
+            some: {
+              id: session.user.id
+            }
           }
         }
-      }
-    })
+      })
 
-    if (!team) {
-      return NextResponse.json(
-        { error: "Team not found or access denied" },
-        { status: 404 }
-      )
+      if (!team) {
+        return NextResponse.json(
+          { error: "Team not found or access denied" },
+          { status: 404 }
+        )
+      }
     }
 
-    // Create the project (statusy są teraz globalne, nie tworzymy ich per projekt)
+    // Create the project with the creator as the owner
     const result = await prisma.project.create({
       data: {
         name,
         description,
-        teamId,
+        teamId: teamId || null,
+        createdById: session.user.id,
         imageUrl,
-        color: color || "#3B82F6", // Domyślny kolor jeśli nie podano
+        color: color || "#3B82F6",
         icon,
+        // Automatically add creator as project member
+        members: {
+          create: {
+            userId: session.user.id,
+            role: "admin"
+          }
+        }
       },
       include: {
-        team: {
+        team: teamId ? {
           select: {
             id: true,
             name: true
+          }
+        } : false,
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                avatarUrl: true
+              }
+            }
           }
         }
       }

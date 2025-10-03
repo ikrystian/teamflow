@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,6 +13,7 @@ import { ArrowLeft, Key, Save, Eye, EyeOff, X, Plus, Edit, Trash2, Share2, Copy,
 import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { usePageHeader } from "@/contexts/header-context"
 import { toast } from "sonner"
+import { ProjectMembersManager } from "./project-members-manager"
 
 
 
@@ -29,9 +31,15 @@ interface Project {
   stagingUrl?: string
   productionUrl?: string
   credentials?: string
-  team: {
+  createdById: string
+  team?: {
     id: string
     name: string
+  }
+  createdBy: {
+    id: string
+    name: string | null
+    email: string
   }
 }
 
@@ -42,6 +50,7 @@ interface ProjectSettingsContentProps {
 
 
 export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProps) {
+  const { data: session } = useSession()
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
   const [credentialsList, setCredentialsList] = useState<Array<{
@@ -289,6 +298,15 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
   return (
     <div className="space-y-6 p-4 md:p-8 pt-6">
       {/* Header */}
+
+      {/* Project Members */}
+      {session?.user?.id && (
+        <ProjectMembersManager
+          projectId={projectId}
+          createdById={project.createdById}
+          currentUserId={session.user.id}
+        />
+      )}
 
       {/* Project Sharing */}
       <Card>

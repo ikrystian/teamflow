@@ -211,13 +211,30 @@ export async function POST(request: NextRequest) {
         where: {
           id: projectId,
           archived: false,
-          team: {
-            members: {
-              some: {
-                id: session.user.id
+          OR: [
+            // User is a team member
+            {
+              team: {
+                members: {
+                  some: {
+                    id: session.user.id
+                  }
+                }
               }
+            },
+            // User is an individual project member
+            {
+              members: {
+                some: {
+                  userId: session.user.id
+                }
+              }
+            },
+            // User is the project creator/owner
+            {
+              createdById: session.user.id
             }
-          }
+          ]
         }
       })
 

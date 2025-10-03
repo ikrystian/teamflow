@@ -101,9 +101,12 @@ export const selectValueToPriority = (value: string): string | undefined => {
  * @param project - Project object with name and team
  * @returns Formatted string "Project Name • Team Name"
  */
-export const formatProjectDisplay = (project?: { name: string; team: { name: string } } | null): string => {
+export const formatProjectDisplay = (project?: { name: string; team?: { name: string } | null } | null): string => {
   if (!project) {
     return "Brak projektu"
+  }
+  if (!project.team) {
+    return project.name
   }
   return `${project.name} • ${project.team.name}`
 }

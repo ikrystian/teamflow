@@ -38,7 +38,7 @@ export function CreateProjectContent({
   const { refreshProjects } = useProjects()
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
-  const [teamId, setTeamId] = useState("")
+  const [teamId, setTeamId] = useState("no-team")
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [color, setColor] = useState("#3B82F6")
   const [icon, setIcon] = useState<string | null>(null)
@@ -56,7 +56,7 @@ export function CreateProjectContent({
     const validation = createProjectSchema.safeParse({
       name,
       description: description || undefined,
-      teamId,
+      teamId: teamId === "no-team" ? null : teamId || null,
       imageUrl,
       color,
       icon: showIconSelector ? icon : null
@@ -103,7 +103,7 @@ export function CreateProjectContent({
   const resetForm = () => {
     setName("")
     setDescription("")
-    setTeamId("")
+    setTeamId("no-team")
     setImageUrl(null)
     setColor("#3B82F6")
     setIcon(null)
@@ -176,12 +176,13 @@ export function CreateProjectContent({
         </div>
 
         <div className="grid gap-2">
-          <Label htmlFor="team">Zespół</Label>
-          <Select value={teamId} onValueChange={setTeamId} required disabled={loading}>
+          <Label htmlFor="team">Zespół (opcjonalnie)</Label>
+          <Select value={teamId} onValueChange={setTeamId} disabled={loading}>
             <SelectTrigger className={fieldErrors.teamId ? "border-destructive" : ""}>
-              <SelectValue placeholder="Wybierz zespół" />
+              <SelectValue placeholder="Wybierz zespół lub pozostaw puste" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="no-team">Brak zespołu</SelectItem>
               {teams.map((team) => (
                 <SelectItem key={team.id} value={team.id}>
                   {team.name}
@@ -192,6 +193,9 @@ export function CreateProjectContent({
           {fieldErrors.teamId && (
             <p className="text-sm text-destructive">{fieldErrors.teamId}</p>
           )}
+          <p className="text-sm text-muted-foreground">
+            Jeśli nie wybierzesz zespołu, zostaniesz automatycznie dodany jako właściciel projektu.
+          </p>
         </div>
 
         <div className="grid gap-2">
@@ -246,7 +250,7 @@ export function CreateProjectContent({
           </Button>
           <Button
             type="submit"
-            disabled={loading || !name.trim() || !teamId}
+            disabled={loading || !name.trim()}
           >
             {loading ? "Tworzenie..." : "Utwórz projekt"}
           </Button>

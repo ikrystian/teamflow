@@ -385,9 +385,11 @@ export function TaskDetailsContent({
               <Badge variant="outline" className="text-xs font-medium">
                 {task.project.name}
               </Badge>
-              <Badge variant="outline" className="text-xs font-medium">
-                {task.project.team.name}
-              </Badge>
+              {task.project.team && (
+                <Badge variant="outline" className="text-xs font-medium">
+                  {task.project.team.name}
+                </Badge>
+              )}
             </>
           ) : (
             <Badge variant="outline" className="text-xs font-medium text-muted-foreground">

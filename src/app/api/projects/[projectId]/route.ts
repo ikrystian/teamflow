@@ -47,13 +47,30 @@ export async function GET(
     const project = await prisma.project.findFirst({
       where: {
         id: projectId,
-        team: {
-          members: {
-            some: {
-              id: session.user.id
+        OR: [
+          // Projects where user is a team member
+          {
+            team: {
+              members: {
+                some: {
+                  id: session.user.id
+                }
+              }
             }
+          },
+          // Projects where user is a direct project member
+          {
+            members: {
+              some: {
+                userId: session.user.id
+              }
+            }
+          },
+          // Projects created by the user (without team)
+          {
+            createdById: session.user.id
           }
-        }
+        ]
       },
       include: {
         team: {
@@ -61,6 +78,26 @@ export async function GET(
             id: true,
             name: true,
             members: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                avatarUrl: true
+              }
+            }
+          }
+        },
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatarUrl: true
+          }
+        },
+        members: {
+          include: {
+            user: {
               select: {
                 id: true,
                 name: true,
@@ -169,13 +206,30 @@ export async function PATCH(
     const existingProject = await prisma.project.findFirst({
       where: {
         id: projectId,
-        team: {
-          members: {
-            some: {
-              id: session.user.id
+        OR: [
+          // Projects where user is a team member
+          {
+            team: {
+              members: {
+                some: {
+                  id: session.user.id
+                }
+              }
             }
+          },
+          // Projects where user is a direct project member
+          {
+            members: {
+              some: {
+                userId: session.user.id
+              }
+            }
+          },
+          // Projects created by the user (without team)
+          {
+            createdById: session.user.id
           }
-        }
+        ]
       }
     })
 
@@ -265,13 +319,30 @@ export async function DELETE(
       where: {
         id: projectId,
         ...(userIsAdmin ? {} : {
-          team: {
-            members: {
-              some: {
-                id: session.user.id
+          OR: [
+            // Projects where user is a team member
+            {
+              team: {
+                members: {
+                  some: {
+                    id: session.user.id
+                  }
+                }
               }
+            },
+            // Projects where user is a direct project member
+            {
+              members: {
+                some: {
+                  userId: session.user.id
+                }
+              }
+            },
+            // Projects created by the user (without team)
+            {
+              createdById: session.user.id
             }
-          }
+          ]
         })
       },
       include: {

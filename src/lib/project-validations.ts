@@ -14,7 +14,9 @@ export const createProjectSchema = z.object({
     .optional(),
   teamId: z
     .string()
-    .min(1, "Zespół jest wymagany"),
+    .min(1)
+    .optional()
+    .nullable(),
   color: z
     .string()
     .regex(/^#[0-9A-F]{6}$/i, "Nieprawidłowy format koloru")

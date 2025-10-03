@@ -54,7 +54,7 @@ interface ProjectDetails {
   color?: string
   createdAt: string
   updatedAt: string
-  team: {
+  team?: {
     id: string
     name: string
     members: {
@@ -64,6 +64,22 @@ interface ProjectDetails {
       avatarUrl?: string
     }[]
   }
+  createdBy?: {
+    id: string
+    name: string | null
+    email: string
+    avatarUrl?: string | null
+  }
+  members?: {
+    id: string
+    role: string
+    user: {
+      id: string
+      name: string | null
+      email: string
+      avatarUrl?: string | null
+    }
+  }[]
   tasks: Task[]
 }
 
@@ -73,6 +89,54 @@ interface ProjectDetailsContentProps {
 
 export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps) {
   const { data: session } = useSession() as { data: Session | null }
+
+  // Helper function to get all project members (team + direct members)
+  const getProjectMembers = (project: ProjectDetails | null) => {
+    if (!project) return []
+
+    const members: Array<{
+      id: string
+      name: string
+      email: string
+      avatarUrl?: string | null
+    }> = []
+
+    // Add team members
+    if (project.team?.members) {
+      members.push(...project.team.members.map(member => ({
+        id: member.id,
+        name: member.name || member.email,
+        email: member.email,
+        avatarUrl: member.avatarUrl
+      })))
+    }
+
+    // Add direct project members (avoiding duplicates)
+    if (project.members) {
+      project.members.forEach(member => {
+        if (!members.find(m => m.id === member.user.id)) {
+          members.push({
+            id: member.user.id,
+            name: member.user.name || member.user.email,
+            email: member.user.email,
+            avatarUrl: member.user.avatarUrl
+          })
+        }
+      })
+    }
+
+    // Add project creator if not already included
+    if (project.createdBy && !members.find(m => m.id === project.createdBy!.id)) {
+      members.push({
+        id: project.createdBy.id,
+        name: project.createdBy.name || project.createdBy.email,
+        email: project.createdBy.email,
+        avatarUrl: project.createdBy.avatarUrl ?? undefined
+      })
+    }
+
+    return members
+  }
   const [project, setProject] = useState<ProjectDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [createTaskDialogOpen, setCreateTaskDialogOpen] = useState(false)
@@ -277,15 +341,17 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     // Admin can edit all tasks
     if (isAdmin) return true
 
-    // If no specific task provided, check if user is team member
+    const projectMembers = getProjectMembers(project)
+
+    // If no specific task provided, check if user is project member
     if (!task) {
-      return project?.team.members.some(member => member.id === session.user.id) || false
+      return projectMembers.some(member => member.id === session.user.id) || false
     }
 
-    // User can edit if they are the assignee, creator, or team member
+    // User can edit if they are the assignee, creator, or project member
     return task.createdBy?.id === session.user.id ||
            task.assignee?.id === session.user.id ||
-           project?.team.members.some(member => member.id === session.user.id) || false
+           projectMembers.some(member => member.id === session.user.id) || false
   }
 
 
@@ -319,12 +385,11 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     const mine = tasks.filter(task => task.assignee?.id === session?.user?.id).length
     const byUser: Record<string, number> = {}
 
-    // Count tasks for each team member
-    if (project?.team.members) {
-      project.team.members.forEach(member => {
-        byUser[member.id] = tasks.filter(task => task.assignee?.id === member.id).length
-      })
-    }
+    // Count tasks for each project member
+    const projectMembers = getProjectMembers(project)
+    projectMembers.forEach(member => {
+      byUser[member.id] = tasks.filter(task => task.assignee?.id === member.id).length
+    })
 
     return { all, mine, byUser }
   }
@@ -336,24 +401,26 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   // Transform tasks to include project info for KanbanBoard
   const transformTasksForKanban = (tasks: Task[]) => {
     if (!project) return []
+    const projectMembers = getProjectMembers(project)
+
     return tasks.map(task => ({
       ...task,
       project: {
         id: project.id,
         name: project.name,
-        color: project.color, // Dodaj kolor projektu
-        team: {
+        color: project.color,
+        team: project.team ? {
           id: project.team.id,
           name: project.team.name,
-        },
+        } : undefined,
       },
       assignee: task.assignee ? {
         ...task.assignee,
-        email: project.team.members.find(m => m.id === task.assignee?.id)?.email || ''
+        email: projectMembers.find(m => m.id === task.assignee?.id)?.email || ''
       } : undefined,
       createdBy: task.createdBy ? {
         ...task.createdBy,
-        email: project.team.members.find(m => m.id === task.createdBy?.id)?.email || ''
+        email: projectMembers.find(m => m.id === task.createdBy?.id)?.email || ''
       } : undefined,
       timeEntries: []
     }))
@@ -362,24 +429,25 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   // Transform single task for TaskDetailsDialog
   const transformTaskForDialog = (task: Task | null) => {
     if (!task || !project) return null
+    const projectMembers = getProjectMembers(project)
 
     return {
       ...task,
       project: {
         id: project.id,
         name: project.name,
-        team: {
+        team: project.team ? {
           id: project.team.id,
           name: project.team.name
-        }
+        } : undefined
       },
       assignee: task.assignee ? {
         ...task.assignee,
-        email: project.team.members.find(m => m.id === task.assignee?.id)?.email || ''
+        email: projectMembers.find(m => m.id === task.assignee?.id)?.email || ''
       } : undefined,
       createdBy: task.createdBy ? {
         ...task.createdBy,
-        email: project.team.members.find(m => m.id === task.createdBy?.id)?.email || ''
+        email: projectMembers.find(m => m.id === task.createdBy?.id)?.email || ''
       } : undefined,
       timeEntries: task.timeEntries || [],
       images: task.images || []
@@ -420,12 +488,12 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                 <div>
                   {taskFilter === "all" ? "Wszystkie zadania w tym projekcie" :
                    taskFilter === "mine" ? "Twoje zadania w tym projekcie" :
-                   `Zadania przypisane do ${project.team.members.find(m => m.id === taskFilter)?.name || "Nieznany użytkownik"}`}
+                   `Zadania przypisane do ${getProjectMembers(project).find(m => m.id === taskFilter)?.name || "Nieznany użytkownik"}`}
                 </div>
               </div>
               <div className="flex items-center space-x-2">
                 <TaskBoardFilters
-                  teamMembers={project.team.members}
+                  teamMembers={getProjectMembers(project)}
                   currentUserId={session?.user?.id}
                   selectedFilter={taskFilter}
                   onFilterChange={handleFilterChange}
@@ -546,7 +614,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
               throw error
             }
           }}
-          teamMembers={project.team.members}
+          teamMembers={project.team?.members ?? []}
         />
       ) : (
         <div>
@@ -556,7 +624,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
               <p className="text-sm text-gray-500">Przeciągnij zadania między kolumnami, aby zaktualizować ich status</p>
             </div>
             <TaskBoardFilters
-              teamMembers={project.team.members}
+              teamMembers={getProjectMembers(project)}
               currentUserId={session?.user?.id}
               selectedFilter={taskFilter}
               onFilterChange={handleFilterChange}
@@ -605,7 +673,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         onOpenChange={setCreateTaskDialogOpen}
         onTaskCreated={handleTaskCreated}
         projectId={projectId}
-        teamMembers={project.team.members}
+        teamMembers={getProjectMembers(project)}
       />
 
       <TaskDetailsSheet
@@ -625,7 +693,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         onOpenChange={setEditTaskDialogOpen}
         onTaskUpdated={handleTaskUpdated}
         task={selectedTask}
-        teamMembers={project.team.members}
+        teamMembers={getProjectMembers(project)}
         projects={projects}
       />
 

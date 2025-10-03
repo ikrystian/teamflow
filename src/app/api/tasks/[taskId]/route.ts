@@ -194,13 +194,41 @@ export async function PATCH(
     }
 
     // Check permissions:
-    // 1. If task has a project, user must be a team member
+    // 1. If task has a project, user must have access to it
     // 2. User must be either the creator or assignee of the task
     let hasProjectAccess = true
     if (existingTask.project) {
-      hasProjectAccess = existingTask.project.team.members.some(
-        member => member.id === session.user.id
-      )
+      // Check if user has access to the project
+      const project = await prisma.project.findFirst({
+        where: {
+          id: existingTask.project.id,
+          OR: [
+            // Projects where user is a team member
+            {
+              team: {
+                members: {
+                  some: {
+                    id: session.user.id
+                  }
+                }
+              }
+            },
+            // Projects where user is a direct project member
+            {
+              members: {
+                some: {
+                  userId: session.user.id
+                }
+              }
+            },
+            // Projects created by the user (without team)
+            {
+              createdById: session.user.id
+            }
+          ]
+        }
+      })
+      hasProjectAccess = !!project
     }
 
     if (!hasProjectAccess) {

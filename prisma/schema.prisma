@@ -39,6 +39,8 @@ model User {
   chatRooms         UserChatRoom[]
   taskAttachments   TaskAttachment[]
   passwordResetTokens PasswordResetToken[]
+  createdProjects   Project[]         @relation("ProjectCreator")
+  projectMemberships ProjectMember[]
 }
 
 model Team {
@@ -68,11 +70,14 @@ model Project {
   shareToken    String?           @unique // Token for public sharing
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
-  teamId        String
+  teamId        String?           // Made optional
+  createdById   String            // Project creator/owner
   color         String            @default("#3B82F6")
   icon          String?
   archived      Boolean           @default(false)
-  team          Team              @relation(fields: [teamId], references: [id])
+  team          Team?             @relation(fields: [teamId], references: [id])
+  createdBy     User              @relation("ProjectCreator", fields: [createdById], references: [id])
+  members       ProjectMember[]   // Individual project members
   documents     ProjectDocument[]
   tasks         Task[]
   chatRooms     ChatRoom[]
@@ -345,4 +350,16 @@ model PasswordResetToken {
   used      Boolean  @default(false)
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ProjectMember {
+  id        String   @id @default(cuid())
+  projectId String
+  userId    String
+  role      String   @default("member") // "member", "admin", "viewer"
+  addedAt   DateTime @default(now())
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
 }
