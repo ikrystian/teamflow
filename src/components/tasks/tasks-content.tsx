@@ -14,7 +14,7 @@ import { TaskFormContent } from "../shared/task-form-content"
 import { TimeTrackingSheet } from "./time-tracking-sheet"
 import { TaskDetailsSheet } from "./task-details-sheet"
 import { TasksKanbanBoard } from "./tasks-kanban-board"
-import { TasksWeeklyCalendar } from "./tasks-weekly-calendar"
+import { TasksHourlyCalendar } from "./tasks-hourly-calendar"
 import { usePageHeader } from "@/contexts/header-context"
 import {
   DropdownMenu,
@@ -74,6 +74,9 @@ export function TasksContent() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [taskFormSidebarOpen, setTaskFormSidebarOpen] = useState(false)
   const [taskFormMode, setTaskFormMode] = useState<"create" | "edit">("create")
+  const [defaultTaskDate, setDefaultTaskDate] = useState<Date | undefined>()
+  const [defaultTaskTime, setDefaultTaskTime] = useState<{ start?: Date; end?: Date }>({})
+
 
 
   // Check if user is admin
@@ -187,6 +190,23 @@ export function TasksContent() {
   const handleTaskCreated = () => {
     fetchTasks()
     setTaskFormSidebarOpen(false)
+    setDefaultTaskDate(undefined)
+    setDefaultTaskTime({})
+  }
+
+  const handleCreateTaskFromCalendar = (date: Date, hour: number) => {
+    // Utwórz startTime i endTime na podstawie wybranej godziny
+    const startTime = new Date(date)
+    startTime.setHours(hour, 0, 0, 0)
+
+    const endTime = new Date(date)
+    endTime.setHours(hour + 1, 0, 0, 0) // Domyślnie 1 godzina
+
+    setDefaultTaskDate(date)
+    setDefaultTaskTime({ start: startTime, end: endTime })
+    setTaskFormMode("create")
+    setSelectedTask(null)
+    setTaskFormSidebarOpen(true)
   }
 
   const handleEditTask = async (task: Task, e: React.MouseEvent) => {
@@ -216,6 +236,8 @@ export function TasksContent() {
     fetchTasks()
     setTaskFormSidebarOpen(false)
     setSelectedTask(null)
+    setDefaultTaskDate(undefined)
+    setDefaultTaskTime({})
   }
 
   const handleTaskUpdate = async (taskId: string, updates: TaskUpdateData) => {
@@ -446,7 +468,7 @@ export function TasksContent() {
             <LayoutGrid className="h-4 w-4" />
             Tablica
           </TabsTrigger>
-          <TabsTrigger value="calendar" className="flex items-center gap-2">
+          <TabsTrigger value="hourly" className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
             Kalendarz
           </TabsTrigger>
@@ -497,8 +519,8 @@ export function TasksContent() {
           )}
         </TabsContent>
 
-        <TabsContent value="calendar" className="space-y-4">
-          <TasksWeeklyCalendar
+        <TabsContent value="hourly" className="space-y-4">
+          <TasksHourlyCalendar
             tasks={tasks.filter(task => task.dueDate)}
             onTaskUpdated={fetchTasks}
             onTaskUpdate={handleTaskUpdate}
@@ -506,6 +528,7 @@ export function TasksContent() {
             projects={projects}
             session={session}
             hideProjectSelect={filter === "assigned"}
+            onCreateTask={handleCreateTaskFromCalendar}
           />
         </TabsContent>
 
@@ -737,7 +760,11 @@ export function TasksContent() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setTaskFormSidebarOpen(false)}
+                onClick={() => {
+                  setTaskFormSidebarOpen(false)
+                  setDefaultTaskDate(undefined)
+                  setDefaultTaskTime({})
+                }}
               >
                 <Plus className="h-4 w-4 rotate-45" />
               </Button>
@@ -752,6 +779,9 @@ export function TasksContent() {
                 teamMembers={teamMembers}
                 projects={projects}
                 forceAssignToCurrentUser={taskFormMode === "create"}
+                defaultDate={defaultTaskDate}
+                defaultStartTime={defaultTaskTime.start}
+                defaultEndTime={defaultTaskTime.end}
               />
             </div>
           </div>

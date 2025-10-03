@@ -42,6 +42,9 @@ interface TaskFormContentProps {
   teamMembers?: User[]
   defaultStatusId?: string
   forceAssignToCurrentUser?: boolean
+  defaultDate?: Date
+  defaultStartTime?: Date
+  defaultEndTime?: Date
 
   // For edit mode
   task?: Task | null
@@ -62,6 +65,9 @@ export function TaskFormContent({
   teamMembers = [],
   defaultStatusId,
   forceAssignToCurrentUser = false,
+  defaultDate,
+  defaultStartTime,
+  defaultEndTime,
   task,
   mode,
 }: TaskFormContentProps) {
@@ -163,11 +169,11 @@ export function TaskFormContent({
       setSelectedProjectId(projectId || "")
       setAssigneeId(session?.user?.id || "")
       setPriority("")
-      setDueDate("")
-      setStartTime(undefined)
-      setEndTime(undefined)
+      setDueDate(defaultDate ? dateToLocalDateString(defaultDate) : "")
+      setStartTime(defaultStartTime || undefined)
+      setEndTime(defaultEndTime || undefined)
       setEstimatedHours("")
-      setTimePlanningMode("reporting")
+      setTimePlanningMode(defaultStartTime && defaultEndTime ? "scheduled" : "reporting")
       setReminderEnabled(false)
       setReminderType("hours")
       setReminderValue(1)
@@ -193,7 +199,7 @@ export function TaskFormContent({
       setReminderValue(task.reminderValue || 1)
       setError("")
     }
-  }, [isCreateMode, isEditMode, task, projectId, session?.user?.id, fetchTaskStatuses])
+  }, [isCreateMode, isEditMode, task, projectId, session?.user?.id, fetchTaskStatuses, defaultDate, defaultStartTime, defaultEndTime])
 
   // Force assign to current user when forceAssignToCurrentUser is true
   useEffect(() => {
