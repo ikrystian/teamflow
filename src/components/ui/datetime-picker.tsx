@@ -104,7 +104,7 @@ export function DateTimePicker({
   const minuteOptions = ['00', '30']
 
   return (
-    <Popover>
+    <Popover modal={false}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"

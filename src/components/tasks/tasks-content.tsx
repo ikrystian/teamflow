@@ -10,7 +10,7 @@ import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, CheckSquare, Calendar, User as UserIcon, Filter, Edit, Clock, MoreHorizontal, Trash2, LayoutGrid, List } from "lucide-react"
-import { TaskFormSheet } from "../shared/task-form-sheet"
+import { TaskFormContent } from "../shared/task-form-content"
 import { TimeTrackingSheet } from "./time-tracking-sheet"
 import { TaskDetailsSheet } from "./task-details-sheet"
 import { TasksKanbanBoard } from "./tasks-kanban-board"
@@ -63,8 +63,6 @@ export function TasksContent() {
   const [projects, setProjects] = useState<Project[]>([])
   const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
   const [loading, setLoading] = useState(true)
-  const [createDialogOpen, setCreateDialogOpen] = useState(false)
-  const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [timeTrackingDialogOpen, setTimeTrackingDialogOpen] = useState(false)
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -74,6 +72,8 @@ export function TasksContent() {
   const [deletingTask, setDeletingTask] = useState(false)
   const [activeTab, setActiveTab] = useState("board")
   const [isAdmin, setIsAdmin] = useState(false)
+  const [taskFormSidebarOpen, setTaskFormSidebarOpen] = useState(false)
+  const [taskFormMode, setTaskFormMode] = useState<"create" | "edit">("create")
 
 
   // Check if user is admin
@@ -122,7 +122,11 @@ export function TasksContent() {
           Wszystkie zadania
         </Button>
 
-        <Button onClick={() => {setCreateDialogOpen(true)}}>
+        <Button onClick={() => {
+          setTaskFormMode("create")
+          setSelectedTask(null)
+          setTaskFormSidebarOpen(true)
+        }}>
           Utwórz nowe zadanie
         </Button>
       </div>
@@ -182,7 +186,7 @@ export function TasksContent() {
 
   const handleTaskCreated = () => {
     fetchTasks()
-    setCreateDialogOpen(false)
+    setTaskFormSidebarOpen(false)
   }
 
   const handleEditTask = async (task: Task, e: React.MouseEvent) => {
@@ -204,12 +208,13 @@ export function TasksContent() {
     }
 
     setSelectedTask(task)
-    setEditDialogOpen(true)
+    setTaskFormMode("edit")
+    setTaskFormSidebarOpen(true)
   }
 
   const handleTaskUpdated = () => {
     fetchTasks()
-    setEditDialogOpen(false)
+    setTaskFormSidebarOpen(false)
     setSelectedTask(null)
   }
 
@@ -467,7 +472,11 @@ export function TasksContent() {
                    filter === "assigned" ? "Brak zadań przypisanych Tobie" :
                    "Brak zadań do wyświetlenia"}
                 </p>
-                <Button onClick={() => setCreateDialogOpen(true)}>
+                <Button onClick={() => {
+                  setTaskFormMode("create")
+                  setSelectedTask(null)
+                  setTaskFormSidebarOpen(true)
+                }}>
                   <Plus className="mr-2 h-4 w-4" />
                   Utwórz zadanie
                 </Button>
@@ -516,7 +525,11 @@ export function TasksContent() {
                     : "Nie utworzono jeszcze żadnych zadań."
                   }
                 </p>
-                <Button onClick={() => setCreateDialogOpen(true)}>
+                <Button onClick={() => {
+                  setTaskFormMode("create")
+                  setSelectedTask(null)
+                  setTaskFormSidebarOpen(true)
+                }}>
                   <Plus className="mr-2 h-4 w-4" />
                   Utwórz zadanie
                 </Button>
@@ -584,8 +597,12 @@ export function TasksContent() {
                                 {task.project ? (
                                   <>
                                     <span>{task.project.name}</span>
-                                    <span>•</span>
-                                    <span>{task.project.team.name}</span>
+                                    {task.project.team && (
+                                      <>
+                                        <span>•</span>
+                                        <span>{task.project.team.name}</span>
+                                      </>
+                                    )}
                                   </>
                                 ) : (
                                   <span className="text-muted-foreground">Brak projektu</span>
@@ -709,25 +726,37 @@ export function TasksContent() {
         </TabsContent>
       </Tabs>
 
-      {/* Sheets */}
-      <TaskFormSheet
-        mode="create"
-        open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
-        onTaskCreated={handleTaskCreated}
-        projects={projects}
-        forceAssignToCurrentUser={true}
-      />
-
-      <TaskFormSheet
-        mode="edit"
-        open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
-        onTaskUpdated={handleTaskUpdated}
-        task={selectedTask}
-        teamMembers={teamMembers}
-        projects={projects}
-      />
+      {/* Right Sidebar for Task Form */}
+      {taskFormSidebarOpen && (
+        <div className="fixed right-0 top-0 h-full bg-background border-l shadow-lg transition-all duration-300 ease-in-out z-40 w-[600px]">
+          <div className="h-full flex flex-col">
+            <div className="p-4 border-b flex items-center justify-between">
+              <h2 className="text-lg font-semibold">
+                {taskFormMode === "create" ? "Utwórz nowe zadanie" : "Edytuj zadanie"}
+              </h2>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setTaskFormSidebarOpen(false)}
+              >
+                <Plus className="h-4 w-4 rotate-45" />
+              </Button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              <TaskFormContent
+                mode={taskFormMode}
+                onTaskCreated={handleTaskCreated}
+                onTaskUpdated={handleTaskUpdated}
+                onClose={() => setTaskFormSidebarOpen(false)}
+                task={selectedTask}
+                teamMembers={teamMembers}
+                projects={projects}
+                forceAssignToCurrentUser={taskFormMode === "create"}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       <TimeTrackingSheet
         open={timeTrackingDialogOpen}
