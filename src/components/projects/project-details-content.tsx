@@ -43,7 +43,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { type Task, type Project, type User } from "@/types"
+import { type Task, type Project } from "@/types"
 import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
 
 interface ProjectDetailsContentProps {

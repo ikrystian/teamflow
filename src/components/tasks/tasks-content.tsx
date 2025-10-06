@@ -38,7 +38,6 @@ import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
 import { getPriorityColor, getPriorityDisplayName } from "@/lib/task-format-utils"
 import { formatEstimatedHours, formatAssignee } from "@/lib/task-format-utils"
 
-import Link from "next/link"
 
 interface Project {
   id: string

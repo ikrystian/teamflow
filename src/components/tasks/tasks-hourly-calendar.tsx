@@ -8,7 +8,7 @@ import { ChevronLeft, ChevronRight, CalendarDays, CalendarRange, Calendar as Cal
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { TaskDetailsSheet } from "./task-details-sheet"
 import { TaskPopover } from "./task-popover"
-import type { Task, TaskStatus, TaskUpdateData } from "@/types"
+import type { Task, TaskUpdateData } from "@/types"
 import type { Session } from "next-auth"
 import { formatAssignee, getPriorityColor } from "@/lib/task-format-utils"
 
@@ -46,21 +46,8 @@ export function TasksHourlyCalendar({
   const [currentWeek, setCurrentWeek] = useState(new Date())
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [taskDetailsDialogOpen, setTaskDetailsDialogOpen] = useState(false)
-  const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
   const [isAdmin, setIsAdmin] = useState(false)
   const [viewMode, setViewMode] = useState<"day" | "week" | "month">("week")
-
-  const fetchTaskStatuses = useCallback(async () => {
-    try {
-      const response = await fetch('/api/system/task-statuses')
-      if (response.ok) {
-        const data = await response.json()
-        setTaskStatuses(data.taskStatuses)
-      }
-    } catch (error) {
-      console.error("Error fetching task statuses:", error)
-    }
-  }, [])
 
   const checkAdminStatus = useCallback(async () => {
     if (session?.user) {
@@ -77,9 +64,8 @@ export function TasksHourlyCalendar({
   }, [session])
 
   useEffect(() => {
-    fetchTaskStatuses()
     checkAdminStatus()
-  }, [fetchTaskStatuses, checkAdminStatus])
+  }, [checkAdminStatus])
 
   // Funkcja do pobierania początku tygodnia (poniedziałek)
   const getWeekStart = (date: Date) => {

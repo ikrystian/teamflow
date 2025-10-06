@@ -102,8 +102,8 @@ export async function POST(request: NextRequest) {
       try {
         const { stdout: insertCount } = await execAsync(`grep -c "INSERT INTO" "${backupPath}" || echo "0"`)
         exportedRecords = parseInt(insertCount.trim()) || 0
-      } catch (error) {
-        console.log('⚠️ Could not count exported records for response')
+      } catch (error: unknown) {
+        console.log('⚠️ Could not count exported records for response:', error instanceof Error ? error.message : error)
       }
     }
 
