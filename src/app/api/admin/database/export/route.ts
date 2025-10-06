@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     // Odczytaj format z body (domyślnie 'sql')
     let format: 'sql' | 'db' = 'sql'
     try {
-      const body = await request.json().catch(() => null as { format?: string })
+      const body = await request.json().catch(() => null as unknown as { format?: string })
       if (body?.format === 'db') format = 'db'
     } catch {}
 
@@ -60,8 +60,8 @@ export async function POST(request: NextRequest) {
       tableCounts.split('\n').filter(line => line.trim()).forEach(line => {
         console.log(`   ${line}`)
       })
-    } catch (error) {
-      console.log('⚠️ Could not get table counts:', error)
+    } catch (error: unknown) {
+      console.log('⚠️ Could not get table counts:', error instanceof Error ? error.message : error)
     }
 
     if (format === 'sql') {
@@ -73,8 +73,8 @@ export async function POST(request: NextRequest) {
       try {
         const { stdout: insertCount } = await execAsync(`grep -c "INSERT INTO" "${backupPath}" || echo "0"`)
         console.log(`📝 Exported ${insertCount.trim()} INSERT statements (data records)`)
-      } catch (error) {
-        console.log('⚠️ Could not count INSERT statements')
+      } catch (error: unknown) {
+        console.log('⚠️ Could not count INSERT statements:', error instanceof Error ? error.message : error)
       }
     } else {
       // Binarny backup bazy (szybsze przywracanie)

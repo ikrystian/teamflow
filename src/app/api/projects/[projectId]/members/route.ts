@@ -6,7 +6,7 @@ import type { Session } from "next-auth"
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions) as Session | null
@@ -15,7 +15,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const projectId = params.projectId
+    const { projectId } = await params
 
     // Check if user has access to this project
     const project = await prisma.project.findFirst({
@@ -68,7 +68,7 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions) as Session | null
@@ -77,7 +77,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const projectId = params.projectId
+    const { projectId } = await params
     const { userId, role = "member" } = await request.json()
 
     if (!userId) {
@@ -172,7 +172,7 @@ export async function POST(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions) as Session | null
@@ -181,7 +181,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const projectId = params.projectId
+    const { projectId } = await params
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get("userId")
 

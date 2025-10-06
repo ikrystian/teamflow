@@ -338,7 +338,7 @@ export async function GET(request: NextRequest) {
         sum + task.timeEntries.reduce((timeSum, entry) => timeSum + entry.hours, 0), 0
       )
 
-      const teamMembersCount = project.team.members.length
+      const teamMembersCount = project.team?.members.length ?? 0
       const averageWorkload = teamMembersCount > 0 ? totalHours / teamMembersCount : 0
 
       // Mock deadline stress calculation

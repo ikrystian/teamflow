@@ -17,7 +17,7 @@ interface TeamMember {
   id: string
   name: string
   email: string
-  avatarUrl?: string
+  avatarUrl?: string | null
 }
 
 interface TaskBoardFiltersProps {
@@ -55,7 +55,7 @@ export function TaskBoardFilters({
     if (user) {
       return (
         <Avatar className="h-4 w-4">
-          <AvatarImage src={user.avatarUrl} />
+          <AvatarImage src={user.avatarUrl ?? undefined} />
           <AvatarFallback className="text-xs">
             {user.name?.charAt(0) || "U"}
           </AvatarFallback>
@@ -74,7 +74,7 @@ export function TaskBoardFilters({
   return (
     <div className="flex items-center space-x-3">
       <div className="flex items-center space-x-2">
-        <Filter className="h-4 w-4 text-gray-500" />
+        <Filter className="h-4 w-4" />
         <span className="text-sm font-medium text-gray-700">Filtruj:</span>
       </div>
 
@@ -141,7 +141,7 @@ export function TaskBoardFilters({
                 >
                   <div className="flex items-center space-x-2">
                     <Avatar className="h-4 w-4">
-                      <AvatarImage src={member.avatarUrl} />
+                      <AvatarImage src={member.avatarUrl ?? undefined} />
                       <AvatarFallback className="text-xs">
                         {member.name?.charAt(0) || "U"}
                       </AvatarFallback>

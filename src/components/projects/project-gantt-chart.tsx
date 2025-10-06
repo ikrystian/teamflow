@@ -28,7 +28,7 @@ interface GanttTask {
   assignee?: {
     id: string
     name: string
-    avatarUrl?: string
+    avatarUrl?: string | null
   }
   priority?: string
   status?: string
@@ -295,7 +295,7 @@ export function ProjectGanttChart({ tasks, onTaskClick }: ProjectGanttChartProps
                       {task.assignee && (
                         <div className="flex items-center space-x-1">
                           <Avatar className="h-4 w-4">
-                            <AvatarImage src={task.assignee.avatarUrl} />
+                            <AvatarImage src={task.assignee.avatarUrl ?? undefined} />
                             <AvatarFallback className="text-xs">
                               {task.assignee.name?.split(' ').map(n => n[0]).join('') || 'U'}
                             </AvatarFallback>

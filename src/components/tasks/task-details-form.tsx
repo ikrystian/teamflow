@@ -117,7 +117,7 @@ export function TaskDetailsForm({
               {selectedUser && (
                 <div className="flex items-center gap-2">
                   <Avatar className="h-5 w-5">
-                    <AvatarImage src={selectedUser.avatarUrl} />
+                    <AvatarImage src={selectedUser.avatarUrl ?? undefined} />
                     <AvatarFallback className="text-xs">
                       {selectedUser.name?.charAt(0) || "U"}
                     </AvatarFallback>
@@ -133,7 +133,7 @@ export function TaskDetailsForm({
               <SelectItem key={user.id} value={user.id}>
                 <div className="flex items-center gap-2">
                   <Avatar className="h-5 w-5">
-                    <AvatarImage src={user.avatarUrl} />
+                    <AvatarImage src={user.avatarUrl ?? undefined} />
                     <AvatarFallback className="text-xs">
                       {user.name?.charAt(0) || "U"}
                     </AvatarFallback>

@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/sheet"
 import { VisuallyHidden } from "@/components/ui/visually-hidden"
 import { TaskFormContent } from "./task-form-content"
-import type { Task, User } from "@/types"
+import type { Task, User, Project } from "@/types"
 
 // Extended User type with teams information
 interface UserWithTeams extends User {
@@ -16,15 +16,6 @@ interface UserWithTeams extends User {
     id: string
     name: string
   }[]
-}
-
-interface Project {
-  id: string
-  name: string
-  team: {
-    id: string
-    name: string
-  }
 }
 
 interface TaskFormSheetProps {

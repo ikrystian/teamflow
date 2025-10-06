@@ -17,24 +17,7 @@ import {
 import { ProjectImageSelector } from "./project-image-selector"
 import { ProjectIconSelector } from "./project-icon-selector"
 import { editProjectSchema, type EditProjectFormData } from "@/lib/project-validations"
-
-interface Team {
-  id: string
-  name: string
-}
-
-interface Project {
-  id: string
-  name: string
-  description?: string
-  imageUrl?: string
-  color?: string
-  icon?: string
-  team: {
-    id: string
-    name: string
-  }
-}
+import { type Project, type Team } from "@/types" // Import from types
 
 interface EditProjectSheetProps {
   open: boolean
@@ -88,7 +71,7 @@ export function EditProjectSheet({
       color,
       icon
     })
-    
+
     if (!validation.success) {
       const errors: Partial<EditProjectFormData> = {}
       validation.error.issues.forEach((issue) => {
@@ -179,7 +162,7 @@ export function EditProjectSheet({
           <div className="grid gap-2">
             <Label>Zespół</Label>
             <div className="px-3 py-2 border rounded-md bg-muted text-muted-foreground">
-              {project?.team.name}
+              {project?.team?.name}
             </div>
             <p className="text-xs text-muted-foreground">
               Zespół nie może być zmieniony po utworzeniu projektu

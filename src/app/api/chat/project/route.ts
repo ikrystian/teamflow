@@ -43,6 +43,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user is member of the project's team
+    if (!project.team) {
+      return NextResponse.json({ error: 'Project team not found' }, { status: 404 })
+    }
     const isMember = project.team.members.some(member => member.id === session.user.id)
     if (!isMember) {
       return NextResponse.json({ error: 'Access denied - not a team member' }, { status: 403 })
@@ -90,9 +93,9 @@ export async function POST(request: NextRequest) {
         projectId: projectId,
         createdById: session.user.id,
         members: {
-          create: project.team.members.map(member => ({
+          create: project.team?.members.map(member => ({
             userId: member.id
-          }))
+          })) || [] // Fallback to an empty array if project.team or project.team.members is null/undefined
         }
       },
       include: {

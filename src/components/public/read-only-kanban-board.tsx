@@ -75,7 +75,7 @@ function ReadOnlyTaskCard({ task, onTaskClick }: ReadOnlyTaskCardProps) {
             {task.assignee ? (
               <div className="flex items-center gap-1">
                 <Avatar className="w-5 h-5">
-                  <AvatarImage src={task.assignee.avatarUrl} />
+                  <AvatarImage src={task.assignee.avatarUrl ?? undefined} />
                   <AvatarFallback className="text-xs">
                     {task.assignee.name?.charAt(0).toUpperCase()}
                   </AvatarFallback>

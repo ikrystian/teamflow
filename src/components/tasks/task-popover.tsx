@@ -308,7 +308,7 @@ export function TaskPopover({
                       {optimisticTask.assignee ? (
                         <div className="flex items-center gap-2">
                           <Avatar className="h-6 w-6">
-                            <AvatarImage src={optimisticTask.assignee.avatarUrl} />
+                            <AvatarImage src={optimisticTask.assignee.avatarUrl ?? undefined} />
                             <AvatarFallback className="text-xs">
                               {optimisticTask.assignee.name?.charAt(0) || "U"}
                             </AvatarFallback>
@@ -388,7 +388,7 @@ export function TaskPopover({
                   {optimisticTask.assignee ? (
                     <div className="flex items-center gap-2">
                       <Avatar className="h-6 w-6">
-                        <AvatarImage src={optimisticTask.assignee.avatarUrl} />
+                        <AvatarImage src={optimisticTask.assignee.avatarUrl ?? undefined} />
                         <AvatarFallback className="text-xs">
                           {optimisticTask.assignee.name?.charAt(0) || "U"}
                         </AvatarFallback>

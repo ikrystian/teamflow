@@ -50,13 +50,11 @@ export async function GET(request: NextRequest) {
               {
                 name: {
                   contains: query,
-                  mode: 'insensitive'
                 }
               },
               {
                 email: {
-                  contains: query,
-                  mode: 'insensitive'
+                  contains: query
                 }
               }
             ]

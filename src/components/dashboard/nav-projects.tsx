@@ -49,18 +49,7 @@ import {
 
 // Import all possible project icons
 import * as LucideIcons from "lucide-react"
-
-interface Project {
-  id: string
-  name: string
-  color?: string
-  icon?: string
-  archived?: boolean
-  team: {
-    id: string
-    name: string
-  }
-}
+import { type Project } from "@/types"
 
 interface NavProjectsProps {
   projects: Project[]

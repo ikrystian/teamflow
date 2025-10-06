@@ -241,7 +241,7 @@ export function ReadOnlyTaskDetails({
                   {task.assignee ? (
                     <div className="flex items-center gap-2">
                       <Avatar className="w-6 h-6">
-                        <AvatarImage src={task.assignee.avatarUrl} />
+                        <AvatarImage src={task.assignee.avatarUrl ?? undefined} />
                         <AvatarFallback className="text-xs">
                           {task.assignee.name?.charAt(0).toUpperCase()}
                         </AvatarFallback>
@@ -262,7 +262,7 @@ export function ReadOnlyTaskDetails({
                       <label className="text-sm font-medium">Utworzone przez</label>
                       <div className="flex items-center gap-2">
                         <Avatar className="w-6 h-6">
-                          <AvatarImage src={task.createdBy.avatarUrl} />
+                          <AvatarImage src={task.createdBy.avatarUrl ?? undefined} />
                           <AvatarFallback className="text-xs">
                             {task.createdBy.name?.charAt(0).toUpperCase()}
                           </AvatarFallback>
@@ -342,7 +342,7 @@ export function ReadOnlyTaskDetails({
                     <div key={entry.id} className="flex items-center justify-between p-2 border rounded">
                       <div className="flex items-center gap-2">
                         <Avatar className="w-6 h-6">
-                          <AvatarImage src={entry.user.avatarUrl} />
+                          <AvatarImage src={entry.user.avatarUrl ?? undefined} />
                           <AvatarFallback className="text-xs">
                             {entry.user.name?.charAt(0).toUpperCase()}
                           </AvatarFallback>

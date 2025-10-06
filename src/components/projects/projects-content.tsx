@@ -36,42 +36,7 @@ import {
 } from "@/components/ui/select"
 import Link from "next/link"
 import Image from "next/image"
-
-interface Project {
-  id: string
-  name: string
-  description?: string
-  status?: string
-  archived?: boolean
-  imageUrl?: string
-  createdAt?: string
-  team?: {
-    id: string
-    name: string
-  }
-  createdBy?: {
-    id: string
-    name: string | null
-    email: string
-  }
-  tasks?: {
-    id: string
-    title: string
-    statusId?: string
-    taskStatus?: {
-      id: string
-      name: string
-      color: string
-    }
-    priority?: string
-    dueDate?: string
-    assignee?: {
-      id: string
-      name: string
-      avatarUrl?: string
-    }
-  }[]
-}
+import { type Project } from "@/types"
 
 interface Team {
   id: string

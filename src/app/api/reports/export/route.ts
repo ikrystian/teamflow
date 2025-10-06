@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
       data = timeEntries.map(entry => ({
         "Date": entry.date.toISOString().split('T')[0],
         "User": entry.user.name || entry.user.email,
-        "Team": entry.task.project?.team.name || "No Project",
+        "Team": entry.task.project?.team?.name || "No Project",
         "Project": entry.task.project?.name || "No Project",
         "Task": entry.task.title,
         "Task Status": entry.task.taskStatus?.name || "No Status",
@@ -216,7 +216,7 @@ export async function POST(request: NextRequest) {
           const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.taskStatus?.name !== "Done"
 
           return {
-            "Team": project.team.name,
+            "Team": project.team?.name || "No Team",
             "Project": project.name,
             "Project Status": "Active",
             "Task ID": task.id,

@@ -2,39 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react'
 import { useSession } from 'next-auth/react'
-
-interface Project {
-  id: string
-  name: string
-  description?: string
-  status?: string
-  color?: string
-  icon?: string
-  imageUrl?: string
-  archived?: boolean
-  createdAt?: string
-  team: {
-    id: string
-    name: string
-  }
-  tasks?: {
-    id: string
-    title: string
-    statusId?: string
-    taskStatus?: {
-      id: string
-      name: string
-      color: string
-    }
-    priority?: string
-    dueDate?: string
-    assignee?: {
-      id: string
-      name: string
-      avatarUrl?: string
-    }
-  }[]
-}
+import { type Project } from "@/types"
 
 interface ProjectsContextType {
   projects: Project[]
@@ -58,7 +26,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
       setLoading(false)
       return
     }
-    
+
     try {
       setLoading(true)
       const response = await fetch(`/api/projects?includeArchived=${includeArchived}`)

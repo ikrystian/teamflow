@@ -10,7 +10,7 @@ import { RichTextEditor } from "@/components/ui/rich-text-editor"
 
 import { DateTimePicker } from "@/components/ui/datetime-picker"
 import { dateToLocalDateString } from "@/lib/date-utils"
-import type { Task, User, TaskStatus } from "@/types"
+import type { Task, User, TaskStatus, Project } from "@/types" // Updated import
 import { ReminderSettings } from "@/components/tasks/reminder-settings"
 import { FileUpload } from "@/components/ui/file-upload"
 import {
@@ -22,14 +22,6 @@ import {
   formatProjectDisplay
 } from "@/lib/task-format-utils"
 
-interface Project {
-  id: string
-  name: string
-  team: {
-    id: string
-    name: string
-  }
-}
 
 interface TaskFormContentProps {
   onTaskCreated?: () => void
@@ -39,7 +31,7 @@ interface TaskFormContentProps {
   // For create mode
   projects?: Project[]
   projectId?: string
-  teamMembers?: User[]
+  teamMembers?: User[] // UserWithTeams is actually just User[] at this point, if we consider team property on Project
   defaultStatusId?: string
   forceAssignToCurrentUser?: boolean
   defaultDate?: Date
@@ -109,16 +101,12 @@ export function TaskFormContent({
   const showProjectSelector = ((isCreateMode && !projectId) || isEditMode) && projects.length > 0
 
   // Get current project for team member selection
-  const currentProject = projectId
-    ? { id: projectId, team: { members: teamMembers } }
-    : projects.find(p => p.id === selectedProjectId)
+  const currentProject = projects.find(p => p.id === (projectId || selectedProjectId));
 
   // Get team members for the current context
-  const availableTeamMembers = projectId
+  const availableTeamMembers: User[] = (projectId
     ? teamMembers
-    : ('members' in (currentProject?.team || {}))
-      ? (currentProject?.team as { members: User[] }).members
-      : teamMembers
+    : (currentProject?.team?.members || teamMembers));
 
   const fetchTaskStatuses = useCallback(async () => {
     try {

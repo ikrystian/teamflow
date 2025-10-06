@@ -283,19 +283,19 @@ export async function PATCH(
       }
 
       // Verify assignee is a member of the project's team (only if task has a project)
-      if (existingTask.project) {
+      if (existingTask.project && existingTask.project.teamId) {
         const team = await prisma.team.findUnique({
           where: {
             id: existingTask.project.teamId
           },
-        include: {
-          members: {
-            where: {
-              id: assigneeId
+          include: {
+            members: {
+              where: {
+                id: assigneeId
+              }
             }
           }
-        }
-      })
+        })
 
         if (!team || team.members.length === 0) {
           return NextResponse.json(
@@ -303,6 +303,17 @@ export async function PATCH(
             { status: 400 }
           )
         }
+      } else if (existingTask.project && !existingTask.project.teamId) {
+        // If there's a project but no teamId associated, it's an unexpected state.
+        // It should implicitly consider that the assignee needs to be a direct project member.
+        // Assuming for now, this case implies no team for the project, so no team-based member check.
+        // Or if it's considered an error, return an appropriate response.
+        // For now, let's allow it as a project without a team. (This might need clarification on business logic).
+        // For strictness, if a project exists, but `teamId` is null, imply an error.
+        return NextResponse.json(
+          { error: "Project exists but has no associated team. Cannot verify assignee membership." },
+          { status: 400 }
+        )
       }
     }
 
@@ -340,7 +351,7 @@ export async function PATCH(
 
         // If assigneeId is being set and project is being changed, verify assignee is member of new project team
         if (assigneeId !== undefined && assigneeId !== null) {
-          const isAssigneeMember = project.team.members.some(member => member.id === assigneeId)
+          const isAssigneeMember = project.team?.members.some(member => member.id === assigneeId)
           if (!isAssigneeMember) {
             return NextResponse.json(
               { error: "Assignee is not a member of the selected project team" },
@@ -552,7 +563,7 @@ export async function DELETE(
       userIsAdmin || // Admin can delete any task
       existingTask.createdById === session.user.id || // Task creator
       existingTask.assigneeId === session.user.id || // Assigned user
-      (existingTask.project && existingTask.project.team.members.some(member => member.id === session.user.id)) // Team member (only for tasks with projects)
+      (existingTask.project && existingTask.project.team?.members.some(member => member.id === session.user.id)) // Team member (only for tasks with projects)
 
     if (!canDelete) {
       return NextResponse.json(

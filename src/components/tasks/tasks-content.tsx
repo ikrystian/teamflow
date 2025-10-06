@@ -212,7 +212,7 @@ export function TasksContent() {
   const handleEditTask = async (task: Task, e: React.MouseEvent) => {
     e.stopPropagation();
     // Fetch team members for the task's project (if it has one)
-    if (task.project) {
+    if (task.project?.team) {
       try {
         const response = await fetch(`/api/teams/${task.project.team.id}/members`)
         if (response.ok) {
@@ -524,7 +524,10 @@ export function TasksContent() {
             tasks={tasks.filter(task => task.dueDate)}
             onTaskUpdated={fetchTasks}
             onTaskUpdate={handleTaskUpdate}
-            teamMembers={teamMembers}
+            teamMembers={teamMembers.map(member => ({
+              ...member,
+              avatarUrl: member.avatarUrl ?? undefined
+            }))}
             projects={projects}
             session={session}
             hideProjectSelect={filter === "assigned"}

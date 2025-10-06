@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
+import { type Session, type User } from "next-auth"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -14,34 +15,7 @@ import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { usePageHeader } from "@/contexts/header-context"
 import { toast } from "sonner"
 import { ProjectMembersManager } from "./project-members-manager"
-
-
-
-interface Project {
-  id: string
-  name: string
-  description?: string
-  status: string
-  color?: string
-  repositoryUrl?: string
-  databaseUrl?: string
-  serverUrl?: string
-  apiUrl?: string
-  adminPanelUrl?: string
-  stagingUrl?: string
-  productionUrl?: string
-  credentials?: string
-  createdById: string
-  team?: {
-    id: string
-    name: string
-  }
-  createdBy: {
-    id: string
-    name: string | null
-    email: string
-  }
-}
+import { type Project } from "@/types"
 
 interface ProjectSettingsContentProps {
   projectId: string
@@ -50,7 +24,7 @@ interface ProjectSettingsContentProps {
 
 
 export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProps) {
-  const { data: session } = useSession()
+  const { data: session } = useSession() as { data: Session | null }
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
   const [credentialsList, setCredentialsList] = useState<Array<{
@@ -303,8 +277,8 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
       {session?.user?.id && (
         <ProjectMembersManager
           projectId={projectId}
-          createdById={project.createdById}
-          currentUserId={session.user.id}
+          createdById={project.createdById as string}
+          currentUserId={(session.user as User).id}
         />
       )}
 

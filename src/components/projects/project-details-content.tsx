@@ -43,45 +43,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { type Task } from "@/types"
+import { type Task, type Project, type User } from "@/types"
 import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
-
-interface ProjectDetails {
-  id: string
-  name: string
-  description?: string
-  status: string
-  color?: string
-  createdAt: string
-  updatedAt: string
-  team?: {
-    id: string
-    name: string
-    members: {
-      id: string
-      name: string
-      email: string
-      avatarUrl?: string
-    }[]
-  }
-  createdBy?: {
-    id: string
-    name: string | null
-    email: string
-    avatarUrl?: string | null
-  }
-  members?: {
-    id: string
-    role: string
-    user: {
-      id: string
-      name: string | null
-      email: string
-      avatarUrl?: string | null
-    }
-  }[]
-  tasks: Task[]
-}
 
 interface ProjectDetailsContentProps {
   projectId: string
@@ -91,7 +54,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   const { data: session } = useSession() as { data: Session | null }
 
   // Helper function to get all project members (team + direct members)
-  const getProjectMembers = (project: ProjectDetails | null) => {
+  const getProjectMembers = (project: Project | null) => {
     if (!project) return []
 
     const members: Array<{
@@ -137,7 +100,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
 
     return members
   }
-  const [project, setProject] = useState<ProjectDetails | null>(null)
+  const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
   const [createTaskDialogOpen, setCreateTaskDialogOpen] = useState(false)
   const [taskDetailsDialogOpen, setTaskDetailsDialogOpen] = useState(false)
@@ -497,7 +460,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                   currentUserId={session?.user?.id}
                   selectedFilter={taskFilter}
                   onFilterChange={handleFilterChange}
-                  taskCounts={getTaskCounts(project.tasks)}
+                  taskCounts={getTaskCounts(project.tasks || [])}
                 />
                 <Button onClick={() => setCreateTaskDialogOpen(true)} size="sm">
                   <Plus className="mr-2 h-4 w-4" />
@@ -507,7 +470,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
             </div>
           </div>
           <div>
-            {getFilteredTasks(project.tasks).length === 0 ? (
+            {getFilteredTasks(project.tasks || []).length === 0 ? (
               <div className="text-center py-8">
                 <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -527,7 +490,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
               </div>
             ) : (
               <div className="space-y-4">
-                {getFilteredTasks(project.tasks).map((task) => (
+                {getFilteredTasks(project.tasks || []).map((task) => (
                   <div
                     key={task.id}
                     className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors border-l-4"
@@ -554,7 +517,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                           {task.assignee && (
                             <div className="flex items-center space-x-1">
                               <Avatar className="h-4 w-4">
-                                <AvatarImage src={task.assignee.avatarUrl} />
+                                <AvatarImage src={task.assignee.avatarUrl ?? undefined} />
                                 <AvatarFallback className="text-xs">
                                   {task.assignee.name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
                                 </AvatarFallback>
@@ -585,12 +548,12 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         </div>
       ) : viewMode === "gantt" ? (
         <ProjectGanttChart
-          tasks={getFilteredTasks(project.tasks)}
+          tasks={getFilteredTasks(project.tasks || [])}
           onTaskClick={handleTaskDetails}
         />
       ) : viewMode === "daily" ? (
         <ProjectDailyView
-          tasks={getFilteredTasks(project.tasks)}
+          tasks={getFilteredTasks(project.tasks || [])}
           onTaskClick={handleTaskDetails}
           onCreateTask={() => setCreateTaskDialogOpen(true)}
           onTaskUpdate={async (taskId: string, updates: { startTime?: string; endTime?: string; assigneeId?: string }) => {
@@ -614,7 +577,10 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
               throw error
             }
           }}
-          teamMembers={project.team?.members ?? []}
+          teamMembers={project.team?.members?.map(member => ({
+            ...member,
+            avatarUrl: member.avatarUrl ?? undefined
+          })) ?? []}
         />
       ) : (
         <div>
@@ -628,10 +594,10 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
               currentUserId={session?.user?.id}
               selectedFilter={taskFilter}
               onFilterChange={handleFilterChange}
-              taskCounts={getTaskCounts(project.tasks)}
+              taskCounts={getTaskCounts(project.tasks || [])}
             />
           </div>
-          {getFilteredTasks(project.tasks).length === 0 ? (
+          {getFilteredTasks(project.tasks || []).length === 0 ? (
             <Card >
               <CardContent className="py-12">
                 <div className="text-center">
@@ -656,7 +622,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
           ) : (
             <KanbanBoard
               projectId={projectId}
-              tasks={transformTasksForKanban(getFilteredTasks(project.tasks))}
+              tasks={transformTasksForKanban(getFilteredTasks(project.tasks || []))}
               onTaskUpdated={handleTaskUpdated}
               onTaskEdit={handleEditTask}
               onTimeTracking={handleTimeTracking}

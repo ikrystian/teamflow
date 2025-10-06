@@ -667,7 +667,7 @@ export function TaskDetailsContent({
                             ) : (
                               <>
                                 <Avatar className="h-8 w-8">
-                                  <AvatarImage src={task.assignee.avatarUrl} />
+                                  <AvatarImage src={task.assignee.avatarUrl ?? undefined} />
                                   <AvatarFallback className="text-sm">
                                     {task.assignee.name?.charAt(0) || "U"}
                                   </AvatarFallback>
@@ -708,7 +708,7 @@ export function TaskDetailsContent({
                         ) : (
                           <>
                             <Avatar className="h-8 w-8">
-                              <AvatarImage src={task.createdBy.avatarUrl} />
+                              <AvatarImage src={task.createdBy.avatarUrl ?? undefined} />
                               <AvatarFallback className="text-sm">
                                 {task.createdBy.name?.charAt(0) || "U"}
                               </AvatarFallback>

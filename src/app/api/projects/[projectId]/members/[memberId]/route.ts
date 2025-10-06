@@ -6,7 +6,7 @@ import type { Session } from "next-auth"
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { projectId: string; memberId: string } }
+  { params }: { params: Promise<{ projectId: string; memberId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions) as Session | null
@@ -15,7 +15,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { projectId, memberId } = params
+    const { projectId, memberId } = await params
     const { role } = await request.json()
 
     if (!role || !["member", "admin", "viewer"].includes(role)) {

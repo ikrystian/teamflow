@@ -39,20 +39,7 @@ import { RightSidebar } from "@/components/dashboard/right-sidebar"
 import { RecentChanges } from "@/components/dashboard/recent-changes"
 import { HeaderProvider, useHeader } from "@/contexts/header-context"
 import { useProjects } from "@/contexts/projects-context"
-
-interface Project {
-  id: string
-  name: string
-  description?: string
-  color?: string
-  icon?: string
-  imageUrl?: string
-  archived?: boolean
-  team: {
-    id: string
-    name: string
-  }
-}
+import { type Project } from "@/types"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
