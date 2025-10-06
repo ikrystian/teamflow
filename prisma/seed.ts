@@ -213,6 +213,7 @@ export async function main() {
       productionUrl: 'https://www.ecommerce-client.com',
       credentials: 'Admin: admin@ecommerce.com / SecurePass123',
       teamId: frontendTeam.id,
+      createdById: user1.id,
     },
   })
 
@@ -229,6 +230,7 @@ export async function main() {
       icon: '🏦',
       repositoryUrl: 'https://github.com/techsolutions/mobile-banking-app',
       teamId: frontendTeam.id,
+      createdById: user2.id,
     },
   })
 
@@ -247,6 +249,7 @@ export async function main() {
       apiUrl: 'https://api.chatbot.techsolutions.com',
       productionUrl: 'https://chatbot.techsolutions.com',
       teamId: backendTeam.id,
+      createdById: user3.id,
     },
   })
 
@@ -264,6 +267,7 @@ export async function main() {
       repositoryUrl: 'https://github.com/techsolutions/cloud-migration',
       serverUrl: 'https://aws.amazon.com/console',
       teamId: devopsTeam.id,
+      createdById: adminUser.id,
     },
   })
 
@@ -590,7 +594,7 @@ export async function main() {
 
   for (const subtask of subtasks) {
     const taskId = createdTasks[subtask.taskId]?.id || subtask.taskId
-    await prisma.subtask.create({ 
+    await prisma.subtask.create({
       data: {
         ...subtask,
         taskId: taskId
@@ -646,7 +650,7 @@ export async function main() {
 
   for (const comment of comments) {
     const taskId = createdTasks[comment.taskId]?.id || comment.taskId
-    await prisma.comment.create({ 
+    await prisma.comment.create({
       data: {
         ...comment,
         taskId: taskId
@@ -1001,7 +1005,7 @@ export async function main() {
 
   for (const todo of todos) {
     const taskId = createdTasks[todo.taskId]?.id || todo.taskId
-    await prisma.todo.create({ 
+    await prisma.todo.create({
       data: {
         ...todo,
         taskId: taskId

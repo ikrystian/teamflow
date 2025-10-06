@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     // Odczytaj format z body (domyślnie 'sql')
     let format: 'sql' | 'db' = 'sql'
     try {
-      const body = await request.json().catch(() => null as any)
+      const body = await request.json().catch(() => null as { format?: string })
       if (body?.format === 'db') format = 'db'
     } catch {}
 
