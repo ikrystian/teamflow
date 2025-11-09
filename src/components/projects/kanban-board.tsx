@@ -48,6 +48,7 @@ interface KanbanBoardProps {
   onTimeTracking: (task: Task) => void
   onTaskDelete: (task: Task) => void
   canEditTask: (task: Task) => boolean
+  onCreateTask?: () => void
 }
 
 import { getPriorityColor, getPriorityShortName, getPriorityDisplayName } from "@/lib/task-format-utils"
@@ -338,7 +339,8 @@ function KanbanColumn({
   onTaskCreated,
   projectId,
   updatingTasks,
-  taskStatuses
+  taskStatuses,
+  onCreateTask
 }: {
   status: TaskStatus
   tasks: Task[]
@@ -351,6 +353,7 @@ function KanbanColumn({
   projectId: string
   updatingTasks: Set<string>
   taskStatuses: TaskStatus[]
+  onCreateTask?: () => void
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: status.id,
@@ -398,11 +401,24 @@ function KanbanColumn({
 
             {/* Wyświetl przycisk dodawania zadania tylko w domyślnej kolumnie */}
             {status.isDefault && (
-              <QuickAddTask
-                status={status}
-                onTaskCreated={onTaskCreated}
-                projectId={projectId}
-              />
+              <div className="space-y-2">
+                <QuickAddTask
+                  status={status}
+                  onTaskCreated={onTaskCreated}
+                  projectId={projectId}
+                />
+                {onCreateTask && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onCreateTask}
+                    className="w-full justify-start text-muted-foreground hover:text-foreground"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Utwórz szczegółowe zadanie
+                  </Button>
+                )}
+              </div>
             )}
           </div>
         </SortableContext>
@@ -418,7 +434,8 @@ export function KanbanBoard({
   onTaskEdit,
   onTimeTracking,
   onTaskDelete,
-  canEditTask
+  canEditTask,
+  onCreateTask
 }: KanbanBoardProps) {
   const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
   const [activeTask, setActiveTask] = useState<Task | null>(null)
@@ -566,6 +583,7 @@ export function KanbanBoard({
               projectId={projectId}
               updatingTasks={updatingTasks}
               taskStatuses={taskStatuses}
+              onCreateTask={onCreateTask}
             />
           )) : (
             <div className="flex items-center justify-center w-full h-64 text-muted-foreground">

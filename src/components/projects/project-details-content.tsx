@@ -26,7 +26,7 @@ import {
   BarChart3
 } from "lucide-react"
 import Link from "next/link"
-import { TaskFormSheet } from "../shared/task-form-sheet"
+import { TaskFormContent } from "../shared/task-form-content"
 import { KanbanBoard } from "./kanban-board"
 import { ProjectGanttChart } from "./project-gantt-chart"
 import { ProjectDailyView } from "./project-daily-view"
@@ -102,9 +102,9 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   }
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
-  const [createTaskDialogOpen, setCreateTaskDialogOpen] = useState(false)
+  const [taskFormSidebarOpen, setTaskFormSidebarOpen] = useState(false)
+  const [taskFormMode, setTaskFormMode] = useState<"create" | "edit">("create")
   const [taskDetailsDialogOpen, setTaskDetailsDialogOpen] = useState(false)
-  const [editTaskDialogOpen, setEditTaskDialogOpen] = useState(false)
   const [timeTrackingDialogOpen, setTimeTrackingDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
@@ -219,7 +219,11 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
             </Button>
           </Link>
 
-          <Button onClick={() => setCreateTaskDialogOpen(true)}>
+          <Button onClick={() => {
+            setTaskFormMode("create")
+            setSelectedTask(null)
+            setTaskFormSidebarOpen(true)
+          }}>
             <Plus className="mr-2 h-4 w-4" />
             Dodaj zadanie
           </Button>
@@ -235,14 +239,14 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
 
   const handleTaskCreated = () => {
     fetchProject()
-    setCreateTaskDialogOpen(false)
+    setTaskFormSidebarOpen(false)
   }
 
   const handleTaskUpdated = (updatedTask?: Task) => {
     fetchProject()
     // If we have the updated task and we're coming from edit mode, show task details
-    if (updatedTask && editTaskDialogOpen) {
-      setEditTaskDialogOpen(false)
+    if (updatedTask && taskFormMode === "edit") {
+      setTaskFormSidebarOpen(false)
       // Small delay to ensure smooth transition
       setTimeout(() => {
         setSelectedTask(updatedTask)
@@ -259,7 +263,8 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   const handleEditTask = (task: Task) => {
     setSelectedTask(task)
     setTaskDetailsDialogOpen(false)
-    setEditTaskDialogOpen(true)
+    setTaskFormMode("edit")
+    setTaskFormSidebarOpen(true)
   }
 
   const handleTimeTracking = (task: Task) => {
@@ -462,7 +467,11 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                   onFilterChange={handleFilterChange}
                   taskCounts={getTaskCounts(project.tasks || [])}
                 />
-                <Button onClick={() => setCreateTaskDialogOpen(true)} size="sm">
+                <Button onClick={() => {
+                  setTaskFormMode("create")
+                  setSelectedTask(null)
+                  setTaskFormSidebarOpen(true)
+                }} size="sm">
                   <Plus className="mr-2 h-4 w-4" />
                   Dodaj zadanie
                 </Button>
@@ -483,7 +492,11 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                    taskFilter === "mine" ? "Brak zadań przypisanych Tobie w tym projekcie" :
                    "Ten członek zespołu nie ma przypisanych zadań w tym projekcie"}
                 </p>
-                <Button onClick={() => setCreateTaskDialogOpen(true)}>
+                <Button onClick={() => {
+                  setTaskFormMode("create")
+                  setSelectedTask(null)
+                  setTaskFormSidebarOpen(true)
+                }}>
                   <Plus className="mr-2 h-4 w-4" />
                   Utwórz zadanie
                 </Button>
@@ -555,7 +568,11 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         <ProjectDailyView
           tasks={getFilteredTasks(project.tasks || [])}
           onTaskClick={handleTaskDetails}
-          onCreateTask={() => setCreateTaskDialogOpen(true)}
+          onCreateTask={() => {
+            setTaskFormMode("create")
+            setSelectedTask(null)
+            setTaskFormSidebarOpen(true)
+          }}
           onTaskUpdate={async (taskId: string, updates: { startTime?: string; endTime?: string; assigneeId?: string }) => {
             try {
               const response = await fetch(`/api/tasks/${taskId}`, {
@@ -612,7 +629,11 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                      taskFilter === "mine" ? "Brak zadań przypisanych Tobie w tym projekcie" :
                      "Ten członek zespołu nie ma przypisanych zadań w tym projekcie"}
                   </p>
-                  <Button onClick={() => setCreateTaskDialogOpen(true)}>
+                  <Button onClick={() => {
+                    setTaskFormMode("create")
+                    setSelectedTask(null)
+                    setTaskFormSidebarOpen(true)
+                  }}>
                     <Plus className="mr-2 h-4 w-4" />
                     Utwórz zadanie
                   </Button>
@@ -628,19 +649,48 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
               onTimeTracking={handleTimeTracking}
               onTaskDelete={handleDeleteTask}
               canEditTask={canEditTask}
+              onCreateTask={() => {
+                setTaskFormMode("create")
+                setSelectedTask(null)
+                setTaskFormSidebarOpen(true)
+              }}
             />
           )}
         </div>
       )}
 
-      <TaskFormSheet
-        mode="create"
-        open={createTaskDialogOpen}
-        onOpenChange={setCreateTaskDialogOpen}
-        onTaskCreated={handleTaskCreated}
-        projectId={projectId}
-        teamMembers={getProjectMembers(project)}
-      />
+      {/* Right Sidebar for Task Form */}
+      {taskFormSidebarOpen && (
+        <div className="fixed right-0 top-0 h-full bg-background border-l shadow-lg transition-all duration-300 ease-in-out z-40 w-[600px]">
+          <div className="h-full flex flex-col">
+            <div className="p-4 border-b flex items-center justify-between">
+              <h2 className="text-lg font-semibold">
+                {taskFormMode === "create" ? "Utwórz nowe zadanie" : "Edytuj zadanie"}
+              </h2>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setTaskFormSidebarOpen(false)}
+              >
+                <Plus className="h-4 w-4 rotate-45" />
+              </Button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              <TaskFormContent
+                mode={taskFormMode}
+                onTaskCreated={handleTaskCreated}
+                onTaskUpdated={handleTaskUpdated}
+                onClose={() => setTaskFormSidebarOpen(false)}
+                task={selectedTask}
+                teamMembers={getProjectMembers(project)}
+                projects={projects}
+                projectId={projectId}
+                forceAssignToCurrentUser={taskFormMode === "create"}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       <TaskDetailsSheet
         open={taskDetailsDialogOpen}
@@ -651,16 +701,6 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         onDelete={handleDeleteTask}
         onTaskUpdated={handleTaskUpdated}
         canEdit={selectedTask ? canEditTask(selectedTask) : false}
-      />
-
-      <TaskFormSheet
-        mode="edit"
-        open={editTaskDialogOpen}
-        onOpenChange={setEditTaskDialogOpen}
-        onTaskUpdated={handleTaskUpdated}
-        task={selectedTask}
-        teamMembers={getProjectMembers(project)}
-        projects={projects}
       />
 
       <TimeTrackingSheet
