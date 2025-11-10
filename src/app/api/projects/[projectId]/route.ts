@@ -48,15 +48,8 @@ export async function GET(
       where: {
         id: projectId,
         OR: [
-          // Projects where user is a team member
           {
-            team: {
-              members: {
-                some: {
-                  id: session.user.id
-                }
-              }
-            }
+
           },
           // Projects where user is a direct project member
           {
@@ -66,27 +59,13 @@ export async function GET(
               }
             }
           },
-          // Projects created by the user (without team)
+          // Projects created by the user (without )
           {
             createdById: session.user.id
           }
         ]
       },
       include: {
-        team: {
-          select: {
-            id: true,
-            name: true,
-            members: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                avatarUrl: true
-              }
-            }
-          }
-        },
         createdBy: {
           select: {
             id: true,
@@ -207,15 +186,8 @@ export async function PATCH(
       where: {
         id: projectId,
         OR: [
-          // Projects where user is a team member
           {
-            team: {
-              members: {
-                some: {
-                  id: session.user.id
-                }
-              }
-            }
+
           },
           // Projects where user is a direct project member
           {
@@ -225,7 +197,7 @@ export async function PATCH(
               }
             }
           },
-          // Projects created by the user (without team)
+          // Projects created by the user
           {
             createdById: session.user.id
           }
@@ -263,12 +235,7 @@ export async function PATCH(
         ...(credentials !== undefined && { credentials })
       },
       include: {
-        team: {
-          select: {
-            id: true,
-            name: true
-          }
-        },
+
         tasks: {
           select: {
             id: true,
@@ -320,16 +287,7 @@ export async function DELETE(
         id: projectId,
         ...(userIsAdmin ? {} : {
           OR: [
-            // Projects where user is a team member
-            {
-              team: {
-                members: {
-                  some: {
-                    id: session.user.id
-                  }
-                }
-              }
-            },
+
             // Projects where user is a direct project member
             {
               members: {
@@ -338,7 +296,7 @@ export async function DELETE(
                 }
               }
             },
-            // Projects created by the user (without team)
+            // Projects created by the user
             {
               createdById: session.user.id
             }

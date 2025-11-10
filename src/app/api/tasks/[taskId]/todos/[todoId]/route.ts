@@ -56,13 +56,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ t
             { assigneeId: session.user.id },
             {
               project: {
-                team: {
-                  members: {
-                    some: {
-                      id: session.user.id
-                    }
-                  }
-                }
+
               }
             }
           ]

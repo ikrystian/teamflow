@@ -42,9 +42,6 @@ interface TimeTrackingData {
   projectStats: Array<{
     project: {
       name: string
-      team: {
-        name: string
-      }
     }
     totalHours: number
     entriesCount: number
@@ -64,9 +61,6 @@ interface ProjectProgressData {
     project: {
       name: string
       status: string
-      team: {
-        name: string
-      }
     }
     taskStats: {
       total: number
@@ -84,7 +78,7 @@ interface ProjectProgressData {
   }>
 }
 
-export function exportTimeTrackingToPDF(data: TimeTrackingData, filters: { startDate: string; endDate: string; projectId: string; userId: string; teamId: string }): jsPDF {
+export function exportTimeTrackingToPDF(data: TimeTrackingData, filters: { startDate: string; endDate: string; projectId: string; userId: string; }): jsPDF {
   const doc = new jsPDF()
 
   // Title
@@ -156,7 +150,6 @@ export function exportTimeTrackingToPDF(data: TimeTrackingData, filters: { start
 
   const projectTableData = data.projectStats.map(project => [
     project.project.name,
-    project.project.team?.name,
     formatHours(project.totalHours),
     project.entriesCount.toString(),
     project.users.join(', ')
@@ -164,7 +157,7 @@ export function exportTimeTrackingToPDF(data: TimeTrackingData, filters: { start
 
   autoTable(doc, {
     startY: currentY + 10,
-    head: [['Project', 'Team', 'Total Hours', 'Entries', 'Contributors']],
+    head: [['Project','Total Hours', 'Entries', 'Contributors']],
     body: projectTableData,
     theme: 'grid',
     headStyles: { fillColor: [66, 139, 202] },
@@ -188,7 +181,7 @@ export function exportTimeTrackingToPDF(data: TimeTrackingData, filters: { start
   return doc
 }
 
-export function exportProjectProgressToPDF(data: ProjectProgressData, filters: { startDate: string; endDate: string; projectId: string; teamId: string }): jsPDF {
+export function exportProjectProgressToPDF(data: ProjectProgressData, filters: { startDate: string; endDate: string; projectId: string;}): jsPDF {
   const doc = new jsPDF()
 
   // Title
@@ -231,7 +224,6 @@ export function exportProjectProgressToPDF(data: ProjectProgressData, filters: {
 
   const projectTableData = data.projectReports.map(project => [
     project.project.name,
-    project.project.team?.name,
     project.project.status,
     project.taskStats.total.toString(),
     project.taskStats.completed.toString(),
@@ -242,7 +234,7 @@ export function exportProjectProgressToPDF(data: ProjectProgressData, filters: {
 
   autoTable(doc, {
     startY: currentY + 10,
-    head: [['Project', 'Team', 'Status', 'Total Tasks', 'Completed', 'Completion %', 'Hours Logged', 'Efficiency %']],
+    head: [['Project', 'Status', 'Total Tasks', 'Completed', 'Completion %', 'Hours Logged', 'Efficiency %']],
     body: projectTableData,
     theme: 'grid',
     headStyles: { fillColor: [66, 139, 202] },
@@ -255,7 +247,6 @@ export function exportProjectProgressToPDF(data: ProjectProgressData, filters: {
       4: { cellWidth: 15 },
       5: { cellWidth: 15 },
       6: { cellWidth: 20 },
-      7: { cellWidth: 15 }
     }
   })
 

@@ -62,11 +62,7 @@ export async function POST(
       include: {
         project: {
           include: {
-            team: {
-              include: {
-                members: true
-              }
-            }
+
           }
         }
       }
@@ -78,7 +74,6 @@ export async function POST(
 
     // Check if user has access to this task
     const hasAccess = !task.project ||
-      task.project.team?.members.some(member => member.id === session.user.id) ||
       task.assigneeId === session.user.id ||
       task.createdById === session.user.id
 
@@ -181,11 +176,7 @@ export async function DELETE(
           include: {
             project: {
               include: {
-                team: {
-                  include: {
-                    members: true
-                  }
-                }
+
               }
             }
           }
@@ -202,9 +193,7 @@ export async function DELETE(
     const canDelete = userIsAdmin || // Admin can delete any attachment
       attachment.uploadedById === session.user.id ||
       attachment.task.createdById === session.user.id ||
-      attachment.task.assigneeId === session.user.id ||
-      (!attachment.task.project ||
-        attachment.task.project.team?.members.some(member => member.id === session.user.id))
+      attachment.task.assigneeId === session.user.id ;
 
     if (!canDelete) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 })

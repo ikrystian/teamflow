@@ -31,33 +31,9 @@ export async function GET(
         company: true,
         website: true,
         createdAt: true,
-        // Don't include phone for privacy
-        teams: {
-          where: {
-            members: {
-              some: {
-                id: session.user.id // Only show teams where current user is also a member
-              }
-            }
-          },
-          select: {
-            id: true,
-            name: true,
-            createdAt: true
-          }
-        },
+
         assignedTasks: {
-          where: {
-            project: {
-              team: {
-                members: {
-                  some: {
-                    id: session.user.id // Only show tasks from projects where current user has access
-                  }
-                }
-              }
-            }
-          },
+
           select: {
             id: true,
             title: true,
@@ -69,12 +45,7 @@ export async function GET(
               select: {
                 id: true,
                 name: true,
-                team: {
-                  select: {
-                    id: true,
-                    name: true
-                  }
-                }
+
               }
             }
           },
@@ -84,17 +55,7 @@ export async function GET(
           take: 10 // Limit to recent tasks
         },
         createdTasks: {
-          where: {
-            project: {
-              team: {
-                members: {
-                  some: {
-                    id: session.user.id
-                  }
-                }
-              }
-            }
-          },
+
           select: {
             id: true,
             title: true,
@@ -110,13 +71,7 @@ export async function GET(
           where: {
             task: {
               project: {
-                team: {
-                  members: {
-                    some: {
-                      id: session.user.id
-                    }
-                  }
-                }
+
               }
             }
           },
@@ -146,13 +101,7 @@ export async function GET(
           where: {
             task: {
               project: {
-                team: {
-                  members: {
-                    some: {
-                      id: session.user.id
-                    }
-                  }
-                }
+
               }
             }
           },
@@ -191,13 +140,7 @@ export async function GET(
       where: {
         assigneeId: userId,
         project: {
-          team: {
-            members: {
-              some: {
-                id: session.user.id
-              }
-            }
-          }
+
         }
       }
     })
@@ -209,13 +152,7 @@ export async function GET(
           name: "Done"
         },
         project: {
-          team: {
-            members: {
-              some: {
-                id: session.user.id
-              }
-            }
-          }
+
         }
       }
     })
@@ -225,13 +162,7 @@ export async function GET(
         userId: userId,
         task: {
           project: {
-            team: {
-              members: {
-                some: {
-                  id: session.user.id
-                }
-              }
-            }
+
           }
         }
       },
@@ -245,13 +176,7 @@ export async function GET(
         authorId: userId,
         task: {
           project: {
-            team: {
-              members: {
-                some: {
-                  id: session.user.id
-                }
-              }
-            }
+
           }
         }
       }
@@ -266,7 +191,6 @@ export async function GET(
         totalHours: totalTimeEntries._sum.hours || 0,
         totalComments,
         completionRate: totalAssignedTasks > 0 ? Math.round((completedTasks / totalAssignedTasks) * 100) : 0,
-        teamsCount: user.teams.length
       }
     }
 

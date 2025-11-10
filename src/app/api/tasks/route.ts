@@ -62,17 +62,10 @@ export async function GET(request: NextRequest) {
     } : {
       ...baseFilters,
       OR: [
-        // Tasks with projects where user is a team member and project is not archived
         {
           project: {
             archived: false,
-            team: {
-              members: {
-                some: {
-                  id: session.user.id
-                }
-              }
-            }
+
           }
         },
         // Tasks without projects created by the user
@@ -97,12 +90,7 @@ export async function GET(request: NextRequest) {
             name: true,
             color: true,
             archived: true,
-            team: {
-              select: {
-                id: true,
-                name: true
-              }
-            }
+
           }
         },
         assignee: {
@@ -212,16 +200,7 @@ export async function POST(request: NextRequest) {
           id: projectId,
           archived: false,
           OR: [
-            // User is a team member
-            {
-              team: {
-                members: {
-                  some: {
-                    id: session.user.id
-                  }
-                }
-              }
-            },
+
             // User is an individual project member
             {
               members: {

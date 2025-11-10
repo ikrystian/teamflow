@@ -13,7 +13,6 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const teamId = searchParams.get("teamId")
     const includeArchived = searchParams.get("includeArchived") === "true"
     const archivedOnly = searchParams.get("archivedOnly") === "true"
 
@@ -28,19 +27,9 @@ export async function GET(request: NextRequest) {
 
     const projects = await prisma.project.findMany({
       where: {
-        ...(teamId && { teamId }),
         ...archivedCondition,
         OR: [
-          // Projects where user is a team member
-          {
-            team: {
-              members: {
-                some: {
-                  id: session.user.id
-                }
-              }
-            }
-          },
+
           // Projects where user is a direct project member
           {
             members: {
@@ -56,12 +45,7 @@ export async function GET(request: NextRequest) {
         ]
       },
       include: {
-        team: {
-          select: {
-            id: true,
-            name: true
-          }
-        },
+
         createdBy: {
           select: {
             id: true,
@@ -126,7 +110,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { name, description, teamId, imageUrl, color, icon } = await request.json()
+    const { name, description, imageUrl, color, icon } = await request.json()
 
     if (!name) {
       return NextResponse.json(
@@ -135,33 +119,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verify user is member of the team if teamId is provided
-    if (teamId) {
-      const team = await prisma.team.findFirst({
-        where: {
-          id: teamId,
-          members: {
-            some: {
-              id: session.user.id
-            }
-          }
-        }
-      })
-
-      if (!team) {
-        return NextResponse.json(
-          { error: "Team not found or access denied" },
-          { status: 404 }
-        )
-      }
-    }
-
     // Create the project with the creator as the owner
     const result = await prisma.project.create({
       data: {
         name,
         description,
-        teamId: teamId || null,
         createdById: session.user.id,
         imageUrl,
         color: color || "#3B82F6",
@@ -175,12 +137,7 @@ export async function POST(request: NextRequest) {
         }
       },
       include: {
-        team: teamId ? {
-          select: {
-            id: true,
-            name: true
-          }
-        } : false,
+
         createdBy: {
           select: {
             id: true,

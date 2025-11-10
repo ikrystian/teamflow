@@ -35,7 +35,6 @@ interface UserWithRole {
   _count?: {
     assignedTasks: number
     createdTasks: number
-    teams: number
     comments: number
     timeEntries: number
   }
@@ -83,7 +82,6 @@ export async function GET(
           select: {
             assignedTasks: true,
             createdTasks: true,
-            teams: true,
             comments: true,
             timeEntries: true
           }

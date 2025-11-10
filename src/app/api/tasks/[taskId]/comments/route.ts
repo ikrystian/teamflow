@@ -27,13 +27,7 @@ export async function POST(
       where: {
         id: taskId,
         project: {
-          team: {
-            members: {
-              some: {
-                id: session.user.id
-              }
-            }
-          }
+
         }
       }
     })
@@ -85,13 +79,7 @@ export async function GET(
       where: {
         id: taskId,
         project: {
-          team: {
-            members: {
-              some: {
-                id: session.user.id
-              }
-            }
-          }
+
         }
       }
     })

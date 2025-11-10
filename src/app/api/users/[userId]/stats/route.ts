@@ -34,13 +34,7 @@ export async function GET(
     // Base filter to ensure user has access to the data
     const accessFilter = {
       project: {
-        team: {
-          members: {
-            some: {
-              id: session.user.id
-            }
-          }
-        }
+
       }
     }
 
@@ -133,23 +127,11 @@ export async function GET(
     const projects = await prisma.project.findMany({
       where: {
         id: { in: projectIds },
-        team: {
-          members: {
-            some: {
-              id: session.user.id
-            }
-          }
-        }
       },
       select: {
         id: true,
         name: true,
-        team: {
-          select: {
-            id: true,
-            name: true
-          }
-        }
+
       }
     })
 
@@ -189,17 +171,6 @@ export async function GET(
     const completedTasks = taskStats.find(stat => stat.statusId === doneStatus?.id)?._count.id || 0
     const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
 
-    // Get team count
-    const teamsCount = await prisma.team.count({
-      where: {
-        members: {
-          some: {
-            id: userId
-          }
-        }
-      }
-    })
-
     // Format response
     const stats = {
       summary: {
@@ -211,7 +182,6 @@ export async function GET(
         totalTimeEntries: timeStats._count.id,
         recentComments,
         recentTasksCreated,
-        teamsCount,
         projectsCount: projectStatsWithDetails.length
       },
       tasksByStatus: await Promise.all(taskStats.map(async (stat) => {

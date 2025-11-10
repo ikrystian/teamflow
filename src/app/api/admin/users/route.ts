@@ -47,7 +47,6 @@ export async function GET(request: NextRequest) {
             select: {
               assignedTasks: true,
               createdTasks: true,
-              teams: true
             }
           }
         },

@@ -243,18 +243,18 @@ export async function sendPasswordResetEmail(userEmail: string, userName: string
     const mailOptions = {
       from: `"${smtpSettings.fromName}" <${smtpSettings.fromEmail}>`,
       to: userEmail,
-      subject: 'Resetowanie hasła - TeamFlow 🔐',
+      subject: 'Resetowanie hasła - Nexus 🔐',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #3B82F6; margin: 0;">TeamFlow</h1>
+            <h1 style="color: #3B82F6; margin: 0;">Nexus</h1>
             <p style="color: #6B7280; margin: 5px 0;">Zarządzanie projektami zespołowymi</p>
           </div>
 
           <div style="background: #FEF3C7; border: 1px solid #F59E0B; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
             <h2 style="color: #92400E; margin-top: 0;">Resetowanie hasła 🔐</h2>
             <p style="color: #92400E; line-height: 1.6; margin: 0;">
-              Otrzymaliśmy prośbę o zresetowanie hasła do Twojego konta w TeamFlow.
+              Otrzymaliśmy prośbę o zresetowanie hasła do Twojego konta w Nexus.
             </p>
           </div>
 
@@ -287,7 +287,7 @@ export async function sendPasswordResetEmail(userEmail: string, userName: string
               ${resetUrl}
             </p>
             <p style="color: #9CA3AF; font-size: 14px; margin: 10px 0 0 0;">
-              © ${new Date().getFullYear()} TeamFlow. Wszystkie prawa zastrzeżone.
+              © ${new Date().getFullYear()} Nexus. Wszystkie prawa zastrzeżone.
             </p>
           </div>
         </div>

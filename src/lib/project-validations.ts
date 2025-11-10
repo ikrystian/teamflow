@@ -12,11 +12,6 @@ export const createProjectSchema = z.object({
     .string()
     .max(500, "Opis nie może być dłuższy niż 500 znaków")
     .optional(),
-  teamId: z
-    .string()
-    .min(1)
-    .optional()
-    .nullable(),
   color: z
     .string()
     .regex(/^#[0-9A-F]{6}$/i, "Nieprawidłowy format koloru")
@@ -32,7 +27,7 @@ export const createProjectSchema = z.object({
     .nullable()
 })
 
-// Edit project validation schema (without teamId since it can't be changed)
+// Edit project validation schema
 export const editProjectSchema = z.object({
   name: z
     .string()

@@ -27,13 +27,7 @@ export async function GET(
           {
             project: {
               archived: false,
-              team: {
-                members: {
-                  some: {
-                    id: session.user.id
-                  }
-                }
-              }
+
             }
           },
           // Tasks without projects created by the user
@@ -62,12 +56,7 @@ export async function GET(
             name: true,
             color: true,
             archived: true,
-            team: {
-              select: {
-                id: true,
-                name: true
-              }
-            }
+
           }
         },
         assignee: {
@@ -176,11 +165,7 @@ export async function PATCH(
         assignee: true,
         project: {
           include: {
-            team: {
-              include: {
-                members: true
-              }
-            }
+
           }
         }
       }
@@ -205,13 +190,7 @@ export async function PATCH(
           OR: [
             // Projects where user is a team member
             {
-              team: {
-                members: {
-                  some: {
-                    id: session.user.id
-                  }
-                }
-              }
+
             },
             // Projects where user is a direct project member
             {
@@ -297,11 +276,7 @@ export async function PATCH(
           }
         })
 
-        if (!team || team.members.length === 0) {
-          return NextResponse.json(
-            { error: "Assignee is not a member of the project team" },
-            { status: 400 }
-          )
+
         }
       } else if (existingTask.project && !existingTask.project.teamId) {
         // If there's a project but no teamId associated, it's an unexpected state.
@@ -325,20 +300,10 @@ export async function PATCH(
         const project = await prisma.project.findFirst({
           where: {
             id: projectId,
-            team: {
-              members: {
-                some: {
-                  id: session.user.id
-                }
-              }
-            }
+
           },
           include: {
-            team: {
-              include: {
-                members: true
-              }
-            }
+
           }
         })
 
@@ -424,12 +389,7 @@ export async function PATCH(
             id: true,
             name: true,
             color: true,
-            team: {
-              select: {
-                id: true,
-                name: true
-              }
-            }
+
           }
         },
         assignee: {
@@ -540,11 +500,7 @@ export async function DELETE(
         assignee: true,
         project: {
           include: {
-            team: {
-              include: {
-                members: true
-              }
-            }
+
           }
         }
       }
@@ -562,8 +518,7 @@ export async function DELETE(
     const canDelete =
       userIsAdmin || // Admin can delete any task
       existingTask.createdById === session.user.id || // Task creator
-      existingTask.assigneeId === session.user.id || // Assigned user
-      (existingTask.project && existingTask.project.team?.members.some(member => member.id === session.user.id)) // Team member (only for tasks with projects)
+      existingTask.assigneeId === session.user.id;
 
     if (!canDelete) {
       return NextResponse.json(

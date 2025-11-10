@@ -24,13 +24,7 @@ export async function POST(
     const project = await prisma.project.findFirst({
       where: {
         id: projectId,
-        team: {
-          members: {
-            some: {
-              id: session.user.id
-            }
-          }
-        }
+
       }
     })
 
@@ -90,12 +84,7 @@ export async function POST(
       where: { id: projectId },
       data: { imageUrl },
       include: {
-        team: {
-          select: {
-            id: true,
-            name: true
-          }
-        }
+
       }
     })
 
@@ -130,13 +119,7 @@ export async function DELETE(
     const project = await prisma.project.findFirst({
       where: {
         id: projectId,
-        team: {
-          members: {
-            some: {
-              id: session.user.id
-            }
-          }
-        }
+
       }
     })
 
@@ -161,12 +144,7 @@ export async function DELETE(
       where: { id: projectId },
       data: { imageUrl: null },
       include: {
-        team: {
-          select: {
-            id: true,
-            name: true
-          }
-        }
+
       }
     })
 

@@ -23,13 +23,7 @@ export async function POST(
       where: {
         id: taskId,
         project: {
-          team: {
-            members: {
-              some: {
-                email: session.user.email
-              }
-            }
-          }
+
         }
       }
     })
@@ -116,13 +110,7 @@ export async function DELETE(
       where: {
         id: taskId,
         project: {
-          team: {
-            members: {
-              some: {
-                email: session.user.email
-              }
-            }
-          }
+
         }
       }
     })

@@ -24,13 +24,7 @@ export async function GET(
         OR: [
           { createdById: session.user.id },
           { members: { some: { userId: session.user.id } } },
-          {
-            team: {
-              members: {
-                some: { id: session.user.id }
-              }
-            }
-          }
+
         ]
       },
       include: {

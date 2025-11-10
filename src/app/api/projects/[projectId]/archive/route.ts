@@ -30,13 +30,7 @@ export async function PATCH(
     const existingProject = await prisma.project.findFirst({
       where: {
         id: projectId,
-        team: {
-          members: {
-            some: {
-              id: session.user.id
-            }
-          }
-        }
+
       }
     })
 
@@ -56,12 +50,7 @@ export async function PATCH(
         archived
       },
       include: {
-        team: {
-          select: {
-            id: true,
-            name: true
-          }
-        }
+
       }
     })
 

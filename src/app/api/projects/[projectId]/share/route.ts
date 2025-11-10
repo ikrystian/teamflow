@@ -23,13 +23,7 @@ export async function POST(
     const existingProject = await prisma.project.findFirst({
       where: {
         id: projectId,
-        team: {
-          members: {
-            some: {
-              id: session.user.id
-            }
-          }
-        }
+
       }
     })
 
@@ -75,13 +69,7 @@ export async function DELETE(
     const existingProject = await prisma.project.findFirst({
       where: {
         id: projectId,
-        team: {
-          members: {
-            some: {
-              id: session.user.id
-            }
-          }
-        }
+
       }
     })
 
@@ -130,13 +118,7 @@ export async function GET(
     const project = await prisma.project.findFirst({
       where: {
         id: projectId,
-        team: {
-          members: {
-            some: {
-              id: session.user.id
-            }
-          }
-        }
+
       },
       select: {
         shareToken: true

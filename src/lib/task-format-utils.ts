@@ -98,17 +98,15 @@ export const selectValueToPriority = (value: string): string | undefined => {
 
 /**
  * Standard project display format
- * @param project - Project object with name and team
- * @returns Formatted string "Project Name • Team Name"
+ * @param project - Project object with name
+ * @returns Formatted string "Project Name"
  */
-export const formatProjectDisplay = (project?: { name: string; team?: { name: string } | null } | null): string => {
+export const formatProjectDisplay = (project?: { name: string;  } | null): string => {
   if (!project) {
     return "Brak projektu"
   }
-  if (!project.team) {
-    return project.name
-  }
-  return `${project.name} • ${project.team?.name}`
+
+  return `${project.name}`
 }
 
 /**
