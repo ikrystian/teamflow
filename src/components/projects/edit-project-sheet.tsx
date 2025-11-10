@@ -97,7 +97,7 @@ export function EditProjectSheet({
         // Odśwież globalny stan projektów
         refreshProjects()
         onProjectUpdated()
-        handleClose()
+        handleClose(false)
       } else {
         const data = await response.json()
         setError(data.error || "Nie udało się zaktualizować projektu")
@@ -109,9 +109,11 @@ export function EditProjectSheet({
     }
   }
 
-  const handleClose = () => {
-    setError("")
-    onOpenChange(false)
+  const handleClose = (open: boolean) => {
+    if (!open) {
+      setError("")
+    }
+    onOpenChange(open)
   }
 
   if (!project) return null
@@ -227,7 +229,7 @@ export function EditProjectSheet({
         </form>
 
         <SheetFooter className="pt-4 border-t">
-          <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
+          <Button type="button" variant="outline" onClick={() => handleClose(false)} disabled={loading}>
             Anuluj
           </Button>
           <Button

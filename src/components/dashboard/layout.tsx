@@ -30,7 +30,6 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { NavUser } from "@/components/dashboard/nav-user"
 import { NavProjects } from "@/components/dashboard/nav-projects"
-import { NavAdmin } from "@/components/dashboard/nav-admin"
 import { TeamSwitcher } from "@/components/dashboard/team-switcher"
 import { DashboardBreadcrumbs } from "@/components/dashboard/breadcrumbs"
 import { NotificationBell } from "@/components/notifications/notification-bell"
@@ -51,7 +50,6 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
   const { projects, refreshProjects } = useProjects()
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
-  const [rightSidebarVisible, setRightSidebarVisible] = useState(false)
 
   const navigation = [
     { name: "Panel", href: "/dashboard", icon: Home },
@@ -84,10 +82,6 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
     refreshProjects()
   }
 
-  const handleRecentChangesClick = () => {
-    setRightSidebarVisible(!rightSidebarVisible)
-  }
-
 
 
   return (
@@ -103,7 +97,6 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
           ]} />
         </SidebarHeader>
         <SidebarContent>
-          <NavAdmin onRecentChangesClick={handleRecentChangesClick} />
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>
@@ -145,7 +138,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
           </div>
         </header>
         <DashboardBreadcrumbs />
-        <main className={`flex-1 transition-all duration-300 ${rightSidebarVisible ? 'pr-[400px]' : ''}`}>
+        <main className={`flex-1 transition-all duration-300 `}>
           <div className="min-w-0 w-full h-[calc(100vh-101px)] ">
               {children}
           </div>
@@ -160,12 +153,6 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
         teams={[]}
       />
 
-      {/* Right Sidebar for Recent Changes */}
-      {rightSidebarVisible && (
-        <RightSidebar>
-          <RecentChanges limit={15} />
-        </RightSidebar>
-      )}
     </SidebarProvider>
   )
 }

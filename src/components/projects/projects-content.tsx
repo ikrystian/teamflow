@@ -262,7 +262,7 @@ export function ProjectsContent() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0 bg-white/80 hover:bg-white/90 backdrop-blur-sm"
+                        className="h-8 w-8 p-0 bg-white/80 hover:bg-white/90 backdrop-blur-sm open-project-menu"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <MoreVertical className="h-4 w-4" />
@@ -270,7 +270,7 @@ export function ProjectsContent() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => handleEditProject(project)}>
-                        <Edit className="mr-2 h-4 w-4" />
+                        <Edit className="mr-2 h-4 w-4 " />
                         Edytuj projekt
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleArchiveProject(project)}>

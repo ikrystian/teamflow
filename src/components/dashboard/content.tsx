@@ -389,27 +389,6 @@ export function DashboardContent() {
           </CardContent>
         </Card>
       </div>
-
-      <MyTasks />
-      <TasksTable
-        tasks={tasks}
-        users={users}
-        taskStatuses={taskStatuses}
-        onTaskUpdate={handleTaskUpdate}
-        onTaskDetails={handleTaskDetails}
-        onTaskDelete={handleTaskDelete}
-        isAdmin={isAdmin}
-        currentUserId={session?.user?.id}
-      />
-
-      {/* Task Details Sheet */}
-      <TaskDetailsSheet
-        open={detailsDialogOpen}
-        onOpenChange={setDetailsDialogOpen}
-        task={selectedTask}
-        onTaskUpdated={handleTaskUpdated}
-        canEdit={selectedTask ? (isAdmin || selectedTask.createdBy?.id === session?.user?.id || selectedTask.assignee?.id === session?.user?.id) : false}
-      />
     </div>
   )
 }

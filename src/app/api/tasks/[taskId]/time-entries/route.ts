@@ -21,16 +21,7 @@ export async function GET(
     // Verify user has access to the task
     const task = await prisma.task.findFirst({
       where: {
-        id: taskId,
-        project: {
-          team: {
-            members: {
-              some: {
-                id: session.user.id
-              }
-            }
-          }
-        }
+        id: taskId
       }
     })
 
@@ -102,16 +93,7 @@ export async function POST(
     // Verify user has access to the task
     const task = await prisma.task.findFirst({
       where: {
-        id: taskId,
-        project: {
-          team: {
-            members: {
-              some: {
-                id: session.user.id
-              }
-            }
-          }
-        }
+        id: taskId
       }
     })
 
@@ -184,33 +166,10 @@ export async function DELETE(
         id: entryId,
         taskId: taskId,
         ...(userIsAdmin ? {} : { userId: session.user.id }), // Admin can access any time entry
-        task: {
-          project: {
-            team: {
-              members: {
-                some: {
-                  id: session.user.id
-                }
-              }
-            }
-          }
-        }
+
       },
       include: {
         user: true,
-        task: {
-          include: {
-            project: {
-              include: {
-                team: {
-                  include: {
-                    members: true
-                  }
-                }
-              }
-            }
-          }
-        }
       }
     })
 
