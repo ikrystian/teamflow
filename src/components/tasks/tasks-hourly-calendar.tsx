@@ -37,7 +37,7 @@ export function TasksHourlyCalendar({
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [taskDetailsDialogOpen, setTaskDetailsDialogOpen] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
-  const [viewMode, setViewMode] = useState<"day" | "week" | "month">("week")
+  const [viewMode, setViewMode] = useState<"day" | "week">("week")
 
   const checkAdminStatus = useCallback(async () => {
     if (session?.user) {
@@ -66,7 +66,7 @@ export function TasksHourlyCalendar({
   }
 
   // Funkcja do pobierania dni na podstawie trybu widoku
-  const getViewDays = (startDate: Date, mode: "day" | "week" | "month") => {
+  const getViewDays = (startDate: Date, mode: "day" | "week") => {
     const days = []
 
     if (mode === "day") {
@@ -78,16 +78,6 @@ export function TasksHourlyCalendar({
         const day = new Date(startDate)
         day.setDate(startDate.getDate() + i)
         days.push(day)
-      }
-    } else if (mode === "month") {
-      // Wszystkie dni miesiąca
-      const year = startDate.getFullYear()
-      const month = startDate.getMonth()
-      const firstDay = new Date(year, month, 1)
-      const lastDay = new Date(year, month + 1, 0)
-
-      for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
-        days.push(new Date(d))
       }
     }
 
@@ -138,13 +128,6 @@ export function TasksHourlyCalendar({
           newDate.setDate(newDate.getDate() - 7)
         } else {
           newDate.setDate(newDate.getDate() + 7)
-        }
-      } else if (viewMode === "month") {
-        // Dla miesiąca, przesuwaj o 1 miesiąc
-        if (direction === 'prev') {
-          newDate.setMonth(newDate.getMonth() - 1)
-        } else {
-          newDate.setMonth(newDate.getMonth() + 1)
         }
       }
       return newDate
@@ -203,7 +186,7 @@ export function TasksHourlyCalendar({
   }
 
   // Oblicz dni do wyświetlenia w zależności od trybu
-  const weekStart = viewMode === "month" ? currentWeek : getWeekStart(currentWeek)
+  const weekStart =  getWeekStart(currentWeek)
   const viewDays = getViewDays(weekStart, viewMode)
 
   // Oblicz koniec zakresu dla nagłówka
@@ -246,15 +229,12 @@ export function TasksHourlyCalendar({
               Kalendarz
             </CardTitle>
             <div className="flex items-center space-x-2">
-              <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as "day" | "week" | "month")}>
+              <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as "day" | "week")}>
                 <ToggleGroupItem value="day" aria-label="Widok dnia" size="sm">
                   <CalendarDays className="h-4 w-4" />
                 </ToggleGroupItem>
                 <ToggleGroupItem value="week" aria-label="Widok tygodnia" size="sm">
                   <CalendarRange className="h-4 w-4" />
-                </ToggleGroupItem>
-                <ToggleGroupItem value="month" aria-label="Widok miesiąca" size="sm">
-                  <CalendarIcon className="h-4 w-4" />
                 </ToggleGroupItem>
               </ToggleGroup>
               <Button variant="outline" size="sm" onClick={goToToday}>
