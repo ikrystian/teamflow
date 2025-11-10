@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight, CalendarDays, CalendarRange, Calendar as CalendarIcon } from "lucide-react"
+import { ChevronLeft, ChevronRight, CalendarDays, CalendarRange } from "lucide-react"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { TaskDetailsSheet } from "./task-details-sheet"
 import { TaskPopover } from "./task-popover"
@@ -24,6 +24,7 @@ interface TasksHourlyCalendarProps {
   session?: Session | null
   hideProjectSelect?: boolean
   onCreateTask?: (date: Date, hour: number) => void
+  isAdmin?: boolean
 }
 
 export function TasksHourlyCalendar({
@@ -32,30 +33,12 @@ export function TasksHourlyCalendar({
   onTaskUpdate,
   session = null,
   onCreateTask,
+  isAdmin = false,
 }: TasksHourlyCalendarProps) {
   const [currentWeek, setCurrentWeek] = useState(new Date())
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [taskDetailsDialogOpen, setTaskDetailsDialogOpen] = useState(false)
-  const [isAdmin, setIsAdmin] = useState(false)
   const [viewMode, setViewMode] = useState<"day" | "week">("week")
-
-  const checkAdminStatus = useCallback(async () => {
-    if (session?.user) {
-      try {
-        const response = await fetch('/api/user/admin-status')
-        if (response.ok) {
-          const data = await response.json()
-          setIsAdmin(data.isAdmin)
-        }
-      } catch (error) {
-        console.error('Error checking admin status:', error)
-      }
-    }
-  }, [session])
-
-  useEffect(() => {
-    checkAdminStatus()
-  }, [checkAdminStatus])
 
   // Funkcja do pobierania początku tygodnia (poniedziałek)
   const getWeekStart = (date: Date) => {

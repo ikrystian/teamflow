@@ -24,7 +24,6 @@ import {
   Key,
   Users,
   Mail,
-  Database
 } from "lucide-react"
 import { useSession } from "next-auth/react"
 import type { Session } from "next-auth"
@@ -34,7 +33,6 @@ import { PasswordChangeForm } from "./password-change-form"
 import { ActiveSessions } from "./active-sessions"
 import { UserManagement } from "./user-management"
 import { SMTPSettings } from "./smtp-settings"
-import { DatabaseManagement } from "./database-management"
 import { usePushNotifications } from "@/hooks/usePushNotifications"
 
 interface UserProfile {
@@ -323,10 +321,6 @@ export function SettingsContent() {
                 <TabsTrigger value="smtp" className="flex items-center gap-2">
                   <Mail className="h-4 w-4" />
                   SMTP
-                </TabsTrigger>
-                <TabsTrigger value="database" className="flex items-center gap-2">
-                  <Database className="h-4 w-4" />
-                  Baza danych
                 </TabsTrigger>
                 <TabsTrigger value="users" className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
@@ -720,10 +714,6 @@ export function SettingsContent() {
             <>
               <TabsContent value="smtp" className="space-y-6">
                 <SMTPSettings />
-              </TabsContent>
-
-              <TabsContent value="database" className="space-y-6">
-                <DatabaseManagement />
               </TabsContent>
 
               <TabsContent value="users" className="space-y-6">

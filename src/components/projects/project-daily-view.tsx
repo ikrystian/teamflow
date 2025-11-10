@@ -3,14 +3,12 @@
 import { useState, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DatePicker } from "@/components/ui/date-picker"
 import {
   Calendar,
   Clock,
   ChevronLeft,
   ChevronRight,
-  User,
   Plus
 } from "lucide-react"
 import { type Task } from "@/types"

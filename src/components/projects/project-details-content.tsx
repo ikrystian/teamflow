@@ -23,7 +23,6 @@ import {
   LayoutGrid,
   Settings,
   Info,
-  BarChart3
 } from "lucide-react"
 import Link from "next/link"
 import { TaskFormContent } from "../shared/task-form-content"

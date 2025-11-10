@@ -5,12 +5,10 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { usePageHeader } from "@/contexts/header-context"
 import {
   ArrowLeft,
-  Users,
   CheckCircle,
   AlertCircle,
   Info,

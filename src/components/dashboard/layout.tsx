@@ -6,12 +6,8 @@ import { useState } from "react"
 
 import {
   Home,
-  Users,
   CheckSquare,
-  Calendar,
-  BarChart3,
   FolderOpen,
-  MessageCircle,
 } from "lucide-react"
 import {
   Sidebar,

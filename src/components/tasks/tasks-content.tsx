@@ -33,7 +33,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import type { Task, User, TaskUpdateData } from "@/types"
+import type { Task, TaskUpdateData } from "@/types"
 import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
 import { getPriorityColor, getPriorityDisplayName } from "@/lib/task-format-utils"
 import { formatEstimatedHours, formatAssignee } from "@/lib/task-format-utils"
@@ -148,7 +148,7 @@ export function TasksContent() {
     }
   }, [filter, session?.user?.id])
 
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async () => {
     try {
       const response = await fetch("/api/projects?includeArchived=false")
       if (response.ok) {
@@ -158,20 +158,19 @@ export function TasksContent() {
     } catch (error) {
       console.error("Error fetching projects:", error)
     }
-  }
+  }, [])
 
-  const fetchTaskStatuses = async () => {
+  const fetchTaskStatuses = useCallback(async () => {
     try {
       const response = await fetch('/api/system/task-statuses')
       if (response.ok) {
-
         const data = await response.json()
         setTaskStatuses(data.taskStatuses)
       }
     } catch (error) {
       console.error("Error fetching task statuses:", error)
     }
-  }
+  }, [])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -179,7 +178,7 @@ export function TasksContent() {
       setLoading(false)
     }
     fetchData()
-  }, [filter, session?.user?.id, fetchTasks])
+  }, [filter, session?.user?.id, fetchTasks, fetchProjects, fetchTaskStatuses])
 
   const handleTaskCreated = () => {
     fetchTasks()
@@ -495,6 +494,7 @@ export function TasksContent() {
               projects={projects}
               session={session}
               hideProjectSelect={filter === "assigned"}
+              taskStatuses={taskStatuses}
             />
           )}
         </TabsContent>
@@ -508,6 +508,7 @@ export function TasksContent() {
             session={session}
             hideProjectSelect={filter === "assigned"}
             onCreateTask={handleCreateTaskFromCalendar}
+            isAdmin={isAdmin}
           />
         </TabsContent>
 

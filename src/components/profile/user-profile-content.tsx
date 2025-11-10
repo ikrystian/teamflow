@@ -17,7 +17,6 @@ import {
   CheckSquare,
   Clock,
   MessageSquare,
-  Users,
   TrendingUp,
   ArrowLeft,
   Settings

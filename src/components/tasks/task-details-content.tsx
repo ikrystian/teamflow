@@ -39,7 +39,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import type { Task, Todo, User } from "@/types"
+import type { Task, Todo } from "@/types"
 import { formatTaskDueDateWithRelative, formatCreatedDate, dateToLocalDateString } from "@/lib/date-utils"
 import { getPriorityColor, getPriorityDisplayName, formatProjectDisplay } from "@/lib/task-format-utils"
 

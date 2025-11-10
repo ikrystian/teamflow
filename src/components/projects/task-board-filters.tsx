@@ -41,18 +41,6 @@ export function TaskBoardFilters({
   const getFilterIcon = () => {
     if (selectedFilter === "all") return <Users className="h-4 w-4" />
     if (selectedFilter === "mine") return <User className="h-4 w-4" />
-
-    let user: any;
-    if (user) {
-      return (
-        <Avatar className="h-4 w-4">
-          <AvatarImage src={user.avatarUrl ?? undefined} />
-          <AvatarFallback className="text-xs">
-            {user.name?.charAt(0) || "U"}
-          </AvatarFallback>
-        </Avatar>
-      )
-    }
     return <User className="h-4 w-4" />
   }
 

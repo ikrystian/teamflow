@@ -10,7 +10,7 @@ import { RichTextEditor } from "@/components/ui/rich-text-editor"
 
 import { DateTimePicker } from "@/components/ui/datetime-picker"
 import { dateToLocalDateString } from "@/lib/date-utils"
-import type { Task, User, TaskStatus, Project } from "@/types" // Updated import
+import type { Task, TaskStatus, Project } from "@/types" // Updated import
 import { ReminderSettings } from "@/components/tasks/reminder-settings"
 import { FileUpload } from "@/components/ui/file-upload"
 import {

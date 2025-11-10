@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { TaskFormContent } from "./task-form-content"
-import type { Task, User } from "@/types"
+import type { Task } from "@/types"
 
 interface Project {
   id: string

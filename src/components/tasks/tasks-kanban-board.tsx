@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ClickableAvatar } from "@/components/ui/clickable-avatar"
@@ -57,6 +57,7 @@ interface TasksKanbanBoardProps {
   }>
   session: Session | null
   hideProjectSelect?: boolean
+  taskStatuses: TaskStatus[]
 }
 
 interface StatusColumn extends TaskStatus {
@@ -508,9 +509,9 @@ export function TasksKanbanBoard({
   canEditTask,
   projects,
   session,
-  hideProjectSelect = false
+  hideProjectSelect = false,
+  taskStatuses
 }: TasksKanbanBoardProps) {
-  const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
   const [activeTask, setActiveTask] = useState<Task | null>(null)
   const [optimisticTasks, setOptimisticTasks] = useState<Task[]>(tasks)
   const [updatingTasks, setUpdatingTasks] = useState<Set<string>>(new Set())
@@ -519,22 +520,6 @@ export function TasksKanbanBoard({
 
   // Always use optimistic tasks for display
   const displayTasks = optimisticTasks
-
-  const fetchTaskStatuses = useCallback(async () => {
-    try {
-      const response = await fetch('/api/system/task-statuses')
-      if (response.ok) {
-        const data = await response.json()
-        setTaskStatuses(data.taskStatuses)
-      }
-    } catch (error) {
-      console.error("Error fetching task statuses:", error)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchTaskStatuses()
-  }, [fetchTaskStatuses])
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
