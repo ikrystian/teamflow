@@ -16,19 +16,10 @@ interface TasksWeeklyCalendarProps {
   tasks: Task[]
   onTaskUpdated: () => void
   onTaskUpdate?: (taskId: string, updates: TaskUpdateData) => void
-  teamMembers?: Array<{
-    id: string
-    name: string
-    email: string
-    avatarUrl?: string
-  }>
   projects?: Array<{
     id: string
     name: string
-    team: {
-      id: string
-      name: string
-    }
+
   }>
   session?: Session | null
   hideProjectSelect?: boolean
@@ -38,7 +29,6 @@ export function TasksWeeklyCalendar({
   tasks,
   onTaskUpdated,
   onTaskUpdate,
-  teamMembers = [],
   projects = [],
   session = null,
   hideProjectSelect = false
@@ -237,7 +227,6 @@ export function TasksWeeklyCalendar({
                         onTaskClick={handleTaskClick}
                         onTaskUpdate={onTaskUpdate}
                         onTimeLogged={onTaskUpdated}
-                        users={teamMembers}
                         canEdit={canEditTask(task)}
                         side="right"
                         align="start"

@@ -37,11 +37,6 @@ interface UserProfile {
   company: string | null
   website: string | null
   createdAt: string
-  teams: Array<{
-    id: string
-    name: string
-    createdAt: string
-  }>
   assignedTasks: Array<{
     id: string
     title: string
@@ -52,10 +47,6 @@ interface UserProfile {
     project: {
       id: string
       name: string
-      team: {
-        id: string
-        name: string
-      }
     }
   }>
   createdTasks: Array<{
@@ -97,7 +88,6 @@ interface UserProfile {
     totalHours: number
     totalComments: number
     completionRate: number
-    teamsCount: number
   }
 }
 
@@ -228,13 +218,6 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
       color: "text-blue-600"
     },
     {
-      name: "Zespoły",
-      value: userProfile.stats.teamsCount.toString(),
-      description: "Członkostwo w zespołach",
-      icon: Users,
-      color: "text-green-600"
-    },
-    {
       name: "Czas pracy",
       value: `${userProfile.stats.totalHours}h`,
       description: "Łączny czas",
@@ -355,7 +338,6 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
             <Tabs defaultValue="tasks" className="space-y-4">
               <TabsList>
                 <TabsTrigger value="tasks">Zadania</TabsTrigger>
-                <TabsTrigger value="teams">Zespoły</TabsTrigger>
                 <TabsTrigger value="activity">Aktywność</TabsTrigger>
                 <TabsTrigger value="time">Czas pracy</TabsTrigger>
                 {isOwnProfile && <TabsTrigger value="settings">Ustawienia</TabsTrigger>}
@@ -395,38 +377,6 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
                             <div className="text-xs text-muted-foreground">
                               {task.dueDate ? formatDate(task.dueDate) : formatDate(task.createdAt)}
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="teams" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Zespoły</CardTitle>
-                    <CardDescription>
-                      Zespoły, do których należy użytkownik
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {userProfile.teams.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-4">
-                        Brak zespołów
-                      </p>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {userProfile.teams.map((team) => (
-                          <div key={team.id} className="p-4 border rounded-lg">
-                            <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4 text-muted-foreground" />
-                              <h4 className="font-medium">{team.name}</h4>
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Dołączył {formatDate(team.createdAt)}
-                            </p>
                           </div>
                         ))}
                       </div>

@@ -9,23 +9,17 @@ import {
 import { VisuallyHidden } from "@/components/ui/visually-hidden"
 import { CreateProjectContent } from "./create-project-content"
 
-interface Team {
-  id: string
-  name: string
-}
 
 interface CreateProjectSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onProjectCreated: () => void
-  teams: Team[]
 }
 
 export function CreateProjectSheet({
   open,
   onOpenChange,
   onProjectCreated,
-  teams
 }: CreateProjectSheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -37,7 +31,6 @@ export function CreateProjectSheet({
           <div className="px-4 flex-1 overflow-y-auto">
             <CreateProjectContent
               onProjectCreated={onProjectCreated}
-              teams={teams}
               onClose={() => onOpenChange(false)}
               showIconSelector={true}
             />

@@ -69,7 +69,6 @@ interface UserData {
   _count: {
     assignedTasks: number
     createdTasks: number
-    teams: number
     comments?: number
     timeEntries?: number
   }
@@ -341,10 +340,6 @@ export function UserManagement() {
                   <span className="flex items-center gap-1">
                     <Activity className="h-3 w-3" />
                     {user._count.assignedTasks} zadań
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Users className="h-3 w-3" />
-                    {user._count.teams} zespołów
                   </span>
                   <span className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />

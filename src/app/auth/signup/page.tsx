@@ -25,7 +25,7 @@ export default function SignUp() {
       <div className="relative hidden bg-muted lg:block">
         <Image
           src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=1920&q=80"
-          alt="Team workspace"
+          alt="workspace"
           fill
           className="object-cover"
         />

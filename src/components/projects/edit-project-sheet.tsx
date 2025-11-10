@@ -17,14 +17,13 @@ import {
 import { ProjectImageSelector } from "./project-image-selector"
 import { ProjectIconSelector } from "./project-icon-selector"
 import { editProjectSchema, type EditProjectFormData } from "@/lib/project-validations"
-import { type Project, type Team } from "@/types" // Import from types
+import { type Project } from "@/types" // Import from types
 
 interface EditProjectSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onProjectUpdated: () => void
   project: Project | null
-  teams: Team[]
 }
 
 export function EditProjectSheet({
@@ -159,16 +158,6 @@ export function EditProjectSheet({
             {fieldErrors.description && (
               <p className="text-sm text-destructive">{fieldErrors.description}</p>
             )}
-          </div>
-
-          <div className="grid gap-2">
-            <Label>Zespół</Label>
-            <div className="px-3 py-2 border rounded-md bg-muted text-muted-foreground">
-              {project?.team?.name}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Zespół nie może być zmieniony po utworzeniu projektu
-            </p>
           </div>
 
           <div className="grid gap-2">

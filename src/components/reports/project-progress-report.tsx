@@ -29,7 +29,6 @@ interface ProjectProgressReportProps {
     endDate: string
     projectId: string
     userId: string
-    teamId: string
   }
   onDataLoaded?: (data: ProjectProgressData) => void
 }
@@ -49,10 +48,6 @@ export interface ProjectProgressData {
       name: string
       description?: string
       status: string
-      team: {
-        id: string
-        name: string
-      }
     }
     taskStats: {
       total: number
@@ -286,9 +281,6 @@ export function ProjectProgressReport({ filters }: ProjectProgressReportProps) {
                       {projectReport.project.status}
                     </Badge>
                   </CardTitle>
-                  <CardDescription>
-                    Zespół: {projectReport.project.team?.name}
-                  </CardDescription>
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-bold text-green-600">

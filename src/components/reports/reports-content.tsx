@@ -20,26 +20,14 @@ import {
   Activity
 } from "lucide-react"
 import { TimeTrackingReport, type TimeTrackingData } from "./time-tracking-report"
-import { ProjectProgressReport, type ProjectProgressData } from "./project-progress-report"
-import { DashboardOverviewReport, type DashboardOverviewData } from "./dashboard-overview-report"
-import { TeamPerformanceReport, type TeamPerformanceData } from "./team-performance-report"
-import { WorkloadAnalyticsReport, type WorkloadAnalyticsData } from "./workload-analytics-report"
 import { exportTimeTrackingToPDF, exportProjectProgressToPDF } from "@/lib/pdf-export"
 import { usePageHeader } from "@/contexts/header-context"
 
-interface Team {
-  id: string
-  name: string
-}
 
 interface Project {
   id: string
   name: string
   color?: string
-  team: {
-    id: string
-    name: string
-  }
 }
 
 interface User {
@@ -50,12 +38,11 @@ interface User {
 
 export function ReportsContent() {
   useSession() as { data: Session | null }
-  const [activeReport, setActiveReport] = useState<"dashboard-overview" | "time-tracking" | "project-progress" | "team-performance" | "workload-analytics">("dashboard-overview")
+  const [activeReport, setActiveReport] = useState<"dashboard-overview" | "time-tracking" | "project-progress" |  "workload-analytics">("dashboard-overview")
   const [loading, setLoading] = useState(false)
-  const [teams, setTeams] = useState<Team[]>([])
   const [projects, setProjects] = useState<Project[]>([])
   const [users, setUsers] = useState<User[]>([])
-  const [reportData, setReportData] = useState<TimeTrackingData | ProjectProgressData | DashboardOverviewData | TeamPerformanceData | WorkloadAnalyticsData | null>(null)
+  const [reportData, setReportData] = useState<TimeTrackingData | ProjectProgressData | DashboardOverviewData | WorkloadAnalyticsData | null>(null)
 
   // Filters
   const [filters, setFilters] = useState({
@@ -63,7 +50,6 @@ export function ReportsContent() {
     endDate: "",
     projectId: "",
     userId: "",
-    teamId: ""
   })
 
   // Date filter states for DatePicker
@@ -100,14 +86,6 @@ export function ReportsContent() {
         >
           <TrendingUp className="mr-2 h-4 w-4" />
           Postęp projektów
-        </Button>
-        <Button
-          variant={activeReport === "team-performance" ? "default" : "outline"}
-          onClick={() => setActiveReport("team-performance")}
-          size="sm"
-        >
-          <Users className="mr-2 h-4 w-4" />
-          Wydajność zespołu
         </Button>
         <Button
           variant={activeReport === "workload-analytics" ? "default" : "outline"}
@@ -172,24 +150,9 @@ export function ReportsContent() {
 
   const fetchFilterData = async () => {
     try {
-      const [teamsRes, projectsRes] = await Promise.all([
-        fetch("/api/teams"),
+      const [projectsRes] = await Promise.all([
         fetch("/api/projects?includeArchived=false")
       ])
-
-      if (teamsRes.ok) {
-        const teamsData = await teamsRes.json()
-        setTeams(teamsData.teams || [])
-
-        // Extract all users from teams
-        const allUsers = new Map()
-        teamsData.teams?.forEach((team: Team & { members: User[] }) => {
-          team.members?.forEach((user: User) => {
-            allUsers.set(user.id, user)
-          })
-        })
-        setUsers(Array.from(allUsers.values()))
-      }
 
       if (projectsRes.ok) {
         const projectsData = await projectsRes.json()
@@ -215,7 +178,6 @@ export function ReportsContent() {
       endDate: "",
       projectId: "",
       userId: "",
-      teamId: ""
     })
   }
 
@@ -315,13 +277,6 @@ export function ReportsContent() {
       color: "text-green-600"
     },
     {
-      id: "team-performance",
-      name: "Wydajność zespołu",
-      description: "Zaawansowana analiza wydajności członków zespołu i współpracy",
-      icon: Users,
-      color: "text-orange-600"
-    },
-    {
       id: "workload-analytics",
       name: "Analiza obciążenia",
       description: "Monitoring obciążenia zespołu, wykrywanie ryzyka wypalenia i optymalizacja",
@@ -346,7 +301,7 @@ export function ReportsContent() {
                 ? "ring-2 ring-blue-500 bg-blue-50"
                 : "hover:shadow-md"
             }`}
-            onClick={() => setActiveReport(report.id as "dashboard-overview" | "time-tracking" | "project-progress" | "team-performance" | "workload-analytics")}
+            onClick={() => setActiveReport(report.id as "dashboard-overview" | "time-tracking" | "project-progress" | "workload-analytics")}
           >
             <CardContent className="p-6">
               <div className="flex items-center">
@@ -395,22 +350,6 @@ export function ReportsContent() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Zespół</Label>
-              <Select value={filters.teamId || "all"} onValueChange={(value) => handleFilterChange("teamId", value === "all" ? "" : value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Wszystkie zespoły" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Wszystkie zespoły</SelectItem>
-                  {teams.map((team) => (
-                    <SelectItem key={team.id} value={team.id}>
-                      {team.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
               <Label>Projekt</Label>
               <Select value={filters.projectId || "all"} onValueChange={(value) => handleFilterChange("projectId", value === "all" ? "" : value)}>
                 <SelectTrigger>
@@ -451,22 +390,11 @@ export function ReportsContent() {
         </CardContent>
       </Card>
 
-      {/* Report Content */}
-      {activeReport === "dashboard-overview" && (
-        <DashboardOverviewReport filters={filters} onDataLoaded={setReportData} />
-      )}
+
       {activeReport === "time-tracking" && (
         <TimeTrackingReport filters={filters} onDataLoaded={setReportData} />
       )}
-      {activeReport === "project-progress" && (
-        <ProjectProgressReport filters={filters} onDataLoaded={setReportData} />
-      )}
-      {activeReport === "team-performance" && (
-        <TeamPerformanceReport filters={filters} onDataLoaded={setReportData} />
-      )}
-      {activeReport === "workload-analytics" && (
-        <WorkloadAnalyticsReport filters={filters} onDataLoaded={setReportData} />
-      )}
+
     </div>
   )
 }

@@ -27,7 +27,6 @@ interface TimeTrackingReportProps {
     endDate: string
     projectId: string
     userId: string
-    teamId: string
   }
   onDataLoaded?: (data: TimeTrackingData) => void
 }
@@ -59,10 +58,6 @@ export interface TimeTrackingData {
     project: {
       id: string
       name: string
-      team: {
-        id: string
-        name: string
-      }
     }
     totalHours: number
     entriesCount: number
@@ -94,10 +89,6 @@ export interface TimeTrackingData {
       project: {
         id: string
         name: string
-        team: {
-          id: string
-          name: string
-        }
       }
     }
   }>

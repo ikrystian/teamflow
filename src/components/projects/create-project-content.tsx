@@ -17,28 +17,20 @@ import { ProjectImageSelector } from "./project-image-selector"
 import { ProjectIconSelector } from "./project-icon-selector"
 import { createProjectSchema, type CreateProjectFormData } from "@/lib/project-validations"
 
-interface Team {
-  id: string
-  name: string
-}
-
 interface CreateProjectContentProps {
   onProjectCreated: () => void
-  teams: Team[]
   onClose?: () => void
   showIconSelector?: boolean
 }
 
 export function CreateProjectContent({
   onProjectCreated,
-  teams,
   onClose,
   showIconSelector = true
 }: CreateProjectContentProps) {
   const { refreshProjects } = useProjects()
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
-  const [teamId, setTeamId] = useState("no-team")
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [color, setColor] = useState("#3B82F6")
   const [icon, setIcon] = useState<string | null>(null)
@@ -56,12 +48,11 @@ export function CreateProjectContent({
     const validation = createProjectSchema.safeParse({
       name,
       description: description || undefined,
-      teamId: teamId === "no-team" ? null : teamId || null,
       imageUrl,
       color,
       icon: showIconSelector ? icon : null
     })
-    
+
     if (!validation.success) {
       const errors: Partial<CreateProjectFormData> = {}
       validation.error.issues.forEach((issue) => {
@@ -103,7 +94,6 @@ export function CreateProjectContent({
   const resetForm = () => {
     setName("")
     setDescription("")
-    setTeamId("no-team")
     setImageUrl(null)
     setColor("#3B82F6")
     setIcon(null)
@@ -173,29 +163,6 @@ export function CreateProjectContent({
           {fieldErrors.description && (
             <p className="text-sm text-destructive">{fieldErrors.description}</p>
           )}
-        </div>
-
-        <div className="grid gap-2">
-          <Label htmlFor="team">Zespół (opcjonalnie)</Label>
-          <Select value={teamId} onValueChange={setTeamId} disabled={loading}>
-            <SelectTrigger className={fieldErrors.teamId ? "border-destructive" : ""}>
-              <SelectValue placeholder="Wybierz zespół lub pozostaw puste" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="no-team">Brak zespołu</SelectItem>
-              {teams.map((team) => (
-                <SelectItem key={team.id} value={team.id}>
-                  {team.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {fieldErrors.teamId && (
-            <p className="text-sm text-destructive">{fieldErrors.teamId}</p>
-          )}
-          <p className="text-sm text-muted-foreground">
-            Jeśli nie wybierzesz zespołu, zostaniesz automatycznie dodany jako właściciel projektu.
-          </p>
         </div>
 
         <div className="grid gap-2">

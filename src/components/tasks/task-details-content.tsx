@@ -78,7 +78,6 @@ export function TaskDetailsContent({
   const [images, setImages] = useState(initialTask.images || [])
   const [todos, setTodos] = useState(initialTask?.todos || [])
   const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
-  const [teamMembers, setTeamMembers] = useState<User[]>([])
 
   // Inline editing state
   const [editingField, setEditingField] = useState<string | null>(null)
@@ -93,10 +92,6 @@ export function TaskDetailsContent({
   const [projects, setProjects] = useState<Array<{
     id: string
     name: string
-    team: {
-      id: string
-      name: string
-    }
   }>>([])
 
   // Fetch fresh task data when task changes
@@ -128,20 +123,6 @@ export function TaskDetailsContent({
       }
     }
 
-    const fetchTeamMembers = async () => {
-      if (task?.project?.team?.id) {
-        try {
-          const response = await fetch(`/api/teams/${task.project.team.id}/members`)
-          if (response.ok) {
-            const data = await response.json()
-            setTeamMembers(data.members || [])
-          }
-        } catch (error) {
-          console.error("Error fetching team members:", error)
-        }
-      }
-    }
-
     const fetchProjects = async () => {
       try {
         const response = await fetch('/api/projects')
@@ -157,13 +138,12 @@ export function TaskDetailsContent({
     if (task?.id) {
       fetchTaskData()
       fetchTaskStatuses()
-      fetchTeamMembers()
       fetchProjects()
     } else {
       setComments(task?.comments || [])
       setTodos(task?.todos || [])
     }
-  }, [task?.id, task?.comments, task?.todos, task?.project?.team?.id])
+  }, [task?.id, task?.comments, task?.todos])
 
   // Update local state when task changes
   useEffect(() => {
@@ -385,11 +365,6 @@ export function TaskDetailsContent({
               <Badge variant="outline" className="text-xs font-medium">
                 {task.project.name}
               </Badge>
-              {task.project.team && (
-                <Badge variant="outline" className="text-xs font-medium">
-                  {task.project.team?.name}
-                </Badge>
-              )}
             </>
           ) : (
             <Badge variant="outline" className="text-xs font-medium text-muted-foreground">
@@ -617,11 +592,7 @@ export function TaskDetailsContent({
                           className="h-10 w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                         >
                           <option value="unassigned">Nieprzypisany</option>
-                          {teamMembers.map((member) => (
-                            <option key={member.id} value={member.id}>
-                              {member.name || member.email}
-                            </option>
-                          ))}
+
                         </select>
                         <div className="flex items-center gap-2">
                           <Button

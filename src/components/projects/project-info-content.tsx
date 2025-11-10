@@ -44,16 +44,6 @@ interface ProjectDetails {
   productionUrl?: string
   credentials?: string
 
-  team: {
-    id: string
-    name: string
-    members?: {
-      id: string
-      name: string
-      email: string
-      avatarUrl?: string
-    }[]
-  }
   tasks?: {
     id: string
     title: string
@@ -347,19 +337,6 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
                 {project.status}
               </Badge>
             </div>
-
-            {/* Team */}
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                <h4 className="text-sm font-medium text-muted-foreground">Zespół</h4>
-              </div>
-              <p className="text-lg font-semibold text-foreground">{project.team?.name}</p>
-              <p className="text-xs text-muted-foreground">
-                {project.team?.members?.length || 0} {(project.team?.members?.length || 0) === 1 ? 'członek' : 'członków'}
-              </p>
-            </div>
-
             {/* Created Date */}
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
@@ -434,18 +411,6 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
 
       {/* Project Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Zespół</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{project.team?.name}</div>
-            <p className="text-xs text-muted-foreground">
-              {project.team?.members?.length || 0} {(project.team?.members?.length || 0) === 1 ? 'członek' : 'członków'}
-            </p>
-          </CardContent>
-        </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -474,33 +439,6 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
         </Card>
       </div>
 
-      {/* Team Members */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Członkowie zespołu</CardTitle>
-          <CardDescription>Osoby pracujące nad tym projektem</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-4">
-            {project.team?.members?.map((member) => (
-              <div key={member.id} className="flex items-center space-x-3">
-                <ClickableAvatar
-                  userId={member.id}
-                  avatarUrl={member.avatarUrl}
-                  name={member.name}
-                  size="lg"
-                />
-                <div>
-                  <p className="text-sm font-medium">{member.name}</p>
-                  <p className="text-xs text-gray-500">{member.email}</p>
-                </div>
-              </div>
-            )) || (
-              <p className="text-sm text-muted-foreground">Brak członków zespołu</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Task Summary */}
       <Card>

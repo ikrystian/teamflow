@@ -38,16 +38,10 @@ import Link from "next/link"
 import Image from "next/image"
 import { type Project } from "@/types"
 
-interface Team {
-  id: string
-  name: string
-}
-
 type ProjectFilter = "active" | "archived" | "all"
 
 export function ProjectsContent() {
   const { refreshProjects } = useProjects()
-  const [teams, setTeams] = useState<Team[]>([])
   const [loading, setLoading] = useState(true)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
@@ -62,25 +56,14 @@ export function ProjectsContent() {
 
 
 
-  const fetchTeams = useCallback(async () => {
-    try {
-      const response = await fetch("/api/teams")
-      if (response.ok) {
-        const data = await response.json()
-        setTeams(data.teams)
-      }
-    } catch (error) {
-      console.error("Error fetching teams:", error)
-    }
-  }, [])
+
 
   useEffect(() => {
     const fetchData = async () => {
-      await fetchTeams()
       setLoading(false)
     }
     fetchData()
-  }, [fetchTeams])
+  }, [])
 
   const handleProjectCreated = () => {
     refreshProjects()
@@ -179,7 +162,7 @@ export function ProjectsContent() {
         </Button>
       </div>
     </div>,
-    [projectFilter, teams.length] // Only re-render when filter or teams count changes
+    [projectFilter]
   )
 
   const getFilteredProjects = () => {
@@ -345,7 +328,7 @@ export function ProjectsContent() {
                     <div className="space-y-4">
                       <div className="flex items-center text-sm text-gray-600">
                         <Users className="h-4 w-4 mr-2" />
-                        {project.team ? project.team?.name : (project.createdBy ? `Projekt osobisty (${project.createdBy.name || project.createdBy.email})` : 'Projekt osobisty')}
+                        Projekt osobisty
                       </div>
 
                       <div className="space-y-2">
@@ -388,7 +371,6 @@ export function ProjectsContent() {
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onProjectCreated={handleProjectCreated}
-        teams={teams}
       />
 
       <EditProjectSheet
@@ -396,7 +378,6 @@ export function ProjectsContent() {
         onOpenChange={setEditDialogOpen}
         onProjectUpdated={handleProjectUpdated}
         project={selectedProject}
-        teams={teams}
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

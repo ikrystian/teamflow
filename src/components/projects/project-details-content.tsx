@@ -53,7 +53,7 @@ interface ProjectDetailsContentProps {
 export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps) {
   const { data: session } = useSession() as { data: Session | null }
 
-  // Helper function to get all project members (team + direct members)
+  // Helper function to get all project members ( direct members)
   const getProjectMembers = (project: Project | null) => {
     if (!project) return []
 
@@ -63,31 +63,6 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
       email: string
       avatarUrl?: string | null
     }> = []
-
-    // Add team members
-    if (project.team?.members) {
-      members.push(...project.team?.members.map(member => ({
-        id: member.id,
-        name: member.name || member.email,
-        email: member.email,
-        avatarUrl: member.avatarUrl
-      })))
-    }
-
-    // Add direct project members (avoiding duplicates)
-    if (project.members) {
-      project.members.forEach(member => {
-        if (!members.find(m => m.id === member.user.id)) {
-          members.push({
-            id: member.user.id,
-            name: member.user.name || member.user.email,
-            email: member.user.email,
-            avatarUrl: member.user.avatarUrl
-          })
-        }
-      })
-    }
-
     // Add project creator if not already included
     if (project.createdBy && !members.find(m => m.id === project.createdBy!.id)) {
       members.push({
@@ -376,11 +351,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
       project: {
         id: project.id,
         name: project.name,
-        color: project.color,
-        team: project.team ? {
-          id: project.team.id,
-          name: project.team?.name,
-        } : undefined,
+        color: project.color
       },
       assignee: task.assignee ? {
         ...task.assignee,
@@ -404,10 +375,6 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
       project: {
         id: project.id,
         name: project.name,
-        team: project.team ? {
-          id: project.team.id,
-          name: project.team?.name
-        } : undefined
       },
       assignee: task.assignee ? {
         ...task.assignee,
@@ -461,7 +428,6 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
               </div>
               <div className="flex items-center space-x-2">
                 <TaskBoardFilters
-                  teamMembers={getProjectMembers(project)}
                   currentUserId={session?.user?.id}
                   selectedFilter={taskFilter}
                   onFilterChange={handleFilterChange}
@@ -594,10 +560,6 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
               throw error
             }
           }}
-          teamMembers={project.team?.members?.map(member => ({
-            ...member,
-            avatarUrl: member.avatarUrl ?? undefined
-          })) ?? []}
         />
       ) : (
         <div>
@@ -607,7 +569,6 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
               <p className="text-sm text-gray-500">Przeciągnij zadania między kolumnami, aby zaktualizować ich status</p>
             </div>
             <TaskBoardFilters
-              teamMembers={getProjectMembers(project)}
               currentUserId={session?.user?.id}
               selectedFilter={taskFilter}
               onFilterChange={handleFilterChange}
@@ -682,7 +643,6 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                 onTaskUpdated={handleTaskUpdated}
                 onClose={() => setTaskFormSidebarOpen(false)}
                 task={selectedTask}
-                teamMembers={getProjectMembers(project)}
                 projects={projects}
                 projectId={projectId}
                 forceAssignToCurrentUser={taskFormMode === "create"}

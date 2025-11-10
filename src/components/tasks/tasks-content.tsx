@@ -42,10 +42,6 @@ import { formatEstimatedHours, formatAssignee } from "@/lib/task-format-utils"
 interface Project {
   id: string
   name: string
-  team: {
-    id: string
-    name: string
-  }
 }
 
 interface TaskStatus {
@@ -66,7 +62,6 @@ export function TasksContent() {
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
-  const [teamMembers, setTeamMembers] = useState<User[]>([])
   const [filter, setFilter] = useState<"all" | "assigned">("assigned")
   const [deletingTask, setDeletingTask] = useState(false)
   const [activeTab, setActiveTab] = useState("board")
@@ -210,21 +205,7 @@ export function TasksContent() {
 
   const handleEditTask = async (task: Task, e: React.MouseEvent) => {
     e.stopPropagation();
-    // Fetch team members for the task's project (if it has one)
-    if (task.project?.team) {
-      try {
-        const response = await fetch(`/api/teams/${task.project.team.id}/members`)
-        if (response.ok) {
-          const data = await response.json()
-          setTeamMembers(data.members)
-        }
-      } catch (error) {
-        console.error("Error fetching team members:", error)
-      }
-    } else {
-      // For tasks without projects, we can't fetch team members
-      setTeamMembers([])
-    }
+
 
     setSelectedTask(task)
     setTaskFormMode("edit")
@@ -523,10 +504,6 @@ export function TasksContent() {
             tasks={tasks.filter(task => task.dueDate)}
             onTaskUpdated={fetchTasks}
             onTaskUpdate={handleTaskUpdate}
-            teamMembers={teamMembers.map(member => ({
-              ...member,
-              avatarUrl: member.avatarUrl ?? undefined
-            }))}
             projects={projects}
             session={session}
             hideProjectSelect={filter === "assigned"}
@@ -622,12 +599,7 @@ export function TasksContent() {
                                 {task.project ? (
                                   <>
                                     <span>{task.project.name}</span>
-                                    {task.project.team && (
-                                      <>
-                                        <span>•</span>
-                                        <span>{task.project.team?.name}</span>
-                                      </>
-                                    )}
+
                                   </>
                                 ) : (
                                   <span className="text-muted-foreground">Brak projektu</span>
@@ -779,7 +751,6 @@ export function TasksContent() {
                 onTaskUpdated={handleTaskUpdated}
                 onClose={() => setTaskFormSidebarOpen(false)}
                 task={selectedTask}
-                teamMembers={teamMembers}
                 projects={projects}
                 forceAssignToCurrentUser={taskFormMode === "create"}
                 defaultDate={defaultTaskDate}

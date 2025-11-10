@@ -35,12 +35,6 @@ interface ProjectDailyViewProps {
   onTaskClick?: (task: Task) => void
   onCreateTask?: () => void
   onTaskUpdate?: (taskId: string, updates: { startTime?: string; endTime?: string }) => Promise<void>
-  teamMembers: Array<{
-    id: string
-    name: string
-    email: string
-    avatarUrl?: string
-  }>
   className?: string
 }
 
@@ -55,7 +49,6 @@ export function ProjectDailyView({
   onTaskClick,
   onCreateTask,
   onTaskUpdate,
-  teamMembers,
   className
 }: ProjectDailyViewProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
@@ -133,11 +126,6 @@ export function ProjectDailyView({
   const tasksByAssignee = useMemo(() => {
     const grouped: Record<string, TaskWithTime[]> = {}
 
-    // Initialize with all team members
-    teamMembers.forEach(member => {
-      grouped[member.id] = []
-    })
-
     // Add unassigned tasks group
     grouped['unassigned'] = []
 
@@ -150,7 +138,7 @@ export function ProjectDailyView({
     })
 
     return grouped
-  }, [tasksForDate, teamMembers])
+  }, [tasksForDate])
 
   const navigateDate = (direction: 'prev' | 'next') => {
     if (direction === 'prev') {
@@ -357,7 +345,7 @@ export function ProjectDailyView({
         startTime: updates.startTime || t.startTime,
         endTime: updates.endTime || t.endTime,
         assignee: updates.assigneeId !== undefined
-          ? (updates.assigneeId ? teamMembers.find(m => m.id === updates.assigneeId) : undefined)
+          ? ( undefined)
           : t.assignee
       } : t)
     )
@@ -366,7 +354,7 @@ export function ProjectDailyView({
     const timeStr = format(newStartTime, 'HH:mm')
     const assigneeName = assigneeId === 'unassigned'
       ? 'nieprzypisane'
-      : teamMembers.find(m => m.id === assigneeId)?.name || 'nieznany'
+      :  'nieznany'
 
     toast.loading(`Przenoszenie zadania na ${timeStr} (${assigneeName})...`, {
       id: `move-task-${taskId}`,
@@ -542,37 +530,6 @@ export function ProjectDailyView({
         <div>
           <div className="overflow-x-auto">
             <div className="min-w-[800px]">
-              {/* Header with team members */}
-              <div className="grid grid-cols-[100px_1fr] gap-4 mb-4">
-                <div className="text-sm font-medium text-muted-foreground">Czas</div>
-                <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Object.keys(tasksByAssignee).length}, 1fr)` }}>
-                  {Object.entries(tasksByAssignee).map(([assigneeId, tasks]) => {
-                    const member = teamMembers.find(m => m.id === assigneeId)
-                    return (
-                      <div key={assigneeId} className="text-center">
-                        {assigneeId === 'unassigned' ? (
-                          <div className="flex flex-col items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                              <User className="h-4 w-4 text-gray-500" />
-                            </div>
-                            <span className="text-sm font-medium">Nieprzypisane</span>
-                            <span className="text-xs text-muted-foreground">{tasks.length} zadań</span>
-                          </div>
-                        ) : member ? (
-                          <div className="flex flex-col items-center gap-2">
-                            <Avatar className="w-8 h-8">
-                              <AvatarImage src={member.avatarUrl} alt={member.name} />
-                              <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <span className="text-sm font-medium">{member.name}</span>
-                            <span className="text-xs text-muted-foreground">{tasks.length} zadań</span>
-                          </div>
-                        ) : null}
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
 
               {/* Time slots grid */}
               <div className="relative">

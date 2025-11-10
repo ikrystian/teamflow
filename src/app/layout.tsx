@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Nexus - Team Project Management",
-  description: "Modern team collaboration and project management platform",
+  title: "Nexus - Project Management",
+  description: "Modern work collaboration and project management platform",
 };
 
 export default function RootLayout({

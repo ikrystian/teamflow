@@ -31,7 +31,6 @@ interface TaskFormContentProps {
   // For create mode
   projects?: Project[]
   projectId?: string
-  teamMembers?: User[] // UserWithTeams is actually just User[] at this point, if we consider team property on Project
   defaultStatusId?: string
   forceAssignToCurrentUser?: boolean
   defaultDate?: Date
@@ -54,7 +53,6 @@ export function TaskFormContent({
   onClose,
   projects = [],
   projectId,
-  teamMembers = [],
   defaultStatusId,
   forceAssignToCurrentUser = false,
   defaultDate,
@@ -100,13 +98,9 @@ export function TaskFormContent({
   // Determine if we should show project selector
   const showProjectSelector = ((isCreateMode && !projectId) || isEditMode) && projects.length > 0
 
-  // Get current project for team member selection
+  // Get current project for member selection
   const currentProject = projects.find(p => p.id === (projectId || selectedProjectId));
 
-  // Get team members for the current context
-  const availableTeamMembers: User[] = (projectId
-    ? teamMembers
-    : (currentProject?.team?.members || teamMembers));
 
   const fetchTaskStatuses = useCallback(async () => {
     try {
@@ -535,14 +529,6 @@ export function TaskFormContent({
                   className="h-10 w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 >
                   <option value="">Wybierz osobę</option>
-                  {availableTeamMembers.map((member) => {
-                    const assigneeInfo = formatAssignee(member)
-                    return (
-                      <option key={member.id} value={member.id}>
-                        {assigneeInfo.displayName}
-                      </option>
-                    )
-                  })}
                 </select>
               )}
             </div>

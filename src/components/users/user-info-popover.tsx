@@ -26,7 +26,6 @@ interface User {
     completedTasks: number
     totalHours: number
     completionRate: number
-    teamsCount: number
   }
 }
 
@@ -49,7 +48,7 @@ export function UserInfoPopover({
 
   const fetchUserData = useCallback(async () => {
     if (loading) return
-    
+
     setLoading(true)
     try {
       // Fetch user profile with stats
@@ -76,7 +75,7 @@ export function UserInfoPopover({
     const now = new Date()
     const diffTime = Math.abs(now.getTime() - date.getTime())
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    
+
     if (diffDays < 30) {
       return `${diffDays} dni temu`
     } else if (diffDays < 365) {
@@ -93,8 +92,6 @@ export function UserInfoPopover({
       case "admin":
         return "bg-red-100 text-red-800 border-red-200"
       case "manager":
-      case "team lead":
-        return "bg-purple-100 text-purple-800 border-purple-200"
       case "developer":
         return "bg-blue-100 text-blue-800 border-blue-200"
       case "designer":
@@ -165,7 +162,7 @@ export function UserInfoPopover({
               {user.stats && (
                 <div className="space-y-3">
                   <h4 className="text-xs font-medium text-muted-foreground">Statystyki</h4>
-                  
+
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
@@ -196,16 +193,6 @@ export function UserInfoPopover({
                         </div>
                       </div>
                       <div className="text-xs text-muted-foreground">Ukończenie</div>
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <UserIcon className="h-4 w-4 text-muted-foreground" />
-                        <div className="text-xs">
-                          <span className="font-medium">{user.stats.teamsCount}</span>
-                        </div>
-                      </div>
-                      <div className="text-xs text-muted-foreground">Zespoły</div>
                     </div>
                   </div>
                 </div>

@@ -54,10 +54,6 @@ interface TasksKanbanBoardProps {
   projects: Array<{
     id: string
     name: string
-    team: {
-      id: string
-      name: string
-    }
   }>
   session: Session | null
   hideProjectSelect?: boolean
@@ -274,10 +270,6 @@ function QuickAddTask({
   projects: Array<{
     id: string
     name: string
-    team: {
-      id: string
-      name: string
-    }
   }>
   session: Session | null
   hideProjectSelect?: boolean
@@ -438,10 +430,6 @@ function KanbanColumn({
   projects: Array<{
     id: string
     name: string
-    team: {
-      id: string
-      name: string
-    }
   }>
   session: Session | null
   hideProjectSelect?: boolean

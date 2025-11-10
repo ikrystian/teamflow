@@ -8,15 +8,9 @@ import {
 } from "@/components/ui/sheet"
 import { VisuallyHidden } from "@/components/ui/visually-hidden"
 import { TaskFormContent } from "./task-form-content"
-import type { Task, User, Project } from "@/types"
+import type { Task, Project } from "@/types"
 
-// Extended User type with teams information
-interface UserWithTeams extends User {
-  teams?: {
-    id: string
-    name: string
-  }[]
-}
+
 
 interface TaskFormSheetProps {
   open: boolean
@@ -27,7 +21,6 @@ interface TaskFormSheetProps {
   // For create mode
   projects?: Project[]
   projectId?: string
-  teamMembers?: UserWithTeams[]
   defaultStatusId?: string
   forceAssignToCurrentUser?: boolean // When true, always assign to current user regardless of project
 
@@ -45,7 +38,6 @@ export function TaskFormSheet({
   onTaskUpdated,
   projects = [],
   projectId,
-  teamMembers = [],
   defaultStatusId,
   forceAssignToCurrentUser = false,
   task,
@@ -67,7 +59,6 @@ export function TaskFormSheet({
               onClose={() => onOpenChange(false)}
               projects={projects}
               projectId={projectId}
-              teamMembers={teamMembers}
               defaultStatusId={defaultStatusId}
               forceAssignToCurrentUser={forceAssignToCurrentUser}
               task={task}

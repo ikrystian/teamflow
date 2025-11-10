@@ -16,19 +16,10 @@ interface TasksHourlyCalendarProps {
   tasks: Task[]
   onTaskUpdated: () => void
   onTaskUpdate?: (taskId: string, updates: TaskUpdateData) => void
-  teamMembers?: Array<{
-    id: string
-    name: string
-    email: string
-    avatarUrl?: string
-  }>
+
   projects?: Array<{
     id: string
     name: string
-    team: {
-      id: string
-      name: string
-    }
   }>
   session?: Session | null
   hideProjectSelect?: boolean
@@ -39,7 +30,6 @@ export function TasksHourlyCalendar({
   tasks,
   onTaskUpdated,
   onTaskUpdate,
-  teamMembers = [],
   session = null,
   onCreateTask,
 }: TasksHourlyCalendarProps) {
@@ -336,7 +326,6 @@ export function TasksHourlyCalendar({
                               onTaskClick={handleTaskClick}
                               onTaskUpdate={onTaskUpdate}
                               onTimeLogged={onTaskUpdated}
-                              users={teamMembers}
                               canEdit={canEditTask(task)}
                               side="right"
                               align="start"

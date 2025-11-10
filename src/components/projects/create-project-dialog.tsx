@@ -8,23 +8,16 @@ import {
 } from "@/components/ui/dialog"
 import { CreateProjectContent } from "./create-project-content"
 
-interface Team {
-  id: string
-  name: string
-}
-
 interface CreateProjectDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onProjectCreated: () => void
-  teams: Team[]
 }
 
 export function CreateProjectDialog({
   open,
   onOpenChange,
   onProjectCreated,
-  teams
 }: CreateProjectDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -34,7 +27,6 @@ export function CreateProjectDialog({
         </DialogHeader>
         <CreateProjectContent
           onProjectCreated={onProjectCreated}
-          teams={teams}
           onClose={() => onOpenChange(false)}
           showIconSelector={false}
         />

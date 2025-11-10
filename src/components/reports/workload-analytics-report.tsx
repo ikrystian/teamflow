@@ -39,7 +39,6 @@ interface WorkloadAnalyticsReportProps {
     endDate: string
     projectId: string
     userId: string
-    teamId: string
   }
   onDataLoaded?: (data: WorkloadAnalyticsData) => void
 }
@@ -51,7 +50,6 @@ export interface WorkloadAnalyticsData {
     overloadedMembers: number
     underutilizedMembers: number
     burnoutRiskLevel: "low" | "medium" | "high"
-    teamCapacityUtilization: number
     workloadBalance: number
     efficiencyScore: number
   }
@@ -110,7 +108,6 @@ export interface WorkloadAnalyticsData {
   projectWorkload: Array<{
     project: string
     totalHours: number
-    teamMembers: number
     averageWorkload: number
     deadlineStress: number
     color: string
@@ -275,18 +272,6 @@ export function WorkloadAnalyticsReport({ filters, onDataLoaded }: WorkloadAnaly
 
       {/* Overview KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Wykorzystanie zespołu</p>
-                <p className="text-2xl font-bold">{data.overview.teamCapacityUtilization}%</p>
-                <Progress value={data.overview.teamCapacityUtilization} className="mt-2" />
-              </div>
-              <Users className="h-8 w-8 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
 
         <Card>
           <CardContent className="p-6">
@@ -567,26 +552,6 @@ export function WorkloadAnalyticsReport({ filters, onDataLoaded }: WorkloadAnaly
             </CardContent>
           </Card>
 
-          {/* Team Workload Distribution Over Time */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Rozkład obciążenia zespołu w czasie</CardTitle>
-              <CardDescription>Jak zmieniało się obciążenie poszczególnych okresów</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={400}>
-                <LineChart data={data.workloadDistribution}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="timeSlot" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="plannedHours" stroke="#94A3B8" strokeDasharray="5 5" name="Planowane" />
-                  <Line type="monotone" dataKey="actualHours" stroke="#3B82F6" strokeWidth={2} name="Rzeczywiste" />
-                  <Line type="monotone" dataKey="utilizationRate" stroke="#10B981" strokeWidth={2} name="Wykorzystanie %" />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
         </div>
       )}
 

@@ -41,7 +41,6 @@ interface DashboardOverviewReportProps {
     endDate: string
     projectId: string
     userId: string
-    teamId: string
   }
   onDataLoaded?: (data: DashboardOverviewData) => void
 }
@@ -57,7 +56,6 @@ export interface DashboardOverviewData {
     totalTimeLogged: number
     avgTaskCompletionTime: number
     productivityScore: number
-    teamEfficiency: number
   }
   trends: {
     tasksCreated: Array<{ date: string; count: number }>
@@ -301,22 +299,6 @@ export function DashboardOverviewReport({ filters, onDataLoaded }: DashboardOver
                 </div>
               </div>
               <Calendar className="h-8 w-8 text-indigo-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Efektywność zespołu</p>
-                <p className="text-2xl font-bold">{kpis.teamEfficiency}%</p>
-                <div className="flex items-center gap-1 mt-1">
-                  <TrendingUp className="h-3 w-3 text-green-500" />
-                  <span className="text-xs text-green-600">Powyżej średniej</span>
-                </div>
-              </div>
-              <Target className="h-8 w-8 text-green-500" />
             </div>
           </CardContent>
         </Card>

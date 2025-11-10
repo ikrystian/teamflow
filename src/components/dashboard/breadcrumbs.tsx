@@ -20,11 +20,6 @@ interface BreadcrumbSegment {
   isLast: boolean
 }
 
-interface Team {
-  id: string
-  name: string
-}
-
 interface User {
   id: string
   name: string
@@ -37,7 +32,7 @@ export function DashboardBreadcrumbs() {
   const [dataLoading, setDataLoading] = useState(true)
   const [missingProjects, setMissingProjects] = useState<{[key: string]: string}>({})
 
-  // Fetch data for dynamic segments (teams and users only, projects come from context)
+  // Fetch data for dynamic segments ( users only, projects come from context)
   useEffect(() => {
     const fetchData = async () => {
       try {

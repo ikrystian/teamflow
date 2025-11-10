@@ -12,10 +12,6 @@ import type { Task, User } from "@/types"
 interface Project {
   id: string
   name: string
-  team: {
-    id: string
-    name: string
-  }
 }
 
 interface TaskFormDialogProps {
@@ -27,7 +23,6 @@ interface TaskFormDialogProps {
   // For create mode
   projects?: Project[]
   projectId?: string
-  teamMembers?: User[]
   defaultStatusId?: string
   forceAssignToCurrentUser?: boolean // When true, always assign to current user regardless of project
 
@@ -45,7 +40,6 @@ export function TaskFormDialog({
   onTaskUpdated,
   projects = [],
   projectId,
-  teamMembers = [],
   defaultStatusId,
   forceAssignToCurrentUser = false,
   task,
@@ -65,7 +59,6 @@ export function TaskFormDialog({
           onClose={() => onOpenChange(false)}
           projects={projects}
           projectId={projectId}
-          teamMembers={teamMembers}
           defaultStatusId={defaultStatusId}
           forceAssignToCurrentUser={forceAssignToCurrentUser}
           task={task}

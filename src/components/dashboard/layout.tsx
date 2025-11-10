@@ -30,7 +30,6 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { NavUser } from "@/components/dashboard/nav-user"
 import { NavProjects } from "@/components/dashboard/nav-projects"
-import { TeamSwitcher } from "@/components/dashboard/team-switcher"
 import { DashboardBreadcrumbs } from "@/components/dashboard/breadcrumbs"
 import { EditProjectSheet } from "@/components/projects/edit-project-sheet"
 import { HeaderProvider, useHeader } from "@/contexts/header-context"
@@ -82,13 +81,6 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
     <SidebarProvider>
       <Sidebar collapsible="icon" className="border-r">
         <SidebarHeader>
-          <TeamSwitcher teams={[
-            {
-              name: "Nexus Pro",
-              logo: () => <div className="w-4 h-4 bg-blue-500 rounded" />,
-              plan: "Pro"
-            }
-          ]} />
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
@@ -141,7 +133,6 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
         onOpenChange={setEditDialogOpen}
         onProjectUpdated={handleProjectUpdated}
         project={selectedProject}
-        teams={[]}
       />
 
     </SidebarProvider>

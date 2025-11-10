@@ -13,15 +13,8 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Users, User, Filter, Check } from "lucide-react"
 
-interface TeamMember {
-  id: string
-  name: string
-  email: string
-  avatarUrl?: string | null
-}
 
 interface TaskBoardFiltersProps {
-  teamMembers: TeamMember[]
   currentUserId?: string
   selectedFilter: "all" | "mine" | string // "all", "mine", or user ID
   onFilterChange: (filter: "all" | "mine" | string) => void
@@ -33,7 +26,6 @@ interface TaskBoardFiltersProps {
 }
 
 export function TaskBoardFilters({
-  teamMembers,
   currentUserId,
   selectedFilter,
   onFilterChange,
@@ -43,15 +35,14 @@ export function TaskBoardFilters({
     if (selectedFilter === "all") return "Wszystkie zadania"
     if (selectedFilter === "mine") return "Moje zadania"
 
-    const user = teamMembers.find(member => member.id === selectedFilter)
-    return user ? user.name : "Nieznany użytkownik"
+    return "Nieznany użytkownik"
   }
 
   const getFilterIcon = () => {
     if (selectedFilter === "all") return <Users className="h-4 w-4" />
     if (selectedFilter === "mine") return <User className="h-4 w-4" />
 
-    const user = teamMembers.find(member => member.id === selectedFilter)
+    let user: any;
     if (user) {
       return (
         <Avatar className="h-4 w-4">
@@ -126,42 +117,6 @@ export function TaskBoardFilters({
                 {selectedFilter === "mine" && <Check className="h-4 w-4" />}
               </div>
             </DropdownMenuItem>
-          )}
-
-          {teamMembers.length > 0 && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Członkowie zespołu</DropdownMenuLabel>
-
-              {teamMembers.map((member) => (
-                <DropdownMenuItem
-                  key={member.id}
-                  onClick={() => onFilterChange(member.id)}
-                  className="flex items-center justify-between"
-                >
-                  <div className="flex items-center space-x-2">
-                    <Avatar className="h-4 w-4">
-                      <AvatarImage src={member.avatarUrl ?? undefined} />
-                      <AvatarFallback className="text-xs">
-                        {member.name?.charAt(0) || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span>{member.name}</span>
-                    {member.id === currentUserId && (
-                      <Badge variant="outline" className="text-xs">
-                        Ty
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="secondary" className="text-xs">
-                      {taskCounts.byUser[member.id] || 0}
-                    </Badge>
-                    {selectedFilter === member.id && <Check className="h-4 w-4" />}
-                  </div>
-                </DropdownMenuItem>
-              ))}
-            </>
           )}
         </DropdownMenuContent>
       </DropdownMenu>

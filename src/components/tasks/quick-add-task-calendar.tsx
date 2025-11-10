@@ -16,10 +16,6 @@ interface QuickAddTaskCalendarProps {
   projects: Array<{
     id: string
     name: string
-    team: {
-      id: string
-      name: string
-    }
   }>
   session: Session | null
   hideProjectSelect?: boolean

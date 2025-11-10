@@ -106,7 +106,6 @@ export function SettingsContent() {
       taskAssigned: true,
       taskCompleted: true,
       projectUpdates: true,
-      teamInvites: true,
       weeklyReport: false,
       marketing: false
     },
@@ -550,16 +549,6 @@ export function SettingsContent() {
                     />
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Zaproszenia do zespołu</Label>
-                      <p className="text-sm text-gray-500">Gdy zostaniesz zaproszony do zespołu</p>
-                    </div>
-                    <Switch disabled
-                      checked={otherSettings.notifications.teamInvites}
-                      onCheckedChange={(checked) => handleNotificationChange("teamInvites", checked)}
-                    />
-                  </div>
 
                   <Separator />
 
