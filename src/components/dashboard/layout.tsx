@@ -32,10 +32,7 @@ import { NavUser } from "@/components/dashboard/nav-user"
 import { NavProjects } from "@/components/dashboard/nav-projects"
 import { TeamSwitcher } from "@/components/dashboard/team-switcher"
 import { DashboardBreadcrumbs } from "@/components/dashboard/breadcrumbs"
-import { NotificationBell } from "@/components/notifications/notification-bell"
 import { EditProjectSheet } from "@/components/projects/edit-project-sheet"
-import { RightSidebar } from "@/components/dashboard/right-sidebar"
-import { RecentChanges } from "@/components/dashboard/recent-changes"
 import { HeaderProvider, useHeader } from "@/contexts/header-context"
 import { useProjects } from "@/contexts/projects-context"
 import { type Project } from "@/types"
@@ -54,10 +51,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
   const navigation = [
     { name: "Panel", href: "/dashboard", icon: Home },
     { name: "Moje zadania", href: "/dashboard/tasks", icon: CheckSquare },
-    { name: "Chat", href: "/dashboard/chat", icon: MessageCircle },
-    { name: "Zespoły", href: "/dashboard/teams", icon: Users },
     { name: "Raporty", href: "/dashboard/reports", icon: BarChart3 },
-    { name: "Kalendarz", href: "/dashboard/calendar", icon: Calendar },
     { name: "Projekty", href: "/dashboard/projects", icon: FolderOpen },
   ]
 
@@ -131,9 +125,6 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
             <Separator orientation="vertical" className="mr-2 h-4" />
             <div className="flex-1">
               {headerContent}
-            </div>
-            <div className="flex items-center gap-2">
-              <NotificationBell />
             </div>
           </div>
         </header>

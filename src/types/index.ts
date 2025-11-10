@@ -42,11 +42,6 @@ export interface TaskStatus {
   isDefault: boolean;
 }
 
-export interface Team {
-  id: string;
-  name: string;
-}
-
 export interface Project {
   id: string;
   name: string;
@@ -67,16 +62,6 @@ export interface Project {
   createdAt?: string;
   updatedAt?: string;
   createdById?: string;
-  team?: {
-    id: string;
-    name: string;
-    members?: {
-      id: string;
-      name: string;
-      email: string;
-      avatarUrl?: string;
-    }[];
-  };
   createdBy?: {
     id: string;
     name: string | null;
@@ -118,10 +103,6 @@ export interface Task {
     name: string;
     color?: string;
     archived?: boolean;
-    team?: {
-      id: string;
-      name: string;
-    };
   };
   assignee?: User;
   createdBy?: User;

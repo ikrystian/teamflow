@@ -33,7 +33,6 @@ interface User {
 export function DashboardBreadcrumbs() {
   const pathname = usePathname()
   const { projects, loading: projectsLoading } = useProjects()
-  const [teams, setTeams] = useState<Team[]>([])
   const [users, setUsers] = useState<User[]>([])
   const [dataLoading, setDataLoading] = useState(true)
   const [missingProjects, setMissingProjects] = useState<{[key: string]: string}>({})
@@ -42,15 +41,9 @@ export function DashboardBreadcrumbs() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [teamsRes, usersRes] = await Promise.all([
-          fetch('/api/teams'),
+        const [usersRes] = await Promise.all([
           fetch('/api/users')
         ])
-
-        if (teamsRes.ok) {
-          const teamsData = await teamsRes.json()
-          setTeams(teamsData.teams || [])
-        }
 
         if (usersRes.ok) {
           const usersData = await usersRes.json()
@@ -113,9 +106,6 @@ export function DashboardBreadcrumbs() {
         case 'tasks':
           label = 'Moje zadania'
           break
-        case 'teams':
-          label = 'Zespoły'
-          break
         case 'reports':
           label = 'Raporty'
           break
@@ -158,12 +148,6 @@ export function DashboardBreadcrumbs() {
               fetchMissingProject(segment)
             }
 
-            const team = teams.find(t => t.id === segment)
-            if (team) {
-              label = team.name
-              break
-            }
-
             const user = users.find(u => u.id === segment)
             if (user) {
               label = user.name
@@ -193,7 +177,7 @@ export function DashboardBreadcrumbs() {
     }
 
     return breadcrumbs
-  }, [pathname, projects, teams, users, missingProjects, projectsLoading, dataLoading, fetchMissingProject])
+  }, [pathname, projects, users, missingProjects, projectsLoading, dataLoading, fetchMissingProject])
 
   const breadcrumbs = generateBreadcrumbs()
 

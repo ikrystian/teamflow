@@ -30,7 +30,6 @@ model User {
   createdTasks      Task[]            @relation("TaskCreator")
   blockedTasks      Task[]            @relation("TaskBlocker")
   timeEntries       TimeEntry[]
-  teams             Team[]            @relation("TeamMembers")
   systemChanges     SystemChange[]    @relation("SystemChangeCreator")
   systemChangeReads SystemChangeRead[]
   pushSubscriptions PushSubscription[]
@@ -41,15 +40,6 @@ model User {
   passwordResetTokens PasswordResetToken[]
   createdProjects   Project[]         @relation("ProjectCreator")
   projectMemberships ProjectMember[]
-}
-
-model Team {
-  id        String    @id @default(cuid())
-  name      String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  projects  Project[]
-  members   User[]    @relation("TeamMembers")
 }
 
 model Project {
@@ -70,12 +60,10 @@ model Project {
   shareToken    String?           @unique // Token for public sharing
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
-  teamId        String?           // Made optional
   createdById   String            // Project creator/owner
   color         String            @default("#3B82F6")
   icon          String?
   archived      Boolean           @default(false)
-  team          Team?             @relation(fields: [teamId], references: [id])
   createdBy     User              @relation("ProjectCreator", fields: [createdById], references: [id])
   members       ProjectMember[]   // Individual project members
   documents     ProjectDocument[]
