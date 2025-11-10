@@ -281,10 +281,10 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
     }
 
     const total = tasks.length
-    const completed = tasks.filter(task => task.taskStatus?.name.toLowerCase() === "done").length
-    const inProgress = tasks.filter(task => task.taskStatus?.name.toLowerCase() === "in progress").length
+    const completed = tasks.filter(task => task.taskStatus?.name?.toLowerCase() === "done").length
+    const inProgress = tasks.filter(task => task.taskStatus?.name?.toLowerCase() === "in progress").length
     const overdue = tasks.filter(task =>
-      task.dueDate && new Date(task.dueDate) < new Date() && task.taskStatus?.name.toLowerCase() !== "done"
+      task.dueDate && new Date(task.dueDate) < new Date() && task.taskStatus?.name?.toLowerCase() !== "done"
     ).length
 
     return { total, completed, inProgress, overdue }
@@ -354,9 +354,9 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
                 <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
                 <h4 className="text-sm font-medium text-muted-foreground">Zespół</h4>
               </div>
-              <p className="text-lg font-semibold text-foreground">{project.team.name}</p>
+              <p className="text-lg font-semibold text-foreground">{project.team?.name}</p>
               <p className="text-xs text-muted-foreground">
-                {project.team.members?.length || 0} {(project.team.members?.length || 0) === 1 ? 'członek' : 'członków'}
+                {project.team?.members?.length || 0} {(project.team?.members?.length || 0) === 1 ? 'członek' : 'członków'}
               </p>
             </div>
 
@@ -440,9 +440,9 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{project.team.name}</div>
+            <div className="text-2xl font-bold">{project.team?.name}</div>
             <p className="text-xs text-muted-foreground">
-              {project.team.members?.length || 0} {(project.team.members?.length || 0) === 1 ? 'członek' : 'członków'}
+              {project.team?.members?.length || 0} {(project.team?.members?.length || 0) === 1 ? 'członek' : 'członków'}
             </p>
           </CardContent>
         </Card>
@@ -482,7 +482,7 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-4">
-            {project.team.members?.map((member) => (
+            {project.team?.members?.map((member) => (
               <div key={member.id} className="flex items-center space-x-3">
                 <ClickableAvatar
                   userId={member.id}

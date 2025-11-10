@@ -625,7 +625,7 @@ export function TasksContent() {
                                     {task.project.team && (
                                       <>
                                         <span>•</span>
-                                        <span>{task.project.team.name}</span>
+                                        <span>{task.project.team?.name}</span>
                                       </>
                                     )}
                                   </>
@@ -657,7 +657,8 @@ export function TasksContent() {
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="h-8 w-8 p-0"
+
+                                    className="h-8 w-8 p-0 open-dropdown-action"
                                     onClick={(e) => e.stopPropagation()}
                                   >
                                     <MoreHorizontal className="h-4 w-4" />

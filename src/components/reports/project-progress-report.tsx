@@ -287,7 +287,7 @@ export function ProjectProgressReport({ filters }: ProjectProgressReportProps) {
                     </Badge>
                   </CardTitle>
                   <CardDescription>
-                    Zespół: {projectReport.project.team.name}
+                    Zespół: {projectReport.project.team?.name}
                   </CardDescription>
                 </div>
                 <div className="text-right">

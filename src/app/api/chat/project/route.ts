@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     if (!project.team) {
       return NextResponse.json({ error: 'Project team not found' }, { status: 404 })
     }
-    const isMember = project.team.members.some(member => member.id === session.user.id)
+    const isMember = project.team?.members.some(member => member.id === session.user.id)
     if (!isMember) {
       return NextResponse.json({ error: 'Access denied - not a team member' }, { status: 403 })
     }
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
         members: {
           create: project.team?.members.map(member => ({
             userId: member.id
-          })) || [] // Fallback to an empty array if project.team or project.team.members is null/undefined
+          })) || [] // Fallback to an empty array if project.team or project.team?.members is null/undefined
         }
       },
       include: {
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
     // Emit socket event for real-time chat room creation
     try {
       if (global.socketServer && global.userSockets) {
-        const memberIds = project.team.members.map(member => member.id)
+        const memberIds = project.team?.members.map(member => member.id)
         memberIds.forEach(memberId => {
           const memberSocketId = global.userSockets.get(memberId)
           if (memberSocketId && memberId !== session.user.id) {

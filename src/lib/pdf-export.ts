@@ -156,7 +156,7 @@ export function exportTimeTrackingToPDF(data: TimeTrackingData, filters: { start
 
   const projectTableData = data.projectStats.map(project => [
     project.project.name,
-    project.project.team.name,
+    project.project.team?.name,
     formatHours(project.totalHours),
     project.entriesCount.toString(),
     project.users.join(', ')
@@ -231,7 +231,7 @@ export function exportProjectProgressToPDF(data: ProjectProgressData, filters: {
 
   const projectTableData = data.projectReports.map(project => [
     project.project.name,
-    project.project.team.name,
+    project.project.team?.name,
     project.project.status,
     project.taskStats.total.toString(),
     project.taskStats.completed.toString(),

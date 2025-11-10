@@ -387,7 +387,7 @@ export function TaskDetailsContent({
               </Badge>
               {task.project.team && (
                 <Badge variant="outline" className="text-xs font-medium">
-                  {task.project.team.name}
+                  {task.project.team?.name}
                 </Badge>
               )}
             </>

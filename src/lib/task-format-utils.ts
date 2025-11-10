@@ -108,7 +108,7 @@ export const formatProjectDisplay = (project?: { name: string; team?: { name: st
   if (!project.team) {
     return project.name
   }
-  return `${project.name} • ${project.team.name}`
+  return `${project.name} • ${project.team?.name}`
 }
 
 /**

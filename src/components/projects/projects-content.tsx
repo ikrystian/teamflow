@@ -345,7 +345,7 @@ export function ProjectsContent() {
                     <div className="space-y-4">
                       <div className="flex items-center text-sm text-gray-600">
                         <Users className="h-4 w-4 mr-2" />
-                        {project.team ? project.team.name : (project.createdBy ? `Projekt osobisty (${project.createdBy.name || project.createdBy.email})` : 'Projekt osobisty')}
+                        {project.team ? project.team?.name : (project.createdBy ? `Projekt osobisty (${project.createdBy.name || project.createdBy.email})` : 'Projekt osobisty')}
                       </div>
 
                       <div className="space-y-2">

@@ -240,7 +240,7 @@ export function TimeTrackerWidget() {
   return (
     <Card
       className={cn(
-        "fixed bottom-6 right-6 z-50 shadow-2xl border-2 transition-all duration-300",
+        "fixed bottom-6 right-6 z-50 shadow-2xl border-2 transition-all duration-300 pt-0 gap-0",
         isMinimized ? "w-64" : "w-96"
       )}
     >

@@ -160,7 +160,7 @@ export default function PublicProjectPage() {
                 )}
                 <div>
                   <h1 className="font-semibold">{project.name}</h1>
-                  <p className="text-sm text-muted-foreground">{project.team.name}</p>
+                  <p className="text-sm text-muted-foreground">{project.team?.name}</p>
                 </div>
               </div>
             </div>

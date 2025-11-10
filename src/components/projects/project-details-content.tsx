@@ -66,7 +66,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
 
     // Add team members
     if (project.team?.members) {
-      members.push(...project.team.members.map(member => ({
+      members.push(...project.team?.members.map(member => ({
         id: member.id,
         name: member.name || member.email,
         email: member.email,
@@ -379,7 +379,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         color: project.color,
         team: project.team ? {
           id: project.team.id,
-          name: project.team.name,
+          name: project.team?.name,
         } : undefined,
       },
       assignee: task.assignee ? {
@@ -406,7 +406,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         name: project.name,
         team: project.team ? {
           id: project.team.id,
-          name: project.team.name
+          name: project.team?.name
         } : undefined
       },
       assignee: task.assignee ? {

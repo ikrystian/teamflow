@@ -1,4 +1,4 @@
-- Naprawiono błąd TypeError w ProjectDetailsContent przez zabezpieczenie odwołań do project.team.members opcjonalnym łańcuchowaniem i domyślną pustą tablicą.
+- Naprawiono błąd TypeError w ProjectDetailsContent przez zabezpieczenie odwołań do project.team?.members opcjonalnym łańcuchowaniem i domyślną pustą tablicą.
 - Gdy projekt nie ma zespołu, lista "Przypisany" w formularzu tworzenia/edycji zadania pokazuje wszystkich członków projektu (w tym autora) dzięki użyciu getProjectMembers().
 - Poprawiono weryfikację uprawnień w POST /api/tasks: autor projektu oraz członkowie projektu (bez zespołu) mogą tworzyć zadania w niearchiwizowanych projektach.
 - Naprawiono błąd seedowania bazy danych przez dodanie wymaganego pola createdById do wszystkich projektów w prisma/seed.ts.
