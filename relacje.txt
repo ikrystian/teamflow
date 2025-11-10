@@ -46,7 +46,6 @@
 ### Relacje między komponentami
 
 #### ProjectDetailsContent
-- Zawiera przełącznik widoków (list/board/gantt/daily)
 - Renderuje ProjectDailyView dla widoku "daily"
 - Przekazuje zadania, członków zespołu i funkcje callback
 

@@ -101,9 +101,6 @@ export function DashboardBreadcrumbs() {
         case 'tasks':
           label = 'Moje zadania'
           break
-        case 'reports':
-          label = 'Raporty'
-          break
         case 'calendar':
           label = 'Kalendarz'
           break

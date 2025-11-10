@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 
-export type ViewMode = "list" | "board" | "gantt" | "daily"
+export type ViewMode = "list" | "board"  | "daily"
 
 interface ProjectViewPreferences {
   [projectId: string]: ViewMode
@@ -21,7 +21,7 @@ export function useProjectViewPreferences(projectId: string) {
       if (stored) {
         const preferences: ProjectViewPreferences = JSON.parse(stored)
         const projectViewMode = preferences[projectId]
-        if (projectViewMode === "list" || projectViewMode === "board" || projectViewMode === "gantt" || projectViewMode === "daily") {
+        if (projectViewMode === "list" || projectViewMode === "board" || projectViewMode === "daily") {
           setViewMode(projectViewMode)
         }
       }

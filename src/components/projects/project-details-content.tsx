@@ -28,7 +28,6 @@ import {
 import Link from "next/link"
 import { TaskFormContent } from "../shared/task-form-content"
 import { KanbanBoard } from "./kanban-board"
-import { ProjectGanttChart } from "./project-gantt-chart"
 import { ProjectDailyView } from "./project-daily-view"
 import { TaskDetailsSheet } from "../tasks/task-details-sheet"
 import { TimeTrackingSheet } from "../tasks/time-tracking-sheet"
@@ -161,14 +160,6 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
               className="rounded-none"
             >
               <LayoutGrid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === "gantt" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => updateViewMode("gantt")}
-              className="rounded-none"
-            >
-              <BarChart3 className="h-4 w-4" />
             </Button>
             <Button
               variant={viewMode === "daily" ? "default" : "ghost"}
@@ -525,12 +516,8 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
             )}
           </div>
         </div>
-      ) : viewMode === "gantt" ? (
-        <ProjectGanttChart
-          tasks={getFilteredTasks(project.tasks || [])}
-          onTaskClick={handleTaskDetails}
-        />
-      ) : viewMode === "daily" ? (
+      )
+       : viewMode === "daily" ? (
         <ProjectDailyView
           tasks={getFilteredTasks(project.tasks || [])}
           onTaskClick={handleTaskDetails}
