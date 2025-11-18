@@ -76,27 +76,6 @@ export const getPriorityShortName = (priority?: string) => {
 }
 
 /**
- * Converts priority to select option value
- * @param priority - Priority string or null/undefined
- * @returns String value for select component
- */
-export const priorityToSelectValue = (priority?: string | null): string => {
-  return priority || "none"
-}
-
-/**
- * Converts select option value to priority
- * @param value - String value from select component
- * @returns Priority string or undefined
- */
-export const selectValueToPriority = (value: string): string | undefined => {
-  if (value === "none" || !value) {
-    return undefined
-  }
-  return value
-}
-
-/**
  * Standard project display format
  * @param project - Project object with name
  * @returns Formatted string "Project Name"
@@ -107,27 +86,6 @@ export const formatProjectDisplay = (project?: { name: string;  } | null): strin
   }
 
   return `${project.name}`
-}
-
-/**
- * Converts project to select option value
- * @param project - Project object or null/undefined
- * @returns String value for select component
- */
-export const projectToSelectValue = (project?: { id: string } | null): string => {
-  return project?.id || "no-project"
-}
-
-/**
- * Converts select option value to project id
- * @param value - String value from select component
- * @returns Project id or undefined
- */
-export const selectValueToProjectId = (value: string): string | undefined => {
-  if (value === "no-project" || !value) {
-    return undefined
-  }
-  return value
 }
 
 /**
@@ -180,25 +138,4 @@ export const selectValueToHours = (value: string): number | undefined => {
   }
   const parsed = parseFloat(value)
   return isNaN(parsed) ? undefined : parsed
-}
-
-/**
- * Converts assignee to select option value
- * @param assignee - User object or null/undefined
- * @returns String value for select component
- */
-export const assigneeToSelectValue = (assignee?: { id: string } | null): string => {
-  return assignee?.id || "unassigned"
-}
-
-/**
- * Converts select option value to assignee id
- * @param value - String value from select component
- * @returns User id or undefined
- */
-export const selectValueToAssigneeId = (value: string): string | undefined => {
-  if (value === "unassigned" || !value) {
-    return undefined
-  }
-  return value
 }
