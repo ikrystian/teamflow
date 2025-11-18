@@ -21,19 +21,19 @@ interface PrintTodosDialogProps {
 export function PrintTodosDialog({ tasks }: PrintTodosDialogProps) {
   const [open, setOpen] = useState(false)
 
-  // Filter tasks that are due today and have todos
+  // Filter tasks that are due today
   const todaysTasks = tasks.filter(task => {
-    if (!task.dueDate || !task.todos || task.todos.length === 0) return false
+    if (!task.dueDate) return false
 
     const dueDate = new Date(task.dueDate)
     const today = new Date()
 
+    // Normalize dates to compare date-only (not timestamps)
+    dueDate.setHours(0, 0, 0, 0)
+    today.setHours(0, 0, 0, 0)
+
     // Check if the due date is today
-    return (
-      dueDate.getDate() === today.getDate() &&
-      dueDate.getMonth() === today.getMonth() &&
-      dueDate.getFullYear() === today.getFullYear()
-    )
+    return dueDate.getTime() === today.getTime()
   })
 
   const totalTodos = todaysTasks.reduce((sum, task) => sum + (task.todos?.length || 0), 0)
@@ -69,11 +69,13 @@ export function PrintTodosDialog({ tasks }: PrintTodosDialogProps) {
           <DialogTitle>Lista zadań na dzisiaj</DialogTitle>
           <DialogDescription>
             {todaysTasks.length === 0 ? (
-              "Brak zadań z listami todo na dzisiaj"
+              "Brak zadań na dzisiaj"
             ) : (
               <>
-                {totalTodos} {totalTodos === 1 ? 'zadanie' : totalTodos < 5 ? 'zadania' : 'zadań'}
-                {' '}({completedTodos} ukończonych)
+                {todaysTasks.length} {todaysTasks.length === 1 ? 'zadanie' : todaysTasks.length < 5 ? 'zadania' : 'zadań'}
+                {totalTodos > 0 && (
+                  <> • {totalTodos} {totalTodos === 1 ? 'todo' : 'todos'} ({completedTodos} ukończonych)</>
+                )}
               </>
             )}
           </DialogDescription>
@@ -85,16 +87,21 @@ export function PrintTodosDialog({ tasks }: PrintTodosDialogProps) {
             <h1 className="text-3xl font-bold mb-2">Lista zadań</h1>
             <p className="text-lg text-gray-600">{getTodayDate()}</p>
             <div className="mt-4 flex gap-4 text-sm">
-              <span>Wszystkich zadań: {totalTodos}</span>
-              <span>Ukończonych: {completedTodos}</span>
-              <span>Do zrobienia: {totalTodos - completedTodos}</span>
+              <span>Zadań: {todaysTasks.length}</span>
+              {totalTodos > 0 && (
+                <>
+                  <span>• Wszystkich todos: {totalTodos}</span>
+                  <span>• Ukończonych: {completedTodos}</span>
+                  <span>• Do zrobienia: {totalTodos - completedTodos}</span>
+                </>
+              )}
             </div>
             <hr className="my-4 border-gray-300" />
           </div>
 
           {todaysTasks.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <p>Brak zadań z listami todo na dzisiaj</p>
+              <p>Brak zadań na dzisiaj</p>
             </div>
           ) : (
             <div className="space-y-6">

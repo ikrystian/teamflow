@@ -150,7 +150,13 @@ export function DashboardContent() {
 
     const dueDate = new Date(task.dueDate)
     const today = new Date()
-    const sevenDaysFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
+    const sevenDaysFromNow = new Date()
+
+    // Normalize dates to compare date-only (not timestamps)
+    dueDate.setHours(0, 0, 0, 0)
+    today.setHours(0, 0, 0, 0)
+    sevenDaysFromNow.setHours(0, 0, 0, 0)
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7)
 
     return dueDate >= today && dueDate <= sevenDaysFromNow
   }).sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
