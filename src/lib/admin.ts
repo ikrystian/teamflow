@@ -56,10 +56,3 @@ export async function getAdminSession(): Promise<Session | null> {
     return null
   }
 }
-
-/**
- * Check if a specific user email has admin privileges
- */
-export function isAdminEmail(email: string): boolean {
-  return email === 'krystian@bpcoders.pl'
-}
