@@ -8,6 +8,7 @@ import {
   Home,
   CheckSquare,
   FolderOpen,
+  BarChart3,
 } from "lucide-react"
 import {
   Sidebar,
@@ -47,6 +48,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
     { name: "Panel", href: "/dashboard", icon: Home },
     { name: "Moje zadania", href: "/dashboard/tasks", icon: CheckSquare },
     { name: "Projekty", href: "/dashboard/projects", icon: FolderOpen },
+    { name: "Raporty", href: "/dashboard/reports", icon: BarChart3 },
   ]
 
   // Function to check if a navigation item is active
