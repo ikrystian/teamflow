@@ -39,7 +39,9 @@ function TooltipContent({
   sideOffset = 0,
   children,
   ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Content>) {
+}: Omit<React.ComponentProps<typeof TooltipPrimitive.Content>, 'children'> & {
+  children?: React.ReactNode
+}) {
   return (
     <TooltipPrimitive.Portal>
       <TooltipPrimitive.Content

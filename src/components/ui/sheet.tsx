@@ -49,7 +49,8 @@ function SheetContent({
   children,
   side = "right",
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Content> & {
+}: Omit<React.ComponentProps<typeof SheetPrimitive.Content>, 'children'> & {
+  children?: React.ReactNode
   side?: "top" | "right" | "bottom" | "left"
 }) {
   return (

@@ -10,8 +10,9 @@ function NavigationMenu({
   children,
   viewport = true,
   ...props
-}: React.ComponentProps<typeof NavigationMenuPrimitive.Root> & {
+}: Omit<React.ComponentProps<typeof NavigationMenuPrimitive.Root>, 'children'> & {
   viewport?: boolean
+  children?: React.ReactNode
 }) {
   return (
     <NavigationMenuPrimitive.Root
@@ -66,7 +67,9 @@ function NavigationMenuTrigger({
   className,
   children,
   ...props
-}: React.ComponentProps<typeof NavigationMenuPrimitive.Trigger>) {
+}: Omit<React.ComponentProps<typeof NavigationMenuPrimitive.Trigger>, 'children'> & {
+  children?: React.ReactNode
+}) {
   return (
     <NavigationMenuPrimitive.Trigger
       data-slot="navigation-menu-trigger"
