@@ -27,7 +27,6 @@ export async function GET(
           {
             project: {
               archived: false,
-
             }
           },
           // Tasks without projects created by the user
@@ -260,25 +259,7 @@ export async function PATCH(
           { status: 400 }
         )
       }
-
-      // Verify assignee is a member of the project's team (only if task has a project)
-      if (existingTask.project && existingTask.project.teamId) {
-        const team = await prisma.team.findUnique({
-          where: {
-            id: existingTask.project.teamId
-          },
-          include: {
-            members: {
-              where: {
-                id: assigneeId
-              }
-            }
-          }
-        })
-
-
-        }
-      } else if (existingTask.project && !existingTask.project.teamId) {
+if (existingTask.project) {
         // If there's a project but no teamId associated, it's an unexpected state.
         // It should implicitly consider that the assignee needs to be a direct project member.
         // Assuming for now, this case implies no team for the project, so no team-based member check.
@@ -316,13 +297,7 @@ export async function PATCH(
 
         // If assigneeId is being set and project is being changed, verify assignee is member of new project team
         if (assigneeId !== undefined && assigneeId !== null) {
-          const isAssigneeMember = project.team?.members.some(member => member.id === assigneeId)
-          if (!isAssigneeMember) {
-            return NextResponse.json(
-              { error: "Assignee is not a member of the selected project team" },
-              { status: 400 }
-            )
-          }
+
         }
       }
     }
@@ -486,13 +461,7 @@ export async function DELETE(
       where: {
         id: taskId,
         project: {
-          team: {
-            members: {
-              some: {
-                id: session.user.id
-              }
-            }
-          }
+
         }
       },
       include: {
@@ -518,7 +487,8 @@ export async function DELETE(
     const canDelete =
       userIsAdmin || // Admin can delete any task
       existingTask.createdById === session.user.id || // Task creator
-      existingTask.assigneeId === session.user.id;
+      existingTask.assigneeId === session.user.id || // Assigned user
+      (existingTask.project ) // Team member (only for tasks with projects)
 
     if (!canDelete) {
       return NextResponse.json(
