@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import type { Session } from "next-auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,7 +11,6 @@ import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, CheckSquare, Calendar, User as UserIcon, Filter, Edit, Clock, MoreHorizontal, Trash2, LayoutGrid, List } from "lucide-react"
-import { TaskFormContent } from "../shared/task-form-content"
 import { TimeTrackingSheet } from "./time-tracking-sheet"
 import { TaskDetailsSheet } from "./task-details-sheet"
 import { TasksKanbanBoard } from "./tasks-kanban-board"
@@ -54,6 +54,7 @@ interface TaskStatus {
 
 export function TasksContent() {
   const { data: session } = useSession() as { data: Session | null }
+  const router = useRouter()
   const [tasks, setTasks] = useState<Task[]>([])
   const [projects, setProjects] = useState<Project[]>([])
   const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
@@ -66,10 +67,6 @@ export function TasksContent() {
   const [deletingTask, setDeletingTask] = useState(false)
   const [activeTab, setActiveTab] = useState("board")
   const [isAdmin, setIsAdmin] = useState(false)
-  const [taskFormSidebarOpen, setTaskFormSidebarOpen] = useState(false)
-  const [taskFormMode, setTaskFormMode] = useState<"create" | "edit">("create")
-  const [defaultTaskDate, setDefaultTaskDate] = useState<Date | undefined>()
-  const [defaultTaskTime, setDefaultTaskTime] = useState<{ start?: Date; end?: Date }>({})
 
 
 
@@ -130,11 +127,7 @@ export function TasksContent() {
           Wszystkie zadania
         </Button>
 
-        <Button onClick={() => {
-          setTaskFormMode("create")
-          setSelectedTask(null)
-          setTaskFormSidebarOpen(true)
-        }}>
+        <Button onClick={() => router.push("/dashboard/tasks/new")}>
           Utwórz nowe zadanie
         </Button>
       </div>
@@ -191,43 +184,20 @@ export function TasksContent() {
     fetchData()
   }, [filter, session?.user?.id, fetchTasks, fetchProjects, fetchTaskStatuses])
 
-  const handleTaskCreated = () => {
-    fetchTasks()
-    setTaskFormSidebarOpen(false)
-    setDefaultTaskDate(undefined)
-    setDefaultTaskTime({})
-  }
-
   const handleCreateTaskFromCalendar = (date: Date, hour: number) => {
-    // Utwórz startTime i endTime na podstawie wybranej godziny
-    const startTime = new Date(date)
-    startTime.setHours(hour, 0, 0, 0)
-
-    const endTime = new Date(date)
-    endTime.setHours(hour + 1, 0, 0, 0) // Domyślnie 1 godzina
-
-    setDefaultTaskDate(date)
-    setDefaultTaskTime({ start: startTime, end: endTime })
-    setTaskFormMode("create")
-    setSelectedTask(null)
-    setTaskFormSidebarOpen(true)
+    // Store date and time in localStorage for the new task page to use
+    const taskData = {
+      date: date.toISOString(),
+      startHour: hour,
+      endHour: hour + 1
+    }
+    localStorage.setItem('newTaskDefaults', JSON.stringify(taskData))
+    router.push("/dashboard/tasks/new")
   }
 
   const handleEditTask = async (task: Task, e: React.MouseEvent) => {
     e.stopPropagation();
-
-
-    setSelectedTask(task)
-    setTaskFormMode("edit")
-    setTaskFormSidebarOpen(true)
-  }
-
-  const handleTaskUpdated = () => {
-    fetchTasks()
-    setTaskFormSidebarOpen(false)
-    setSelectedTask(null)
-    setDefaultTaskDate(undefined)
-    setDefaultTaskTime({})
+    router.push(`/dashboard/tasks/${task.id}/edit`)
   }
 
   const handleTaskUpdate = async (taskId: string, updates: TaskUpdateData) => {
@@ -487,11 +457,7 @@ export function TasksContent() {
                    filter === "assigned" ? "Brak zadań przypisanych Tobie" :
                    "Brak zadań do wyświetlenia"}
                 </p>
-                <Button onClick={() => {
-                  setTaskFormMode("create")
-                  setSelectedTask(null)
-                  setTaskFormSidebarOpen(true)
-                }}>
+                <Button onClick={() => router.push("/dashboard/tasks/new")}>
                   <Plus className="mr-2 h-4 w-4" />
                   Utwórz zadanie
                 </Button>
@@ -542,11 +508,7 @@ export function TasksContent() {
                     : "Nie utworzono jeszcze żadnych zadań."
                   }
                 </p>
-                <Button onClick={() => {
-                  setTaskFormMode("create")
-                  setSelectedTask(null)
-                  setTaskFormSidebarOpen(true)
-                }}>
+                <Button onClick={() => router.push("/dashboard/tasks/new")}>
                   <Plus className="mr-2 h-4 w-4" />
                   Utwórz zadanie
                 </Button>
@@ -738,44 +700,6 @@ export function TasksContent() {
           )}
         </TabsContent>
       </Tabs>
-
-      {/* Right Sidebar for Task Form */}
-      {taskFormSidebarOpen && (
-        <div className="fixed right-0 top-0 h-full bg-background border-l shadow-lg transition-all duration-300 ease-in-out z-40 w-[600px]">
-          <div className="h-full flex flex-col">
-            <div className="p-4 border-b flex items-center justify-between">
-              <h2 className="text-lg font-semibold">
-                {taskFormMode === "create" ? "Utwórz nowe zadanie" : "Edytuj zadanie"}
-              </h2>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  setTaskFormSidebarOpen(false)
-                  setDefaultTaskDate(undefined)
-                  setDefaultTaskTime({})
-                }}
-              >
-                <Plus className="h-4 w-4 rotate-45" />
-              </Button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4">
-              <TaskFormContent
-                mode={taskFormMode}
-                onTaskCreated={handleTaskCreated}
-                onTaskUpdated={handleTaskUpdated}
-                onClose={() => setTaskFormSidebarOpen(false)}
-                task={selectedTask}
-                projects={projects}
-                forceAssignToCurrentUser={taskFormMode === "create"}
-                defaultDate={defaultTaskDate}
-                defaultStartTime={defaultTaskTime.start}
-                defaultEndTime={defaultTaskTime.end}
-              />
-            </div>
-          </div>
-        </div>
-      )}
 
       <TimeTrackingSheet
         open={timeTrackingDialogOpen}

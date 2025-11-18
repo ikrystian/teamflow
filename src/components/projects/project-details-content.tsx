@@ -25,7 +25,6 @@ import {
   Info,
 } from "lucide-react"
 import Link from "next/link"
-import { TaskFormContent } from "../shared/task-form-content"
 import { KanbanBoard } from "./kanban-board"
 import { ProjectDailyView } from "./project-daily-view"
 import { TaskDetailsSheet } from "../tasks/task-details-sheet"
@@ -75,8 +74,6 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   }
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
-  const [taskFormSidebarOpen, setTaskFormSidebarOpen] = useState(false)
-  const [taskFormMode, setTaskFormMode] = useState<"create" | "edit">("create")
   const [taskDetailsDialogOpen, setTaskDetailsDialogOpen] = useState(false)
   const [timeTrackingDialogOpen, setTimeTrackingDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -184,11 +181,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
             </Button>
           </Link>
 
-          <Button onClick={() => {
-            setTaskFormMode("create")
-            setSelectedTask(null)
-            setTaskFormSidebarOpen(true)
-          }}>
+          <Button onClick={() => router.push(`/dashboard/tasks/new?projectId=${projectId}`)}>
             <Plus className="mr-2 h-4 w-4" />
             Dodaj zadanie
           </Button>
@@ -202,17 +195,10 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     [project, viewMode, projectId] // Re-render when project, viewMode or projectId changes
   )
 
-  const handleTaskCreated = () => {
-    fetchProject()
-    setTaskFormSidebarOpen(false)
-  }
-
   const handleTaskUpdated = (updatedTask?: Task) => {
     fetchProject()
-    // If we have the updated task and we're coming from edit mode, show task details
-    if (updatedTask && taskFormMode === "edit") {
-      setTaskFormSidebarOpen(false)
-      // Small delay to ensure smooth transition
+    // If we have the updated task, show task details
+    if (updatedTask) {
       setTimeout(() => {
         setSelectedTask(updatedTask)
         setTaskDetailsDialogOpen(true)
@@ -226,10 +212,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   }
 
   const handleEditTask = (task: Task) => {
-    setSelectedTask(task)
-    setTaskDetailsDialogOpen(false)
-    setTaskFormMode("edit")
-    setTaskFormSidebarOpen(true)
+    router.push(`/dashboard/tasks/${task.id}/edit`)
   }
 
   const handleTimeTracking = (task: Task) => {
@@ -423,11 +406,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                   onFilterChange={handleFilterChange}
                   taskCounts={getTaskCounts(project.tasks || [])}
                 />
-                <Button onClick={() => {
-                  setTaskFormMode("create")
-                  setSelectedTask(null)
-                  setTaskFormSidebarOpen(true)
-                }} size="sm">
+                <Button onClick={() => router.push(`/dashboard/tasks/new?projectId=${projectId}`)} size="sm">
                   <Plus className="mr-2 h-4 w-4" />
                   Dodaj zadanie
                 </Button>
@@ -448,11 +427,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                    taskFilter === "mine" ? "Brak zadań przypisanych Tobie w tym projekcie" :
                    "Ten członek zespołu nie ma przypisanych zadań w tym projekcie"}
                 </p>
-                <Button onClick={() => {
-                  setTaskFormMode("create")
-                  setSelectedTask(null)
-                  setTaskFormSidebarOpen(true)
-                }}>
+                <Button onClick={() => router.push(`/dashboard/tasks/new?projectId=${projectId}`)}>
                   <Plus className="mr-2 h-4 w-4" />
                   Utwórz zadanie
                 </Button>
@@ -520,11 +495,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         <ProjectDailyView
           tasks={getFilteredTasks(project.tasks || [])}
           onTaskClick={handleTaskDetails}
-          onCreateTask={() => {
-            setTaskFormMode("create")
-            setSelectedTask(null)
-            setTaskFormSidebarOpen(true)
-          }}
+          onCreateTask={() => router.push(`/dashboard/tasks/new?projectId=${projectId}`)}
           onTaskUpdate={async (taskId: string, updates: { startTime?: string; endTime?: string; assigneeId?: string }) => {
             try {
               const response = await fetch(`/api/tasks/${taskId}`, {
@@ -576,11 +547,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                      taskFilter === "mine" ? "Brak zadań przypisanych Tobie w tym projekcie" :
                      "Ten członek zespołu nie ma przypisanych zadań w tym projekcie"}
                   </p>
-                  <Button onClick={() => {
-                    setTaskFormMode("create")
-                    setSelectedTask(null)
-                    setTaskFormSidebarOpen(true)
-                  }}>
+                  <Button onClick={() => router.push(`/dashboard/tasks/new?projectId=${projectId}`)}>
                     <Plus className="mr-2 h-4 w-4" />
                     Utwórz zadanie
                   </Button>
@@ -596,45 +563,9 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
               onTimeTracking={handleTimeTracking}
               onTaskDelete={handleDeleteTask}
               canEditTask={canEditTask}
-              onCreateTask={() => {
-                setTaskFormMode("create")
-                setSelectedTask(null)
-                setTaskFormSidebarOpen(true)
-              }}
+              onCreateTask={() => router.push(`/dashboard/tasks/new?projectId=${projectId}`)}
             />
           )}
-        </div>
-      )}
-
-      {/* Right Sidebar for Task Form */}
-      {taskFormSidebarOpen && (
-        <div className="fixed right-0 top-0 h-full bg-background border-l shadow-lg transition-all duration-300 ease-in-out z-40 w-[600px]">
-          <div className="h-full flex flex-col">
-            <div className="p-4 border-b flex items-center justify-between">
-              <h2 className="text-lg font-semibold">
-                {taskFormMode === "create" ? "Utwórz nowe zadanie" : "Edytuj zadanie"}
-              </h2>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setTaskFormSidebarOpen(false)}
-              >
-                <Plus className="h-4 w-4 rotate-45" />
-              </Button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4">
-              <TaskFormContent
-                mode={taskFormMode}
-                onTaskCreated={handleTaskCreated}
-                onTaskUpdated={handleTaskUpdated}
-                onClose={() => setTaskFormSidebarOpen(false)}
-                task={selectedTask}
-                projects={projects}
-                projectId={projectId}
-                forceAssignToCurrentUser={taskFormMode === "create"}
-              />
-            </div>
-          </div>
         </div>
       )}
 
