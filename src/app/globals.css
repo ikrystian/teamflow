@@ -278,3 +278,72 @@ html {
   opacity: 1;
   transform: translateY(0);
 }
+
+/* Print Styles */
+@media print {
+  @page {
+    size: A4;
+    margin: 1.5cm;
+  }
+
+  /* Hide all elements except print content */
+  body * {
+    visibility: hidden;
+  }
+
+  .print-content,
+  .print-content * {
+    visibility: visible;
+  }
+
+  /* Ensure print content takes full page */
+  .print-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    background: white;
+    color: black;
+  }
+
+  /* Remove backgrounds and shadows for print */
+  * {
+    background: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Ensure black text for readability */
+  body {
+    color: black;
+  }
+
+  /* Keep project color dots visible */
+  .print-content [style*="backgroundColor"] {
+    background: var(--bg-color) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Prevent page breaks inside task cards */
+  .print-content > div > div {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Add spacing between printed pages */
+  .print-content > div:not(:last-child) {
+    margin-bottom: 1rem;
+  }
+
+  /* Ensure borders are visible */
+  .print-content .border {
+    border: 1px solid #d1d5db !important;
+  }
+
+  /* Style checkboxes for print */
+  .print-content svg {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

@@ -11,6 +11,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Clock, Calendar, User as UserIcon, ArrowRight } from "lucide-react"
+import { PrintTodosDialog } from "./print-todos-dialog"
 
 export function DashboardContent() {
   const { data: session } = useSession() as { data: Session | null }
@@ -58,9 +59,11 @@ export function DashboardContent() {
           {getPageTitle()}
         </h1>
       </div>
-
+      <div>
+        <PrintTodosDialog tasks={tasks} />
+      </div>
     </div>,
-    [isAdmin] // Re-render when admin status changes
+    [isAdmin, tasks] // Re-render when admin status or tasks change
   )
 
   const fetchTasks = useCallback(async () => {
