@@ -233,8 +233,18 @@ export function TimeTrackerWidget() {
     return null
   }
 
+  // Show restore button when widget is hidden
   if (!isVisible) {
-    return null
+    return (
+      <Button
+        onClick={() => setIsVisible(true)}
+        className="fixed bottom-6 right-6 z-50 h-12 w-12 rounded-full shadow-2xl"
+        size="icon"
+        title="Otwórz śledzenie czasu"
+      >
+        <Clock className="h-5 w-5" />
+      </Button>
+    )
   }
 
   return (
