@@ -91,6 +91,17 @@ export function TasksContent() {
     checkAdminStatus()
   }, [session])
 
+  // Cleanup body styles when delete dialog closes
+  useEffect(() => {
+    if (!deleteDialogOpen) {
+      // Remove pointer-events: none from body when dialog closes
+      const timer = setTimeout(() => {
+        document.body.style.pointerEvents = ''
+      }, 150)
+      return () => clearTimeout(timer)
+    }
+  }, [deleteDialogOpen])
+
   // Set page header content
   usePageHeader(
     <div className="flex items-center justify-between w-full">
@@ -268,7 +279,10 @@ export function TasksContent() {
       if (response.ok) {
         fetchTasks() // Refresh the task list
         setDeleteDialogOpen(false)
-        setSelectedTask(null)
+        // Delay resetting state to allow dialog to close properly and clean up body styles
+        setTimeout(() => {
+          setSelectedTask(null)
+        }, 100)
       } else {
         const data = await response.json()
         alert(data.error || "Nie udało się usunąć zadania")

@@ -65,6 +65,17 @@ export function ProjectsContent() {
     fetchData()
   }, [])
 
+  // Cleanup body styles when delete dialog closes
+  useEffect(() => {
+    if (!deleteDialogOpen) {
+      // Remove pointer-events: none from body when dialog closes
+      const timer = setTimeout(() => {
+        document.body.style.pointerEvents = ''
+      }, 150)
+      return () => clearTimeout(timer)
+    }
+  }, [deleteDialogOpen])
+
   const handleProjectCreated = () => {
     refreshProjects()
     setCreateDialogOpen(false)
@@ -125,7 +136,10 @@ export function ProjectsContent() {
       if (response.ok) {
         refreshProjects()
         setDeleteDialogOpen(false)
-        setProjectToDelete(null)
+        // Delay resetting state to allow dialog to close properly and clean up body styles
+        setTimeout(() => {
+          setProjectToDelete(null)
+        }, 100)
       } else {
         const errorData = await response.json()
         console.error("Failed to delete project:", errorData.error)
