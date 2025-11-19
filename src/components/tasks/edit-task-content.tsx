@@ -80,7 +80,7 @@ export function EditTaskContent({ taskId }: EditTaskContentProps) {
   }
 
   if (loading) {
-    return <PageLoadingLayout variant="form" />
+    return <PageLoadingLayout variant="details" />
   }
 
   if (!task) {

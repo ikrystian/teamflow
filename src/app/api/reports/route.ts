@@ -108,6 +108,11 @@ export async function GET(request: NextRequest) {
     }
 
     const projectStats = tasks.reduce((acc: Record<string, ProjectStat>, task) => {
+      // Skip tasks without a project
+      if (!task.project) {
+        return acc
+      }
+
       const projectId = task.project.id
       const projectName = task.project.name
       const projectColor = task.project.color || '#3b82f6'
@@ -171,8 +176,8 @@ export async function GET(request: NextRequest) {
       return {
         id: task.id,
         title: task.title,
-        project: task.project.name,
-        projectColor: task.project.color,
+        project: task.project?.name || 'No Project',
+        projectColor: task.project?.color || '#3b82f6',
         status: task.taskStatus?.name || 'No Status',
         statusColor: task.taskStatus?.color || '#gray',
         totalHours: totalTime,
