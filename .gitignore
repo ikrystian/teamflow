@@ -44,3 +44,4 @@ next-env.d.ts
 
 # database backups
 /backups/*.sql
+/prisma/dev.db
