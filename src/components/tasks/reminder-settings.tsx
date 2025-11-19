@@ -15,7 +15,7 @@ interface ReminderSettingsProps {
   reminderEnabled: boolean
   reminderType: string
   reminderValue: number
-  dueDate?: string
+  dueDate?: string | Date
   onReminderChange: (enabled: boolean, type: string, value: number) => void
 }
 

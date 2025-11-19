@@ -70,7 +70,7 @@ export function TaskFormContent({
   const [statusId, setStatusId] = useState("")
   const [assigneeId, setAssigneeId] = useState("")
   const [priority, setPriority] = useState("")
-  const [dueDate, setDueDate] = useState("")
+  const [dueDate, setDueDate] = useState<Date | undefined>()
   const [startTime, setStartTime] = useState<Date | undefined>()
   const [endTime, setEndTime] = useState<Date | undefined>()
   const [estimatedHours, setEstimatedHours] = useState("")
@@ -151,7 +151,7 @@ export function TaskFormContent({
       setSelectedProjectId(projectId || "")
       setAssigneeId(session?.user?.id || "")
       setPriority("")
-      setDueDate(defaultDate ? dateToLocalDateString(defaultDate) : "")
+      setDueDate(defaultDate)
       setStartTime(defaultStartTime || undefined)
       setEndTime(defaultEndTime || undefined)
       setEstimatedHours("")
@@ -167,7 +167,7 @@ export function TaskFormContent({
       setSelectedProjectId(task.project?.id || "")
       setAssigneeId(task.assignee?.id || "")
       setPriority(task.priority || "")
-      setDueDate(task.dueDate ? dateToLocalDateString(new Date(task.dueDate)) : "")
+      setDueDate(task.dueDate ? new Date(task.dueDate) : undefined)
       setStartTime(task.startTime ? new Date(task.startTime) : undefined)
       setEndTime(task.endTime ? new Date(task.endTime) : undefined)
       setEstimatedHours(hoursToSelectValue(task.estimatedHours))
@@ -225,7 +225,7 @@ export function TaskFormContent({
   // Sync due date with start time in scheduled mode if due date is not set
   useEffect(() => {
     if (timePlanningMode === "scheduled" && startTime && !dueDate) {
-      setDueDate(dateToLocalDateString(startTime))
+      setDueDate(startTime)
     }
   }, [startTime, timePlanningMode, dueDate])
 
@@ -271,7 +271,7 @@ export function TaskFormContent({
               : undefined,
             assigneeId: assigneeId || undefined,
             priority: priority || undefined,
-            dueDate: dueDate || undefined,
+            dueDate: dueDate ? dueDate.toISOString() : undefined,
             startTime: startTime ? startTime.toISOString() : undefined,
             endTime: endTime ? endTime.toISOString() : undefined,
             estimatedHours: selectValueToHours(estimatedHours),
@@ -309,7 +309,7 @@ export function TaskFormContent({
             statusId: statusId || undefined,
             assigneeId: assigneeId || undefined,
             priority: priority || undefined,
-            dueDate: dueDate || undefined,
+            dueDate: dueDate ? dueDate.toISOString() : undefined,
             startTime: startTime ? startTime.toISOString() : undefined,
             endTime: endTime ? endTime.toISOString() : undefined,
             estimatedHours: selectValueToHours(estimatedHours),
@@ -438,7 +438,7 @@ export function TaskFormContent({
     statusId !== task.statusId ||
     (assigneeId || undefined) !== task.assignee?.id ||
     (priority || undefined) !== task.priority ||
-    (dueDate || undefined) !== (task.dueDate ? task.dueDate.split('T')[0] : undefined) ||
+    (dueDate ? dueDate.toISOString() : undefined) !== task.dueDate ||
     (startTime ? startTime.toISOString() : undefined) !== task.startTime ||
     (endTime ? endTime.toISOString() : undefined) !== task.endTime ||
     selectValueToHours(estimatedHours) !== task.estimatedHours
@@ -588,8 +588,8 @@ export function TaskFormContent({
                 {timePlanningMode === "reporting" ? "Termin wykonania" : "Termin wykonania (opcjonalnie)"}
               </Label>
               <DateTimePicker
-                value={dueDate ? new Date(dueDate) : undefined}
-                onChange={(date) => setDueDate(date ? dateToLocalDateString(date) : '')}
+                value={dueDate}
+                onChange={setDueDate}
                 className="rounded-lg border shadow-sm"
               />
             </div>
