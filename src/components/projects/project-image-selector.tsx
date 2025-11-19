@@ -4,15 +4,16 @@ import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
-import { 
-  Upload, 
-  Image as ImageIcon, 
-  X, 
+import {
+  Upload,
+  Image as ImageIcon,
+  X,
   Loader2,
   Shuffle
 } from "lucide-react"
 import { cn } from '@/lib/utils'
 import Image from 'next/image'
+import { ImageCropper } from './image-cropper'
 
 interface ProjectImageSelectorProps {
   selectedImageUrl?: string | null
@@ -20,7 +21,7 @@ interface ProjectImageSelectorProps {
   className?: string
 }
 
-export function ProjectImageSelector({ 
+export function ProjectImageSelector({
   selectedImageUrl,
   onImageChange,
   className
@@ -28,6 +29,8 @@ export function ProjectImageSelector({
   const [uploading, setUploading] = useState(false)
   const [fetchingRandom, setFetchingRandom] = useState(false)
   const [dragOver, setDragOver] = useState(false)
+  const [cropperOpen, setCropperOpen] = useState(false)
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const validateFile = (file: File): string | null => {
@@ -49,17 +52,18 @@ export function ProjectImageSelector({
 
     setUploading(true)
     try {
-      // Convert file to base64 for preview
+      // Convert file to base64 and open cropper
       const reader = new FileReader()
       reader.onload = (e) => {
         const result = e.target?.result as string
-        onImageChange?.(result)
+        setImageToCrop(result)
+        setCropperOpen(true)
+        setUploading(false)
       }
       reader.readAsDataURL(file)
     } catch (error) {
       console.error('Error processing file:', error)
       alert('Wystąpił błąd podczas przetwarzania pliku')
-    } finally {
       setUploading(false)
     }
   }
@@ -70,7 +74,9 @@ export function ProjectImageSelector({
       const response = await fetch('/api/projects/random-image?query=business office workspace')
       if (response.ok) {
         const data = await response.json()
-        onImageChange?.(data.url)
+        // Open cropper with the random image
+        setImageToCrop(data.url)
+        setCropperOpen(true)
       } else {
         alert('Nie udało się pobrać losowego zdjęcia')
       }
@@ -79,6 +85,19 @@ export function ProjectImageSelector({
       alert('Wystąpił błąd podczas pobierania losowego zdjęcia')
     } finally {
       setFetchingRandom(false)
+    }
+  }
+
+  const handleCropComplete = (croppedImageUrl: string) => {
+    onImageChange?.(croppedImageUrl)
+    setImageToCrop(null)
+  }
+
+  const handleCropCancel = () => {
+    setCropperOpen(false)
+    setImageToCrop(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
     }
   }
 
@@ -230,6 +249,16 @@ export function ProjectImageSelector({
         onChange={handleFileInputChange}
         className="hidden"
       />
+
+      {imageToCrop && (
+        <ImageCropper
+          imageUrl={imageToCrop}
+          open={cropperOpen}
+          onClose={handleCropCancel}
+          onCropComplete={handleCropComplete}
+          aspectRatio={11 / 5}
+        />
+      )}
     </div>
   )
 }
