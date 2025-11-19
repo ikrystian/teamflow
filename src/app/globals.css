@@ -98,6 +98,10 @@
     overflow-x: auto;
   }
 }
+body {
+  pointer-events: auto !important;
+}
+
 
 /* TipTap Editor Styles */
 .ProseMirror {

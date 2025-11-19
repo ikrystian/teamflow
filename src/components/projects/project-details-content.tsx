@@ -30,6 +30,7 @@ import { ProjectDailyView } from "./project-daily-view"
 import { TaskDetailsSheet } from "../tasks/task-details-sheet"
 import { TimeTrackingSheet } from "../tasks/time-tracking-sheet"
 import { TaskBoardFilters } from "./task-board-filters"
+import { QuickAddTaskCommand } from "./quick-add-task-command"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -400,6 +401,10 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                 </div>
               </div>
               <div className="flex items-center space-x-2">
+                <QuickAddTaskCommand
+                  projectId={projectId}
+                  onTaskCreated={fetchProject}
+                />
                 <TaskBoardFilters
                   currentUserId={session?.user?.id}
                   selectedFilter={taskFilter}
@@ -492,32 +497,34 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         </div>
       )
        : viewMode === "daily" ? (
-        <ProjectDailyView
-          tasks={getFilteredTasks(project.tasks || [])}
-          onTaskClick={handleTaskDetails}
-          onCreateTask={() => router.push(`/dashboard/tasks/new?projectId=${projectId}`)}
-          onTaskUpdate={async (taskId: string, updates: { startTime?: string; endTime?: string; assigneeId?: string }) => {
-            try {
-              const response = await fetch(`/api/tasks/${taskId}`, {
-                method: 'PATCH',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(updates),
-              })
+       <ProjectDailyView
+         tasks={getFilteredTasks(project.tasks || [])}
+         onTaskClick={handleTaskDetails}
+         onCreateTask={() => router.push(`/dashboard/tasks/new?projectId=${projectId}`)}
+         onTaskCreated={fetchProject}
+         projectId={projectId}
+         onTaskUpdate={async (taskId: string, updates: { startTime?: string; endTime?: string; assigneeId?: string }) => {
+           try {
+             const response = await fetch(`/api/tasks/${taskId}`, {
+               method: 'PATCH',
+               headers: {
+                 'Content-Type': 'application/json',
+               },
+               body: JSON.stringify(updates),
+             })
 
-              if (!response.ok) {
-                throw new Error('Failed to update task')
-              }
+             if (!response.ok) {
+               throw new Error('Failed to update task')
+             }
 
-              // Refresh tasks
-              handleTaskUpdated()
-            } catch (error) {
-              console.error('Error updating task:', error)
-              throw error
-            }
-          }}
-        />
+             // Refresh tasks
+             handleTaskUpdated()
+           } catch (error) {
+             console.error('Error updating task:', error)
+             throw error
+           }
+         }}
+       />
       ) : (
         <div>
           <div className="flex items-center justify-between mb-6">
@@ -525,12 +532,18 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
               <h2 className="text-lg font-semibold">Tablica zadań</h2>
               <p className="text-sm text-gray-500">Przeciągnij zadania między kolumnami, aby zaktualizować ich status</p>
             </div>
-            <TaskBoardFilters
-              currentUserId={session?.user?.id}
-              selectedFilter={taskFilter}
-              onFilterChange={handleFilterChange}
-              taskCounts={getTaskCounts(project.tasks || [])}
-            />
+            <div className="flex items-center space-x-2">
+              <QuickAddTaskCommand
+                projectId={projectId}
+                onTaskCreated={fetchProject}
+              />
+              <TaskBoardFilters
+                currentUserId={session?.user?.id}
+                selectedFilter={taskFilter}
+                onFilterChange={handleFilterChange}
+                taskCounts={getTaskCounts(project.tasks || [])}
+              />
+            </div>
           </div>
           {getFilteredTasks(project.tasks || []).length === 0 ? (
             <Card >

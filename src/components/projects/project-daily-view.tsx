@@ -27,12 +27,15 @@ import {
   useDraggable,
 } from "@dnd-kit/core"
 import { toast } from "sonner"
+import { QuickAddTaskCommand } from "./quick-add-task-command"
 
 interface ProjectDailyViewProps {
   tasks: Task[]
   onTaskClick?: (task: Task) => void
   onCreateTask?: () => void
-  onTaskUpdate?: (taskId: string, updates: { startTime?: string; endTime?: string }) => Promise<void>
+  onTaskUpdate?: (taskId: string, updates: { startTime?: string; endTime?: string; assigneeId?: string }) => Promise<void>
+  onTaskCreated?: () => void
+  projectId?: string
   className?: string
 }
 
@@ -47,6 +50,8 @@ export function ProjectDailyView({
   onTaskClick,
   onCreateTask,
   onTaskUpdate,
+  onTaskCreated,
+  projectId,
   className
 }: ProjectDailyViewProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
@@ -497,6 +502,12 @@ export function ProjectDailyView({
             </div>
             <div>
               <div className="flex items-center space-x-2">
+                {projectId && (
+                  <QuickAddTaskCommand
+                    projectId={projectId}
+                    onTaskCreated={onTaskCreated}
+                  />
+                )}
                 <Button variant="outline" size="sm" onClick={goToToday}>
                   Dzisiaj
                 </Button>

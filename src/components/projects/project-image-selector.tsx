@@ -104,7 +104,7 @@ export function ProjectImageSelector({
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     setDragOver(false)
-    
+
     const files = Array.from(e.dataTransfer.files)
     if (files.length > 0) {
       handleFileSelect(files[0])
@@ -138,7 +138,7 @@ export function ProjectImageSelector({
   return (
     <div className={cn("space-y-2", className)}>
       <Label>Zdjęcie projektu</Label>
-      
+
       {selectedImageUrl ? (
         <Card>
           <CardContent className="p-4">
@@ -237,6 +237,9 @@ export function ProjectImageSelector({
             </div>
             <p className="text-xs text-muted-foreground mt-2">
               Maksymalny rozmiar: 10MB. Obsługiwane formaty: JPG, PNG, GIF
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Zdjęcia będą kadrowane w proporcjach 11:5
             </p>
           </CardContent>
         </Card>
