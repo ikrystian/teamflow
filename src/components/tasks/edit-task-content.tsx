@@ -1,6 +1,6 @@
 "use client"
 
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 import { TaskFormContent } from "../shared/task-form-content"
 import { usePageHeader } from "@/contexts/header-context"
@@ -16,6 +16,8 @@ interface EditTaskContentProps {
 
 export function EditTaskContent({ taskId }: EditTaskContentProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const projectIdFromUrl = searchParams.get("projectId")
   const [projects, setProjects] = useState<Project[]>([])
   const [task, setTask] = useState<Task | null>(null)
   const [loading, setLoading] = useState(true)
@@ -24,7 +26,7 @@ export function EditTaskContent({ taskId }: EditTaskContentProps) {
   usePageHeader(
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center space-x-4">
-        <Link href="/dashboard/tasks">
+        <Link href={projectIdFromUrl ? `/dashboard/projects/${projectIdFromUrl}` : "/dashboard/tasks"}>
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -34,7 +36,7 @@ export function EditTaskContent({ taskId }: EditTaskContentProps) {
         </h1>
       </div>
     </div>,
-    [task]
+    [task, projectIdFromUrl]
   )
 
   const fetchProjects = useCallback(async () => {
@@ -70,7 +72,11 @@ export function EditTaskContent({ taskId }: EditTaskContentProps) {
   }, [fetchProjects, fetchTask])
 
   const handleTaskUpdated = () => {
-    router.push("/dashboard/tasks")
+    if (projectIdFromUrl) {
+      router.push(`/dashboard/projects/${projectIdFromUrl}`)
+    } else {
+      router.push("/dashboard/tasks")
+    }
   }
 
   if (loading) {
@@ -96,13 +102,21 @@ export function EditTaskContent({ taskId }: EditTaskContentProps) {
     )
   }
 
+  const handleClose = () => {
+    if (projectIdFromUrl) {
+      router.push(`/dashboard/projects/${projectIdFromUrl}`)
+    } else {
+      router.push("/dashboard/tasks")
+    }
+  }
+
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-8 pt-6">
       <TaskFormContent
         mode="edit"
         task={task}
         onTaskUpdated={handleTaskUpdated}
-        onClose={() => router.push("/dashboard/tasks")}
+        onClose={handleClose}
         projects={projects}
       />
     </div>
