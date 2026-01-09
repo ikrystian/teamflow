@@ -34,6 +34,8 @@ export async function GET(request: NextRequest) {
       excludeUserIds = projectMembers.map(member => member.userId)
     }
 
+    const capitalizedQuery = query.charAt(0).toUpperCase() + query.slice(1)
+
     // Search users by name or email
     const users = await prisma.user.findMany({
       where: {
@@ -50,6 +52,11 @@ export async function GET(request: NextRequest) {
               {
                 name: {
                   contains: query,
+                }
+              },
+              {
+                name: {
+                  contains: capitalizedQuery,
                 }
               },
               {

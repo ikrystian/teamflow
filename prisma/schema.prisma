@@ -22,16 +22,13 @@ model User {
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
   role              String            @default("user")
-  accounts          Account[]
+
   comments          Comment[]
   uploadedDocuments ProjectDocument[]
   sessions          Session[]
   assignedTasks     Task[]
   createdTasks      Task[]            @relation("TaskCreator")
-  blockedTasks      Task[]            @relation("TaskBlocker")
   timeEntries       TimeEntry[]
-  systemChanges     SystemChange[]    @relation("SystemChangeCreator")
-  systemChangeReads SystemChangeRead[]
   pushSubscriptions PushSubscription[]
   createdChatRooms  ChatRoom[]        @relation("ChatRoomCreator")
   sentMessages      Message[]         @relation("MessageSender")
@@ -86,12 +83,6 @@ model Task {
   projectId      String?
   assigneeId     String?
   createdById    String?
-  isBlocked      Boolean     @default(false)
-  blockReason    String?
-  blockedAt      DateTime?
-  unblockedAt    DateTime?
-  blockedById    String?
-  // Pola związane z przypomnieniami
   reminderEnabled Boolean    @default(false)
   reminderTime   DateTime?   // Kiedy wysłać przypomnienie
   reminderType   String?     // "hours" lub "days"
@@ -106,7 +97,6 @@ model Task {
   attachments    TaskAttachment[]
   timeEntries    TimeEntry[]
   todos          Todo[]
-  blockedBy      User?       @relation("TaskBlocker", fields: [blockedById], references: [id])
 }
 
 model Todo {
@@ -208,23 +198,7 @@ model ProjectDocument {
   uploadedBy   User     @relation(fields: [uploadedById], references: [id])
 }
 
-model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String?
-  access_token      String?
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([provider, providerAccountId])
-}
 
 model Session {
   id           String   @id @default(cuid())
@@ -237,37 +211,9 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
 
-  @@unique([identifier, token])
-}
 
-model SystemChange {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  type        String   @default("info") // info, warning, success, error
-  isVisible   Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  createdById String
-  createdBy   User     @relation("SystemChangeCreator", fields: [createdById], references: [id])
-  readBy      SystemChangeRead[]
-}
 
-model SystemChangeRead {
-  id        String       @id @default(cuid())
-  userId    String
-  changeId  String
-  readAt    DateTime     @default(now())
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  change    SystemChange @relation(fields: [changeId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, changeId])
-}
 
 model PushSubscription {
   id        String   @id @default(cuid())
@@ -320,15 +266,7 @@ model UserChatRoom {
   @@unique([userId, chatRoomId])
 }
 
-model SystemSettings {
-  id          String   @id @default(cuid())
-  key         String   @unique
-  value       String?
-  description String?
-  isEncrypted Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
+
 
 model PasswordResetToken {
   id        String   @id @default(cuid())

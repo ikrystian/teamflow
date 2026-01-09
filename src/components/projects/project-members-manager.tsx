@@ -263,7 +263,7 @@ export function ProjectMembersManager({
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-full p-0">
-                      <Command>
+                      <Command shouldFilter={false}>
                         <CommandInput
                           placeholder="Wyszukaj użytkownika po nazwie lub email..."
                           value={searchQuery}
@@ -302,9 +302,8 @@ export function ProjectMembersManager({
                                   </div>
                                 </div>
                                 <CheckCircle
-                                  className={`ml-auto h-4 w-4 ${
-                                    selectedUser?.id === user.id ? "opacity-100" : "opacity-0"
-                                  }`}
+                                  className={`ml-auto h-4 w-4 ${selectedUser?.id === user.id ? "opacity-100" : "opacity-0"
+                                    }`}
                                 />
                               </CommandItem>
                             ))}

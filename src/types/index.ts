@@ -139,19 +139,3 @@ export interface TaskUpdateData extends Partial<Task> {
   statusId?: string;
   projectId?: string;
 }
-
-export interface SystemChange {
-  id: string;
-  title: string;
-  description?: string;
-  createdAt: string;
-  updatedAt: string;
-  isRead?: boolean;
-  isVisible?: boolean;
-  createdBy: {
-    id: string;
-    name: string;
-    email: string;
-    avatarUrl?: string;
-  };
-}
