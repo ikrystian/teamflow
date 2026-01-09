@@ -3,6 +3,23 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import type { Session } from "next-auth"
+import type { Prisma } from "@prisma/client"
+
+type TaskWithIncludes = Prisma.TaskGetPayload<{
+  include: {
+    taskStatus: true
+    project: true
+    timeEntries: true
+    assignee: {
+      select: {
+        id: true
+        name: true
+        email: true
+        avatarUrl: true
+      }
+    }
+  }
+}>
 
 export async function GET(request: NextRequest) {
   try {
@@ -67,16 +84,16 @@ export async function GET(request: NextRequest) {
     })
 
     // Calculate total hours from time entries
-    const totalHours = tasks.reduce((sum: number, task) => {
+    const totalHours = tasks.reduce((sum: number, task: TaskWithIncludes) => {
       const taskHours = task.timeEntries.reduce((taskSum: number, entry) => taskSum + entry.hours, 0)
       return sum + taskHours
     }, 0)
 
     // Calculate total estimated hours
-    const totalEstimatedHours = tasks.reduce((sum: number, task) => sum + (task.estimatedHours || 0), 0)
+    const totalEstimatedHours = tasks.reduce((sum: number, task: TaskWithIncludes) => sum + (task.estimatedHours || 0), 0)
 
     // Count tasks by status
-    const tasksByStatus = tasks.reduce((acc: Record<string, { name: string; count: number; color: string }>, task) => {
+    const tasksByStatus = tasks.reduce((acc: Record<string, { name: string; count: number; color: string }>, task: TaskWithIncludes) => {
       const statusName = task.taskStatus?.name || 'No Status'
       const statusColor = task.taskStatus?.color || '#gray'
       if (!acc[statusName]) {
@@ -87,7 +104,7 @@ export async function GET(request: NextRequest) {
     }, {} as Record<string, { name: string; count: number; color: string }>)
 
     // Count tasks by priority
-    const tasksByPriority = tasks.reduce((acc: Record<string, number>, task) => {
+    const tasksByPriority = tasks.reduce((acc: Record<string, number>, task: TaskWithIncludes) => {
       const priority = task.priority || 'None'
       if (!acc[priority]) {
         acc[priority] = 0
@@ -107,7 +124,7 @@ export async function GET(request: NextRequest) {
       completedTasks: number
     }
 
-    const projectStats = tasks.reduce((acc: Record<string, ProjectStat>, task) => {
+    const projectStats = tasks.reduce((acc: Record<string, ProjectStat>, task: TaskWithIncludes) => {
       // Skip tasks without a project
       if (!task.project) {
         return acc
