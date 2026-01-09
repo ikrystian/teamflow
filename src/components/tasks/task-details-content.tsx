@@ -78,6 +78,7 @@ export function TaskDetailsContent({
   const [images, setImages] = useState(initialTask.images || [])
   const [todos, setTodos] = useState(initialTask?.todos || [])
   const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
+  const [totalLoggedHours, setTotalLoggedHours] = useState(0)
 
   // Inline editing state
   const [editingField, setEditingField] = useState<string | null>(null)
@@ -135,10 +136,24 @@ export function TaskDetailsContent({
       }
     }
 
+    const fetchTimeEntries = async () => {
+      if (!task?.id) return
+      try {
+        const response = await fetch(`/api/tasks/${task.id}/time-entries`)
+        if (response.ok) {
+          const data = await response.json()
+          setTotalLoggedHours(data.totalHours || 0)
+        }
+      } catch (error) {
+        console.error("Error fetching time entries:", error)
+      }
+    }
+
     if (task?.id) {
       fetchTaskData()
       fetchTaskStatuses()
       fetchProjects()
+      fetchTimeEntries()
     } else {
       setComments(task?.comments || [])
       setTodos(task?.todos || [])
@@ -273,7 +288,8 @@ export function TaskDetailsContent({
     return today >= overdueDate
   }
 
-  const totalLoggedHours = task.timeEntries?.reduce((sum, entry) => sum + entry.hours, 0) || 0
+  // Total logged hours is now fetched from the API
+
   const completedSubtasks = task.subtasks.filter(subtask => subtask.isCompleted).length
   const subtaskProgress = task.subtasks.length > 0 ? (completedSubtasks / task.subtasks.length) * 100 : 0
 
@@ -703,7 +719,7 @@ export function TaskDetailsContent({
                       <div className="space-y-2">
                         <DatePicker
                           value={editDueDate ? new Date(editDueDate) : undefined}
-                          onChange={(date) => saveField('dueDate', date ? dateToLocalDateString(date) : '' )}
+                          onChange={(date) => saveField('dueDate', date ? dateToLocalDateString(date) : '')}
                           className="rounded-lg border shadow-sm"
                         />
                       </div>
@@ -714,9 +730,8 @@ export function TaskDetailsContent({
                         title={canEdit ? "Kliknij aby zmienić termin" : undefined}
                       >
                         {task.dueDate ? (
-                          <div className={`flex items-center gap-2 ${
-                            isOverdue(task.dueDate) ? "text-destructive" : "text-foreground"
-                          }`}>
+                          <div className={`flex items-center gap-2 ${isOverdue(task.dueDate) ? "text-destructive" : "text-foreground"
+                            }`}>
                             {isOverdue(task.dueDate) && <AlertCircle className="h-4 w-4" />}
                             <span className="font-medium">
                               {formatTaskDueDateWithRelative(task.dueDate)}
@@ -733,7 +748,7 @@ export function TaskDetailsContent({
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                       <Clock className="h-4 w-4" />
-                      Czas pracy
+                      Szacowany czas pracy
                     </div>
                     {editingField === 'estimatedHours' ? (
                       <div className="space-y-2">
@@ -898,9 +913,8 @@ export function TaskDetailsContent({
                         ) : (
                           <div className="h-5 w-5 border-2 border-muted-foreground rounded flex-shrink-0" />
                         )}
-                        <span className={`text-sm ${
-                          subtask.isCompleted ? "line-through text-muted-foreground" : "text-foreground"
-                        }`}>
+                        <span className={`text-sm ${subtask.isCompleted ? "line-through text-muted-foreground" : "text-foreground"
+                          }`}>
                           {subtask.title}
                         </span>
                       </div>
