@@ -84,21 +84,31 @@ export function ImageCropper({
 
       if (!ctx) return
 
-      // Set canvas size to the cropped area
-      canvas.width = completedCrop.width
-      canvas.height = completedCrop.height
+      // Calculate scale factors between displayed and natural image size
+      const scaleX = image.naturalWidth / image.width
+      const scaleY = image.naturalHeight / image.height
 
-      // Draw the cropped image
+      // Calculate actual crop coordinates on the original image
+      const cropX = completedCrop.x * scaleX
+      const cropY = completedCrop.y * scaleY
+      const cropWidth = completedCrop.width * scaleX
+      const cropHeight = completedCrop.height * scaleY
+
+      // Set canvas size to the cropped area (using original image dimensions)
+      canvas.width = cropWidth
+      canvas.height = cropHeight
+
+      // Draw the cropped image from original coordinates
       ctx.drawImage(
         image,
-        completedCrop.x,
-        completedCrop.y,
-        completedCrop.width,
-        completedCrop.height,
+        cropX,
+        cropY,
+        cropWidth,
+        cropHeight,
         0,
         0,
-        completedCrop.width,
-        completedCrop.height
+        cropWidth,
+        cropHeight
       )
 
       // Convert to base64

@@ -25,14 +25,14 @@ export async function GET(request: NextRequest) {
 
     const pexelsApiKey = process.env.PEXELS_API_KEY
 
-    // If no API key, return a fallback placeholder image
+    // If no API key, return a fallback placeholder image (full resolution)
     if (!pexelsApiKey || pexelsApiKey === "your-pexels-api-key-here") {
       const fallbackImages = [
-        "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=600&fit=crop",
-        "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=800&h=600&fit=crop",
-        "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=800&h=600&fit=crop",
-        "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=600&fit=crop",
-        "https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=800&h=600&fit=crop"
+        "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920&q=90",
+        "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1920&q=90",
+        "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1920&q=90",
+        "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1920&q=90",
+        "https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=1920&q=90"
       ]
 
       const randomIndex = Math.floor(Math.random() * fallbackImages.length)
@@ -78,8 +78,8 @@ export async function GET(request: NextRequest) {
     const randomIndex = Math.floor(Math.random() * data.photos.length)
     const selectedPhoto = data.photos[randomIndex]
 
-    // Convert to base64 to avoid CORS issues during cropping
-    const base64Url = await imageUrlToBase64(selectedPhoto.src.medium)
+    // Convert to base64 to avoid CORS issues during cropping (use large2x for high resolution)
+    const base64Url = await imageUrlToBase64(selectedPhoto.src.large2x)
 
     return NextResponse.json({
       id: selectedPhoto.id,
