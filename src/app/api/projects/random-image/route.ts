@@ -1,5 +1,22 @@
 import { NextRequest, NextResponse } from "next/server"
 
+// Helper function to convert image URL to base64
+async function imageUrlToBase64(url: string): Promise<string> {
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw new Error(`Failed to fetch image: ${response.status}`)
+  }
+
+  const arrayBuffer = await response.arrayBuffer()
+  const buffer = Buffer.from(arrayBuffer)
+  const base64 = buffer.toString('base64')
+
+  // Get content type from response header
+  const contentType = response.headers.get('content-type') || 'image/jpeg'
+
+  return `data:${contentType};base64,${base64}`
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -19,11 +36,15 @@ export async function GET(request: NextRequest) {
       ]
 
       const randomIndex = Math.floor(Math.random() * fallbackImages.length)
+      const imageUrl = fallbackImages[randomIndex]
+
+      // Convert to base64 to avoid CORS issues during cropping
+      const base64Url = await imageUrlToBase64(imageUrl)
 
       return NextResponse.json({
         id: `fallback-${randomIndex}`,
-        url: fallbackImages[randomIndex],
-        originalUrl: fallbackImages[randomIndex],
+        url: base64Url,
+        originalUrl: imageUrl,
         photographer: "Unsplash",
         photographerUrl: "https://unsplash.com",
         alt: query,
@@ -57,9 +78,12 @@ export async function GET(request: NextRequest) {
     const randomIndex = Math.floor(Math.random() * data.photos.length)
     const selectedPhoto = data.photos[randomIndex]
 
+    // Convert to base64 to avoid CORS issues during cropping
+    const base64Url = await imageUrlToBase64(selectedPhoto.src.medium)
+
     return NextResponse.json({
       id: selectedPhoto.id,
-      url: selectedPhoto.src.medium,
+      url: base64Url,
       originalUrl: selectedPhoto.src.original,
       photographer: selectedPhoto.photographer,
       photographerUrl: selectedPhoto.photographer_url,

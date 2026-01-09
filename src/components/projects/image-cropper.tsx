@@ -136,6 +136,7 @@ export function ImageCropper({
                   src={imageUrl}
                   alt="Zdjęcie do kadrowania"
                   onLoad={onImageLoad}
+                  crossOrigin="anonymous"
                   className="max-w-full max-h-full object-contain"
                 />
               </ReactCrop>
