@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useSession } from "next-auth/react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ClickableAvatar } from "@/components/ui/clickable-avatar"
@@ -121,18 +122,17 @@ function SortableTaskCard({
       className="touch-none"
     >
       <Card
-        className={`mb-2 cursor-pointer hover:shadow-md transition-all border-l-4 ${
-          isUpdating
-            ? 'border-l-yellow-500 bg-yellow-50/50'
-            : ''
-        }`}
+        className={`mb-2 cursor-pointer hover:shadow-md transition-all border-l-4 ${isUpdating
+          ? 'border-l-yellow-500 bg-yellow-50/50'
+          : ''
+          }`}
         style={{
           borderLeftColor: isUpdating ? undefined : (task.project?.color || '#3B82F6'),
           paddingTop: 5,
           paddingBottom: 0
         }}
       >
-        <CardContent className="p-3" onClick={(event) => {onViewDetails(task); event.stopPropagation()}}>
+        <CardContent className="p-3" onClick={(event) => { onViewDetails(task); event.stopPropagation() }}>
           <div className="flex items-start justify-between mb-2 select-none">
             <div className="flex items-start gap-2 flex-1 min-w-0">
               <div className="flex-1 min-w-0">
@@ -177,16 +177,15 @@ function SortableTaskCard({
 
           <div className="space-y-2">
             <div className="flex items-center  gap-2 flex-wrap">
-            {task.priority && (
+              {task.priority && (
                 <Badge variant="outline" className={`text-xs ${getPriorityColor(task.priority)}`} title={getPriorityDisplayName(task.priority)}>
                   {getPriorityShortName(task.priority)}
                 </Badge>
               )}
 
               {task.dueDate && (
-                <div className={`flex items-center gap-1 text-xs ${
-                  isOverdue(task.dueDate) ? 'text-red-600' : 'text-muted-foreground'
-                }`}>
+                <div className={`flex items-center gap-1 text-xs ${isOverdue(task.dueDate) ? 'text-red-600' : 'text-muted-foreground'
+                  }`}>
                   <Calendar className="h-3 w-3" />
                   {formatTaskDueDateWithRelative(task.dueDate)}
                   {isOverdue(task.dueDate) && <AlertCircle className="h-3 w-3 text-red-600" />}
@@ -200,16 +199,16 @@ function SortableTaskCard({
                 </div>
               )}
               <div className="flex-1"></div>
-                          {task.assignee && (
-              <div className="flex items-center justify-end">
-                <ClickableAvatar
-                  userId={task.assignee.id}
-                  avatarUrl={task.assignee.avatarUrl}
-                  name={task.assignee.name}
-                  size="sm"
-                />
-              </div>
-            )}
+              {task.assignee && (
+                <div className="flex items-center justify-end">
+                  <ClickableAvatar
+                    userId={task.assignee.id}
+                    avatarUrl={task.assignee.avatarUrl}
+                    name={task.assignee.name}
+                    size="sm"
+                  />
+                </div>
+              )}
             </div>
 
 
@@ -229,6 +228,7 @@ function QuickAddTask({
   onTaskCreated: () => void
   projectId: string
 }) {
+  const { data: session } = useSession()
   const [isAdding, setIsAdding] = useState(false)
   const [title, setTitle] = useState("")
   const [loading, setLoading] = useState(false)
@@ -251,6 +251,7 @@ function QuickAddTask({
           title: title.trim(),
           projectId: projectId,
           statusId: status.id,
+          assigneeId: (session?.user as any)?.id,
         }),
       })
 
@@ -361,9 +362,8 @@ function KanbanColumn({
 
   return (
     <div className="flex-shrink-0 w-80">
-      <div className={`bg-muted/30 rounded-lg p-4 h-full transition-colors ${
-        isOver ? 'bg-primary/10 ring-2 ring-primary/20' : ''
-      }`}>
+      <div className={`bg-muted/30 rounded-lg p-4 h-full transition-colors ${isOver ? 'bg-primary/10 ring-2 ring-primary/20' : ''
+        }`}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <h3 className="font-semibold text-sm">{status.name}</h3>
