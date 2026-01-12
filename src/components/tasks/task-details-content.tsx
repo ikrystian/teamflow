@@ -51,6 +51,19 @@ interface TaskStatus {
   isDefault: boolean
 }
 
+interface TimeEntry {
+  id: string
+  hours: number
+  description?: string
+  date: string
+  createdAt: string
+  user: {
+    id: string
+    name: string
+    avatarUrl?: string
+  }
+}
+
 interface TaskDetailsContentProps {
   task: Task
   onEdit?: (task: Task, e: React.MouseEvent) => void
@@ -79,6 +92,8 @@ export function TaskDetailsContent({
   const [todos, setTodos] = useState(initialTask?.todos || [])
   const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
   const [totalLoggedHours, setTotalLoggedHours] = useState(0)
+  const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([])
+  const [loadingTimeEntries, setLoadingTimeEntries] = useState(false)
 
   // Inline editing state
   const [editingField, setEditingField] = useState<string | null>(null)
@@ -138,14 +153,18 @@ export function TaskDetailsContent({
 
     const fetchTimeEntries = async () => {
       if (!task?.id) return
+      setLoadingTimeEntries(true)
       try {
         const response = await fetch(`/api/tasks/${task.id}/time-entries`)
         if (response.ok) {
           const data = await response.json()
           setTotalLoggedHours(data.totalHours || 0)
+          setTimeEntries(data.timeEntries || [])
         }
       } catch (error) {
         console.error("Error fetching time entries:", error)
+      } finally {
+        setLoadingTimeEntries(false)
       }
     }
 
@@ -977,19 +996,69 @@ export function TaskDetailsContent({
                       Zadanie utworzone {formatCreatedDate(task.createdAt)}
                     </span>
                   </div>
-                  {task.timeEntries && task.timeEntries.length > 0 && (
-                    <div className="space-y-2">
-                      <h4 className="font-medium">Wpisy czasu pracy:</h4>
-                      {task.timeEntries.map((entry, index) => (
-                        <div key={index} className="flex items-center gap-3 text-sm pl-4">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                          <span className="text-muted-foreground">
-                            {entry.hours}h - {entry.description || 'Brak opisu'}
-                          </span>
-                        </div>
-                      ))}
+
+                  {/* Historia wpisów czasu */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium flex items-center gap-2">
+                        <Timer className="h-4 w-4" />
+                        Historia wpisów czasu
+                      </h4>
+                      {totalLoggedHours > 0 && (
+                        <span className="text-sm text-muted-foreground">
+                          Łącznie: {totalLoggedHours.toFixed(1)}h
+                        </span>
+                      )}
                     </div>
-                  )}
+
+                    {loadingTimeEntries ? (
+                      <div className="text-center py-4">
+                        <div className="text-sm text-muted-foreground">Ładowanie wpisów...</div>
+                      </div>
+                    ) : timeEntries.length === 0 ? (
+                      <div className="text-center py-6">
+                        <Clock className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                        <p className="text-sm text-muted-foreground">Brak wpisów czasu dla tego zadania</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {timeEntries.map((entry) => (
+                          <div key={entry.id} className="flex items-start gap-3 p-3 border rounded-lg">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-medium">
+                                  {entry.hours === 1 ? '1 godzina' : entry.hours < 5 ? `${entry.hours} godziny` : `${entry.hours} godzin`}
+                                </span>
+                                <span className="text-sm text-muted-foreground">•</span>
+                                <span className="text-sm text-muted-foreground">
+                                  {(() => {
+                                    const date = new Date(entry.date)
+                                    const today = new Date()
+                                    const yesterday = new Date(today)
+                                    yesterday.setDate(yesterday.getDate() - 1)
+                                    if (date.toDateString() === today.toDateString()) {
+                                      return 'Dzisiaj'
+                                    } else if (date.toDateString() === yesterday.toDateString()) {
+                                      return 'Wczoraj'
+                                    } else {
+                                      return date.toLocaleDateString('pl-PL')
+                                    }
+                                  })()}
+                                </span>
+                              </div>
+                              {entry.description && (
+                                <p className="text-sm text-muted-foreground mt-1">{entry.description}</p>
+                              )}
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Dodane przez {entry.user.name}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
