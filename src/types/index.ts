@@ -132,6 +132,13 @@ export interface Task {
   images?: TaskImage[];
   attachments?: TaskAttachment[];
   todos?: Todo[];
+  tags?: Tag[];
+}
+
+export interface Tag {
+  id: string;
+  name: string;
+  color: string;
 }
 
 export interface TaskUpdateData extends Partial<Task> {

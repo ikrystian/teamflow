@@ -119,6 +119,11 @@ export async function GET(
           orderBy: {
             createdAt: "desc"
           }
+        },
+        taskTags: {
+          include: {
+            tag: true
+          }
         }
       }
     })
@@ -130,7 +135,14 @@ export async function GET(
       )
     }
 
-    return NextResponse.json({ task })
+    // Map tags for simpler consumption
+    const taskWithTags = {
+      ...task,
+      tags: task.taskTags.map(tt => tt.tag),
+      taskTags: undefined
+    }
+
+    return NextResponse.json({ task: taskWithTags })
   } catch (error) {
     console.error("Error fetching task:", error)
     return NextResponse.json(
@@ -152,7 +164,7 @@ export async function PATCH(
     }
 
     const { taskId } = await params
-    const { title, description, statusId, priority, dueDate, startTime, endTime, assigneeId, estimatedHours, projectId, reminderEnabled, reminderType, reminderValue } = await request.json()
+    const { title, description, statusId, priority, dueDate, startTime, endTime, assigneeId, estimatedHours, projectId, reminderEnabled, reminderType, reminderValue, tagIds } = await request.json()
 
     // Fetch task to check permissions
     const existingTask = await prisma.task.findUnique({
@@ -219,8 +231,8 @@ export async function PATCH(
     // Check if user can edit this task (creator, assignee, or admin)
     const userIsAdmin = await isAdmin()
     const canEdit = userIsAdmin ||
-                   existingTask.createdById === session.user.id ||
-                   existingTask.assigneeId === session.user.id
+      existingTask.createdById === session.user.id ||
+      existingTask.assigneeId === session.user.id
 
     if (!canEdit) {
       return NextResponse.json(
@@ -259,7 +271,7 @@ export async function PATCH(
           { status: 400 }
         )
       }
-if (existingTask.project) {
+      if (existingTask.project) {
         // If there's a project but no teamId associated, it's an unexpected state.
         // It should implicitly consider that the assignee needs to be a direct project member.
         // Assuming for now, this case implies no team for the project, so no team-based member check.
@@ -318,7 +330,7 @@ if (existingTask.project) {
       reminderType?: string | null;
       reminderValue?: number | null;
       reminderTime?: Date | null;
-  } = {}
+    } = {}
     if (title !== undefined) updateData.title = title
     if (description !== undefined) updateData.description = description
     if (statusId !== undefined) updateData.statusId = statusId
@@ -352,6 +364,24 @@ if (existingTask.project) {
         }
       } else {
         updateData.reminderTime = null
+      }
+    }
+
+    // Handle tags update
+    if (tagIds !== undefined) {
+      // Delete existing task tags
+      await prisma.taskTag.deleteMany({
+        where: { taskId }
+      })
+
+      // Create new task tags
+      if (tagIds.length > 0) {
+        await prisma.taskTag.createMany({
+          data: tagIds.map((tagId: string) => ({
+            taskId,
+            tagId
+          }))
+        })
       }
     }
 
@@ -427,13 +457,25 @@ if (existingTask.project) {
           orderBy: {
             createdAt: "desc"
           }
+        },
+        taskTags: {
+          include: {
+            tag: true
+          }
         }
       }
     })
 
+    // Map tags for simpler consumption
+    const taskWithTags = {
+      ...task,
+      tags: task.taskTags.map(tt => tt.tag),
+      taskTags: undefined
+    }
+
     // TODO: Add Slack notification when slackUserId is available in user model
 
-    return NextResponse.json({ task })
+    return NextResponse.json({ task: taskWithTags })
   } catch (error) {
     console.error("Error updating task:", error)
     return NextResponse.json(
@@ -488,7 +530,7 @@ export async function DELETE(
       userIsAdmin || // Admin can delete any task
       existingTask.createdById === session.user.id || // Task creator
       existingTask.assigneeId === session.user.id || // Assigned user
-      (existingTask.project ) // Team member (only for tasks with projects)
+      (existingTask.project) // Team member (only for tasks with projects)
 
     if (!canDelete) {
       return NextResponse.json(

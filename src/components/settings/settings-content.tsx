@@ -24,6 +24,7 @@ import {
   Key,
   Users,
   Mail,
+  Tag,
 } from "lucide-react"
 import { useSession } from "next-auth/react"
 import type { Session } from "next-auth"
@@ -33,6 +34,7 @@ import { PasswordChangeForm } from "./password-change-form"
 import { ActiveSessions } from "./active-sessions"
 import { UserManagement } from "./user-management"
 import { SMTPSettings } from "./smtp-settings"
+import { TagsManagement } from "./tags-management"
 import { usePushNotifications } from "@/hooks/usePushNotifications"
 
 interface UserProfile {
@@ -255,8 +257,8 @@ export function SettingsContent() {
 
   // Available tabs based on user role
   const availableTabs = useMemo(() => isAdmin
-    ? ['profile', 'security', 'notifications', 'privacy', 'appearance', 'task-statuses', 'smtp', 'database', 'users']
-    : ['profile', 'security', 'notifications', 'privacy', 'appearance', 'task-statuses'], [isAdmin])
+    ? ['profile', 'security', 'notifications', 'privacy', 'appearance', 'task-statuses', 'tags', 'smtp', 'database', 'users']
+    : ['profile', 'security', 'notifications', 'privacy', 'appearance', 'task-statuses', 'tags'], [isAdmin])
 
   // Validate current tab and redirect if invalid
   useEffect(() => {
@@ -290,438 +292,446 @@ export function SettingsContent() {
   return (
     <div className="container mx-auto py-6 px-4">
 
-        <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-6">
-          <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-9' : 'grid-cols-6'}`}>
-            <TabsTrigger value="profile" className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              Profil
-            </TabsTrigger>
-            <TabsTrigger value="security" className="flex items-center gap-2">
-              <Key className="h-4 w-4" />
-              Bezpieczeństwo
-            </TabsTrigger>
-            <TabsTrigger value="notifications" className="flex items-center gap-2">
-              <Bell className="h-4 w-4" />
-              Powiadomienia
-            </TabsTrigger>
-            <TabsTrigger value="privacy" className="flex items-center gap-2">
-              <Shield className="h-4 w-4" />
-              Prywatność
-            </TabsTrigger>
-            <TabsTrigger value="appearance" className="flex items-center gap-2">
-              <Palette className="h-4 w-4" />
-              Wygląd
-            </TabsTrigger>
-            <TabsTrigger value="task-statuses" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Statusy zadań
-            </TabsTrigger>
-            {isAdmin && (
-              <>
-                <TabsTrigger value="smtp" className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  SMTP
-                </TabsTrigger>
-                <TabsTrigger value="users" className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Użytkownicy
-                </TabsTrigger>
-              </>
-            )}
-          </TabsList>
+      <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-6">
+        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-10' : 'grid-cols-7'}`}>
+          <TabsTrigger value="profile" className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            Profil
+          </TabsTrigger>
+          <TabsTrigger value="security" className="flex items-center gap-2">
+            <Key className="h-4 w-4" />
+            Bezpieczeństwo
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="flex items-center gap-2">
+            <Bell className="h-4 w-4" />
+            Powiadomienia
+          </TabsTrigger>
+          <TabsTrigger value="privacy" className="flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            Prywatność
+          </TabsTrigger>
+          <TabsTrigger value="appearance" className="flex items-center gap-2">
+            <Palette className="h-4 w-4" />
+            Wygląd
+          </TabsTrigger>
+          <TabsTrigger value="task-statuses" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Statusy zadań
+          </TabsTrigger>
+          <TabsTrigger value="tags" className="flex items-center gap-2">
+            <Tag className="h-4 w-4" />
+            Tagi
+          </TabsTrigger>
+          {isAdmin && (
+            <>
+              <TabsTrigger value="smtp" className="flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                SMTP
+              </TabsTrigger>
+              <TabsTrigger value="users" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Użytkownicy
+              </TabsTrigger>
+            </>
+          )}
+        </TabsList>
 
-          <TabsContent value="profile" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Informacje osobiste
-                </CardTitle>
-                <CardDescription>
-                  Zaktualizuj swoje dane osobowe i informacje kontaktowe
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Avatar Section */}
-                <AvatarUpload
-                  currentAvatarUrl={userProfile?.avatarUrl}
-                  fallbackText={session?.user?.name?.charAt(0) || "U"}
-                  onAvatarChange={handleAvatarChange}
-                  size="lg"
+        <TabsContent value="profile" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Informacje osobiste
+              </CardTitle>
+              <CardDescription>
+                Zaktualizuj swoje dane osobowe i informacje kontaktowe
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Avatar Section */}
+              <AvatarUpload
+                currentAvatarUrl={userProfile?.avatarUrl}
+                fallbackText={session?.user?.name?.charAt(0) || "U"}
+                onAvatarChange={handleAvatarChange}
+                size="lg"
+              />
+
+              <Separator />
+
+              {/* Basic Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Imię i nazwisko</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => handleFormChange("name", e.target.value)}
+                    placeholder="Wprowadź imię i nazwisko"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={userProfile?.email || ""}
+                    disabled
+                    placeholder="Adres email nie może być zmieniony"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Telefon</Label>
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => handleFormChange("phone", e.target.value)}
+                    placeholder="Wprowadź numer telefonu"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="location">Lokalizacja</Label>
+                  <Input
+                    id="location"
+                    value={formData.location}
+                    onChange={(e) => handleFormChange("location", e.target.value)}
+                    placeholder="Miasto, Kraj"
+                  />
+                </div>
+              </div>
+
+              {/* Professional Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="jobTitle">Stanowisko</Label>
+                  <Input
+                    id="jobTitle"
+                    value={formData.jobTitle}
+                    onChange={(e) => handleFormChange("jobTitle", e.target.value)}
+                    placeholder="Twoje stanowisko"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="company">Firma</Label>
+                  <Input
+                    id="company"
+                    value={formData.company}
+                    onChange={(e) => handleFormChange("company", e.target.value)}
+                    placeholder="Nazwa firmy"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="website">Strona internetowa</Label>
+                <Input
+                  id="website"
+                  value={formData.website}
+                  onChange={(e) => handleFormChange("website", e.target.value)}
+                  placeholder="https://twoja-strona.pl"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bio">O mnie</Label>
+                <Textarea
+                  id="bio"
+                  value={formData.bio}
+                  onChange={(e) => handleFormChange("bio", e.target.value)}
+                  placeholder="Opowiedz coś o sobie..."
+                  rows={4}
+                />
+              </div>
+
+              {/* Save Button */}
+              <div className="flex items-center justify-end pt-4 border-t">
+                <Button
+                  onClick={handleSaveProfile}
+                  disabled={isLoading}
+                  className="min-w-[120px]"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Zapisywanie...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      Zapisz zmiany
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="security" className="space-y-6">
+          <PasswordChangeForm />
+          <ActiveSessions />
+        </TabsContent>
+
+        <TabsContent value="notifications" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5" />
+                Powiadomienia
+              </CardTitle>
+              <CardDescription>
+                Wybierz, o czym chcesz być powiadamiany
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Powiadomienia email</Label>
+                    <p className="text-sm text-gray-500">Otrzymuj powiadomienia na email</p>
+                  </div>
+                  <Switch disabled
+                    checked={otherSettings.notifications.email}
+
+
+                    onCheckedChange={(checked) => handleNotificationChange("email", checked)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Powiadomienia push</Label>
+                    <p className="text-sm text-gray-500">
+                      {!pushSupported
+                        ? "Twoja przeglądarka nie obsługuje powiadomień push"
+                        : "Otrzymuj powiadomienia w przeglądarce"
+                      }
+                    </p>
+                  </div>
+                  <Switch
+                    disabled={!pushSupported || pushLoading}
+                    checked={pushSubscribed}
+                    onCheckedChange={(checked) => handleNotificationChange("push", checked)}
+                  />
+                </div>
 
                 <Separator />
 
-                {/* Basic Info */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Imię i nazwisko</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => handleFormChange("name", e.target.value)}
-                      placeholder="Wprowadź imię i nazwisko"
-                    />
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Przypisanie zadania</Label>
+                    <p className="text-sm text-gray-500">Gdy zostaniesz przypisany do zadania</p>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={userProfile?.email || ""}
-                      disabled
-                      placeholder="Adres email nie może być zmieniony"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Telefon</Label>
-                    <Input
-                      id="phone"
-                      value={formData.phone}
-                      onChange={(e) => handleFormChange("phone", e.target.value)}
-                      placeholder="Wprowadź numer telefonu"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="location">Lokalizacja</Label>
-                    <Input
-                      id="location"
-                      value={formData.location}
-                      onChange={(e) => handleFormChange("location", e.target.value)}
-                      placeholder="Miasto, Kraj"
-                    />
-                  </div>
+                  <Switch
+                    checked={otherSettings.notifications.taskAssigned}
+                    onCheckedChange={(checked) => handleNotificationChange("taskAssigned", checked)}
+                  />
                 </div>
 
-                {/* Professional Info */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="jobTitle">Stanowisko</Label>
-                    <Input
-                      id="jobTitle"
-                      value={formData.jobTitle}
-                      onChange={(e) => handleFormChange("jobTitle", e.target.value)}
-                      placeholder="Twoje stanowisko"
-                    />
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Ukończenie zadania</Label>
+                    <p className="text-sm text-gray-500">Gdy zadanie zostanie ukończone</p>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="company">Firma</Label>
-                    <Input
-                      id="company"
-                      value={formData.company}
-                      onChange={(e) => handleFormChange("company", e.target.value)}
-                      placeholder="Nazwa firmy"
-                    />
+                  <Switch disabled
+                    checked={otherSettings.notifications.taskCompleted}
+                    onCheckedChange={(checked) => handleNotificationChange("taskCompleted", checked)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Aktualizacje projektów</Label>
+                    <p className="text-sm text-gray-500">Zmiany w projektach, w których uczestniczysz</p>
+                  </div>
+                  <Switch disabled
+                    checked={otherSettings.notifications.projectUpdates}
+                    onCheckedChange={(checked) => handleNotificationChange("projectUpdates", checked)}
+                  />
+                </div>
+
+
+                <Separator />
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Raport tygodniowy</Label>
+                    <p className="text-sm text-gray-500">Podsumowanie aktywności z tygodnia</p>
+                  </div>
+                  <Switch disabled
+                    checked={otherSettings.notifications.weeklyReport}
+                    onCheckedChange={(checked) => handleNotificationChange("weeklyReport", checked)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Wiadomości marketingowe</Label>
+                    <p className="text-sm text-gray-500">Informacje o nowych funkcjach i aktualizacjach</p>
+                  </div>
+                  <Switch disabled
+                    checked={otherSettings.notifications.marketing}
+                    onCheckedChange={(checked) => handleNotificationChange("marketing", checked)}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="privacy" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Prywatność i bezpieczeństwo
+              </CardTitle>
+              <CardDescription>
+                Kontroluj widoczność swoich danych i aktywności
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Widoczny profil</Label>
+                    <p className="text-sm text-gray-500">Czy inni mogą zobaczyć Twój profil</p>
+                  </div>
+                  <Switch disabled
+                    checked={otherSettings.privacy.profileVisible}
+                    onCheckedChange={(checked) => handlePrivacyChange("profileVisible", checked)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Pokaż email</Label>
+                    <p className="text-sm text-gray-500">Czy inni mogą zobaczyć Twój adres email</p>
+                  </div>
+                  <Switch disabled
+                    checked={otherSettings.privacy.showEmail}
+                    onCheckedChange={(checked) => handlePrivacyChange("showEmail", checked)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Pokaż telefon</Label>
+                    <p className="text-sm text-gray-500">Czy inni mogą zobaczyć Twój numer telefonu</p>
+                  </div>
+                  <Switch disabled
+                    checked={otherSettings.privacy.showPhone}
+                    onCheckedChange={(checked) => handlePrivacyChange("showPhone", checked)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Widoczna aktywność</Label>
+                    <p className="text-sm text-gray-500">Czy inni mogą zobaczyć Twoją aktywność</p>
+                  </div>
+                  <Switch disabled
+                    checked={otherSettings.privacy.activityVisible}
+                    onCheckedChange={(checked) => handlePrivacyChange("activityVisible", checked)}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="appearance" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Palette className="h-5 w-5" />
+                Wygląd i personalizacja
+              </CardTitle>
+              <CardDescription>
+                Dostosuj wygląd aplikacji do swoich preferencji
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Język</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      disabled
+                      variant={otherSettings.appearance.language === "pl" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setOtherSettings(prev => ({
+                        ...prev,
+                        appearance: { ...prev.appearance, language: "pl" }
+                      }))}
+                    >
+                      Polski
+                    </Button>
+                    <Button
+                      disabled
+                      variant={otherSettings.appearance.language === "en" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setOtherSettings(prev => ({
+                        ...prev,
+                        appearance: { ...prev.appearance, language: "en" }
+                      }))}
+                    >
+                      English
+                    </Button>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="website">Strona internetowa</Label>
-                  <Input
-                    id="website"
-                    value={formData.website}
-                    onChange={(e) => handleFormChange("website", e.target.value)}
-                    placeholder="https://twoja-strona.pl"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="bio">O mnie</Label>
-                  <Textarea
-                    id="bio"
-                    value={formData.bio}
-                    onChange={(e) => handleFormChange("bio", e.target.value)}
-                    placeholder="Opowiedz coś o sobie..."
-                    rows={4}
-                  />
-                </div>
-
-                {/* Save Button */}
-                <div className="flex items-center justify-end pt-4 border-t">
-                  <Button
-                    onClick={handleSaveProfile}
-                    disabled={isLoading}
-                    className="min-w-[120px]"
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Zapisywanie...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="mr-2 h-4 w-4" />
-                        Zapisz zmiany
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="security" className="space-y-6">
-            <PasswordChangeForm />
-            <ActiveSessions />
-          </TabsContent>
-
-          <TabsContent value="notifications" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bell className="h-5 w-5" />
-                  Powiadomienia
-                </CardTitle>
-                <CardDescription>
-                  Wybierz, o czym chcesz być powiadamiany
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Powiadomienia email</Label>
-                      <p className="text-sm text-gray-500">Otrzymuj powiadomienia na email</p>
-                    </div>
-                    <Switch disabled
-                      checked={otherSettings.notifications.email}
-
-
-                      onCheckedChange={(checked) => handleNotificationChange("email", checked)}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Powiadomienia push</Label>
-                      <p className="text-sm text-gray-500">
-                        {!pushSupported
-                          ? "Twoja przeglądarka nie obsługuje powiadomień push"
-                          : "Otrzymuj powiadomienia w przeglądarce"
-                        }
-                      </p>
-                    </div>
-                    <Switch
-                      disabled={!pushSupported || pushLoading}
-                      checked={pushSubscribed}
-                      onCheckedChange={(checked) => handleNotificationChange("push", checked)}
-                    />
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Przypisanie zadania</Label>
-                      <p className="text-sm text-gray-500">Gdy zostaniesz przypisany do zadania</p>
-                    </div>
-                    <Switch
-                      checked={otherSettings.notifications.taskAssigned}
-                      onCheckedChange={(checked) => handleNotificationChange("taskAssigned", checked)}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Ukończenie zadania</Label>
-                      <p className="text-sm text-gray-500">Gdy zadanie zostanie ukończone</p>
-                    </div>
-                    <Switch disabled
-                      checked={otherSettings.notifications.taskCompleted}
-                      onCheckedChange={(checked) => handleNotificationChange("taskCompleted", checked)}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Aktualizacje projektów</Label>
-                      <p className="text-sm text-gray-500">Zmiany w projektach, w których uczestniczysz</p>
-                    </div>
-                    <Switch disabled
-                      checked={otherSettings.notifications.projectUpdates}
-                      onCheckedChange={(checked) => handleNotificationChange("projectUpdates", checked)}
-                    />
-                  </div>
-
-
-                  <Separator />
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Raport tygodniowy</Label>
-                      <p className="text-sm text-gray-500">Podsumowanie aktywności z tygodnia</p>
-                    </div>
-                    <Switch disabled
-                      checked={otherSettings.notifications.weeklyReport}
-                      onCheckedChange={(checked) => handleNotificationChange("weeklyReport", checked)}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Wiadomości marketingowe</Label>
-                      <p className="text-sm text-gray-500">Informacje o nowych funkcjach i aktualizacjach</p>
-                    </div>
-                    <Switch disabled
-                      checked={otherSettings.notifications.marketing}
-                      onCheckedChange={(checked) => handleNotificationChange("marketing", checked)}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="privacy" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  Prywatność i bezpieczeństwo
-                </CardTitle>
-                <CardDescription>
-                  Kontroluj widoczność swoich danych i aktywności
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Widoczny profil</Label>
-                      <p className="text-sm text-gray-500">Czy inni mogą zobaczyć Twój profil</p>
-                    </div>
-                    <Switch disabled
-                      checked={otherSettings.privacy.profileVisible}
-                      onCheckedChange={(checked) => handlePrivacyChange("profileVisible", checked)}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Pokaż email</Label>
-                      <p className="text-sm text-gray-500">Czy inni mogą zobaczyć Twój adres email</p>
-                    </div>
-                    <Switch disabled
-                      checked={otherSettings.privacy.showEmail}
-                      onCheckedChange={(checked) => handlePrivacyChange("showEmail", checked)}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Pokaż telefon</Label>
-                      <p className="text-sm text-gray-500">Czy inni mogą zobaczyć Twój numer telefonu</p>
-                    </div>
-                    <Switch disabled
-                      checked={otherSettings.privacy.showPhone}
-                      onCheckedChange={(checked) => handlePrivacyChange("showPhone", checked)}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Widoczna aktywność</Label>
-                      <p className="text-sm text-gray-500">Czy inni mogą zobaczyć Twoją aktywność</p>
-                    </div>
-                    <Switch disabled
-                      checked={otherSettings.privacy.activityVisible}
-                      onCheckedChange={(checked) => handlePrivacyChange("activityVisible", checked)}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="appearance" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Palette className="h-5 w-5" />
-                  Wygląd i personalizacja
-                </CardTitle>
-                <CardDescription>
-                  Dostosuj wygląd aplikacji do swoich preferencji
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Język</Label>
-                    <div className="flex gap-2">
-                      <Button
+                  <Label>Strefa czasowa</Label>
+                  <div className="flex gap-2">
+                    <Button
                       disabled
-                        variant={otherSettings.appearance.language === "pl" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setOtherSettings(prev => ({
-                          ...prev,
-                          appearance: { ...prev.appearance, language: "pl" }
-                        }))}
-                      >
-                        Polski
-                      </Button>
-                      <Button
+                      variant={otherSettings.appearance.timezone === "Europe/Warsaw" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setOtherSettings(prev => ({
+                        ...prev,
+                        appearance: { ...prev.appearance, timezone: "Europe/Warsaw" }
+                      }))}
+                    >
+                      Europa/Warszawa
+                    </Button>
+                    <Button
                       disabled
-                        variant={otherSettings.appearance.language === "en" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setOtherSettings(prev => ({
-                          ...prev,
-                          appearance: { ...prev.appearance, language: "en" }
-                        }))}
-                      >
-                        English
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Strefa czasowa</Label>
-                    <div className="flex gap-2">
-                      <Button
-                      disabled
-                        variant={otherSettings.appearance.timezone === "Europe/Warsaw" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setOtherSettings(prev => ({
-                          ...prev,
-                          appearance: { ...prev.appearance, timezone: "Europe/Warsaw" }
-                        }))}
-                      >
-                        Europa/Warszawa
-                      </Button>
-                      <Button
-                      disabled
-                        variant={otherSettings.appearance.timezone === "UTC" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setOtherSettings(prev => ({
-                          ...prev,
-                          appearance: { ...prev.appearance, timezone: "UTC" }
-                        }))}
-                      >
-                        UTC
-                      </Button>
-                    </div>
+                      variant={otherSettings.appearance.timezone === "UTC" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setOtherSettings(prev => ({
+                        ...prev,
+                        appearance: { ...prev.appearance, timezone: "UTC" }
+                      }))}
+                    >
+                      UTC
+                    </Button>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          <TabsContent value="task-statuses" className="space-y-6">
-            <SystemTaskStatuses />
-          </TabsContent>
+        <TabsContent value="task-statuses" className="space-y-6">
+          <SystemTaskStatuses />
+        </TabsContent>
 
-          {isAdmin && (
-            <>
-              <TabsContent value="smtp" className="space-y-6">
-                <SMTPSettings />
-              </TabsContent>
+        <TabsContent value="tags" className="space-y-6">
+          <TagsManagement />
+        </TabsContent>
 
-              <TabsContent value="users" className="space-y-6">
-                <UserManagement />
-              </TabsContent>
-            </>
-          )}
-        </Tabs>
-      </div>
+        {isAdmin && (
+          <>
+            <TabsContent value="smtp" className="space-y-6">
+              <SMTPSettings />
+            </TabsContent>
+
+            <TabsContent value="users" className="space-y-6">
+              <UserManagement />
+            </TabsContent>
+          </>
+        )}
+      </Tabs>
+    </div>
   )
 }

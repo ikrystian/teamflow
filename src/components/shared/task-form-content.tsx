@@ -9,10 +9,10 @@ import { Label } from "@/components/ui/label"
 import { RichTextEditor } from "@/components/ui/rich-text-editor"
 
 import { DateTimePicker } from "@/components/ui/datetime-picker"
-import { dateToLocalDateString } from "@/lib/date-utils"
-import type { Task, TaskStatus, Project } from "@/types" // Updated import
+import type { Task, TaskStatus, Project, Tag } from "@/types"
 import { ReminderSettings } from "@/components/tasks/reminder-settings"
 import { FileUpload } from "@/components/ui/file-upload"
+import { Badge } from "@/components/ui/badge"
 import {
   getEstimatedHoursOptions,
   hoursToSelectValue,
@@ -92,6 +92,10 @@ export function TaskFormContent({
   const [attachments, setAttachments] = useState<File[]>([])
   const [uploadingFiles, setUploadingFiles] = useState(false)
 
+  // Tags state
+  const [availableTags, setAvailableTags] = useState<Tag[]>([])
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
+
   const isCreateMode = mode === "create"
   const isEditMode = mode === "edit"
 
@@ -140,9 +144,23 @@ export function TaskFormContent({
     }
   }, [isCreateMode, isEditMode, task, defaultStatusId])
 
+  // Fetch available tags
+  const fetchTags = useCallback(async () => {
+    try {
+      const response = await fetch('/api/tags')
+      if (response.ok) {
+        const data = await response.json()
+        setAvailableTags(data.tags)
+      }
+    } catch (error) {
+      console.error("Error fetching tags:", error)
+    }
+  }, [])
+
   // Initialize form
   useEffect(() => {
     fetchTaskStatuses()
+    fetchTags()
 
     if (isCreateMode) {
       // Reset form for create mode
@@ -159,6 +177,7 @@ export function TaskFormContent({
       setReminderEnabled(false)
       setReminderType("hours")
       setReminderValue(1)
+      setSelectedTagIds([])
       setError("")
     } else if (isEditMode && task) {
       // Populate form for edit mode
@@ -179,9 +198,10 @@ export function TaskFormContent({
       setReminderEnabled(task.reminderEnabled || false)
       setReminderType(task.reminderType || "hours")
       setReminderValue(task.reminderValue || 1)
+      setSelectedTagIds(task.tags?.map(t => t.id) || [])
       setError("")
     }
-  }, [isCreateMode, isEditMode, task, projectId, session?.user?.id, fetchTaskStatuses, defaultDate, defaultStartTime, defaultEndTime])
+  }, [isCreateMode, isEditMode, task, projectId, session?.user?.id, fetchTaskStatuses, fetchTags, defaultDate, defaultStartTime, defaultEndTime])
 
   // Force assign to current user when forceAssignToCurrentUser is true
   useEffect(() => {
@@ -278,7 +298,8 @@ export function TaskFormContent({
             statusId: statusId || undefined,
             reminderEnabled,
             reminderType: reminderEnabled ? reminderType : undefined,
-            reminderValue: reminderEnabled ? reminderValue : undefined
+            reminderValue: reminderEnabled ? reminderValue : undefined,
+            tagIds: selectedTagIds.length > 0 ? selectedTagIds : undefined
           }),
         })
 
@@ -317,6 +338,7 @@ export function TaskFormContent({
             reminderEnabled,
             reminderType: reminderEnabled ? reminderType : undefined,
             reminderValue: reminderEnabled ? reminderValue : undefined,
+            tagIds: selectedTagIds,
           }),
         })
 
@@ -550,6 +572,45 @@ export function TaskFormContent({
               </select>
             </div>
           </div>
+
+          {/* Tags Selection */}
+          {availableTags.length > 0 && (
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Tagi</Label>
+              <div className="flex flex-wrap gap-2 p-3 border rounded-md min-h-[42px]">
+                {availableTags.map((tag) => {
+                  const isSelected = selectedTagIds.includes(tag.id)
+                  return (
+                    <Badge
+                      key={tag.id}
+                      variant={isSelected ? "default" : "outline"}
+                      className="cursor-pointer transition-all hover:scale-105"
+                      style={isSelected ? {
+                        backgroundColor: tag.color,
+                        borderColor: tag.color,
+                        color: '#fff'
+                      } : {
+                        borderColor: tag.color,
+                        color: tag.color
+                      }}
+                      onClick={() => {
+                        if (isSelected) {
+                          setSelectedTagIds(prev => prev.filter(id => id !== tag.id))
+                        } else {
+                          setSelectedTagIds(prev => [...prev, tag.id])
+                        }
+                      }}
+                    >
+                      {tag.name}
+                    </Badge>
+                  )
+                })}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Kliknij na tag, aby go zaznaczyć lub odznaczyć
+              </p>
+            </div>
+          )}
 
           {/* Time Planning Mode Selection */}
           <div className="space-y-3">

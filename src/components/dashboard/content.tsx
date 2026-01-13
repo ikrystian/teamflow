@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Clock, Calendar, User as UserIcon, ArrowRight } from "lucide-react"
 import { PrintTodosDialog } from "./print-todos-dialog"
 import { UserReportSummary } from "./user-report-summary"
+import { TagsSummary } from "./tags-summary"
 
 export function DashboardContent() {
   const { data: session } = useSession() as { data: Session | null }
@@ -183,6 +184,9 @@ export function DashboardContent() {
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
       {/* User Report Summary */}
       <UserReportSummary />
+
+      {/* Tags Summary */}
+      <TagsSummary />
 
       {/* Quick Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

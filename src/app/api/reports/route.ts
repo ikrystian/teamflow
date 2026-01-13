@@ -10,6 +10,11 @@ type TaskWithIncludes = Prisma.TaskGetPayload<{
     taskStatus: true
     project: true
     timeEntries: true
+    taskTags: {
+      include: {
+        tag: true
+      }
+    }
     assignee: {
       select: {
         id: true
@@ -75,6 +80,11 @@ export async function GET(request: NextRequest) {
             name: true,
             email: true,
             avatarUrl: true
+          }
+        },
+        taskTags: {
+          include: {
+            tag: true
           }
         }
       },
@@ -171,6 +181,46 @@ export async function GET(request: NextRequest) {
       .map(([date, hours]) => ({ date, hours }))
       .sort((a, b) => a.date.localeCompare(b.date))
 
+    // Calculate tag statistics
+    interface TagStat {
+      id: string
+      name: string
+      color: string
+      totalHours: number
+      estimatedHours: number
+      taskCount: number
+      completedTasks: number
+    }
+
+    const tagStats = tasks.reduce((acc: Record<string, TagStat>, task: TaskWithIncludes) => {
+      const taskHours = task.timeEntries.reduce((sum: number, entry) => sum + entry.hours, 0)
+      const isCompleted = task.taskStatus?.name === 'Done'
+
+      task.taskTags.forEach((taskTag) => {
+        const tag = taskTag.tag
+        if (!acc[tag.id]) {
+          acc[tag.id] = {
+            id: tag.id,
+            name: tag.name,
+            color: tag.color,
+            totalHours: 0,
+            estimatedHours: 0,
+            taskCount: 0,
+            completedTasks: 0
+          }
+        }
+
+        acc[tag.id].totalHours += taskHours
+        acc[tag.id].estimatedHours += task.estimatedHours || 0
+        acc[tag.id].taskCount++
+        if (isCompleted) {
+          acc[tag.id].completedTasks++
+        }
+      })
+
+      return acc
+    }, {} as Record<string, TagStat>)
+
     // Calculate weekly hours for chart
     const weeklyHoursMap = new Map<string, number>()
     tasks.forEach((task) => {
@@ -254,6 +304,14 @@ export async function GET(request: NextRequest) {
           estimatedHours: Math.round(project.estimatedHours * 100) / 100,
           completionRate: project.taskCount > 0
             ? Math.round((project.completedTasks / project.taskCount) * 100 * 100) / 100
+            : 0
+        })),
+        tagStats: Object.values(tagStats).map((tag) => ({
+          ...tag,
+          totalHours: Math.round(tag.totalHours * 100) / 100,
+          estimatedHours: Math.round(tag.estimatedHours * 100) / 100,
+          completionRate: tag.taskCount > 0
+            ? Math.round((tag.completedTasks / tag.taskCount) * 100 * 100) / 100
             : 0
         }))
       },

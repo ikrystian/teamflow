@@ -159,6 +159,11 @@ export async function GET(request: NextRequest) {
           orderBy: {
             createdAt: "desc"
           }
+        },
+        taskTags: {
+          include: {
+            tag: true
+          }
         }
       },
       orderBy: {
@@ -166,7 +171,14 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    return NextResponse.json({ tasks })
+    // Map taskTags to tags for simpler frontend consumption
+    const tasksWithTags = tasks.map(task => ({
+      ...task,
+      tags: task.taskTags.map(tt => tt.tag),
+      taskTags: undefined
+    }))
+
+    return NextResponse.json({ tasks: tasksWithTags })
   } catch (error) {
     console.error("Error fetching tasks:", error)
     return NextResponse.json(
@@ -184,7 +196,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { title, description, projectId, assigneeId, priority, dueDate, startTime, endTime, estimatedHours, statusId, reminderEnabled, reminderType, reminderValue } = await request.json()
+    const { title, description, projectId, assigneeId, priority, dueDate, startTime, endTime, estimatedHours, statusId, reminderEnabled, reminderType, reminderValue, tagIds } = await request.json()
 
     if (!title) {
       return NextResponse.json(
@@ -283,7 +295,14 @@ export async function POST(request: NextRequest) {
         reminderEnabled: reminderEnabled || false,
         reminderType: reminderEnabled ? reminderType : null,
         reminderValue: reminderEnabled ? reminderValue : null,
-        reminderTime
+        reminderTime,
+        ...(tagIds && tagIds.length > 0 && {
+          taskTags: {
+            create: tagIds.map((tagId: string) => ({
+              tagId
+            }))
+          }
+        })
       },
       include: {
         project: {
@@ -321,13 +340,25 @@ export async function POST(request: NextRequest) {
               }
             }
           }
+        },
+        taskTags: {
+          include: {
+            tag: true
+          }
         }
       }
     })
 
+    // Map tags for simpler consumption
+    const taskWithTags = {
+      ...task,
+      tags: task.taskTags.map(tt => tt.tag),
+      taskTags: undefined
+    }
+
     // TODO: Add Slack notification when slackUserId is available in user model
 
-    return NextResponse.json({ task }, { status: 201 })
+    return NextResponse.json({ task: taskWithTags }, { status: 201 })
   } catch (error) {
     console.error("Error creating task:", error)
     return NextResponse.json(

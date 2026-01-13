@@ -70,6 +70,16 @@ interface ReportData {
       completedTasks: number
       completionRate: number
     }>
+    tagStats: Array<{
+      id: string
+      name: string
+      color: string
+      totalHours: number
+      estimatedHours: number
+      taskCount: number
+      completedTasks: number
+      completionRate: number
+    }>
   }
   timeRange: string
   generatedAt: string
@@ -463,9 +473,8 @@ export function ReportsContent() {
                       <TableCell className="text-right">{project.completionRate}%</TableCell>
                       <TableCell className="text-right">{project.estimatedHours}h</TableCell>
                       <TableCell className="text-right font-medium">{project.totalHours}h</TableCell>
-                      <TableCell className={`text-right font-medium ${
-                        project.totalHours <= project.estimatedHours ? 'text-green-600' : 'text-red-600'
-                      }`}>
+                      <TableCell className={`text-right font-medium ${project.totalHours <= project.estimatedHours ? 'text-green-600' : 'text-red-600'
+                        }`}>
                         {project.estimatedHours > 0
                           ? `${Math.round((project.totalHours / project.estimatedHours) * 100)}%`
                           : 'N/A'
@@ -494,9 +503,9 @@ export function ReportsContent() {
         <CardContent className="text-xs text-muted-foreground space-y-1">
           <p><strong>Okres:</strong> {
             timeRange === 'week' ? 'Ostatni tydzień' :
-            timeRange === 'month' ? 'Ostatni miesiąc' :
-            timeRange === 'quarter' ? 'Ostatni kwartał' :
-            timeRange === 'year' ? 'Ostatni rok' : timeRange
+              timeRange === 'month' ? 'Ostatni miesiąc' :
+                timeRange === 'quarter' ? 'Ostatni kwartał' :
+                  timeRange === 'year' ? 'Ostatni rok' : timeRange
           }</p>
           <p><strong>Wygenerowano:</strong> {new Date(reportData.generatedAt).toLocaleString('pl-PL')}</p>
           <p className="mt-2 pt-2 border-t">

@@ -97,6 +97,27 @@ model Task {
   attachments    TaskAttachment[]
   timeEntries    TimeEntry[]
   todos          Todo[]
+  taskTags       TaskTag[]
+}
+
+model Tag {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  color     String    @default("#6B7280")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  taskTags  TaskTag[]
+}
+
+model TaskTag {
+  id        String   @id @default(cuid())
+  taskId    String
+  tagId     String
+  createdAt DateTime @default(now())
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, tagId])
 }
 
 model Todo {
