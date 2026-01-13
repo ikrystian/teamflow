@@ -141,6 +141,7 @@ export function ImageCropper({
                 keepSelection
                 className="max-w-full max-h-full"
               >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   ref={imgRef}
                   src={imageUrl}

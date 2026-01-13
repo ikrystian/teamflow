@@ -12,7 +12,8 @@ import {
   TrendingUp,
   BarChart3,
   PieChart as PieChartIcon,
-  Download
+  Download,
+  Tag
 } from "lucide-react"
 import {
   BarChart,
@@ -495,6 +496,54 @@ export function ReportsContent() {
         </Card>
       </div>
 
+      {/* Tag Statistics */}
+      {
+        reportData.tables.tagStats && reportData.tables.tagStats.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Tag className="h-5 w-5" />
+                Statystyki wg tagów
+              </CardTitle>
+              <CardDescription>Podsumowanie pracy grupowane po tagach</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Tag</TableHead>
+                    <TableHead className="text-right">Zadania</TableHead>
+                    <TableHead className="text-right">Ukończone</TableHead>
+                    <TableHead className="text-right">% ukończenia</TableHead>
+                    <TableHead className="text-right">Szacowany czas</TableHead>
+                    <TableHead className="text-right">Rzeczywisty czas</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reportData.tables.tagStats.map((tag) => (
+                    <TableRow key={tag.id}>
+                      <TableCell className="font-medium">
+                        <span
+                          className="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
+                          style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
+                        >
+                          {tag.name}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">{tag.taskCount}</TableCell>
+                      <TableCell className="text-right">{tag.completedTasks}</TableCell>
+                      <TableCell className="text-right">{tag.completionRate}%</TableCell>
+                      <TableCell className="text-right">{tag.estimatedHours}h</TableCell>
+                      <TableCell className="text-right font-medium">{tag.totalHours}h</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )
+      }
+
       {/* Footer Info */}
       <Card>
         <CardHeader>
@@ -514,6 +563,6 @@ export function ReportsContent() {
           </p>
         </CardContent>
       </Card>
-    </div>
+    </div >
   )
 }

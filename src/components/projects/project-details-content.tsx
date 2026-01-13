@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { useProjectViewPreferences } from "@/hooks/use-project-view-preferences"
 import { usePageHeader } from "@/contexts/header-context"
-import { useProjects } from "@/contexts/projects-context"
+
 
 import {
   ArrowLeft,
@@ -84,7 +84,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   const [deletingTask, setDeletingTask] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const router = useRouter()
-  const { projects } = useProjects()
+  // const { projects } = useProjects()
 
   const fetchProject = useCallback(async () => {
     try {
@@ -267,8 +267,8 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
 
     // User can edit if they are the assignee, creator, or project member
     return task.createdBy?.id === session.user.id ||
-           task.assignee?.id === session.user.id ||
-           projectMembers.some(member => member.id === session.user.id) || false
+      task.assignee?.id === session.user.id ||
+      projectMembers.some(member => member.id === session.user.id) || false
   }
 
 
@@ -396,8 +396,8 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                 <div>Zadania</div>
                 <div>
                   {taskFilter === "all" ? "Wszystkie zadania w tym projekcie" :
-                   taskFilter === "mine" ? "Twoje zadania w tym projekcie" :
-                   `Zadania przypisane do ${getProjectMembers(project).find(m => m.id === taskFilter)?.name || "Nieznany użytkownik"}`}
+                    taskFilter === "mine" ? "Twoje zadania w tym projekcie" :
+                      `Zadania przypisane do ${getProjectMembers(project).find(m => m.id === taskFilter)?.name || "Nieznany użytkownik"}`}
                 </div>
               </div>
               <div className="flex items-center space-x-2">
@@ -424,13 +424,13 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                 <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
                   {taskFilter === "all" ? "Brak zadań" :
-                   taskFilter === "mine" ? "Brak zadań przypisanych do Ciebie" :
-                   "Brak zadań przypisanych tej osobie"}
+                    taskFilter === "mine" ? "Brak zadań przypisanych do Ciebie" :
+                      "Brak zadań przypisanych tej osobie"}
                 </h3>
                 <p className="text-gray-500 mb-4">
                   {taskFilter === "all" ? "Utwórz swoje pierwsze zadanie, aby rozpocząć" :
-                   taskFilter === "mine" ? "Brak zadań przypisanych Tobie w tym projekcie" :
-                   "Ten członek zespołu nie ma przypisanych zadań w tym projekcie"}
+                    taskFilter === "mine" ? "Brak zadań przypisanych Tobie w tym projekcie" :
+                      "Ten członek zespołu nie ma przypisanych zadań w tym projekcie"}
                 </p>
                 <Button onClick={() => router.push(`/dashboard/tasks/new?projectId=${projectId}`)}>
                   <Plus className="mr-2 h-4 w-4" />
@@ -496,91 +496,91 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
           </div>
         </div>
       )
-       : viewMode === "daily" ? (
-       <ProjectDailyView
-         tasks={getFilteredTasks(project.tasks || [])}
-         onTaskClick={handleTaskDetails}
-         onCreateTask={() => router.push(`/dashboard/tasks/new?projectId=${projectId}`)}
-         onTaskCreated={fetchProject}
-         projectId={projectId}
-         onTaskUpdate={async (taskId: string, updates: { startTime?: string; endTime?: string; assigneeId?: string }) => {
-           try {
-             const response = await fetch(`/api/tasks/${taskId}`, {
-               method: 'PATCH',
-               headers: {
-                 'Content-Type': 'application/json',
-               },
-               body: JSON.stringify(updates),
-             })
+        : viewMode === "daily" ? (
+          <ProjectDailyView
+            tasks={getFilteredTasks(project.tasks || [])}
+            onTaskClick={handleTaskDetails}
+            onCreateTask={() => router.push(`/dashboard/tasks/new?projectId=${projectId}`)}
+            onTaskCreated={fetchProject}
+            projectId={projectId}
+            onTaskUpdate={async (taskId: string, updates: { startTime?: string; endTime?: string; assigneeId?: string }) => {
+              try {
+                const response = await fetch(`/api/tasks/${taskId}`, {
+                  method: 'PATCH',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(updates),
+                })
 
-             if (!response.ok) {
-               throw new Error('Failed to update task')
-             }
+                if (!response.ok) {
+                  throw new Error('Failed to update task')
+                }
 
-             // Refresh tasks
-             handleTaskUpdated()
-           } catch (error) {
-             console.error('Error updating task:', error)
-             throw error
-           }
-         }}
-       />
-      ) : (
-        <div>
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-lg font-semibold">Tablica zadań</h2>
-              <p className="text-sm text-gray-500">Przeciągnij zadania między kolumnami, aby zaktualizować ich status</p>
+                // Refresh tasks
+                handleTaskUpdated()
+              } catch (error) {
+                console.error('Error updating task:', error)
+                throw error
+              }
+            }}
+          />
+        ) : (
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-lg font-semibold">Tablica zadań</h2>
+                <p className="text-sm text-gray-500">Przeciągnij zadania między kolumnami, aby zaktualizować ich status</p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <QuickAddTaskCommand
+                  projectId={projectId}
+                  onTaskCreated={fetchProject}
+                />
+                <TaskBoardFilters
+                  currentUserId={session?.user?.id}
+                  selectedFilter={taskFilter}
+                  onFilterChange={handleFilterChange}
+                  taskCounts={getTaskCounts(project.tasks || [])}
+                />
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <QuickAddTaskCommand
+            {getFilteredTasks(project.tasks || []).length === 0 ? (
+              <Card >
+                <CardContent className="py-12">
+                  <div className="text-center">
+                    <LayoutGrid className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      {taskFilter === "all" ? "Brak zadań" :
+                        taskFilter === "mine" ? "Brak zadań przypisanych do Ciebie" :
+                          "Brak zadań przypisanych tej osobie"}
+                    </h3>
+                    <p className="text-gray-500 mb-4">
+                      {taskFilter === "all" ? "Utwórz swoje pierwsze zadanie, aby zobaczyć tablicę" :
+                        taskFilter === "mine" ? "Brak zadań przypisanych Tobie w tym projekcie" :
+                          "Ten członek zespołu nie ma przypisanych zadań w tym projekcie"}
+                    </p>
+                    <Button onClick={() => router.push(`/dashboard/tasks/new?projectId=${projectId}`)}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Utwórz zadanie
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <KanbanBoard
                 projectId={projectId}
-                onTaskCreated={fetchProject}
+                tasks={transformTasksForKanban(getFilteredTasks(project.tasks || []))}
+                onTaskUpdated={handleTaskUpdated}
+                onTaskEdit={handleEditTask}
+                onTimeTracking={handleTimeTracking}
+                onTaskDelete={handleDeleteTask}
+                canEditTask={canEditTask}
+                onCreateTask={() => router.push(`/dashboard/tasks/new?projectId=${projectId}`)}
               />
-              <TaskBoardFilters
-                currentUserId={session?.user?.id}
-                selectedFilter={taskFilter}
-                onFilterChange={handleFilterChange}
-                taskCounts={getTaskCounts(project.tasks || [])}
-              />
-            </div>
+            )}
           </div>
-          {getFilteredTasks(project.tasks || []).length === 0 ? (
-            <Card >
-              <CardContent className="py-12">
-                <div className="text-center">
-                  <LayoutGrid className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    {taskFilter === "all" ? "Brak zadań" :
-                     taskFilter === "mine" ? "Brak zadań przypisanych do Ciebie" :
-                     "Brak zadań przypisanych tej osobie"}
-                  </h3>
-                  <p className="text-gray-500 mb-4">
-                    {taskFilter === "all" ? "Utwórz swoje pierwsze zadanie, aby zobaczyć tablicę" :
-                     taskFilter === "mine" ? "Brak zadań przypisanych Tobie w tym projekcie" :
-                     "Ten członek zespołu nie ma przypisanych zadań w tym projekcie"}
-                  </p>
-                  <Button onClick={() => router.push(`/dashboard/tasks/new?projectId=${projectId}`)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Utwórz zadanie
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <KanbanBoard
-              projectId={projectId}
-              tasks={transformTasksForKanban(getFilteredTasks(project.tasks || []))}
-              onTaskUpdated={handleTaskUpdated}
-              onTaskEdit={handleEditTask}
-              onTimeTracking={handleTimeTracking}
-              onTaskDelete={handleDeleteTask}
-              canEditTask={canEditTask}
-              onCreateTask={() => router.push(`/dashboard/tasks/new?projectId=${projectId}`)}
-            />
-          )}
-        </div>
-      )}
+        )}
 
       <TaskDetailsSheet
         open={taskDetailsDialogOpen}

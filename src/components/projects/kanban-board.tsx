@@ -251,7 +251,7 @@ function QuickAddTask({
           title: title.trim(),
           projectId: projectId,
           statusId: status.id,
-          assigneeId: (session?.user as any)?.id,
+          assigneeId: (session?.user as { id: string })?.id,
         }),
       })
 
