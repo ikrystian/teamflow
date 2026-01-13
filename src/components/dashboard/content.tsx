@@ -12,18 +12,19 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Clock, Calendar, User as UserIcon, ArrowRight } from "lucide-react"
 import { PrintTodosDialog } from "./print-todos-dialog"
+import { UserReportSummary } from "./user-report-summary"
 
 export function DashboardContent() {
   const { data: session } = useSession() as { data: Session | null }
   const [tasks, setTasks] = useState<Task[]>([])
-  const [ ,setUsers] = useState<User[]>([])
-  const [ ,setTaskStatuses] = useState<TaskStatus[]>([])
+  const [, setUsers] = useState<User[]>([])
+  const [, setTaskStatuses] = useState<TaskStatus[]>([])
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
 
   // Dialog states
-  const [ ,setSelectedTask] = useState<Task | null>(null)
-  const [ ,setDetailsDialogOpen] = useState(false)
+  const [, setSelectedTask] = useState<Task | null>(null)
+  const [, setDetailsDialogOpen] = useState(false)
 
   // Check if user is admin
   useEffect(() => {
@@ -143,8 +144,8 @@ export function DashboardContent() {
 
     // For admin, show all upcoming tasks; for user, show only assigned/created tasks
     const hasAccess = isAdmin ||
-                     task.assignee?.id === session.user.id ||
-                     task.createdBy?.id === session.user.id
+      task.assignee?.id === session.user.id ||
+      task.createdBy?.id === session.user.id
 
     if (!hasAccess) return false
 
@@ -167,8 +168,8 @@ export function DashboardContent() {
 
     // For admin, show all recent tasks; for user, show only assigned/created tasks
     const hasAccess = isAdmin ||
-                     task.assignee?.id === session.user.id ||
-                     task.createdBy?.id === session.user.id
+      task.assignee?.id === session.user.id ||
+      task.createdBy?.id === session.user.id
 
     if (!hasAccess) return false
 
@@ -180,6 +181,9 @@ export function DashboardContent() {
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
+      {/* User Report Summary */}
+      <UserReportSummary />
+
       {/* Quick Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Upcoming Tasks */}
