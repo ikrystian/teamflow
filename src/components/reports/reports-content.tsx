@@ -106,10 +106,17 @@ export function ReportsContent() {
       setLoading(true)
       try {
         const response = await fetch(`/api/reports?timeRange=${timeRange}`)
+        if (!response.ok) {
+          throw new Error("Failed to fetch reports")
+        }
         const data = await response.json()
+        if (!data || !data.summary) {
+          throw new Error("Invalid report data format")
+        }
         setReportData(data)
       } catch (error) {
         console.error("Error fetching report data:", error)
+        setReportData(null)
       } finally {
         setLoading(false)
       }
