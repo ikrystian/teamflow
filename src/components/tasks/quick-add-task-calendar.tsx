@@ -70,6 +70,7 @@ export function QuickAddTaskCalendar({
         setIsAdding(false)
         setError("")
         toast.success("Zadanie zostało utworzone")
+        window.dispatchEvent(new CustomEvent('task-created'))
         onTaskCreated()
       } else {
         const data = await response.json()

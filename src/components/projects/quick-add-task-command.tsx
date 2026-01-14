@@ -70,6 +70,7 @@ export function QuickAddTaskCommand({ projectId, onTaskCreated }: QuickAddTaskCo
       toast.success(`Zadanie "${data.task.title}" zostało utworzone`)
       setInput("")
       setOpen(false)
+      window.dispatchEvent(new CustomEvent('task-created'))
       onTaskCreated?.()
     } catch (error) {
       console.error("Error creating task:", error)
