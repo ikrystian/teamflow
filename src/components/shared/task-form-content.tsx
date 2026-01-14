@@ -311,6 +311,7 @@ export function TaskFormContent({
             await uploadAttachmentsAfterTaskCreation(createdTask.id)
           }
 
+          window.dispatchEvent(new CustomEvent('task-created'))
           onTaskCreated?.()
           handleClose()
         } else {

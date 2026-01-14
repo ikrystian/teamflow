@@ -80,6 +80,18 @@ export function TimeTrackerWidget() {
     fetchTasks()
   }, [fetchTasks])
 
+  // Listen for global task creation events
+  useEffect(() => {
+    const handleTaskCreated = () => {
+      fetchTasks()
+    }
+
+    window.addEventListener('task-created', handleTaskCreated)
+    return () => {
+      window.removeEventListener('task-created', handleTaskCreated)
+    }
+  }, [fetchTasks])
+
   // Load state from localStorage on mount
   useEffect(() => {
     if (isInitialized.current) return
