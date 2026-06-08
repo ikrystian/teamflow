@@ -27,7 +27,7 @@ export interface TaskAttachment {
   uploadedBy: User;
 }
 
-export interface Todo {
+export interface Subtask {
   id: string;
   title: string;
   isCompleted: boolean;
@@ -110,11 +110,7 @@ export interface Task {
   assignee?: User;
   createdBy?: User;
   taskStatus?: TaskStatus;
-  subtasks: {
-    id: string;
-    title: string;
-    isCompleted: boolean;
-  }[];
+  subtasks: Subtask[];
   comments: {
     id: string;
     content: string;
@@ -134,7 +130,7 @@ export interface Task {
   }[];
   images?: TaskImage[];
   attachments?: TaskAttachment[];
-  todos?: Todo[];
+  todos?: Subtask[];
   tags?: Tag[];
 }
 
