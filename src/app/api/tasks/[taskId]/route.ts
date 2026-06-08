@@ -269,7 +269,7 @@ export async function PATCH(
       }
     }
 
-    // If assigneeId is provided, verify it exists and is a team member
+    // If assigneeId is provided, verify the user exists.
     if (assigneeId !== undefined && assigneeId !== null) {
       const assignee = await prisma.user.findUnique({
         where: {
@@ -280,18 +280,6 @@ export async function PATCH(
       if (!assignee) {
         return NextResponse.json(
           { error: "Assignee not found" },
-          { status: 400 }
-        )
-      }
-      if (existingTask.project) {
-        // If there's a project but no teamId associated, it's an unexpected state.
-        // It should implicitly consider that the assignee needs to be a direct project member.
-        // Assuming for now, this case implies no team for the project, so no team-based member check.
-        // Or if it's considered an error, return an appropriate response.
-        // For now, let's allow it as a project without a team. (This might need clarification on business logic).
-        // For strictness, if a project exists, but `teamId` is null, imply an error.
-        return NextResponse.json(
-          { error: "Project exists but has no associated team. Cannot verify assignee membership." },
           { status: 400 }
         )
       }

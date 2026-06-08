@@ -95,6 +95,11 @@ export function TaskFormContent({
   const [availableTags, setAvailableTags] = useState<Tag[]>([])
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
 
+  // People with access to the project (project creator + members), used for the assignee select
+  const [projectMembers, setProjectMembers] = useState<
+    Array<{ id: string; name: string | null; email: string; avatarUrl?: string | null }>
+  >([])
+
   // Slack send state (for the AI-generated "changes" field)
   const [sendingToSlack, setSendingToSlack] = useState(false)
 
@@ -157,6 +162,27 @@ export function TaskFormContent({
     }
   }, [])
 
+  // Fetch everyone with access to the project (creator + members) for the assignee select
+  const fetchProjectMembers = useCallback(async (pid: string) => {
+    try {
+      const response = await fetch(`/api/projects/${pid}`)
+      if (response.ok) {
+        const { project } = await response.json()
+        const people: Array<{ id: string; name: string | null; email: string; avatarUrl?: string | null }> = []
+        const addPerson = (user?: { id: string; name?: string | null; email: string; avatarUrl?: string | null } | null) => {
+          if (user && !people.some(p => p.id === user.id)) {
+            people.push({ id: user.id, name: user.name ?? null, email: user.email, avatarUrl: user.avatarUrl })
+          }
+        }
+        addPerson(project?.createdBy)
+        project?.members?.forEach((member: { user: { id: string; name?: string | null; email: string; avatarUrl?: string | null } }) => addPerson(member.user))
+        setProjectMembers(people)
+      }
+    } catch (error) {
+      console.error("Error fetching project members:", error)
+    }
+  }, [])
+
   // Initialize form
   useEffect(() => {
     fetchTaskStatuses()
@@ -209,6 +235,16 @@ export function TaskFormContent({
       setAssigneeId(session.user.id)
     }
   }, [forceAssignToCurrentUser, isCreateMode, session?.user?.id, selectedProjectId])
+
+  // Load people with access whenever the selected project changes
+  const effectiveProjectId = projectId || selectedProjectId
+  useEffect(() => {
+    if (effectiveProjectId && effectiveProjectId !== "no-project") {
+      fetchProjectMembers(effectiveProjectId)
+    } else {
+      setProjectMembers([])
+    }
+  }, [effectiveProjectId, fetchProjectMembers])
 
   // Calculate estimated hours from start and end time
   const calculateEstimatedHours = (start: Date, end: Date): number => {
@@ -489,6 +525,20 @@ export function TaskFormContent({
     selectValueToHours(estimatedHours) !== task.estimatedHours
   ) : true
 
+  // People available in the assignee select. Make sure the current user is always
+  // selectable so the default assignment (the task creator) shows up.
+  const assigneeOptions = session?.user?.id && !projectMembers.some(m => m.id === session.user.id)
+    ? [
+        {
+          id: session.user.id,
+          name: session.user.name ?? null,
+          email: session.user.email ?? "",
+          avatarUrl: session.user.image ?? null,
+        },
+        ...projectMembers,
+      ]
+    : projectMembers
+
   return (
     <>
       {/* Form Content */}
@@ -566,6 +616,12 @@ export function TaskFormContent({
                     className="h-10 w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                   >
                     <option value="">Wybierz osobę</option>
+                    {assigneeOptions.map((member) => (
+                      <option key={member.id} value={member.id}>
+                        {(member.name || member.email)}
+                        {member.id === session?.user?.id ? " (Ty)" : ""}
+                      </option>
+                    ))}
                   </select>
                 )}
               </div>
