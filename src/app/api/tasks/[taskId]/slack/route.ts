@@ -1,0 +1,99 @@
+import { NextRequest, NextResponse } from "next/server"
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"
+import { prisma } from "@/lib/prisma"
+import type { Session } from "next-auth"
+
+// Send a task's "changes" (already formatted as Slack mrkdwn) to the project's
+// configured Slack channel via the Slack Web API (chat.postMessage).
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ taskId: string }> }
+) {
+  try {
+    const session = (await getServerSession(authOptions)) as Session | null
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { taskId } = await params
+
+    const task = await prisma.task.findFirst({
+      where: {
+        id: taskId,
+        OR: [
+          { project: { archived: false } },
+          { projectId: null, createdById: session.user.id },
+          { projectId: null, assigneeId: session.user.id },
+        ],
+      },
+      include: {
+        project: {
+          select: { id: true, name: true, slackChannelId: true },
+        },
+      },
+    })
+
+    if (!task) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 })
+    }
+
+    if (!task.changes) {
+      return NextResponse.json(
+        { error: "Task has no changes to send" },
+        { status: 400 }
+      )
+    }
+
+    const channelId = task.project?.slackChannelId
+    if (!channelId) {
+      return NextResponse.json(
+        { error: "This project has no Slack channel configured" },
+        { status: 400 }
+      )
+    }
+
+    const token = process.env.SLACK_BOT_TOKEN
+    if (!token) {
+      return NextResponse.json(
+        { error: "Slack is not configured" },
+        { status: 500 }
+      )
+    }
+
+    // A short header above the changes so the Slack message has context.
+    const text = `*${task.title}*\n\n${task.changes}`
+
+    const res = await fetch("https://slack.com/api/chat.postMessage", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json; charset=utf-8",
+      },
+      body: JSON.stringify({
+        channel: channelId,
+        text,
+        mrkdwn: true,
+      }),
+    })
+
+    const data = await res.json()
+
+    if (!data.ok) {
+      console.error("Slack API error:", data.error)
+      return NextResponse.json(
+        { error: `Slack error: ${data.error}` },
+        { status: 502 }
+      )
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error("Error sending task to Slack:", error)
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
+  }
+}

@@ -133,8 +133,11 @@ async function generateTaskFromCommit(
     '"workHours": number}. ' +
     "The title is a short task name. The description explains the problem/feature " +
     "the commit addresses. The changes field is a description, based on the actual " +
-    "code, of what was changed/done in this commit, written as a bullet list where " +
-    "each line starts with a relevant emoji (e.g. '- ✨ ...', '- 🐛 ...', '- ♻️ ...'). " +
+    "code, of what was changed/done in this commit. It will be sent to Slack, so " +
+    "format it using Slack mrkdwn with basic formatting: a bullet list where each " +
+    "line starts with a relevant emoji (e.g. '• ✨ ...', '• 🐛 ...', '• ♻️ ...'), " +
+    "use *bold* for emphasis and `code` for identifiers. Do NOT use standard " +
+    "markdown like ** or # headings. " +
     "The workHours field is a realistic estimate, in hours (a number, may be " +
     "fractional), of how long it would potentially take to code this task from " +
     "scratch, accounting for analysis and testing. " +
@@ -177,8 +180,11 @@ async function synthesizeMainTask(
     '{"title": string, "description": string, "changes": string}. ' +
     "The title is a short name that captures all of the commits together. The " +
     "description explains, as a whole, the problem/feature that all commits address. " +
-    "The changes field merges the changes of all commits into one bullet list where " +
-    "each line starts with a relevant emoji (e.g. '- ✨ ...', '- 🐛 ...', '- ♻️ ...'). " +
+    "The changes field merges the changes of all commits into one list. It will be " +
+    "sent to Slack, so format it using Slack mrkdwn with basic formatting: a bullet " +
+    "list where each line starts with a relevant emoji (e.g. '• ✨ ...', '• 🐛 ...', " +
+    "'• ♻️ ...'), use *bold* for emphasis and `code` for identifiers. Do NOT use " +
+    "standard markdown like ** or # headings. " +
     "Write the title, description and changes in Polish."
 
   const tasksBlock = commitTasks

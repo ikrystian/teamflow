@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { isAdmin } from "@/lib/admin"
-import { unlink, rmdir } from "fs/promises"
+import { unlink, rm } from "fs/promises"
 import { join } from "path"
 import { existsSync } from "fs"
 import type { Session } from "next-auth"
@@ -24,7 +24,7 @@ async function deleteFilesSafely(paths: string[]) {
 async function deleteDirectorySafely(dirPath: string) {
   try {
     if (existsSync(dirPath)) {
-      await rmdir(dirPath, { recursive: true })
+      await rm(dirPath, { recursive: true, force: true })
     }
   } catch (error) {
     console.warn(`Failed to delete directory ${dirPath}:`, error)
@@ -178,7 +178,8 @@ export async function PATCH(
       adminPanelUrl,
       stagingUrl,
       productionUrl,
-      credentials
+      credentials,
+      slackChannelId
     } = await request.json()
 
     // Verify user has access to the project
@@ -232,7 +233,8 @@ export async function PATCH(
         ...(adminPanelUrl !== undefined && { adminPanelUrl }),
         ...(stagingUrl !== undefined && { stagingUrl }),
         ...(productionUrl !== undefined && { productionUrl }),
-        ...(credentials !== undefined && { credentials })
+        ...(credentials !== undefined && { credentials }),
+        ...(slackChannelId !== undefined && { slackChannelId })
       },
       include: {
 

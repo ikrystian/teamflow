@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Key, Save, Eye, EyeOff, X, Plus, Edit, Trash2, Share2, Copy, ExternalLink, Trash } from "lucide-react"
+import { ArrowLeft, Key, Save, Eye, EyeOff, X, Plus, Edit, Trash2, Share2, Copy, ExternalLink, Trash, MessageSquare } from "lucide-react"
 import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { usePageHeader } from "@/contexts/header-context"
 import { toast } from "sonner"
@@ -46,6 +46,10 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
   const [generatingShare, setGeneratingShare] = useState(false)
   const [removingShare, setRemovingShare] = useState(false)
 
+  // Slack integration state
+  const [slackChannelId, setSlackChannelId] = useState("")
+  const [savingSlack, setSavingSlack] = useState(false)
+
   const router = useRouter()
 
   // Set page header content
@@ -75,6 +79,7 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
       if (response.ok) {
         const data = await response.json()
         setProject(data.project)
+        setSlackChannelId(data.project.slackChannelId || "")
       } else if (response.status === 404) {
         router.push("/dashboard/projects")
       }
@@ -242,6 +247,34 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
       console.error('Error updating credentials:', error)
     } finally {
       setSavingCredentials(false)
+    }
+  }
+
+  const saveSlackChannel = async () => {
+    setSavingSlack(true)
+    try {
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          slackChannelId: slackChannelId.trim() || null
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setProject(data.project)
+        toast.success("Zapisano kanał Slack")
+      } else {
+        toast.error("Nie udało się zapisać kanału Slack")
+      }
+    } catch (error) {
+      console.error('Error updating Slack channel:', error)
+      toast.error("Nie udało się zapisać kanału Slack")
+    } finally {
+      setSavingSlack(false)
     }
   }
 
@@ -431,6 +464,42 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
                     {savingCredentials ? 'Dodawanie...' : 'Dodaj dane dostępowe'}
                   </Button>
                 </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Slack Integration */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <MessageSquare className="h-5 w-5" />
+            <span>Integracja ze Slackiem</span>
+          </CardTitle>
+          <CardDescription>
+            Ustaw identyfikator kanału Slack (np. C0123ABC), na który będą wysyłane
+            zmiany z zadań tego projektu. Bot Slack musi być dodany do tego kanału.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="slackChannelId" className="text-sm font-medium">
+                ID kanału Slack
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  id="slackChannelId"
+                  placeholder="C0123ABC456"
+                  value={slackChannelId}
+                  onChange={(e) => setSlackChannelId(e.target.value)}
+                  className="font-mono"
+                />
+                <Button onClick={saveSlackChannel} disabled={savingSlack}>
+                  <Save className="h-4 w-4 mr-2" />
+                  {savingSlack ? "Zapisywanie..." : "Zapisz"}
+                </Button>
               </div>
             </div>
           </div>

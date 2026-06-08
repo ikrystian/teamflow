@@ -13,6 +13,8 @@ import type { Task, TaskStatus, Project, Tag } from "@/types"
 import { ReminderSettings } from "@/components/tasks/reminder-settings"
 import { FileUpload } from "@/components/ui/file-upload"
 import { Badge } from "@/components/ui/badge"
+import { Send } from "lucide-react"
+import { toast } from "sonner"
 import {
   getEstimatedHoursOptions,
   hoursToSelectValue,
@@ -95,6 +97,9 @@ export function TaskFormContent({
   // Tags state
   const [availableTags, setAvailableTags] = useState<Tag[]>([])
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
+
+  // Slack send state (for the AI-generated "changes" field)
+  const [sendingToSlack, setSendingToSlack] = useState(false)
 
   const isCreateMode = mode === "create"
   const isEditMode = mode === "edit"
@@ -364,6 +369,28 @@ export function TaskFormContent({
     onClose?.()
   }
 
+  // Send the AI-generated "changes" to the project's Slack channel.
+  const handleSendToSlack = async () => {
+    if (!task) return
+    setSendingToSlack(true)
+    try {
+      const response = await fetch(`/api/tasks/${task.id}/slack`, {
+        method: "POST",
+      })
+      const data = await response.json()
+      if (response.ok) {
+        toast.success("Wysłano na Slacka")
+      } else {
+        toast.error(data.error || "Nie udało się wysłać na Slacka")
+      }
+    } catch (error) {
+      console.error("Error sending to Slack:", error)
+      toast.error("Nie udało się wysłać na Slacka")
+    } finally {
+      setSendingToSlack(false)
+    }
+  }
+
   // File upload handlers
   const handleFileUpload = async (file: File, description?: string, category?: string) => {
     // For create mode, just store files to upload after task creation
@@ -503,6 +530,29 @@ export function TaskFormContent({
               />
             </div>
           </div>
+
+          {/* AI-generated changes (Slack mrkdwn) with a "send to Slack" action */}
+          {isEditMode && task?.changes && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">Zmiany</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSendToSlack}
+                  disabled={sendingToSlack}
+                  title="Wyślij na Slacka"
+                >
+                  <Send className="h-4 w-4" />
+                  <span className="ml-2">{sendingToSlack ? "Wysyłanie..." : "Wyślij na Slacka"}</span>
+                </Button>
+              </div>
+              <pre className="whitespace-pre-wrap break-words rounded-md border bg-muted/50 p-3 text-sm font-sans">
+                {task.changes}
+              </pre>
+            </div>
+          )}
 
           {/* Project selector */}
           {showProjectSelector && !isEditMode && (

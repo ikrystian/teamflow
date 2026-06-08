@@ -58,6 +58,7 @@ export interface Project {
   stagingUrl?: string;
   productionUrl?: string;
   credentials?: string;
+  slackChannelId?: string;
   archived?: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -86,6 +87,7 @@ export interface Task {
   id: string;
   title: string;
   description?: string;
+  changes?: string;
   statusId?: string;
   priority?: string;
   dueDate?: string;

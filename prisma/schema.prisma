@@ -60,6 +60,7 @@ model Project {
   color         String            @default("#3B82F6")
   icon          String?
   archived      Boolean           @default(false)
+  slackChannelId String?
   chatRooms     ChatRoom[]
   createdBy     User              @relation("ProjectCreator", fields: [createdById], references: [id])
   documents     ProjectDocument[]
