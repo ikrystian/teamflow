@@ -559,7 +559,13 @@ export function TasksKanbanBoard({
     if (!over) return
 
     const taskId = active.id as string
-    const newStatusId = over.id as string
+    const overId = over.id as string
+
+    // The drop target can be either a column (its id is a status id) or another
+    // task card inside a column. When a column is full, the card under the cursor
+    // is what gets reported as `over`, so resolve it back to that card's column.
+    const overTask = displayTasks.find(t => t.id === overId)
+    const newStatusId = overTask ? overTask.statusId : overId
 
     // Find the status by id
     const newTaskStatus = taskStatuses.find(status => status.id === newStatusId)

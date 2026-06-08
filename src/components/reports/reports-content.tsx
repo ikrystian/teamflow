@@ -160,7 +160,7 @@ export function ReportsContent() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="week">Ostatni tydzień</SelectItem>
-              <SelectItem value="month">Ostatni miesiąc</SelectItem>
+              <SelectItem value="month">Bieżący miesiąc</SelectItem>
               <SelectItem value="quarter">Ostatni kwartał</SelectItem>
               <SelectItem value="year">Ostatni rok</SelectItem>
             </SelectContent>
@@ -559,7 +559,7 @@ export function ReportsContent() {
         <CardContent className="text-xs text-muted-foreground space-y-1">
           <p><strong>Okres:</strong> {
             timeRange === 'week' ? 'Ostatni tydzień' :
-              timeRange === 'month' ? 'Ostatni miesiąc' :
+              timeRange === 'month' ? 'Bieżący miesiąc' :
                 timeRange === 'quarter' ? 'Ostatni kwartał' :
                   timeRange === 'year' ? 'Ostatni rok' : timeRange
           }</p>

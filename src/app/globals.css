@@ -82,6 +82,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -98,6 +99,7 @@
     overflow-x: auto;
   }
 }
+
 body {
   pointer-events: auto !important;
 }
@@ -126,7 +128,8 @@ body {
   margin-bottom: 0;
 }
 
-.ProseMirror ul, .ProseMirror ol {
+.ProseMirror ul,
+.ProseMirror ol {
   padding-left: 1.5em;
   margin: 0.5em 0;
 }
@@ -152,14 +155,21 @@ body {
   height: 0;
 }
 
-.flex-row-reverse  + .flex-row-reverse {
+.flex-row-reverse+.flex-row-reverse {
   margin-top: 0rem;
 }
 
 /* Modern Landing Page Animations */
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 @keyframes fadeInUp {
@@ -167,6 +177,7 @@ body {
     opacity: 0;
     transform: translateY(30px);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0);
@@ -178,6 +189,7 @@ body {
     opacity: 0;
     transform: translateX(-30px);
   }
+
   100% {
     opacity: 1;
     transform: translateX(0);
@@ -189,6 +201,7 @@ body {
     opacity: 0;
     transform: translateX(30px);
   }
+
   100% {
     opacity: 1;
     transform: translateX(0);
@@ -200,6 +213,7 @@ body {
     opacity: 0;
     transform: scale(0.9);
   }
+
   100% {
     opacity: 1;
     transform: scale(1);
@@ -207,18 +221,24 @@ body {
 }
 
 @keyframes pulse-glow {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
   }
+
   70% {
     box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
   }
 }
 
 @keyframes gradient-shift {
-  0%, 100% {
+
+  0%,
+  100% {
     background-position: 0% 50%;
   }
+
   50% {
     background-position: 100% 50%;
   }
@@ -330,13 +350,13 @@ html {
   }
 
   /* Prevent page breaks inside task cards */
-  .print-content > div > div {
+  .print-content>div>div {
     page-break-inside: avoid;
     break-inside: avoid;
   }
 
   /* Add spacing between printed pages */
-  .print-content > div:not(:last-child) {
+  .print-content>div:not(:last-child) {
     margin-bottom: 1rem;
   }
 
@@ -350,4 +370,10 @@ html {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+}
+
+.ring-2.ring-primary-20 div[role=button] {
+  z-index: -1;
+  position: relative;
+  pointer-events: none;
 }

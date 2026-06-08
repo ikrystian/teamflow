@@ -52,8 +52,8 @@ export async function GET(request: NextRequest) {
       const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
       dateFilter = { gte: weekAgo }
     } else if (timeRange === "month") {
-      const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-      dateFilter = { gte: monthAgo }
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+      dateFilter = { gte: monthStart }
     } else if (timeRange === "quarter") {
       const quarterAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
       dateFilter = { gte: quarterAgo }
