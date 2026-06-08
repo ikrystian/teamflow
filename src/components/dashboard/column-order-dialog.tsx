@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
   Dialog,
   DialogContent,
@@ -11,25 +11,18 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine"
 import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from "@dnd-kit/core"
+  draggable,
+  dropTargetForElements,
+  monitorForElements,
+} from "@atlaskit/pragmatic-drag-and-drop/element/adapter"
 import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable"
-import {
-  useSortable,
-} from "@dnd-kit/sortable"
-import { CSS } from "@dnd-kit/utilities"
+  attachClosestEdge,
+  extractClosestEdge,
+} from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge"
+import { DropIndicator } from "@/components/ui/drop-indicator"
+import { reorderWithEdge, type Edge } from "@/lib/dnd-utils"
 import { GripVertical, Settings2 } from "lucide-react"
 import type { VisibilityState } from "@tanstack/react-table"
 
@@ -59,35 +52,59 @@ const COLUMN_NAMES: { [key: string]: string } = {
 }
 
 function SortableColumnItem({ columnId, columnName, isVisible }: SortableColumnItemProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: columnId })
+  const ref = useRef<HTMLDivElement>(null)
+  const handleRef = useRef<HTMLDivElement>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const [closestEdge, setClosestEdge] = useState<Edge | null>(null)
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  }
+  useEffect(() => {
+    const element = ref.current
+    const handle = handleRef.current
+    if (!element || !handle) return
+
+    return combine(
+      draggable({
+        element,
+        dragHandle: handle,
+        getInitialData: () => ({ type: "column-item", columnId }),
+        onDragStart: () => setIsDragging(true),
+        onDrop: () => setIsDragging(false),
+      }),
+      dropTargetForElements({
+        element,
+        canDrop: ({ source }) => source.data.type === "column-item",
+        getData: ({ input, element }) =>
+          attachClosestEdge(
+            { columnId },
+            { input, element, allowedEdges: ["top", "bottom"] }
+          ),
+        onDrag: ({ self, source }) => {
+          if (source.data.columnId === columnId) {
+            setClosestEdge(null)
+            return
+          }
+          setClosestEdge(extractClosestEdge(self.data))
+        },
+        onDragLeave: () => setClosestEdge(null),
+        onDrop: () => setClosestEdge(null),
+      })
+    )
+  }, [columnId])
 
   return (
     <div
-      ref={setNodeRef}
-      style={style}
-      className="flex items-center gap-3 p-3 bg-card border rounded-lg hover:bg-muted/50 transition-colors"
+      ref={ref}
+      style={{ opacity: isDragging ? 0.5 : 1 }}
+      className="relative flex items-center gap-3 p-3 bg-card border rounded-lg hover:bg-muted/50 transition-colors"
     >
+      {closestEdge && <DropIndicator edge={closestEdge} />}
       <div
-        {...attributes}
-        {...listeners}
+        ref={handleRef}
         className="cursor-grab hover:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors"
       >
         <GripVertical className="h-4 w-4" />
       </div>
-      
+
       <div className="flex-1 flex items-center justify-between">
         <span className={`text-sm font-medium ${!isVisible ? 'text-muted-foreground' : ''}`}>
           {columnName}
@@ -108,24 +125,21 @@ export function ColumnOrderDialog({
   const [open, setOpen] = useState(false)
   const [localOrder, setLocalOrder] = useState(columnOrder)
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
+  useEffect(() => {
+    return monitorForElements({
+      canMonitor: ({ source }) => source.data.type === "column-item",
+      onDrop: ({ source, location }) => {
+        const target = location.current.dropTargets[0]
+        if (!target) return
+
+        const sourceId = source.data.columnId as string
+        const targetId = target.data.columnId as string
+        const edge = extractClosestEdge(target.data)
+
+        setLocalOrder((order) => reorderWithEdge(order, sourceId, targetId, edge))
+      },
     })
-  )
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event
-
-    if (active.id !== over?.id) {
-      const oldIndex = localOrder.indexOf(active.id as string)
-      const newIndex = localOrder.indexOf(over?.id as string)
-
-      const newOrder = arrayMove(localOrder, oldIndex, newIndex)
-      setLocalOrder(newOrder)
-    }
-  }
+  }, [])
 
   const handleSave = () => {
     onColumnOrderChange(localOrder)
@@ -154,25 +168,14 @@ export function ColumnOrderDialog({
         </DialogHeader>
 
         <div className="space-y-3 max-h-96 overflow-y-auto">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={localOrder}
-              strategy={verticalListSortingStrategy}
-            >
-              {localOrder.map((columnId) => (
-                <SortableColumnItem
-                  key={columnId}
-                  columnId={columnId}
-                  columnName={COLUMN_NAMES[columnId] || columnId}
-                  isVisible={columnVisibility[columnId] !== false}
-                />
-              ))}
-            </SortableContext>
-          </DndContext>
+          {localOrder.map((columnId) => (
+            <SortableColumnItem
+              key={columnId}
+              columnId={columnId}
+              columnName={COLUMN_NAMES[columnId] || columnId}
+              isVisible={columnVisibility[columnId] !== false}
+            />
+          ))}
         </div>
 
         <div className="flex justify-end gap-2 pt-4">

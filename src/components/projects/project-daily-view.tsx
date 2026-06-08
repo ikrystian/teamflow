@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -15,17 +15,10 @@ import { type Task } from "@/types"
 import { format, addDays, subDays, isSameDay } from "date-fns"
 import { pl } from "date-fns/locale"
 import {
-  DndContext,
-  closestCenter,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-  DragOverlay,
-  DragStartEvent,
-  useDroppable,
-  useDraggable,
-} from "@dnd-kit/core"
+  draggable,
+  dropTargetForElements,
+  monitorForElements,
+} from "@atlaskit/pragmatic-drag-and-drop/element/adapter"
 import { toast } from "sonner"
 import { QuickAddTaskCommand } from "./quick-add-task-command"
 
@@ -45,6 +38,112 @@ interface TaskWithTime extends Task {
   duration?: number
 }
 
+const getPriorityColor = (priority?: string) => {
+  switch (priority) {
+    case 'high': return 'bg-red-100 text-red-800 border-red-200'
+    case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
+    case 'low': return 'bg-green-100 text-green-800 border-green-200'
+    default: return 'bg-gray-100 text-gray-800 border-gray-200'
+  }
+}
+
+// Draggable Task Component
+function DraggableTask({ task, layout, top, height, isUpdating, onTaskClick }: {
+  task: TaskWithTime
+  layout: { width: number; left: number; column: number }
+  top: number
+  height: number
+  isUpdating: boolean
+  onTaskClick?: (task: Task) => void
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [isDragging, setIsDragging] = useState(false)
+
+  useEffect(() => {
+    const element = ref.current
+    if (!element) return
+
+    return draggable({
+      element,
+      getInitialData: () => ({ type: "daily-task", taskId: task.id }),
+      onDragStart: () => setIsDragging(true),
+      onDrop: () => setIsDragging(false),
+    })
+  }, [task.id])
+
+  return (
+    <div
+      ref={ref}
+      className={`absolute p-2 rounded-md border cursor-grab active:cursor-grabbing hover:shadow-sm transition-all pointer-events-auto ${getPriorityColor(task.priority)} ${isUpdating ? 'animate-pulse' : ''}`}
+      style={{
+        top: `${top}px`,
+        height: `${height - 4}px`,
+        left: `${layout.left}%`,
+        width: `${layout.width - 2}%`,
+        opacity: isDragging ? 0.5 : isUpdating ? 0.7 : 1,
+        zIndex: isDragging ? 1000 : 10 + layout.column,
+      }}
+      onClick={() => {
+        if (!isDragging && !isUpdating) {
+          onTaskClick?.(task)
+        }
+      }}
+    >
+      <div className="text-xs font-medium truncate">{task.title}</div>
+      {(task.displayStartTime || task.displayEndTime) && (
+        <div className="flex items-center gap-1 mt-1">
+          <Clock className="h-3 w-3" />
+          <span className="text-xs">
+            {task.displayStartTime && task.displayEndTime
+              ? `${task.displayStartTime} - ${task.displayEndTime}`
+              : task.displayStartTime || task.displayEndTime
+            }
+          </span>
+        </div>
+      )}
+      {task.priority && height > 40 && layout.width > 30 && (
+        <Badge variant="secondary" className="text-xs mt-1">
+          {task.priority}
+        </Badge>
+      )}
+    </div>
+  )
+}
+
+// Droppable Time Slot Component
+function DroppableTimeSlot({ assigneeId, hour, children }: {
+  assigneeId: string
+  hour: number
+  children: React.ReactNode
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [isOver, setIsOver] = useState(false)
+
+  useEffect(() => {
+    const element = ref.current
+    if (!element) return
+
+    return dropTargetForElements({
+      element,
+      canDrop: ({ source }) => source.data.type === "daily-task",
+      getData: () => ({ assigneeId, hour }),
+      onDragEnter: () => setIsOver(true),
+      onDragLeave: () => setIsOver(false),
+      onDrop: () => setIsOver(false),
+    })
+  }, [assigneeId, hour])
+
+  return (
+    <div
+      ref={ref}
+      className={`min-h-[50px] p-1 transition-colors ${isOver ? 'bg-blue-50 border-blue-200 border-dashed border-2' : ''
+        }`}
+    >
+      {children}
+    </div>
+  )
+}
+
 export function ProjectDailyView({
   tasks,
   onTaskClick,
@@ -55,8 +154,6 @@ export function ProjectDailyView({
   className
 }: ProjectDailyViewProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
-  const [activeTask, setActiveTask] = useState<TaskWithTime | null>(null)
-  const [, setIsDragging] = useState(false)
   const [optimisticTasks, setOptimisticTasks] = useState<Task[]>(tasks)
   const [updatingTasks, setUpdatingTasks] = useState<Set<string>>(new Set())
 
@@ -64,15 +161,6 @@ export function ProjectDailyView({
   useEffect(() => {
     setOptimisticTasks(tasks)
   }, [tasks])
-
-  // Configure drag sensors
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8, // Require 8px movement before drag starts
-      },
-    })
-  )
 
   // Generate time slots (8:00 - 18:00 in 1-hour intervals)
   const timeSlots = useMemo(() => {
@@ -271,36 +359,39 @@ export function ProjectDailyView({
     return layouts
   }
 
-  // Handle drag start
-  const handleDragStart = (event: DragStartEvent) => {
-    const { active } = event
-    const task = tasksForDate.find(t => t.id === active.id)
-    if (task) {
-      setActiveTask(task)
-      setIsDragging(true)
-    }
-  }
+  // Keep latest data accessible inside the drag monitor without re-registering it.
+  const tasksForDateRef = useRef<TaskWithTime[]>(tasksForDate)
+  tasksForDateRef.current = tasksForDate
+  const selectedDateRef = useRef<Date>(selectedDate)
+  selectedDateRef.current = selectedDate
+  const onTaskUpdateRef = useRef(onTaskUpdate)
+  onTaskUpdateRef.current = onTaskUpdate
+
+  useEffect(() => {
+    return monitorForElements({
+      canMonitor: ({ source }) => source.data.type === "daily-task",
+      onDrop: ({ source, location }) => {
+        const target = location.current.dropTargets[0]
+        if (!target) return
+        handleTaskDrop(
+          source.data.taskId as string,
+          target.data.assigneeId as string,
+          target.data.hour as number
+        )
+      },
+    })
+  }, [])
 
   // Handle drag end
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event
-    setActiveTask(null)
-    setIsDragging(false)
+  const handleTaskDrop = async (taskId: string, assigneeId: string, hour: number) => {
+    const onTaskUpdate = onTaskUpdateRef.current
+    const selectedDate = selectedDateRef.current
+    if (!onTaskUpdate) return
 
-    if (!over || !onTaskUpdate) return
-
-    const taskId = active.id as string
-    const task = tasksForDate.find(t => t.id === taskId)
+    const task = tasksForDateRef.current.find(t => t.id === taskId)
     if (!task) return
 
-    // Parse drop target (format: "assignee-hour" or "assignee-hour-minute")
-    const dropId = over.id as string
-    const [assigneeId, hourStr, minuteStr] = dropId.split('-')
-
-    if (!hourStr) return
-
-    const hour = parseInt(hourStr)
-    const minute = minuteStr ? parseInt(minuteStr) : 0
+    const minute = 0
 
     // Calculate new start time
     const newStartTime = new Date(selectedDate)
@@ -393,102 +484,8 @@ export function ProjectDailyView({
     }
   }
 
-  const getPriorityColor = (priority?: string) => {
-    switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800 border-red-200'
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-      case 'low': return 'bg-green-100 text-green-800 border-green-200'
-      default: return 'bg-gray-100 text-gray-800 border-gray-200'
-    }
-  }
-
-  // Draggable Task Component
-  const DraggableTask = ({ task, layout, top, height }: {
-    task: TaskWithTime
-    layout: { width: number; left: number; column: number }
-    top: number
-    height: number
-  }) => {
-    const isUpdating = updatingTasks.has(task.id)
-    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-      id: task.id,
-    })
-
-    const style = {
-      transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
-      opacity: isDragging ? 0.5 : isUpdating ? 0.7 : 1,
-      zIndex: isDragging ? 1000 : 10 + layout.column,
-    }
-
-    return (
-      <div
-        ref={setNodeRef}
-        {...listeners}
-        {...attributes}
-        className={`absolute p-2 rounded-md border cursor-grab active:cursor-grabbing hover:shadow-sm transition-all pointer-events-auto ${getPriorityColor(task.priority)} ${isUpdating ? 'animate-pulse' : ''}`}
-        style={{
-          top: `${top}px`,
-          height: `${height - 4}px`,
-          left: `${layout.left}%`,
-          width: `${layout.width - 2}%`,
-          ...style
-        }}
-        onClick={() => {
-          if (!isDragging && !isUpdating) {
-            onTaskClick?.(task)
-          }
-        }}
-      >
-        <div className="text-xs font-medium truncate">{task.title}</div>
-        {(task.displayStartTime || task.displayEndTime) && (
-          <div className="flex items-center gap-1 mt-1">
-            <Clock className="h-3 w-3" />
-            <span className="text-xs">
-              {task.displayStartTime && task.displayEndTime
-                ? `${task.displayStartTime} - ${task.displayEndTime}`
-                : task.displayStartTime || task.displayEndTime
-              }
-            </span>
-          </div>
-        )}
-        {task.priority && height > 40 && layout.width > 30 && (
-          <Badge variant="secondary" className="text-xs mt-1">
-            {task.priority}
-          </Badge>
-        )}
-      </div>
-    )
-  }
-
-  // Droppable Time Slot Component
-  const DroppableTimeSlot = ({ assigneeId, hour, children }: {
-    assigneeId: string
-    hour: number
-    children: React.ReactNode
-  }) => {
-    const { setNodeRef, isOver } = useDroppable({
-      id: `${assigneeId}-${hour}`,
-    })
-
-    return (
-      <div
-        ref={setNodeRef}
-        className={`min-h-[50px] p-1 transition-colors ${isOver ? 'bg-blue-50 border-blue-200 border-dashed border-2' : ''
-          }`}
-      >
-        {children}
-      </div>
-    )
-  }
-
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
-      <div className={className}>
+    <div className={className}>
         <div>
           <div className="flex items-center justify-between">
             <div>
@@ -587,6 +584,8 @@ export function ProjectDailyView({
                                   layout={layout}
                                   top={top}
                                   height={height}
+                                  isUpdating={updatingTasks.has(task.id)}
+                                  onTaskClick={onTaskClick}
                                 />
                               )
                             })}
@@ -617,25 +616,5 @@ export function ProjectDailyView({
           )}
         </div>
       </div>
-
-      <DragOverlay>
-        {activeTask ? (
-          <div className={`p-2 rounded-md border shadow-lg opacity-90 ${getPriorityColor(activeTask.priority)}`}>
-            <div className="text-xs font-medium truncate">{activeTask.title}</div>
-            {(activeTask.displayStartTime || activeTask.displayEndTime) && (
-              <div className="flex items-center gap-1 mt-1">
-                <Clock className="h-3 w-3" />
-                <span className="text-xs">
-                  {activeTask.displayStartTime && activeTask.displayEndTime
-                    ? `${activeTask.displayStartTime} - ${activeTask.displayEndTime}`
-                    : activeTask.displayStartTime || activeTask.displayEndTime
-                  }
-                </span>
-              </div>
-            )}
-          </div>
-        ) : null}
-      </DragOverlay>
-    </DndContext>
   )
 }

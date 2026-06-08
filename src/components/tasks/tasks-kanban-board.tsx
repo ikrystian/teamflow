@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ClickableAvatar } from "@/components/ui/clickable-avatar"
@@ -16,26 +16,10 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-  DragOverlay,
-  DragStartEvent,
-  useDroppable,
-} from "@dnd-kit/core"
-import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable"
-import {
-  useSortable,
-} from "@dnd-kit/sortable"
-import { CSS } from "@dnd-kit/utilities"
+  draggable,
+  dropTargetForElements,
+  monitorForElements,
+} from "@atlaskit/pragmatic-drag-and-drop/element/adapter"
 import { TaskDetailsSheet } from "./task-details-sheet"
 import type { Task, TaskStatus } from "@/types"
 import type { Session } from "next-auth"
@@ -88,21 +72,23 @@ function SortableTaskCard({
   taskStatuses: TaskStatus[]
   session: Session | null
 }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: task.id })
+  const ref = useRef<HTMLDivElement>(null)
+  const [isDragging, setIsDragging] = useState(false)
+
+  useEffect(() => {
+    const element = ref.current
+    if (!element) return
+
+    return draggable({
+      element,
+      getInitialData: () => ({ type: "task", taskId: task.id, statusId: task.statusId }),
+      onDragStart: () => setIsDragging(true),
+      onDrop: () => setIsDragging(false),
+    })
+  }, [task.id, task.statusId])
 
   const style = {
-    transform: CSS.Transform.toString(transform),
-    transition: isDragging ? 'none' : transition,
     opacity: isDragging ? 0.5 : isUpdating ? 0.8 : 1,
-    scale: isDragging ? 1.05 : 1,
-    zIndex: isDragging ? 1000 : 'auto',
   }
 
   const isOverdue = (dueDate?: string) => {
@@ -136,20 +122,17 @@ function SortableTaskCard({
 
   return (
     <div
-      ref={setNodeRef}
+      ref={ref}
       style={style}
-      {...attributes}
-      {...listeners}
-      className="touch-none"
+      className="touch-none cursor-grab active:cursor-grabbing"
     >
       <Card
-        className={`mb-2 cursor-pointer hover:shadow-md transition-all border-l-4 ${
-          isUpdating
+        className={`mb-2 cursor-pointer hover:shadow-md transition-all border-l-4 ${isUpdating
             ? 'border-l-yellow-500 bg-yellow-50/50'
             : isTaskCompleted()
-            ? 'bg-green-50/80 border-l-green-500'
-            : ''
-        }`}
+              ? 'bg-green-50/80 border-l-green-500'
+              : ''
+          }`}
         style={{
           borderLeftColor: isUpdating ? undefined : isTaskCompleted() ? '#10B981' : (task.project?.color || '#3B82F6'),
           paddingTop: 5,
@@ -157,14 +140,14 @@ function SortableTaskCard({
         }}
       >
         <CardContent className="py-2 px-3 select-none"
-                 onClick={() => onViewDetails(task)}
->
+          onClick={() => onViewDetails(task)}
+        >
           <div className="flex items-start justify-between mb-2">
             <div className="flex items-start gap-2 flex-1 min-w-0">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1">
                   <h4
-                    className="font-medium text-sm leading-tight cursor-pointer hover:text-primary truncate"
+                    className="font-medium text-sm leading-tight cursor-pointer hover:text-primary"
                   >
                     {task.title}
                   </h4>
@@ -181,24 +164,24 @@ function SortableTaskCard({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={(event) => {onViewDetails(task); event.stopPropagation(); }}>
+                <DropdownMenuItem onClick={(event) => { onViewDetails(task); event.stopPropagation(); }}>
                   Szczegóły
                 </DropdownMenuItem>
                 {canEdit && (
                   <>
                     {!isTaskCompleted() && (
-                      <DropdownMenuItem onClick={event => {handleMarkComplete(); event.stopPropagation()}}>
+                      <DropdownMenuItem onClick={event => { handleMarkComplete(); event.stopPropagation() }}>
                         <Check className="mr-2 h-4 w-4" />
                         Oznacz jako zakończone
                       </DropdownMenuItem>
                     )}
-                    <DropdownMenuItem onClick={(event) => { onTimeTracking(task); event.stopPropagation();}}>
+                    <DropdownMenuItem onClick={(event) => { onTimeTracking(task); event.stopPropagation(); }}>
                       <Clock className="mr-2 h-4 w-4" />
                       Loguj czas
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      onClick={(event) => {event.stopPropagation(); onDelete(task)}}
+                      onClick={(event) => { event.stopPropagation(); onDelete(task) }}
                       className="text-destructive"
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
@@ -223,9 +206,8 @@ function SortableTaskCard({
               )}
 
               {task.dueDate && (
-                <div className={`flex items-center gap-1 text-xs ${
-                  isOverdue(task.dueDate) ? 'text-red-600' : 'text-muted-foreground'
-                }`}>
+                <div className={`flex items-center gap-1 text-xs ${isOverdue(task.dueDate) ? 'text-red-600' : 'text-muted-foreground'
+                  }`}>
                   <Calendar className="h-3 w-3" />
                   {formatTaskDueDateWithRelative(task.dueDate)}
                   {isOverdue(task.dueDate) && <AlertCircle className="h-3 w-3 text-red-600" />}
@@ -240,16 +222,16 @@ function SortableTaskCard({
               )}
 
               <div className="flex-1"></div>
-              {task.assignee  && (
-              <div className="flex items-center justify-end">
-                <ClickableAvatar
-                  userId={task.assignee.id}
-                  avatarUrl={task.assignee.avatarUrl}
-                  name={task.assignee.name}
-                  size="sm"
-                />
-              </div>
-            )}
+              {task.assignee && (
+                <div className="flex items-center justify-end">
+                  <ClickableAvatar
+                    userId={task.assignee.id}
+                    avatarUrl={task.assignee.avatarUrl}
+                    name={task.assignee.name}
+                    size="sm"
+                  />
+                </div>
+              )}
             </div>
 
           </div>
@@ -389,7 +371,7 @@ function QuickAddTask({
           <div className="flex gap-2 items-center">
             <Button
               type="button"
-               className="w-6 h-6"
+              className="w-6 h-6"
               variant="ghost"
               size="sm"
               onClick={handleCancel}
@@ -438,15 +420,27 @@ function KanbanColumn({
   onMarkComplete?: (task: Task) => void
   taskStatuses: TaskStatus[]
 }) {
-  const { setNodeRef, isOver } = useDroppable({
-    id: status.id,
-  })
+  const ref = useRef<HTMLDivElement>(null)
+  const [isOver, setIsOver] = useState(false)
+
+  useEffect(() => {
+    const element = ref.current
+    if (!element) return
+
+    return dropTargetForElements({
+      element,
+      canDrop: ({ source }) => source.data.type === "task",
+      getData: () => ({ type: "column", statusId: status.id }),
+      onDragEnter: () => setIsOver(true),
+      onDragLeave: () => setIsOver(false),
+      onDrop: () => setIsOver(false),
+    })
+  }, [status.id])
 
   return (
     <div className="flex-shrink-0 w-80">
-      <div className={`bg-muted/30 rounded-lg p-4 h-full transition-colors ${
-        isOver ? 'bg-primary/10 ring-2 ring-primary/20' : ''
-      }`}>
+      <div className={`bg-muted/30 rounded-lg p-4 h-full transition-colors ${isOver ? 'bg-primary/10 ring-2 ring-primary/20' : ''
+        }`}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <h3 className="font-semibold text-sm">{status.name}</h3>
@@ -456,46 +450,41 @@ function KanbanColumn({
           </div>
         </div>
 
-        <SortableContext
-          items={tasks.map(task => task.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          <div ref={setNodeRef} className="space-y-2 min-h-[400px]">
-            {tasks.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground text-sm">
-                <div className="mb-2">Brak zadań</div>
-                <div className="text-xs">Przeciągnij zadanie tutaj lub dodaj nowe</div>
-              </div>
-            )}
+        <div ref={ref} className="space-y-2 min-h-[400px]">
+          {tasks.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground text-sm">
+              <div className="mb-2">Brak zadań</div>
+              <div className="text-xs">Przeciągnij zadanie tutaj lub dodaj nowe</div>
+            </div>
+          )}
 
-            {tasks.map((task) => (
-              <SortableTaskCard
-                key={task.id}
-                task={task}
-                onEdit={onEdit}
-                onTimeTracking={onTimeTracking}
-                onViewDetails={onViewDetails}
-                onDelete={onDelete}
-                canEdit={canEdit(task)}
-                isUpdating={updatingTasks.has(task.id)}
-                onMarkComplete={onMarkComplete}
-                taskStatuses={taskStatuses}
-                session={session}
-              />
-            ))}
+          {tasks.map((task) => (
+            <SortableTaskCard
+              key={task.id}
+              task={task}
+              onEdit={onEdit}
+              onTimeTracking={onTimeTracking}
+              onViewDetails={onViewDetails}
+              onDelete={onDelete}
+              canEdit={canEdit(task)}
+              isUpdating={updatingTasks.has(task.id)}
+              onMarkComplete={onMarkComplete}
+              taskStatuses={taskStatuses}
+              session={session}
+            />
+          ))}
 
-            {/* Wyświetl przycisk dodawania zadania tylko w domyślnej kolumnie */}
-            {status.isDefault && (
-              <QuickAddTask
-                status={status}
-                onTaskCreated={onTaskCreated}
-                projects={projects}
-                session={session}
-                hideProjectSelect={hideProjectSelect}
-              />
-            )}
-          </div>
-        </SortableContext>
+          {/* Wyświetl przycisk dodawania zadania tylko w domyślnej kolumnie */}
+          {status.isDefault && (
+            <QuickAddTask
+              status={status}
+              onTaskCreated={onTaskCreated}
+              projects={projects}
+              session={session}
+              hideProjectSelect={hideProjectSelect}
+            />
+          )}
+        </div>
       </div>
     </div>
   )
@@ -513,7 +502,6 @@ export function TasksKanbanBoard({
   hideProjectSelect = false,
   taskStatuses
 }: TasksKanbanBoardProps) {
-  const [activeTask, setActiveTask] = useState<Task | null>(null)
   const [optimisticTasks, setOptimisticTasks] = useState<Task[]>(tasks)
   const [updatingTasks, setUpdatingTasks] = useState<Set<string>>(new Set())
   const [taskDetailsDialogOpen, setTaskDetailsDialogOpen] = useState(false)
@@ -522,16 +510,11 @@ export function TasksKanbanBoard({
   // Always use optimistic tasks for display
   const displayTasks = optimisticTasks
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  )
+  // Keep latest data accessible inside the drag monitor without re-registering it.
+  const displayTasksRef = useRef<Task[]>(displayTasks)
+  displayTasksRef.current = displayTasks
+  const taskStatusesRef = useRef<TaskStatus[]>(taskStatuses)
+  taskStatusesRef.current = taskStatuses
 
   const getTasksByStatus = (status: TaskStatus) => {
     return displayTasks.filter(task => {
@@ -546,32 +529,26 @@ export function TasksKanbanBoard({
     tasks: getTasksByStatus(status)
   }))
 
-  const handleDragStart = (event: DragStartEvent) => {
-    const { active } = event
-    const task = displayTasks.find(t => t.id === active.id)
-    setActiveTask(task || null)
-  }
+  useEffect(() => {
+    return monitorForElements({
+      canMonitor: ({ source }) => source.data.type === "task",
+      onDrop: ({ source, location }) => {
+        const target = location.current.dropTargets[0]
+        if (!target) return
+        handleTaskDrop(
+          source.data.taskId as string,
+          target.data.statusId as string
+        )
+      },
+    })
+  }, [])
 
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event
-    setActiveTask(null)
-
-    if (!over) return
-
-    const taskId = active.id as string
-    const overId = over.id as string
-
-    // The drop target can be either a column (its id is a status id) or another
-    // task card inside a column. When a column is full, the card under the cursor
-    // is what gets reported as `over`, so resolve it back to that card's column.
-    const overTask = displayTasks.find(t => t.id === overId)
-    const newStatusId = overTask ? overTask.statusId : overId
-
+  const handleTaskDrop = async (taskId: string, newStatusId: string) => {
     // Find the status by id
-    const newTaskStatus = taskStatuses.find(status => status.id === newStatusId)
+    const newTaskStatus = taskStatusesRef.current.find(status => status.id === newStatusId)
     if (!newTaskStatus) return
 
-    const task = displayTasks.find(t => t.id === taskId)
+    const task = displayTasksRef.current.find(t => t.id === taskId)
     if (!task || task.statusId === newTaskStatus.id) return
 
     // Optimistic update - immediately update UI
@@ -731,49 +708,27 @@ export function TasksKanbanBoard({
 
   return (
     <>
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="flex space-x-4 overflow-x-auto pb-4">
-          {statusColumns.map((status) => (
-            <KanbanColumn
-              key={status.id}
-              status={status}
-              tasks={status.tasks}
-              onEdit={onTaskEdit}
-              onTimeTracking={onTimeTracking}
-              onViewDetails={handleViewDetails}
-              onDelete={onTaskDelete}
-              canEdit={canEditTask}
-              onTaskCreated={onTaskUpdated}
-              updatingTasks={updatingTasks}
-              projects={projects}
-              session={session}
-              hideProjectSelect={hideProjectSelect}
-              onMarkComplete={handleMarkComplete}
-              taskStatuses={taskStatuses}
-            />
-          ))}
-        </div>
-
-        <DragOverlay>
-          {activeTask ? (
-            <Card
-              className="w-80 opacity-90 rotate-3 shadow-lg border-l-4"
-              style={{
-                borderLeftColor: activeTask.project?.color || '#3B82F6'
-              }}
-            >
-              <CardContent className="p-3">
-                <h4 className="font-medium text-sm">{activeTask.title}</h4>
-              </CardContent>
-            </Card>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+      <div className="flex space-x-4 overflow-x-auto pb-4">
+        {statusColumns.map((status) => (
+          <KanbanColumn
+            key={status.id}
+            status={status}
+            tasks={status.tasks}
+            onEdit={onTaskEdit}
+            onTimeTracking={onTimeTracking}
+            onViewDetails={handleViewDetails}
+            onDelete={onTaskDelete}
+            canEdit={canEditTask}
+            onTaskCreated={onTaskUpdated}
+            updatingTasks={updatingTasks}
+            projects={projects}
+            session={session}
+            hideProjectSelect={hideProjectSelect}
+            onMarkComplete={handleMarkComplete}
+            taskStatuses={taskStatuses}
+          />
+        ))}
+      </div>
 
       <TaskDetailsSheet
         open={taskDetailsDialogOpen}

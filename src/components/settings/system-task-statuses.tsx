@@ -1,31 +1,22 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Settings, GripVertical, Edit, Trash2 } from "lucide-react"
+import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine"
 import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-  DragStartEvent,
-  DragOverlay,
-} from "@dnd-kit/core"
+  draggable,
+  dropTargetForElements,
+  monitorForElements,
+} from "@atlaskit/pragmatic-drag-and-drop/element/adapter"
 import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable"
-import {
-  useSortable,
-} from "@dnd-kit/sortable"
-import { CSS } from "@dnd-kit/utilities"
+  attachClosestEdge,
+  extractClosestEdge,
+} from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge"
+import { DropIndicator } from "@/components/ui/drop-indicator"
+import { reorderWithEdge, type Edge } from "@/lib/dnd-utils"
 import { SystemTaskStatusDialog } from "./system-task-status-dialog"
 import { toast } from "sonner"
 import {
@@ -54,34 +45,57 @@ interface SortableTaskStatusProps {
 }
 
 function SortableTaskStatus({ status, onEdit, onDelete }: SortableTaskStatusProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: status.id })
+  const ref = useRef<HTMLDivElement>(null)
+  const handleRef = useRef<HTMLDivElement>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const [closestEdge, setClosestEdge] = useState<Edge | null>(null)
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition: isDragging ? 'none' : transition,
-    opacity: isDragging ? 0.3 : 1,
-    zIndex: isDragging ? 1000 : 'auto',
-  }
+  useEffect(() => {
+    const element = ref.current
+    const handle = handleRef.current
+    if (!element || !handle) return
+
+    return combine(
+      draggable({
+        element,
+        dragHandle: handle,
+        getInitialData: () => ({ type: "task-status", statusId: status.id }),
+        onDragStart: () => setIsDragging(true),
+        onDrop: () => setIsDragging(false),
+      }),
+      dropTargetForElements({
+        element,
+        canDrop: ({ source }) => source.data.type === "task-status",
+        getData: ({ input, element }) =>
+          attachClosestEdge(
+            { statusId: status.id },
+            { input, element, allowedEdges: ["top", "bottom"] }
+          ),
+        onDrag: ({ self, source }) => {
+          if (source.data.statusId === status.id) {
+            setClosestEdge(null)
+            return
+          }
+          setClosestEdge(extractClosestEdge(self.data))
+        },
+        onDragLeave: () => setClosestEdge(null),
+        onDrop: () => setClosestEdge(null),
+      })
+    )
+  }, [status.id])
 
   return (
     <div
-      ref={setNodeRef}
-      style={style}
-      className={`flex items-center justify-between p-4 bg-white border rounded-lg shadow-sm transition-all duration-200 ${
+      ref={ref}
+      style={{ opacity: isDragging ? 0.3 : 1 }}
+      className={`relative flex items-center justify-between p-4 bg-white border rounded-lg shadow-sm transition-all duration-200 ${
         isDragging ? 'shadow-lg scale-105' : 'hover:shadow-md'
       }`}
     >
+      {closestEdge && <DropIndicator edge={closestEdge} />}
       <div className="flex items-center space-x-3">
         <div
-          {...attributes}
-          {...listeners}
+          ref={handleRef}
           className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-gray-100 transition-colors"
           title="Przeciągnij, aby zmienić kolejność"
         >
@@ -129,19 +143,12 @@ export function SystemTaskStatuses() {
   const [editingStatus, setEditingStatus] = useState<TaskStatus | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [statusToDelete, setStatusToDelete] = useState<string | null>(null)
-  const [activeStatus, setActiveStatus] = useState<TaskStatus | null>(null)
   const [isReordering, setIsReordering] = useState(false)
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  )
+  // Keep latest statuses accessible inside the drag monitor without
+  // re-registering it on every render.
+  const statusesRef = useRef<TaskStatus[]>(taskStatuses)
+  statusesRef.current = taskStatuses
 
   const fetchTaskStatuses = async () => {
     try {
@@ -161,30 +168,36 @@ export function SystemTaskStatuses() {
     fetchTaskStatuses()
   }, [])
 
-  const handleDragStart = (event: DragStartEvent) => {
-    const { active } = event
-    const status = taskStatuses.find(s => s.id === active.id)
-    setActiveStatus(status || null)
-  }
+  useEffect(() => {
+    return monitorForElements({
+      canMonitor: ({ source }) => source.data.type === "task-status",
+      onDrop: ({ source, location }) => {
+        const target = location.current.dropTargets[0]
+        if (!target) return
 
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event
-    setActiveStatus(null)
+        const sourceId = source.data.statusId as string
+        const targetId = target.data.statusId as string
+        if (sourceId === targetId) return
 
-    if (!over || active.id === over.id) {
-      return
-    }
+        const edge = extractClosestEdge(target.data)
+        const current = statusesRef.current
+        const orderedIds = reorderWithEdge(
+          current.map((status) => status.id),
+          sourceId,
+          targetId,
+          edge
+        )
 
-    const oldIndex = taskStatuses.findIndex((status) => status.id === active.id)
-    const newIndex = taskStatuses.findIndex((status) => status.id === over.id)
+        const newTaskStatuses = orderedIds
+          .map((id) => current.find((status) => status.id === id))
+          .filter((status): status is TaskStatus => status !== undefined)
 
-    if (oldIndex === -1 || newIndex === -1) {
-      console.error("Invalid drag operation: status not found")
-      return
-    }
+        handleReorder(newTaskStatuses)
+      },
+    })
+  }, [])
 
-    const newTaskStatuses = arrayMove(taskStatuses, oldIndex, newIndex)
-
+  const handleReorder = async (newTaskStatuses: TaskStatus[]) => {
     // Optimistic update
     setTaskStatuses(newTaskStatuses)
     setIsReordering(true)
@@ -300,58 +313,23 @@ export function SystemTaskStatuses() {
           </div>
         </CardHeader>
         <CardContent>
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={taskStatuses.map(status => status.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              <div className={`space-y-3 transition-all duration-200 ${
-                activeStatus ? 'bg-blue-50 border-2 border-dashed border-blue-300 rounded-lg p-4' : ''
-              }`}>
-                {taskStatuses.length > 0 ? (
-                  taskStatuses.map((status) => (
-                    <SortableTaskStatus
-                      key={status.id}
-                      status={status}
-                      onEdit={handleEditStatus}
-                      onDelete={handleDeleteStatus}
-                    />
-                  ))
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <Settings className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                    <p>Brak statusów zadań. Dodaj pierwszy status.</p>
-                  </div>
-                )}
+          <div className="space-y-3">
+            {taskStatuses.length > 0 ? (
+              taskStatuses.map((status) => (
+                <SortableTaskStatus
+                  key={status.id}
+                  status={status}
+                  onEdit={handleEditStatus}
+                  onDelete={handleDeleteStatus}
+                />
+              ))
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <Settings className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                <p>Brak statusów zadań. Dodaj pierwszy status.</p>
               </div>
-            </SortableContext>
-
-            <DragOverlay>
-              {activeStatus ? (
-                <div className="flex items-center justify-between p-4 bg-white border rounded-lg shadow-lg opacity-90 rotate-2">
-                  <div className="flex items-center space-x-3">
-                    <GripVertical className="h-5 w-5 text-gray-400" />
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <span className="font-medium">{activeStatus.name}</span>
-                        {activeStatus.isDefault && (
-                          <Badge variant="secondary" className="text-xs">
-                            Domyślny
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-500">Kolejność: {activeStatus.order}</p>
-                    </div>
-                  </div>
-                </div>
-              ) : null}
-            </DragOverlay>
-          </DndContext>
+            )}
+          </div>
         </CardContent>
       </Card>
 

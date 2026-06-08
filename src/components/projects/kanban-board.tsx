@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useSession } from "next-auth/react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -16,26 +16,10 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-  DragOverlay,
-  DragStartEvent,
-  useDroppable,
-} from "@dnd-kit/core"
-import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable"
-import {
-  useSortable,
-} from "@dnd-kit/sortable"
-import { CSS } from "@dnd-kit/utilities"
+  draggable,
+  dropTargetForElements,
+  monitorForElements,
+} from "@atlaskit/pragmatic-drag-and-drop/element/adapter"
 import { TaskDetailsSheet } from "../tasks/task-details-sheet"
 import type { Task, TaskStatus } from "@/types"
 import { toast } from "sonner"
@@ -72,21 +56,23 @@ function SortableTaskCard({
   isUpdating?: boolean
   taskStatuses: TaskStatus[]
 }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: task.id })
+  const ref = useRef<HTMLDivElement>(null)
+  const [isDragging, setIsDragging] = useState(false)
+
+  useEffect(() => {
+    const element = ref.current
+    if (!element) return
+
+    return draggable({
+      element,
+      getInitialData: () => ({ type: "task", taskId: task.id, statusId: task.statusId }),
+      onDragStart: () => setIsDragging(true),
+      onDrop: () => setIsDragging(false),
+    })
+  }, [task.id, task.statusId])
 
   const style = {
-    transform: CSS.Transform.toString(transform),
-    transition: isDragging ? 'none' : transition,
     opacity: isDragging ? 0.5 : isUpdating ? 0.8 : 1,
-    scale: isDragging ? 1.05 : 1,
-    zIndex: isDragging ? 1000 : 'auto',
   }
 
   const isOverdue = (dueDate?: string) => {
@@ -115,11 +101,9 @@ function SortableTaskCard({
 
   return (
     <div
-      ref={setNodeRef}
+      ref={ref}
       style={style}
-      {...attributes}
-      {...listeners}
-      className="touch-none"
+      className="touch-none cursor-grab active:cursor-grabbing"
     >
       <Card
         className={`mb-2 cursor-pointer hover:shadow-md transition-all border-l-4 ${isUpdating
@@ -138,7 +122,7 @@ function SortableTaskCard({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1">
                   <h4
-                    className="font-medium text-sm leading-tight cursor-pointer hover:text-primary truncate"
+                    className="font-medium text-sm leading-tight cursor-pointer hover:text-primary"
                   >
                     {task.title}
                   </h4>
@@ -357,9 +341,22 @@ function KanbanColumn({
   taskStatuses: TaskStatus[]
   onCreateTask?: () => void
 }) {
-  const { setNodeRef, isOver } = useDroppable({
-    id: status.id,
-  })
+  const ref = useRef<HTMLDivElement>(null)
+  const [isOver, setIsOver] = useState(false)
+
+  useEffect(() => {
+    const element = ref.current
+    if (!element) return
+
+    return dropTargetForElements({
+      element,
+      canDrop: ({ source }) => source.data.type === "task",
+      getData: () => ({ type: "column", statusId: status.id }),
+      onDragEnter: () => setIsOver(true),
+      onDragLeave: () => setIsOver(false),
+      onDrop: () => setIsOver(false),
+    })
+  }, [status.id])
 
   return (
     <div className="flex-shrink-0 w-80">
@@ -374,55 +371,50 @@ function KanbanColumn({
           </div>
         </div>
 
-        <SortableContext
-          items={tasks.map(task => task.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          <div ref={setNodeRef} className="space-y-2 min-h-[400px]">
-            {tasks.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground text-sm">
-                <div className="mb-2">Brak zadań</div>
-                <div className="text-xs">Przeciągnij zadanie tutaj lub dodaj nowe</div>
-              </div>
-            )}
+        <div ref={ref} className="space-y-2 min-h-[400px]">
+          {tasks.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground text-sm">
+              <div className="mb-2">Brak zadań</div>
+              <div className="text-xs">Przeciągnij zadanie tutaj lub dodaj nowe</div>
+            </div>
+          )}
 
-            {tasks.map((task) => (
-              <SortableTaskCard
-                key={task.id}
-                task={task}
-                onEdit={onEdit}
-                onTimeTracking={onTimeTracking}
-                onViewDetails={onViewDetails}
-                onDelete={onDelete}
-                canEdit={canEdit(task)}
-                isUpdating={updatingTasks.has(task.id)}
-                taskStatuses={taskStatuses}
+          {tasks.map((task) => (
+            <SortableTaskCard
+              key={task.id}
+              task={task}
+              onEdit={onEdit}
+              onTimeTracking={onTimeTracking}
+              onViewDetails={onViewDetails}
+              onDelete={onDelete}
+              canEdit={canEdit(task)}
+              isUpdating={updatingTasks.has(task.id)}
+              taskStatuses={taskStatuses}
+            />
+          ))}
+
+          {/* Wyświetl przycisk dodawania zadania tylko w domyślnej kolumnie */}
+          {status.isDefault && (
+            <div className="space-y-2">
+              <QuickAddTask
+                status={status}
+                onTaskCreated={onTaskCreated}
+                projectId={projectId}
               />
-            ))}
-
-            {/* Wyświetl przycisk dodawania zadania tylko w domyślnej kolumnie */}
-            {status.isDefault && (
-              <div className="space-y-2">
-                <QuickAddTask
-                  status={status}
-                  onTaskCreated={onTaskCreated}
-                  projectId={projectId}
-                />
-                {onCreateTask && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onCreateTask}
-                    className="w-full justify-start text-muted-foreground hover:text-foreground"
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Utwórz szczegółowe zadanie
-                  </Button>
-                )}
-              </div>
-            )}
-          </div>
-        </SortableContext>
+              {onCreateTask && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onCreateTask}
+                  className="w-full justify-start text-muted-foreground hover:text-foreground"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Utwórz szczegółowe zadanie
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -439,7 +431,6 @@ export function KanbanBoard({
   onCreateTask
 }: KanbanBoardProps) {
   const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
-  const [activeTask, setActiveTask] = useState<Task | null>(null)
   const [optimisticTasks, setOptimisticTasks] = useState<Task[]>(tasks)
   const [updatingTasks, setUpdatingTasks] = useState<Set<string>>(new Set())
   const [taskDetailsDialogOpen, setTaskDetailsDialogOpen] = useState(false)
@@ -448,21 +439,16 @@ export function KanbanBoard({
   // Always use optimistic tasks for display
   const displayTasks = optimisticTasks
 
+  // Keep latest data accessible inside the drag monitor without re-registering it.
+  const displayTasksRef = useRef<Task[]>(displayTasks)
+  displayTasksRef.current = displayTasks
+  const taskStatusesRef = useRef<TaskStatus[]>(taskStatuses)
+  taskStatusesRef.current = taskStatuses
+
   // Update optimistic tasks when props tasks change
   useEffect(() => {
     setOptimisticTasks(tasks)
   }, [tasks])
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  )
 
   const fetchTaskStatuses = useCallback(async () => {
     try {
@@ -480,31 +466,27 @@ export function KanbanBoard({
     fetchTaskStatuses()
   }, [fetchTaskStatuses])
 
-  const handleDragStart = (event: DragStartEvent) => {
-    const { active } = event
-    const task = displayTasks.find(t => t.id === active.id)
-    setActiveTask(task || null)
-  }
+  useEffect(() => {
+    return monitorForElements({
+      canMonitor: ({ source }) => source.data.type === "task",
+      onDrop: ({ source, location }) => {
+        const target = location.current.dropTargets[0]
+        if (!target) return
+        handleTaskDrop(
+          source.data.taskId as string,
+          target.data.statusId as string
+        )
+      },
+    })
+  }, [])
 
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event
-    setActiveTask(null)
-
-    if (!over) return
-
-    const taskId = active.id as string
-    const overId = over.id as string
-
-    // The drop target can be either a column (its id is a status id) or another
-    // task card inside a column. When a column is full, the card under the cursor
-    // is what gets reported as `over`, so resolve it back to that card's column.
-    const overTask = displayTasks.find(t => t.id === overId)
-    const newStatusId = overTask ? overTask.statusId : overId
+  const handleTaskDrop = async (taskId: string, newStatusId: string) => {
+    const currentTasks = displayTasksRef.current
 
     // Ignore drops that don't resolve to a real status column
-    if (!taskStatuses.some(status => status.id === newStatusId)) return
+    if (!taskStatusesRef.current.some(status => status.id === newStatusId)) return
 
-    const task = displayTasks.find(t => t.id === taskId)
+    const task = currentTasks.find(t => t.id === taskId)
     if (!task) return
 
     // If the task is already in this status, do nothing
@@ -572,69 +554,31 @@ export function KanbanBoard({
 
   return (
     <>
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="flex space-x-4 overflow-x-auto pb-4">
-          {taskStatuses.length > 0 ? taskStatuses.map((status) => (
-            <KanbanColumn
-              key={status.id}
-              status={status}
-              tasks={getTasksByStatus(status)}
-              onEdit={onTaskEdit}
-              onTimeTracking={onTimeTracking}
-              onViewDetails={handleViewDetails}
-              onDelete={onTaskDelete}
-              canEdit={canEditTask}
-              onTaskCreated={onTaskUpdated}
-              projectId={projectId}
-              updatingTasks={updatingTasks}
-              taskStatuses={taskStatuses}
-              onCreateTask={onCreateTask}
-            />
-          )) : (
-            <div className="flex items-center justify-center w-full h-64 text-muted-foreground">
-              Ładowanie statusów zadań...
-            </div>
-          )}
+      <div className="flex space-x-4 overflow-x-auto pb-4">
+        {taskStatuses.length > 0 ? taskStatuses.map((status) => (
+          <KanbanColumn
+            key={status.id}
+            status={status}
+            tasks={getTasksByStatus(status)}
+            onEdit={onTaskEdit}
+            onTimeTracking={onTimeTracking}
+            onViewDetails={handleViewDetails}
+            onDelete={onTaskDelete}
+            canEdit={canEditTask}
+            onTaskCreated={onTaskUpdated}
+            projectId={projectId}
+            updatingTasks={updatingTasks}
+            taskStatuses={taskStatuses}
+            onCreateTask={onCreateTask}
+          />
+        )) : (
+          <div className="flex items-center justify-center w-full h-64 text-muted-foreground">
+            Ładowanie statusów zadań...
+          </div>
+        )}
 
 
-        </div>
-
-        <DragOverlay>
-          {activeTask ? (
-            <Card className="w-72 opacity-95 shadow-2xl rotate-3 transform bg-card border-0 rounded-lg">
-              <CardContent className="p-3">
-                <h3 className="text-sm font-medium text-foreground leading-tight">
-                  {activeTask.title}
-                </h3>
-                <div className="flex items-center justify-between mt-2">
-                  {activeTask.assignee && (
-                    <ClickableAvatar
-                      userId={activeTask.assignee.id}
-                      avatarUrl={activeTask.assignee.avatarUrl}
-                      name={activeTask.assignee.name}
-                      size="md"
-                      className="border-2 border-white shadow-sm"
-                    />
-                  )}
-                  {activeTask.priority && (
-                    <Badge
-                      variant="outline"
-                      className={`${getPriorityColor(activeTask.priority)} text-xs px-2 py-0.5 h-5 font-medium`}
-                    >
-                      {activeTask.priority}
-                    </Badge>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+      </div>
 
       <TaskDetailsSheet
         open={taskDetailsDialogOpen}
