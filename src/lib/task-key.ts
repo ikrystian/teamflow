@@ -12,7 +12,7 @@ const FALLBACK_PREFIX = "TSK"
  * - Single word    -> first two letters ("Trello" -> "TR")
  * - No / empty name -> FALLBACK_PREFIX ("TSK") for tasks without a project
  */
-export function generateProjectPrefix(name?: string | null): string {
+function generateProjectPrefix(name?: string | null): string {
   if (!name) return FALLBACK_PREFIX
 
   const words = name
@@ -43,7 +43,7 @@ export function generateProjectPrefix(name?: string | null): string {
  * which keeps every key unique across the whole system even when two projects
  * happen to share the same initials.
  */
-export async function generateTaskKey(
+async function generateTaskKey(
   db: Db,
   projectId?: string | null
 ): Promise<string> {

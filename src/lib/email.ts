@@ -11,7 +11,7 @@ interface SMTPSettings {
 }
 
 // Pobierz ustawienia SMTP ze zmiennych środowiskowych
-export async function getSMTPSettings(): Promise<SMTPSettings | null> {
+async function getSMTPSettings(): Promise<SMTPSettings | null> {
   try {
     const host = process.env.SMTP_HOST
     const port = process.env.SMTP_PORT
@@ -43,7 +43,7 @@ export async function getSMTPSettings(): Promise<SMTPSettings | null> {
 }
 
 // Utwórz transporter nodemailer
-export async function createTransporter() {
+async function createTransporter() {
   const smtpSettings = await getSMTPSettings()
 
   if (!smtpSettings) {
