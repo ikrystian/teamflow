@@ -110,7 +110,6 @@ export async function GET(request: NextRequest) {
             avatarUrl: true
           }
         },
-        subtasks: true,
         todos: true,
         comments: {
           include: {
@@ -172,11 +171,13 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Map taskTags to tags for simpler frontend consumption
+    // Map taskTags to tags and todos to subtasks for simpler frontend consumption
     const tasksWithTags = tasks.map(task => ({
       ...task,
       tags: task.taskTags.map(tt => tt.tag),
-      taskTags: undefined
+      subtasks: task.todos,
+      taskTags: undefined,
+      todos: undefined
     }))
 
     return NextResponse.json({ tasks: tasksWithTags })
@@ -343,6 +344,7 @@ export async function POST(request: NextRequest) {
             }
           }
         },
+        todos: true,
         taskTags: {
           include: {
             tag: true
@@ -351,11 +353,13 @@ export async function POST(request: NextRequest) {
       }
     }))
 
-    // Map tags for simpler consumption
+    // Map tags and todos to subtasks for simpler consumption
     const taskWithTags = {
       ...task,
       tags: task.taskTags.map(tt => tt.tag),
-      taskTags: undefined
+      subtasks: task.todos,
+      taskTags: undefined,
+      todos: undefined
     }
 
     // TODO: Add Slack notification when slackUserId is available in user model

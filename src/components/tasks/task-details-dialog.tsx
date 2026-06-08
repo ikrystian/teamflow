@@ -18,6 +18,7 @@ interface TaskDetailsDialogProps {
   // For create mode
   mode?: "create" | "edit"
   projectId?: string
+  projects?: Array<{ id: string; name: string }>
 }
 
 export function TaskDetailsDialog({
@@ -28,6 +29,7 @@ export function TaskDetailsDialog({
   onTaskCreated,
   mode = "edit",
   projectId,
+  projects = [],
 }: TaskDetailsDialogProps) {
   const isCreateMode = mode === "create"
 
@@ -46,6 +48,7 @@ export function TaskDetailsDialog({
             task={task}
             mode={mode}
             projectId={projectId}
+            projects={projects}
             onClose={() => onOpenChange(false)}
             onTaskUpdated={onTaskUpdated}
             onTaskCreated={onTaskCreated}

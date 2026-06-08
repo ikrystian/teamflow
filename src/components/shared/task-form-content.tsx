@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useSession } from "next-auth/react"
 import type { Session } from "next-auth"
 import { Button } from "@/components/ui/button"
@@ -115,6 +115,9 @@ export function TaskFormContent({
   const isCreateMode = mode === "create"
   const isEditMode = mode === "edit"
 
+  // Auto-save state (edit mode only)
+  const [isSaving, setIsSaving] = useState(false)
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Get current project for member selection
   const currentProject = projects.find(p => p.id === (projectId || selectedProjectId));
@@ -301,6 +304,76 @@ export function TaskFormContent({
     setReminderType(type)
     setReminderValue(value)
   }
+
+  // Auto-save function for edit mode
+  const autoSave = useCallback(async () => {
+    if (!isEditMode || !task) return
+
+    try {
+      setIsSaving(true)
+      const response = await fetch(`/api/tasks/${task.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: title.trim(),
+          description: description.trim() || undefined,
+          changes: changes.trim() || undefined,
+          statusId: statusId || undefined,
+          assigneeId: assigneeId || undefined,
+          priority: priority || undefined,
+          dueDate: dueDate ? dueDate.toISOString() : undefined,
+          startTime: startTime ? startTime.toISOString() : undefined,
+          endTime: endTime ? endTime.toISOString() : undefined,
+          estimatedHours: selectValueToHours(estimatedHours),
+          projectId: selectedProjectId && selectedProjectId !== "no-project" ? selectedProjectId : undefined,
+          reminderEnabled,
+          reminderType: reminderEnabled ? reminderType : undefined,
+          reminderValue: reminderEnabled ? reminderValue : undefined,
+          tagIds: selectedTagIds,
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        console.error("Auto-save error:", data.error)
+      } else {
+        onTaskUpdated?.()
+      }
+    } catch (error) {
+      console.error("Auto-save error:", error)
+    } finally {
+      setIsSaving(false)
+    }
+  }, [isEditMode, task, title, description, changes, statusId, assigneeId, priority, dueDate, startTime, endTime, estimatedHours, selectedProjectId, reminderEnabled, reminderType, reminderValue, selectedTagIds, onTaskUpdated])
+
+  // Debounced auto-save for field changes
+  const debouncedAutoSave = useCallback(() => {
+    if (!isEditMode) return
+
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current)
+    }
+
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      autoSave()
+    }, 500)
+  }, [isEditMode, autoSave])
+
+  // Auto-save on field changes in edit mode
+  useEffect(() => {
+    debouncedAutoSave()
+  }, [isEditMode ? title : null, isEditMode ? description : null, isEditMode ? statusId : null, isEditMode ? assigneeId : null, isEditMode ? priority : null, isEditMode ? dueDate : null, isEditMode ? selectedProjectId : null, debouncedAutoSave])
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -584,7 +657,7 @@ export function TaskFormContent({
         <div className="space-y-4 flex-1 overflow-y-auto">
           {/* Header Row with Status, Assignee, Priority, Project */}
           {isEditMode && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-muted/30 rounded-lg">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-0 bg-muted/30 rounded-lg">
               {/* Status */}
               <div className="space-y-1">
                 <label className="text-xs font-medium text-muted-foreground">Status</label>
@@ -1090,13 +1163,18 @@ export function TaskFormContent({
         <div className="flex flex-col-reverse sm:flex-row gap-2 pt-6">
           <Button
             type="submit"
-            disabled={loading || !isFormValid() || (isEditMode && !hasChanges)}
+            disabled={loading || !isFormValid() || isSaving}
             className="h-10"
           >
             {loading ? (
               <>
                 <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
                 {isCreateMode ? "Tworzenie..." : "Aktualizowanie..."}
+              </>
+            ) : isSaving ? (
+              <>
+                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                "Zapisywanie..."
               </>
             ) : (
               isCreateMode ? "Utwórz zadanie" : "Zaktualizuj zadanie"

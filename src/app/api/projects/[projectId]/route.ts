@@ -109,7 +109,6 @@ export async function GET(
                 avatarUrl: true
               }
             },
-            subtasks: true,
             todos: true,
             comments: {
               include: {
@@ -140,7 +139,17 @@ export async function GET(
       )
     }
 
-    return NextResponse.json({ project })
+    // Map todos to subtasks for all tasks in the project for simpler frontend consumption
+    const projectWithMappedTasks = {
+      ...project,
+      tasks: project.tasks?.map(task => ({
+        ...task,
+        subtasks: task.todos,
+        todos: undefined
+      }))
+    }
+
+    return NextResponse.json({ project: projectWithMappedTasks })
   } catch (error) {
     console.error("Error fetching project:", error)
     return NextResponse.json(

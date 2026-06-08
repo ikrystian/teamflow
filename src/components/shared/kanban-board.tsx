@@ -98,6 +98,7 @@ function SortableTaskCard({
   const ref = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false)
+  const [isDragOverAbove, setIsDragOverAbove] = useState(false)
 
   useEffect(() => {
     const element = ref.current
@@ -108,6 +109,21 @@ function SortableTaskCard({
       getInitialData: () => ({ type: "task", taskId: task.id, statusId: task.statusId }),
       onDragStart: () => setIsDragging(true),
       onDrop: () => setIsDragging(false),
+    })
+  }, [task.id, task.statusId])
+
+  // Drop target to show indicator above this task
+  useEffect(() => {
+    const element = ref.current
+    if (!element) return
+
+    return dropTargetForElements({
+      element,
+      canDrop: ({ source }) => source.data.type === "task",
+      onDragEnter: () => setIsDragOverAbove(true),
+      onDragLeave: () => setIsDragOverAbove(false),
+      onDrop: () => setIsDragOverAbove(false),
+      getData: () => ({ type: "task", taskId: task.id, statusId: task.statusId }),
     })
   }, [task.id, task.statusId])
 
@@ -145,12 +161,16 @@ function SortableTaskCard({
   }
 
   return (
-    <div
-      ref={ref}
-      style={style}
-      className="touch-none cursor-grab active:cursor-grabbing"
-    >
-      <DropdownMenu open={isContextMenuOpen} onOpenChange={setIsContextMenuOpen}>
+    <>
+      {isDragOverAbove && (
+        <div className="h-0.5 bg-primary mb-1 rounded-full" />
+      )}
+      <div
+        ref={ref}
+        style={style}
+        className="touch-none cursor-grab active:cursor-grabbing"
+      >
+        <DropdownMenu open={isContextMenuOpen} onOpenChange={setIsContextMenuOpen}>
         <Card
           className={`relative mb-2 cursor-pointer hover:shadow-md transition-all border-l-4 ${isUpdating
             ? 'border-l-yellow-500 bg-yellow-50/50'
@@ -250,7 +270,8 @@ function SortableTaskCard({
           </DropdownMenuContent>
         </Card>
       </DropdownMenu>
-    </div>
+      </div>
+    </>
   )
 }
 
@@ -788,6 +809,7 @@ export function KanbanBoard({
         onDelete={onTaskDelete}
         onTaskUpdated={onTaskUpdated}
         canEdit={selectedTask ? canEditTask(selectedTask) : false}
+        projects={projects}
       />
     </>
   )
