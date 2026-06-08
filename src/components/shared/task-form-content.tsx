@@ -14,7 +14,7 @@ import type { Task, TaskStatus, Project, Tag } from "@/types"
 import { ReminderSettings } from "@/components/tasks/reminder-settings"
 import { FileUpload } from "@/components/ui/file-upload"
 import { Badge } from "@/components/ui/badge"
-import { Send, Plus, Trash2 } from "lucide-react"
+import { Send, Plus, Trash2, Clock, Check } from "lucide-react"
 import { toast } from "sonner"
 import {
   getEstimatedHoursOptions,
@@ -135,8 +135,12 @@ export function TaskFormContent({
   // Time entries reported directly on the task (edit mode)
   const [timeEntries, setTimeEntries] = useState<Array<{ id: string; hours: number; description?: string | null; date: string; user?: { id: string; name?: string | null } }>>([])
   const [newTimeHours, setNewTimeHours] = useState("")
-  const [newTimeDescription, setNewTimeDescription] = useState("")
   const [loggingTime, setLoggingTime] = useState(false)
+  // Toggles the compact time-reporting panel revealed by the time summary button.
+  const [showTimeReporting, setShowTimeReporting] = useState(false)
+
+  // When the "changes" note was last sent to Slack (null = not sent yet).
+  const [slackSentAt, setSlackSentAt] = useState<string | null>(task?.changesSentAt ?? null)
 
 
   const fetchTaskStatuses = useCallback(async () => {
@@ -287,6 +291,7 @@ export function TaskFormContent({
       setTitle(task.title)
       setDescription(task.description || "")
       setChanges(task.changes || "")
+      setSlackSentAt(task.changesSentAt ?? null)
       setSelectedProjectId(task.project?.id || "")
       setAssigneeId(task.assignee?.id || "")
       setPriority(task.priority || "")
@@ -505,11 +510,10 @@ export function TaskFormContent({
       const response = await fetch(`/api/tasks/${task.id}/time-entries`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ hours, description: newTimeDescription.trim() || undefined }),
+        body: JSON.stringify({ hours }),
       })
       if (response.ok) {
         setNewTimeHours("")
-        setNewTimeDescription("")
         await fetchTimeEntries(task.id)
         onTaskUpdated?.()
         toast.success("Zaraportowano czas")
@@ -544,7 +548,11 @@ export function TaskFormContent({
     }
   }
 
-  const totalReportedHours = timeEntries.reduce((sum, e) => sum + e.hours, 0)
+  // Reported time = direct task time entries + time logged on subtasks.
+  const taskReportedHours = timeEntries.reduce((sum, e) => sum + e.hours, 0)
+  const subtaskReportedHours = subtasks.reduce((sum, s) => sum + (s.timeSpent || 0), 0)
+  const totalReportedHours = taskReportedHours + subtaskReportedHours
+  const plannedHours = selectValueToHours(estimatedHours) || 0
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -684,6 +692,7 @@ export function TaskFormContent({
       })
       const data = await response.json()
       if (response.ok) {
+        setSlackSentAt(data.changesSentAt ?? new Date().toISOString())
         toast.success("Wysłano na Slacka")
       } else {
         toast.error(data.error || "Nie udało się wysłać na Slacka")
@@ -824,8 +833,8 @@ export function TaskFormContent({
   return (
     <>
       {/* Form Content */}
-      <form onSubmit={handleSubmit} className="space-y-6 modal-form h-full flex flex-col">
-        <div className="space-y-4 flex-1 overflow-y-auto">
+      <form onSubmit={handleSubmit} className="space-y-6 modal-form">
+        <div className="space-y-4">
           {/* Header Row with Status, Assignee, Priority, Project */}
           {isEditMode && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-0 bg-muted/30 rounded-lg">
@@ -837,7 +846,7 @@ export function TaskFormContent({
                   onChange={(e) => setStatusId(e.target.value)}
                   className="h-8 w-full px-2 py-1 border border-input bg-background rounded text-xs focus:outline-none focus:ring-1 focus:ring-ring"
                 >
-                  <option value="">Brak</option>
+                  <option value="">Status</option>
                   {taskStatuses.map((status) => (
                     <option key={status.id} value={status.id}>
                       {status.name}
@@ -854,7 +863,7 @@ export function TaskFormContent({
                   onChange={(e) => setAssigneeId(e.target.value)}
                   className="h-8 w-full px-2 py-1 border border-input bg-background rounded text-xs focus:outline-none focus:ring-1 focus:ring-ring"
                 >
-                  <option value="">Brak</option>
+                  <option value="">Osoba</option>
                   {assigneeOptions.map((member) => (
                     <option key={member.id} value={member.id}>
                       {member.name || member.email}
@@ -872,7 +881,7 @@ export function TaskFormContent({
                   onChange={(e) => setPriority(e.target.value === "none" ? "" : e.target.value)}
                   className="h-8 w-full px-2 py-1 border border-input bg-background rounded text-xs focus:outline-none focus:ring-1 focus:ring-ring"
                 >
-                  <option value="none">Brak</option>
+                  <option value="none">Priorytet</option>
                   {getPriorityOptions().map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
@@ -889,7 +898,7 @@ export function TaskFormContent({
                   onChange={(e) => setSelectedProjectId(e.target.value === "no-project" ? "" : e.target.value)}
                   className="h-8 w-full px-2 py-1 border border-input bg-background rounded text-xs focus:outline-none focus:ring-1 focus:ring-ring"
                 >
-                  <option value="no-project">Bez projektu</option>
+                  <option value="no-project">Projekt</option>
                   {projectsList.map((project) => (
                     <option key={project.id} value={project.id}>
                       {project.name}
@@ -900,12 +909,82 @@ export function TaskFormContent({
             </div>
           )}
 
-          {/* Time Info Row */}
-          {isEditMode && (totalReportedHours > 0 || (estimatedHours && estimatedHours !== "none")) && (
-            <div className="p-2 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded text-xs text-blue-700 dark:text-blue-300">
-              <span>⏱️ Zaraportowany czas: {totalReportedHours.toFixed(1)}h</span>
-              {estimatedHours && estimatedHours !== "none" && (
-                <span className="ml-4">| Szacowany czas: {selectValueToHours(estimatedHours)}h</span>
+          {/* Time summary button — reported / planned hours, toggles quick add */}
+          {isEditMode && (
+            <div className="space-y-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowTimeReporting((v) => !v)}
+                className="gap-1.5"
+                title="Zaraportowany / planowany czas"
+              >
+                <Clock className="h-4 w-4" />
+                <span className="font-medium">
+                  {Number.isInteger(totalReportedHours) ? totalReportedHours : totalReportedHours.toFixed(1)}
+                  /{Number.isInteger(plannedHours) ? plannedHours : plannedHours.toFixed(1)}h
+                </span>
+              </Button>
+
+              {showTimeReporting && (
+                <div className="space-y-3 border rounded-lg p-3 bg-muted/20">
+                  {/* Existing entries (task-level time) */}
+                  {timeEntries.length > 0 && (
+                    <div className="space-y-1">
+                      {timeEntries.map((entry) => (
+                        <div key={entry.id} className="flex items-center gap-2 text-sm p-2 bg-background rounded-md">
+                          <span className="font-medium w-14 shrink-0">{entry.hours}h</span>
+                          <span className="text-xs text-muted-foreground shrink-0 ml-auto">
+                            {new Date(entry.date).toLocaleDateString("pl-PL")}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteTimeEntry(entry.id)}
+                            className="text-destructive hover:text-destructive/80 shrink-0"
+                            title="Usuń wpis"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Quick add (hours only, no description) */}
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      placeholder="Godz."
+                      value={newTimeHours}
+                      onChange={(e) => setNewTimeHours(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault()
+                          handleAddTimeEntry()
+                        }
+                      }}
+                      className="h-9 w-28 text-sm"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAddTimeEntry}
+                      disabled={loggingTime}
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Raportuj czas
+                    </Button>
+                  </div>
+                  {subtaskReportedHours > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      W tym z podzadań: {subtaskReportedHours}h · bezpośrednio: {taskReportedHours}h
+                    </p>
+                  )}
+                </div>
               )}
             </div>
           )}
@@ -949,28 +1028,43 @@ export function TaskFormContent({
 
               {showNotes && (
                 <div className="space-y-2 p-3 border rounded-md bg-muted/20">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <Label htmlFor="changes" className="text-sm font-medium">Notatki (do wysłania na Slack)</Label>
-                    {task?.changes && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleSendToSlack}
-                        disabled={sendingToSlack}
-                        title="Wyślij notatki na Slacka"
-                      >
-                        <Send className="h-4 w-4" />
-                        <span className="ml-1 text-xs">{sendingToSlack ? "Wysyłanie..." : "Wyślij"}</span>
-                      </Button>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {slackSentAt && (
+                        <span className="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                          <Check className="h-3.5 w-3.5" />
+                          Wysłano {new Date(slackSentAt).toLocaleDateString("pl-PL")}
+                        </span>
+                      )}
+                      {task?.changes && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleSendToSlack}
+                          disabled={sendingToSlack}
+                          title="Wyślij notatki na Slacka"
+                        >
+                          <Send className="h-4 w-4" />
+                          <span className="ml-1 text-xs">
+                            {sendingToSlack ? "Wysyłanie..." : slackSentAt ? "Wyślij ponownie" : "Wyślij"}
+                          </span>
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  <textarea
+                  <TextareaAutosize
                     id="changes"
                     value={changes}
-                    onChange={(e) => setChanges(e.target.value)}
+                    onChange={(e) => {
+                      setChanges(e.target.value)
+                      // Editing the note invalidates the "sent" status.
+                      if (slackSentAt) setSlackSentAt(null)
+                    }}
                     placeholder="Notatki dotyczące zmian (będą wysłane na Slack w formacie markdown)"
-                    className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 font-mono min-h-[100px] resize-vertical"
+                    minRows={4}
+                    className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 font-mono resize-none"
                   />
                 </div>
               )}
@@ -1015,78 +1109,6 @@ export function TaskFormContent({
                 <p className="text-xs text-muted-foreground">
                   Kliknij na tag, aby go zaznaczyć lub odznaczyć
                 </p>
-              </div>
-            )}
-
-            {/* Time Reporting (edit mode) */}
-            {isEditMode && (
-              <div className="space-y-3 border rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium">Raportowanie czasu</Label>
-                  <span className="text-xs text-muted-foreground">
-                    Razem: {totalReportedHours.toFixed(1)}h
-                  </span>
-                </div>
-
-                {/* Existing entries */}
-                {timeEntries.length > 0 && (
-                  <div className="space-y-1">
-                    {timeEntries.map((entry) => (
-                      <div key={entry.id} className="flex items-center gap-2 text-sm p-2 bg-muted/40 rounded-md">
-                        <span className="font-medium w-14 shrink-0">{entry.hours}h</span>
-                        <span className="flex-1 truncate text-muted-foreground">
-                          {entry.description || "Bez opisu"}
-                        </span>
-                        <span className="text-xs text-muted-foreground shrink-0">
-                          {new Date(entry.date).toLocaleDateString("pl-PL")}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteTimeEntry(entry.id)}
-                          className="text-destructive hover:text-destructive/80 shrink-0"
-                          title="Usuń wpis"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Add new entry */}
-                <div className="flex gap-2">
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.5"
-                    placeholder="Godz."
-                    value={newTimeHours}
-                    onChange={(e) => setNewTimeHours(e.target.value)}
-                    className="h-9 w-24 text-sm"
-                  />
-                  <Input
-                    placeholder="Opis (opcjonalnie)"
-                    value={newTimeDescription}
-                    onChange={(e) => setNewTimeDescription(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault()
-                        handleAddTimeEntry()
-                      }
-                    }}
-                    className="h-9 flex-1 text-sm"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleAddTimeEntry}
-                    disabled={loggingTime}
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Dodaj
-                  </Button>
-                </div>
               </div>
             )}
 
@@ -1254,9 +1276,9 @@ export function TaskFormContent({
                         </div>
                       )}
                     </div>
-                  ) : task?.attachments ? (
+                  ) : (
                     <FileUpload
-                      files={task.attachments}
+                      files={task?.attachments || []}
                       onFileUpload={handleFileUpload}
                       onFileDelete={handleFileDelete}
                       editable={true}
@@ -1270,10 +1292,6 @@ export function TaskFormContent({
                       showDescriptions={true}
                       className="border rounded-lg p-4"
                     />
-                  ) : (
-                    <div className="text-sm text-muted-foreground border rounded-lg p-4">
-                      Brak załączników
-                    </div>
                   )}
                 </div>
 

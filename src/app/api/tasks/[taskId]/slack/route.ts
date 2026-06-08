@@ -88,7 +88,14 @@ export async function POST(
       )
     }
 
-    return NextResponse.json({ success: true })
+    // Record when the note was sent so the UI can mark it as already delivered.
+    const sentAt = new Date()
+    await prisma.task.update({
+      where: { id: task.id },
+      data: { changesSentAt: sentAt },
+    })
+
+    return NextResponse.json({ success: true, changesSentAt: sentAt })
   } catch (error) {
     console.error("Error sending task to Slack:", error)
     return NextResponse.json(

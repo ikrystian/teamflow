@@ -74,6 +74,7 @@ model Task {
   title           String
   description     String?
   changes         String?
+  changesSentAt   DateTime?
   statusId        String?
   priority        String?
   dueDate         DateTime?
