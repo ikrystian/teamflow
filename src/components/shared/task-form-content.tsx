@@ -65,6 +65,7 @@ export function TaskFormContent({
   // Form state
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
+  const [changes, setChanges] = useState("")
   const [selectedProjectId, setSelectedProjectId] = useState("")
   const [statusId, setStatusId] = useState("")
   const [assigneeId, setAssigneeId] = useState("")
@@ -83,7 +84,7 @@ export function TaskFormContent({
   const [reminderValue, setReminderValue] = useState(1)
 
   // Additional state
-  const [, setTaskStatuses] = useState<TaskStatus[]>([])
+  const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
@@ -94,6 +95,10 @@ export function TaskFormContent({
   // Tags state
   const [availableTags, setAvailableTags] = useState<Tag[]>([])
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
+
+  // Subtasks state
+  const [subtasks, setSubtasks] = useState<Array<{ id: string; title: string; isCompleted: boolean; timeSpent?: number; isNew?: boolean }>>([])
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState("")
 
   // People with access to the project (project creator + members), used for the assignee select
   const [projectMembers, setProjectMembers] = useState<
@@ -209,6 +214,7 @@ export function TaskFormContent({
       // Populate form for edit mode
       setTitle(task.title)
       setDescription(task.description || "")
+      setChanges(task.changes || "")
       setSelectedProjectId(task.project?.id || "")
       setAssigneeId(task.assignee?.id || "")
       setPriority(task.priority || "")
@@ -225,6 +231,7 @@ export function TaskFormContent({
       setReminderType(task.reminderType || "hours")
       setReminderValue(task.reminderValue || 1)
       setSelectedTagIds(task.tags?.map(t => t.id) || [])
+      setSubtasks(task.subtasks || [])
       setError("")
     }
   }, [isCreateMode, isEditMode, task, projectId, session?.user?.id, fetchTaskStatuses, fetchTags, defaultDate, defaultStartTime, defaultEndTime])
@@ -356,6 +363,21 @@ export function TaskFormContent({
         }
       } else if (isEditMode && task) {
         // Update existing task
+        // Separate new and existing subtasks
+        const subtasksToCreate = subtasks.filter(s => s.isNew || s.id.startsWith('temp-')).map(s => ({
+          title: s.title,
+          timeSpent: s.timeSpent || null,
+        }))
+        const subtasksToUpdate = subtasks.filter(s => !s.isNew && !s.id.startsWith('temp-')).map(s => ({
+          id: s.id,
+          title: s.title,
+          isCompleted: s.isCompleted,
+          timeSpent: s.timeSpent || null,
+        }))
+        const deletedSubtaskIds = (task.subtasks || [])
+          .filter(original => !subtasks.some(current => current.id === original.id))
+          .map(s => s.id)
+
         const response = await fetch(`/api/tasks/${task.id}`, {
           method: "PATCH",
           headers: {
@@ -364,6 +386,7 @@ export function TaskFormContent({
           body: JSON.stringify({
             title: title.trim(),
             description: description.trim() || undefined,
+            changes: changes.trim() || undefined,
             statusId: statusId || undefined,
             assigneeId: assigneeId || undefined,
             priority: priority || undefined,
@@ -376,6 +399,9 @@ export function TaskFormContent({
             reminderType: reminderEnabled ? reminderType : undefined,
             reminderValue: reminderEnabled ? reminderValue : undefined,
             tagIds: selectedTagIds,
+            subtasksToCreate: subtasksToCreate.length > 0 ? subtasksToCreate : undefined,
+            subtasksToUpdate: subtasksToUpdate.length > 0 ? subtasksToUpdate : undefined,
+            deletedSubtaskIds: deletedSubtaskIds.length > 0 ? deletedSubtaskIds : undefined,
           }),
         })
 
@@ -513,16 +539,24 @@ export function TaskFormContent({
   }
 
   // Check if there are changes in edit mode
+  const hasSubtaskChanges = subtasks.length !== (task?.subtasks?.length || 0) ||
+    subtasks.some((s, i) => {
+      const original = task?.subtasks?.[i]
+      return !original || s.title !== original.title || s.isCompleted !== original.isCompleted || (s.timeSpent || 0) !== (original.timeSpent || 0)
+    })
+
   const hasChanges = isEditMode && task ? (
     title.trim() !== task.title ||
     (description.trim() || undefined) !== task.description ||
+    (changes.trim() || undefined) !== task.changes ||
     statusId !== task.statusId ||
     (assigneeId || undefined) !== task.assignee?.id ||
     (priority || undefined) !== task.priority ||
     (dueDate ? dueDate.toISOString() : undefined) !== task.dueDate ||
     (startTime ? startTime.toISOString() : undefined) !== task.startTime ||
     (endTime ? endTime.toISOString() : undefined) !== task.endTime ||
-    selectValueToHours(estimatedHours) !== task.estimatedHours
+    selectValueToHours(estimatedHours) !== task.estimatedHours ||
+    hasSubtaskChanges
   ) : true
 
   // People available in the assignee select. Make sure the current user is always
@@ -565,32 +599,55 @@ export function TaskFormContent({
             </div>
           </div>
 
-          <div className="bg-red-200 h-[200px] overflow-y-hidden">
-            {isEditMode && task?.changes && (
+          <div className="space-y-4">
+            {/* Changes field - editable in edit mode with Slack sending option */}
+            {isEditMode && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium">Zmiany</Label>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleSendToSlack}
-                    disabled={sendingToSlack}
-                    title="Wyślij na Slacka"
-                  >
-                    <Send className="h-4 w-4" />
-                    <span className="ml-2">{sendingToSlack ? "Wysyłanie..." : "Wyślij na Slacka"}</span>
-                  </Button>
+                  <Label htmlFor="changes" className="text-sm font-medium">Notatki ze zmian (do wysłania na Slack)</Label>
+                  {task?.changes && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleSendToSlack}
+                      disabled={sendingToSlack}
+                      title="Wyślij notatki na Slacka"
+                    >
+                      <Send className="h-4 w-4" />
+                      <span className="ml-2">{sendingToSlack ? "Wysyłanie..." : "Wyślij"}</span>
+                    </Button>
+                  )}
                 </div>
-                <pre className="whitespace-pre-wrap break-words rounded-md border bg-muted/50 p-3 text-sm font-sans">
-                  {task.changes}
-                </pre>
+                <textarea
+                  id="changes"
+                  value={changes}
+                  onChange={(e) => setChanges(e.target.value)}
+                  placeholder="Notatki dotyczące zmian (będą wysłane na Slack w formacie markdown)"
+                  className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 font-mono min-h-[120px] resize-vertical"
+                />
               </div>
             )}
 
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Status selector */}
+              <div className="space-y-2">
+                <Label htmlFor="status" className="text-sm font-medium">Status</Label>
+                <select
+                  id="status"
+                  value={statusId}
+                  onChange={(e) => setStatusId(e.target.value)}
+                  className="h-10 w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                >
+                  <option value="">Wybierz status</option>
+                  {taskStatuses.map((status) => (
+                    <option key={status.id} value={status.id}>
+                      {status.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Assignee selector */}
               <div className="space-y-2">
                 <Label htmlFor="assignee" className="text-sm font-medium">
@@ -644,6 +701,27 @@ export function TaskFormContent({
               </div>
             </div>
 
+            {/* Project selector - pokazywany w edit mode lub jeśli jest zmienne */}
+            {(isEditMode || !projectId) && (
+              <div className="space-y-2">
+                <Label htmlFor="project" className="text-sm font-medium">Projekt</Label>
+                <select
+                  id="project"
+                  value={selectedProjectId || "no-project"}
+                  onChange={(e) => setSelectedProjectId(e.target.value === "no-project" ? "" : e.target.value)}
+                  className="h-10 w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  disabled={isCreateMode && projectId ? true : false}
+                >
+                  <option value="no-project">Bez projektu</option>
+                  {projects.map((project) => (
+                    <option key={project.id} value={project.id}>
+                      {project.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             {/* Tags Selection */}
             {availableTags.length > 0 && (
               <div className="space-y-2">
@@ -680,6 +758,111 @@ export function TaskFormContent({
                 <p className="text-xs text-muted-foreground">
                   Kliknij na tag, aby go zaznaczyć lub odznaczyć
                 </p>
+              </div>
+            )}
+
+            {/* Subtasks Management */}
+            {isEditMode && (
+              <div className="space-y-3 border rounded-lg p-4 bg-muted/30">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">Podzadania</Label>
+                  <span className="text-xs text-muted-foreground">
+                    {subtasks.filter(s => s.isCompleted).length}/{subtasks.length} ukończone
+                  </span>
+                </div>
+
+                {/* Existing subtasks */}
+                {subtasks.length > 0 && (
+                  <div className="space-y-2">
+                    {subtasks.map((subtask) => (
+                      <div key={subtask.id} className="flex items-center gap-2 p-2 bg-background border rounded-md">
+                        <input
+                          type="checkbox"
+                          checked={subtask.isCompleted}
+                          onChange={(e) => {
+                            setSubtasks(prev => prev.map(s =>
+                              s.id === subtask.id ? { ...s, isCompleted: e.target.checked } : s
+                            ))
+                          }}
+                          className="w-4 h-4 cursor-pointer"
+                        />
+                        <input
+                          type="text"
+                          value={subtask.title}
+                          onChange={(e) => {
+                            setSubtasks(prev => prev.map(s =>
+                              s.id === subtask.id ? { ...s, title: e.target.value } : s
+                            ))
+                          }}
+                          className="flex-1 px-2 py-1 text-sm border-0 bg-transparent focus:outline-none"
+                        />
+                        {subtask.timeSpent && (
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.5"
+                            value={subtask.timeSpent}
+                            onChange={(e) => {
+                              setSubtasks(prev => prev.map(s =>
+                                s.id === subtask.id ? { ...s, timeSpent: parseFloat(e.target.value) || 0 } : s
+                              ))
+                            }}
+                            className="w-16 px-2 py-1 text-sm border-0 bg-transparent focus:outline-none text-right"
+                            placeholder="h"
+                          />
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSubtasks(prev => prev.filter(s => s.id !== subtask.id))
+                          }}
+                          className="text-xs text-destructive hover:text-destructive/80 px-2"
+                        >
+                          Usuń
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add new subtask */}
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Dodaj nowe podzadanie..."
+                    value={newSubtaskTitle}
+                    onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && newSubtaskTitle.trim()) {
+                        setSubtasks(prev => [...prev, {
+                          id: `temp-${Date.now()}`,
+                          title: newSubtaskTitle.trim(),
+                          isCompleted: false,
+                          isNew: true
+                        }])
+                        setNewSubtaskTitle("")
+                      }
+                    }}
+                    className="h-9 text-sm"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (newSubtaskTitle.trim()) {
+                        setSubtasks(prev => [...prev, {
+                          id: `temp-${Date.now()}`,
+                          title: newSubtaskTitle.trim(),
+                          isCompleted: false,
+                          isNew: true
+                        }])
+                        setNewSubtaskTitle("")
+                      }
+                    }}
+                  >
+                    Dodaj
+                  </Button>
+                </div>
               </div>
             )}
 

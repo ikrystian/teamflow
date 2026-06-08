@@ -173,7 +173,7 @@ export async function PATCH(
     }
 
     const { taskId } = await params
-    const { title, description, statusId, priority, dueDate, startTime, endTime, assigneeId, estimatedHours, projectId, reminderEnabled, reminderType, reminderValue, tagIds } = await request.json()
+    const { title, description, changes, statusId, priority, dueDate, startTime, endTime, assigneeId, estimatedHours, projectId, reminderEnabled, reminderType, reminderValue, tagIds, subtasksToCreate, subtasksToUpdate, deletedSubtaskIds } = await request.json()
 
     // Fetch task to check permissions (taskId may be a key like "PS-12" or an id)
     const existingTask = await prisma.task.findFirst({
@@ -318,6 +318,7 @@ export async function PATCH(
     const updateData: {
       title?: string;
       description?: string;
+      changes?: string | null;
       statusId?: string;
       priority?: string;
       dueDate?: Date | null;
@@ -333,6 +334,7 @@ export async function PATCH(
     } = {}
     if (title !== undefined) updateData.title = title
     if (description !== undefined) updateData.description = description
+    if (changes !== undefined) updateData.changes = changes || null
     if (statusId !== undefined) updateData.statusId = statusId
     if (priority !== undefined) updateData.priority = priority
     if (dueDate !== undefined) updateData.dueDate = dueDate ? new Date(dueDate) : null
@@ -381,6 +383,43 @@ export async function PATCH(
             taskId: resolvedTaskId,
             tagId
           }))
+        })
+      }
+    }
+
+    // Handle subtasks update (create, update, delete)
+    if (subtasksToCreate !== undefined || subtasksToUpdate !== undefined || deletedSubtaskIds !== undefined) {
+      // Create new subtasks
+      if (Array.isArray(subtasksToCreate) && subtasksToCreate.length > 0) {
+        await prisma.todo.createMany({
+          data: subtasksToCreate.map((subtask: any) => ({
+            taskId: resolvedTaskId,
+            title: subtask.title,
+            timeSpent: subtask.timeSpent,
+          }))
+        })
+      }
+
+      // Update existing subtasks
+      if (Array.isArray(subtasksToUpdate) && subtasksToUpdate.length > 0) {
+        for (const subtask of subtasksToUpdate) {
+          await prisma.todo.update({
+            where: { id: subtask.id },
+            data: {
+              title: subtask.title,
+              isCompleted: subtask.isCompleted,
+              timeSpent: subtask.timeSpent,
+            }
+          })
+        }
+      }
+
+      // Delete removed subtasks
+      if (Array.isArray(deletedSubtaskIds) && deletedSubtaskIds.length > 0) {
+        await prisma.todo.deleteMany({
+          where: {
+            id: { in: deletedSubtaskIds }
+          }
         })
       }
     }
