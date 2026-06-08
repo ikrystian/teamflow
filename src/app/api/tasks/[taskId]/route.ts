@@ -5,6 +5,10 @@ import { prisma } from "@/lib/prisma"
 import { isAdmin } from "@/lib/admin"
 import type { Session } from "next-auth"
 
+// Status "Done". When a task is moved here (board) or selected from the list
+// and it has no reported time yet, we auto-log its estimatedHours as a TimeEntry.
+const DONE_STATUS_ID = "cmq52n2wu0004fyk33tyehmwj"
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ taskId: string }> }
@@ -390,6 +394,39 @@ export async function PATCH(
             tagId
           }))
         })
+      }
+    }
+
+    // Auto-log estimated time when a task is marked as Done with no reported time yet.
+    // Triggers regardless of how the status was changed (board drag or list selection),
+    // since both go through this PATCH endpoint.
+    if (statusId === DONE_STATUS_ID && existingTask.statusId !== DONE_STATUS_ID) {
+      const finalEstimatedHours =
+        updateData.estimatedHours !== undefined
+          ? updateData.estimatedHours
+          : existingTask.estimatedHours
+
+      if (finalEstimatedHours && finalEstimatedHours > 0) {
+        const existingTimeEntries = await prisma.timeEntry.count({
+          where: { taskId: resolvedTaskId }
+        })
+
+        if (existingTimeEntries === 0) {
+          // Prefer the task's assignee; fall back to whoever marked it done.
+          const timeEntryUserId =
+            (updateData.assigneeId !== undefined
+              ? updateData.assigneeId
+              : existingTask.assigneeId) || session.user.id
+
+          await prisma.timeEntry.create({
+            data: {
+              hours: finalEstimatedHours,
+              description: "Automatycznie zarejestrowany czas (szacowany) po oznaczeniu zadania jako zrobione",
+              taskId: resolvedTaskId,
+              userId: timeEntryUserId
+            }
+          })
+        }
       }
     }
 
