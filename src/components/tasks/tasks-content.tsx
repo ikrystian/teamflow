@@ -197,7 +197,7 @@ export function TasksContent() {
 
   const handleEditTask = async (task: Task, e: React.MouseEvent) => {
     e.stopPropagation();
-    router.push(`/dashboard/tasks/${task.id}/edit`)
+    router.push(`/dashboard/tasks/${task.key ?? task.id}/edit`)
   }
 
   const handleTaskUpdate = async (taskId: string, updates: TaskUpdateData) => {

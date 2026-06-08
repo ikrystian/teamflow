@@ -125,7 +125,6 @@ export function DateTimePicker({
             mode="single"
             selected={selectedDate}
             onSelect={handleDateChange}
-            initialFocus
           />
 
           {showTime && (

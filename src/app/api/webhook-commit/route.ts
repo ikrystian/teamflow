@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { createTaskWithKey } from "@/lib/task-key"
 
 interface WebhookCommitPayload {
   repository: string
@@ -270,8 +271,9 @@ export async function POST(request: NextRequest) {
     // Single commit -> a single task, no todos.
     if (commitTasks.length === 1) {
       const single = commitTasks[0]
-      const task = await prisma.task.create({
+      const task = await createTaskWithKey(prisma, payload.projectId, (key) => prisma.task.create({
         data: {
+          key,
           title: single.title,
           description: single.description,
           changes: single.changes || null,
@@ -279,7 +281,7 @@ export async function POST(request: NextRequest) {
           projectId: payload.projectId,
           statusId: defaultStatus?.id ?? null,
         },
-      })
+      }))
 
       return NextResponse.json({ task }, { status: 201 })
     }
@@ -297,8 +299,9 @@ export async function POST(request: NextRequest) {
     // The main task's estimate is the sum of the todos' time.
     const totalHours = commitTasks.reduce((sum, t) => sum + t.workHours, 0)
 
-    const task = await prisma.task.create({
+    const task = await createTaskWithKey(prisma, payload.projectId, (key) => prisma.task.create({
       data: {
+        key,
         title: main.title,
         description: main.description,
         changes: main.changes || null,
@@ -315,7 +318,7 @@ export async function POST(request: NextRequest) {
       include: {
         todos: true,
       },
-    })
+    }))
 
     return NextResponse.json({ task }, { status: 201 })
   } catch (error) {

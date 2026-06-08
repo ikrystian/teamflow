@@ -180,7 +180,6 @@ export function TaskDetailsForm({
                 }))
                 setIsCalendarOpen(false)
               }}
-              initialFocus
             />
           </PopoverContent>
         </Popover>

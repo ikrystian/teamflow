@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { isAdmin } from "@/lib/admin"
+import { createTaskWithKey } from "@/lib/task-key"
 
 export async function GET(request: NextRequest) {
   try {
@@ -279,8 +280,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const task = await prisma.task.create({
+    const task = await createTaskWithKey(prisma, projectId, (key) => prisma.task.create({
       data: {
+        key,
         title,
         description,
         projectId,
@@ -347,7 +349,7 @@ export async function POST(request: NextRequest) {
           }
         }
       }
-    })
+    }))
 
     // Map tags for simpler consumption
     const taskWithTags = {

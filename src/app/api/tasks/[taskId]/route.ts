@@ -21,23 +21,28 @@ export async function GET(
     // Fetch task with all related data
     const task = await prisma.task.findFirst({
       where: {
-        id: taskId,
-        OR: [
-          // Tasks with projects where user is a team member and project is not archived
+        AND: [
+          // Match by human-friendly key (e.g. "PS-12") or the internal id.
+          { OR: [{ key: taskId }, { id: taskId }] },
           {
-            project: {
-              archived: false,
-            }
-          },
-          // Tasks without projects created by the user
-          {
-            projectId: null,
-            createdById: session.user.id
-          },
-          // Tasks without projects assigned to the user
-          {
-            projectId: null,
-            assigneeId: session.user.id
+            OR: [
+              // Tasks with projects where user is a team member and project is not archived
+              {
+                project: {
+                  archived: false,
+                }
+              },
+              // Tasks without projects created by the user
+              {
+                projectId: null,
+                createdById: session.user.id
+              },
+              // Tasks without projects assigned to the user
+              {
+                projectId: null,
+                assigneeId: session.user.id
+              }
+            ]
           }
         ]
       },
@@ -166,10 +171,10 @@ export async function PATCH(
     const { taskId } = await params
     const { title, description, statusId, priority, dueDate, startTime, endTime, assigneeId, estimatedHours, projectId, reminderEnabled, reminderType, reminderValue, tagIds } = await request.json()
 
-    // Fetch task to check permissions
-    const existingTask = await prisma.task.findUnique({
+    // Fetch task to check permissions (taskId may be a key like "PS-12" or an id)
+    const existingTask = await prisma.task.findFirst({
       where: {
-        id: taskId
+        OR: [{ key: taskId }, { id: taskId }]
       },
       include: {
         createdBy: true,
@@ -188,6 +193,9 @@ export async function PATCH(
         { status: 404 }
       )
     }
+
+    // From here on, always use the resolved internal id for writes.
+    const resolvedTaskId = existingTask.id
 
     // Check permissions:
     // 1. If task has a project, user must have access to it
@@ -371,14 +379,14 @@ export async function PATCH(
     if (tagIds !== undefined) {
       // Delete existing task tags
       await prisma.taskTag.deleteMany({
-        where: { taskId }
+        where: { taskId: resolvedTaskId }
       })
 
       // Create new task tags
       if (tagIds.length > 0) {
         await prisma.taskTag.createMany({
           data: tagIds.map((tagId: string) => ({
-            taskId,
+            taskId: resolvedTaskId,
             tagId
           }))
         })
@@ -386,7 +394,7 @@ export async function PATCH(
     }
 
     const task = await prisma.task.update({
-      where: { id: taskId },
+      where: { id: resolvedTaskId },
       data: updateData,
       include: {
         project: {
@@ -498,13 +506,10 @@ export async function DELETE(
 
     const { taskId } = await params
 
-    // Fetch task to check permissions
+    // Fetch task to check permissions (taskId may be a key like "PS-12" or an id)
     const existingTask = await prisma.task.findFirst({
       where: {
-        id: taskId,
-        project: {
-
-        }
+        OR: [{ key: taskId }, { id: taskId }]
       },
       include: {
         createdBy: true,
@@ -541,7 +546,7 @@ export async function DELETE(
 
     // Delete the task (cascade delete will handle related records)
     await prisma.task.delete({
-      where: { id: taskId }
+      where: { id: existingTask.id }
     })
 
     return NextResponse.json({ success: true }, { status: 200 })

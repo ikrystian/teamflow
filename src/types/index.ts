@@ -85,6 +85,7 @@ export interface Project {
 
 export interface Task {
   id: string;
+  key?: string;
   title: string;
   description?: string;
   changes?: string;

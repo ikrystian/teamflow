@@ -213,7 +213,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   }
 
   const handleEditTask = (task: Task) => {
-    router.push(`/dashboard/tasks/${task.id}/edit?projectId=${projectId}`)
+    router.push(`/dashboard/tasks/${task.key ?? task.id}/edit?projectId=${projectId}`)
   }
 
   const handleTimeTracking = (task: Task) => {
