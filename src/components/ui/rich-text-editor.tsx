@@ -15,21 +15,25 @@ import {
   Redo,
   ImageIcon
 } from 'lucide-react'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 interface RichTextEditorProps {
   content: string
   onChange: (content: string) => void
   placeholder?: string
   onImageUpload?: (file: File) => Promise<string>
+  showToolbarOnFocus?: boolean
 }
 
 export function RichTextEditor({
   content,
   onChange,
   placeholder = "Enter description...",
-  onImageUpload
+  onImageUpload,
+  showToolbarOnFocus = false
 }: RichTextEditorProps) {
+  const [toolbarVisible, setToolbarVisible] = useState(false)
+
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -82,7 +86,7 @@ export function RichTextEditor({
 
   return (
     <div className="border rounded-md">
-      <div className="border-b p-2 flex flex-wrap gap-1  toolbar hidden">
+      <div className={`border-b p-2 flex flex-wrap gap-1 toolbar ${showToolbarOnFocus && !toolbarVisible ? 'hidden' : ''}`}>
         <Button
           type="button"
           variant="ghost"
@@ -164,6 +168,8 @@ export function RichTextEditor({
       <EditorContent
         editor={editor}
         className="prose prose-sm max-w-none min-h-[120px] focus-within:outline-none"
+        onFocus={() => showToolbarOnFocus && setToolbarVisible(true)}
+        onBlur={() => showToolbarOnFocus && setToolbarVisible(false)}
       />
     </div>
   )

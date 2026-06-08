@@ -108,6 +108,10 @@ export function TaskFormContent({
   // Slack send state (for the AI-generated "changes" field)
   const [sendingToSlack, setSendingToSlack] = useState(false)
 
+  // Collapsible sections state
+  const [showNotes, setShowNotes] = useState(false)
+  const [showAdvanced, setShowAdvanced] = useState(false)
+
   const isCreateMode = mode === "create"
   const isEditMode = mode === "edit"
 
@@ -576,10 +580,94 @@ export function TaskFormContent({
   return (
     <>
       {/* Form Content */}
-      <form onSubmit={handleSubmit} className="space-y-6 modal-form">
-        <div className="space-y-4">
-          <div className="space-y-2">
+      <form onSubmit={handleSubmit} className="space-y-6 modal-form h-full flex flex-col">
+        <div className="space-y-4 flex-1 overflow-y-auto">
+          {/* Header Row with Status, Assignee, Priority, Project */}
+          {isEditMode && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-muted/30 rounded-lg">
+              {/* Status */}
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Status</label>
+                <select
+                  value={statusId}
+                  onChange={(e) => setStatusId(e.target.value)}
+                  className="h-8 w-full px-2 py-1 border border-input bg-background rounded text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  <option value="">Brak</option>
+                  {taskStatuses.map((status) => (
+                    <option key={status.id} value={status.id}>
+                      {status.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
+              {/* Assignee */}
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Osoba</label>
+                <select
+                  value={assigneeId}
+                  onChange={(e) => setAssigneeId(e.target.value)}
+                  className="h-8 w-full px-2 py-1 border border-input bg-background rounded text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  <option value="">Brak</option>
+                  {assigneeOptions.map((member) => (
+                    <option key={member.id} value={member.id}>
+                      {member.name || member.email}
+                      {member.id === session?.user?.id ? " (Ty)" : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Priority */}
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Priorytet</label>
+                <select
+                  value={priority || "none"}
+                  onChange={(e) => setPriority(e.target.value === "none" ? "" : e.target.value)}
+                  className="h-8 w-full px-2 py-1 border border-input bg-background rounded text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  <option value="none">Brak</option>
+                  {getPriorityOptions().map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Project */}
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Projekt</label>
+                <select
+                  value={selectedProjectId || "no-project"}
+                  onChange={(e) => setSelectedProjectId(e.target.value === "no-project" ? "" : e.target.value)}
+                  className="h-8 w-full px-2 py-1 border border-input bg-background rounded text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  <option value="no-project">Bez projektu</option>
+                  {projects.map((project) => (
+                    <option key={project.id} value={project.id}>
+                      {project.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Time Info Row */}
+          {isEditMode && subtasks.some(s => s.timeSpent) && (
+            <div className="p-2 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded text-xs text-blue-700 dark:text-blue-300">
+              <span>⏱️ Zaraportowany czas: {subtasks.reduce((sum, s) => sum + (s.timeSpent || 0), 0).toFixed(1)}h</span>
+              {estimatedHours && estimatedHours !== "none" && (
+                <span className="ml-4">| Szacowany czas: {selectValueToHours(estimatedHours)}h</span>
+              )}
+            </div>
+          )}
+
+          {/* Title */}
+          <div className="space-y-2">
             <Input
               id="title"
               placeholder="Tytuł zadania"
@@ -590,137 +678,61 @@ export function TaskFormContent({
             />
           </div>
           <div className="space-y-2">
+            <Label htmlFor="description" className="text-sm font-medium">Opis</Label>
             <div className="border rounded-md">
               <RichTextEditor
                 content={description}
                 onChange={setDescription}
                 placeholder="Wprowadź szczegółowy opis zadania..."
+                showToolbarOnFocus={true}
               />
             </div>
           </div>
 
-          <div className="space-y-4">
-            {/* Changes field - editable in edit mode with Slack sending option */}
-            {isEditMode && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="changes" className="text-sm font-medium">Notatki ze zmian (do wysłania na Slack)</Label>
-                  {task?.changes && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleSendToSlack}
-                      disabled={sendingToSlack}
-                      title="Wyślij notatki na Slacka"
-                    >
-                      <Send className="h-4 w-4" />
-                      <span className="ml-2">{sendingToSlack ? "Wysyłanie..." : "Wyślij"}</span>
-                    </Button>
-                  )}
-                </div>
-                <textarea
-                  id="changes"
-                  value={changes}
-                  onChange={(e) => setChanges(e.target.value)}
-                  placeholder="Notatki dotyczące zmian (będą wysłane na Slack w formacie markdown)"
-                  className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 font-mono min-h-[120px] resize-vertical"
-                />
-              </div>
-            )}
+          {/* Changes field - collapsible in edit mode with Slack sending option */}
+          {isEditMode && (
+            <div className="space-y-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowNotes(!showNotes)}
+                className="w-full justify-start"
+              >
+                {showNotes ? "▼" : "▶"} Pokaż notatki ze zmian
+              </Button>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Status selector */}
-              <div className="space-y-2">
-                <Label htmlFor="status" className="text-sm font-medium">Status</Label>
-                <select
-                  id="status"
-                  value={statusId}
-                  onChange={(e) => setStatusId(e.target.value)}
-                  className="h-10 w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                >
-                  <option value="">Wybierz status</option>
-                  {taskStatuses.map((status) => (
-                    <option key={status.id} value={status.id}>
-                      {status.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Assignee selector */}
-              <div className="space-y-2">
-                <Label htmlFor="assignee" className="text-sm font-medium">
-                  {(isCreateMode && !projectId && !currentProject) || forceAssignToCurrentUser
-                    ? "Przypisany (automatycznie przypisane do Ciebie)"
-                    : "Przypisany"
-                  }
-                </Label>
-                {(isCreateMode && !projectId && !currentProject) || forceAssignToCurrentUser ? (
-                  <div className="h-10 px-3 py-2 border border-input bg-muted/50 rounded-md flex items-center space-x-2">
-                    <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary">
-                      {formatAssignee(session?.user).initials}
-                    </div>
-                    <span className="text-sm text-muted-foreground">
-                      {formatAssignee(session?.user).displayName}
-                    </span>
+              {showNotes && (
+                <div className="space-y-2 p-3 border rounded-md bg-muted/20">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="changes" className="text-sm font-medium">Notatki (do wysłania na Slack)</Label>
+                    {task?.changes && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleSendToSlack}
+                        disabled={sendingToSlack}
+                        title="Wyślij notatki na Slacka"
+                      >
+                        <Send className="h-4 w-4" />
+                        <span className="ml-1 text-xs">{sendingToSlack ? "Wysyłanie..." : "Wyślij"}</span>
+                      </Button>
+                    )}
                   </div>
-                ) : (
-                  <select
-                    id="assignee"
-                    value={assigneeId}
-                    onChange={(e) => setAssigneeId(e.target.value)}
-                    className="h-10 w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                  >
-                    <option value="">Wybierz osobę</option>
-                    {assigneeOptions.map((member) => (
-                      <option key={member.id} value={member.id}>
-                        {(member.name || member.email)}
-                        {member.id === session?.user?.id ? " (Ty)" : ""}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="priority" className="text-sm font-medium">Priorytet</Label>
-                <select
-                  id="priority"
-                  value={priority || "none"}
-                  onChange={(e) => setPriority(e.target.value === "none" ? "" : e.target.value)}
-                  className="h-10 w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                >
-                  <option value="none">Brak priorytetu</option>
-                  {getPriorityOptions().map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  <textarea
+                    id="changes"
+                    value={changes}
+                    onChange={(e) => setChanges(e.target.value)}
+                    placeholder="Notatki dotyczące zmian (będą wysłane na Slack w formacie markdown)"
+                    className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 font-mono min-h-[100px] resize-vertical"
+                  />
+                </div>
+              )}
             </div>
+          )}
 
-            {/* Project selector - pokazywany w edit mode lub jeśli jest zmienne */}
-            {(isEditMode || !projectId) && (
-              <div className="space-y-2">
-                <Label htmlFor="project" className="text-sm font-medium">Projekt</Label>
-                <select
-                  id="project"
-                  value={selectedProjectId || "no-project"}
-                  onChange={(e) => setSelectedProjectId(e.target.value === "no-project" ? "" : e.target.value)}
-                  className="h-10 w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                  disabled={isCreateMode && projectId ? true : false}
-                >
-                  <option value="no-project">Bez projektu</option>
-                  {projects.map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+          <div className="space-y-4">
 
             {/* Tags Selection */}
             {availableTags.length > 0 && (
@@ -761,14 +773,36 @@ export function TaskFormContent({
               </div>
             )}
 
-            {/* Subtasks Management */}
-            {isEditMode && (
-              <div className="space-y-3 border rounded-lg p-4 bg-muted/30">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium">Podzadania</Label>
-                  <span className="text-xs text-muted-foreground">
-                    {subtasks.filter(s => s.isCompleted).length}/{subtasks.length} ukończone
-                  </span>
+            {/* Advanced Button */}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              className="w-full justify-start mt-2"
+            >
+              {showAdvanced ? "▼" : "▶"} Zaawansowane
+            </Button>
+
+            {/* Advanced Section */}
+            {showAdvanced && (
+              <div className="space-y-4 p-3 border rounded-md bg-muted/20">
+                {/* Subtasks Management */}
+                {isEditMode && (
+                  <div className="space-y-3 border rounded-lg p-4 bg-background">
+
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium">Podzadania</Label>
+                    <span className="text-xs text-muted-foreground">
+                      {subtasks.filter(s => s.isCompleted).length}/{subtasks.length} ukończone
+                    </span>
+                  </div>
+                  {subtasks.length > 0 && subtasks.some(s => s.timeSpent) && (
+                    <div className="text-xs text-muted-foreground">
+                      Zaraportowany czas: {subtasks.reduce((sum, s) => sum + (s.timeSpent || 0), 0)}h
+                    </div>
+                  )}
                 </div>
 
                 {/* Existing subtasks */}
@@ -796,21 +830,20 @@ export function TaskFormContent({
                           }}
                           className="flex-1 px-2 py-1 text-sm border-0 bg-transparent focus:outline-none"
                         />
-                        {subtask.timeSpent && (
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.5"
-                            value={subtask.timeSpent}
-                            onChange={(e) => {
-                              setSubtasks(prev => prev.map(s =>
-                                s.id === subtask.id ? { ...s, timeSpent: parseFloat(e.target.value) || 0 } : s
-                              ))
-                            }}
-                            className="w-16 px-2 py-1 text-sm border-0 bg-transparent focus:outline-none text-right"
-                            placeholder="h"
-                          />
-                        )}
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.5"
+                          value={subtask.timeSpent || ""}
+                          onChange={(e) => {
+                            setSubtasks(prev => prev.map(s =>
+                              s.id === subtask.id ? { ...s, timeSpent: e.target.value ? parseFloat(e.target.value) : 0 } : s
+                            ))
+                          }}
+                          className="w-16 px-2 py-1 text-sm border-0 bg-transparent focus:outline-none text-right"
+                          placeholder="h"
+                          title="Zaraportowany czas w godzinach"
+                        />
                         <button
                           type="button"
                           onClick={() => {
@@ -863,6 +896,78 @@ export function TaskFormContent({
                     Dodaj
                   </Button>
                 </div>
+                  </div>
+                )}
+
+                {/* File Attachments */}
+                <div className="space-y-3 border-t pt-4">
+                  <Label className="text-sm font-medium">Załączniki</Label>
+                  {isCreateMode ? (
+                    <div className="space-y-2">
+                      <FileUpload
+                        files={attachments.map((file, index) => ({
+                          id: `temp-${index}`,
+                          filename: file.name,
+                          originalName: file.name,
+                          url: '',
+                          mimeType: file.type,
+                          size: file.size,
+                          createdAt: new Date().toISOString(),
+                          uploadedBy: { id: '', name: '', email: '', avatarUrl: '' }
+                        }))}
+                        onFileUpload={handleFileUpload}
+                        onFileDelete={async (fileId) => {
+                          const index = parseInt(fileId.replace('temp-', ''))
+                          setAttachments(prev => prev.filter((_, i) => i !== index))
+                        }}
+                        editable={true}
+                        accept="*/*"
+                        maxSize={10 * 1024 * 1024}
+                        maxFiles={10}
+                        title="Załączniki"
+                        description="Dodaj pliki do zadania (max 10MB każdy)"
+                        categories={["specification", "design", "manual", "other"]}
+                        showCategories={false}
+                        showDescriptions={false}
+                        className="border rounded-lg p-4"
+                      />
+                      {uploadingFiles && (
+                        <div className="text-sm text-muted-foreground">
+                          Przesyłanie plików...
+                        </div>
+                      )}
+                    </div>
+                  ) : task?.attachments ? (
+                    <FileUpload
+                      files={task.attachments}
+                      onFileUpload={handleFileUpload}
+                      onFileDelete={handleFileDelete}
+                      editable={true}
+                      accept="*/*"
+                      maxSize={10 * 1024 * 1024}
+                      maxFiles={10}
+                      title="Załączniki"
+                      description="Zarządzaj plikami zadania"
+                      categories={["specification", "design", "manual", "other"]}
+                      showCategories={true}
+                      showDescriptions={true}
+                      className="border rounded-lg p-4"
+                    />
+                  ) : (
+                    <div className="text-sm text-muted-foreground border rounded-lg p-4">
+                      Brak załączników
+                    </div>
+                  )}
+                </div>
+
+                {/* Reminder Settings */}
+                <ReminderSettings
+                  reminderEnabled={reminderEnabled}
+                  reminderType={reminderType}
+                  reminderValue={reminderValue}
+                  dueDate={dueDate}
+                  onReminderChange={handleReminderChange}
+                />
               </div>
             )}
 
@@ -969,76 +1074,6 @@ export function TaskFormContent({
                 </div>
               </div>
             )}
-
-            {/* File Attachments */}
-            <div className="space-y-3">
-              <Label className="text-sm font-medium">Załączniki</Label>
-              {isCreateMode ? (
-                <div className="space-y-2">
-                  <FileUpload
-                    files={attachments.map((file, index) => ({
-                      id: `temp-${index}`,
-                      filename: file.name,
-                      originalName: file.name,
-                      url: '',
-                      mimeType: file.type,
-                      size: file.size,
-                      createdAt: new Date().toISOString(),
-                      uploadedBy: { id: '', name: '', email: '', avatarUrl: '' }
-                    }))}
-                    onFileUpload={handleFileUpload}
-                    onFileDelete={async (fileId) => {
-                      const index = parseInt(fileId.replace('temp-', ''))
-                      setAttachments(prev => prev.filter((_, i) => i !== index))
-                    }}
-                    editable={true}
-                    accept="*/*"
-                    maxSize={10 * 1024 * 1024} // 10MB
-                    maxFiles={10}
-                    title="Załączniki"
-                    description="Dodaj pliki do zadania (max 10MB każdy)"
-                    categories={["specification", "design", "manual", "other"]}
-                    showCategories={false}
-                    showDescriptions={false}
-                    className="border rounded-lg p-4"
-                  />
-                  {uploadingFiles && (
-                    <div className="text-sm text-muted-foreground">
-                      Przesyłanie plików...
-                    </div>
-                  )}
-                </div>
-              ) : task?.attachments ? (
-                <FileUpload
-                  files={task.attachments}
-                  onFileUpload={handleFileUpload}
-                  onFileDelete={handleFileDelete}
-                  editable={true}
-                  accept="*/*"
-                  maxSize={10 * 1024 * 1024} // 10MB
-                  maxFiles={10}
-                  title="Załączniki"
-                  description="Zarządzaj plikami zadania"
-                  categories={["specification", "design", "manual", "other"]}
-                  showCategories={true}
-                  showDescriptions={true}
-                  className="border rounded-lg p-4"
-                />
-              ) : (
-                <div className="text-sm text-muted-foreground border rounded-lg p-4">
-                  Brak załączników
-                </div>
-              )}
-            </div>
-
-            {/* Reminder Settings */}
-            <ReminderSettings
-              reminderEnabled={reminderEnabled}
-              reminderType={reminderType}
-              reminderValue={reminderValue}
-              dueDate={dueDate}
-              onReminderChange={handleReminderChange}
-            />
           </div>
 
 
