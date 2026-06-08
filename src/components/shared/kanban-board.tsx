@@ -21,7 +21,6 @@ import {
   dropTargetForElements,
   monitorForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter"
-import { TaskDetailsSheet } from "@/components/tasks/task-details-sheet"
 import type { Task, TaskStatus } from "@/types"
 import type { Session } from "next-auth"
 import { toast } from "sonner"
@@ -140,7 +139,7 @@ function SortableTaskCard({
       className="touch-none cursor-grab active:cursor-grabbing"
     >
       <Card
-        className={`mb-2 cursor-pointer hover:shadow-md transition-all border-l-4 ${isUpdating
+        className={`relative mb-2 cursor-pointer hover:shadow-md transition-all border-l-4 ${isUpdating
           ? 'border-l-yellow-500 bg-yellow-50/50'
           : completed
             ? 'bg-green-50/80 border-l-green-500'
@@ -157,10 +156,11 @@ function SortableTaskCard({
         }}
       >
         <CardContent
-          className="p-3 select-none"
+          className="py-2 px-3 select-none pb-4 kanban-card"
+
           onClick={(event) => { onViewDetails(task); event.stopPropagation() }}
         >
-          <div className="flex items-start justify-between mb-2">
+          <div className="flex items-start justify-between">
             <div className="flex items-start gap-2 flex-1 min-w-0">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1">
@@ -173,42 +173,7 @@ function SortableTaskCard({
                 <Loader2 className="h-3 w-3 animate-spin text-yellow-600 flex-shrink-0" />
               )}
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={(event) => { event.stopPropagation() }}>
-                  <MoreHorizontal className="h-3 w-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {showDetailsMenuItem && (
-                  <DropdownMenuItem onClick={(event) => { onViewDetails(task); event.stopPropagation(); }}>
-                    Szczegóły
-                  </DropdownMenuItem>
-                )}
-                {canEdit && (
-                  <>
-                    {enableMarkComplete && !completed && (
-                      <DropdownMenuItem onClick={(event) => { onMarkComplete?.(task); event.stopPropagation() }}>
-                        <Check className="mr-2 h-4 w-4" />
-                        Oznacz jako zakończone
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem onClick={(event) => { onTimeTracking(task); event.stopPropagation() }}>
-                      <Clock className="mr-2 h-4 w-4" />
-                      Loguj czas
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={(event) => { onDelete(task); event.stopPropagation() }}
-                      className="text-destructive"
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Usuń
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+
           </div>
 
           <div className="space-y-2">
@@ -218,7 +183,7 @@ function SortableTaskCard({
               </div>
             )}
 
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
               {task.priority && (
                 <Badge
                   variant="outline"
@@ -247,22 +212,21 @@ function SortableTaskCard({
                 </div>
               ) : null}
 
-              <div className="flex-1"></div>
               {task.assignee && (
-                <div className="flex items-center justify-end">
-                  <ClickableAvatar
-                    userId={task.assignee.id}
-                    avatarUrl={task.assignee.avatarUrl}
-                    name={task.assignee.name}
-                    size="sm"
-                  />
-                </div>
+
+                <ClickableAvatar
+                  userId={task.assignee.id}
+                  avatarUrl={task.assignee.avatarUrl}
+                  name={task.assignee.name}
+                  size="sm"
+                  className="absolute left-1 bottom-1"
+                />
               )}
             </div>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </CardContent >
+      </Card >
+    </div >
   )
 }
 
@@ -527,17 +491,7 @@ function KanbanColumn({
                 session={session}
                 hideProjectSelect={hideProjectSelect}
               />
-              {onCreateTask && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onCreateTask}
-                  className="w-full justify-start text-muted-foreground hover:text-foreground"
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Utwórz szczegółowe zadanie
-                </Button>
-              )}
+
             </div>
           )}
         </div>
@@ -691,7 +645,17 @@ export function KanbanBoard({
   }
 
   const getTasksByStatus = (status: TaskStatus) => {
-    return displayTasks.filter(task => task.statusId === status.id)
+    return displayTasks
+      .filter(task => task.statusId === status.id)
+      .slice()
+      .sort((a, b) => {
+        // Sort by createdAt ASC so the oldest task is at the top of the
+        // column and the newest task (e.g. one just created via QuickAddTask,
+        // or one dropped in from another column) ends up at the bottom.
+        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0
+        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0
+        return aTime - bTime
+      })
   }
 
   const handleViewDetails = (task: Task) => {

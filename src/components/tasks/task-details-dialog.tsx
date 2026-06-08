@@ -25,8 +25,8 @@ export function TaskDetailsDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-12xl max-h-[90vh] overflow-hidden">
-        <DialogHeader>1
-          <DialogTitle className="sr-only">{task.title}</DialogTitle>
+        <DialogHeader>
+          <DialogTitle className="hidden">{task.title}</DialogTitle>
         </DialogHeader>
         <div>
           <TaskFormContent task={task} mode="edit" onClose={() => onOpenChange(false)} />

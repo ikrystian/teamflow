@@ -492,24 +492,20 @@ export function TaskFormContent({
   return (
     <>
       {/* Form Content */}
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6 modal-form">
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title" className="text-sm font-medium">
-              Tytuł zadania <span className="text-destructive">*</span>
-            </Label>
+
             <Input
               id="title"
-              placeholder="Wprowadź tytuł zadania"
+              placeholder="Tytuł zadania"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              className="h-10"
+              className="p-0 font-medium text-xl px-3 border-none cursor-pointer hover:text-primary focus:border-none"
             />
           </div>
-
           <div className="space-y-2">
-            <Label htmlFor="description" className="text-sm font-medium">Opis</Label>
             <div className="border rounded-md">
               <RichTextEditor
                 content={description}

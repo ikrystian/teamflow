@@ -5,11 +5,11 @@ import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
 import Placeholder from '@tiptap/extension-placeholder'
 import { Button } from '@/components/ui/button'
-import { 
-  Bold, 
-  Italic, 
-  List, 
-  ListOrdered, 
+import {
+  Bold,
+  Italic,
+  List,
+  ListOrdered,
   Quote,
   Undo,
   Redo,
@@ -24,11 +24,11 @@ interface RichTextEditorProps {
   onImageUpload?: (file: File) => Promise<string>
 }
 
-export function RichTextEditor({ 
-  content, 
-  onChange, 
+export function RichTextEditor({
+  content,
+  onChange,
   placeholder = "Enter description...",
-  onImageUpload 
+  onImageUpload
 }: RichTextEditorProps) {
   const editor = useEditor({
     extensions: [
@@ -58,7 +58,7 @@ export function RichTextEditor({
 
   const addImage = useCallback(async () => {
     if (!onImageUpload) return
-    
+
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = 'image/*'
@@ -82,7 +82,7 @@ export function RichTextEditor({
 
   return (
     <div className="border rounded-md">
-      <div className="border-b p-2 flex flex-wrap gap-1">
+      <div className="border-b p-2 flex flex-wrap gap-1  toolbar hidden">
         <Button
           type="button"
           variant="ghost"
@@ -161,9 +161,9 @@ export function RichTextEditor({
           </>
         )}
       </div>
-      <EditorContent 
-        editor={editor} 
-        className="prose prose-sm max-w-none p-3 min-h-[120px] focus-within:outline-none"
+      <EditorContent
+        editor={editor}
+        className="prose prose-sm max-w-none min-h-[120px] focus-within:outline-none"
       />
     </div>
   )
