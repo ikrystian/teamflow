@@ -25,7 +25,7 @@ import {
   Info,
 } from "lucide-react"
 import Link from "next/link"
-import { KanbanBoard } from "./kanban-board"
+import { KanbanBoard } from "@/components/shared/kanban-board"
 import { ProjectDailyView } from "./project-daily-view"
 import { TaskDetailsSheet } from "../tasks/task-details-sheet"
 import { TimeTrackingSheet } from "../tasks/time-tracking-sheet"

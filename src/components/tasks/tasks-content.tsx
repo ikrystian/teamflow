@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, CheckSquare, Calendar, User as UserIcon, Filter, Edit, Clock, MoreHorizontal, Trash2, LayoutGrid, List } from "lucide-react"
 import { TimeTrackingSheet } from "./time-tracking-sheet"
 import { TaskDetailsSheet } from "./task-details-sheet"
-import { TasksKanbanBoard } from "./tasks-kanban-board"
+import { KanbanBoard } from "@/components/shared/kanban-board"
 import { TasksHourlyCalendar } from "./tasks-hourly-calendar"
 import { usePageHeader } from "@/contexts/header-context"
 import {
@@ -464,7 +464,7 @@ export function TasksContent() {
               </CardContent>
             </Card>
           ) : (
-            <TasksKanbanBoard
+            <KanbanBoard
               tasks={tasks}
               onTaskUpdated={fetchTasks}
               onTaskEdit={(task) => handleEditTask(task, { stopPropagation: () => {} } as React.MouseEvent)}
@@ -475,6 +475,8 @@ export function TasksContent() {
               session={session}
               hideProjectSelect={filter === "assigned"}
               taskStatuses={taskStatuses}
+              enableMarkComplete
+              showDetailsMenuItem
             />
           )}
         </TabsContent>
