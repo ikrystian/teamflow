@@ -75,7 +75,7 @@ interface TaskDetailsContentProps {
   showCommentsInTabs?: boolean
 }
 
-export function TaskDetailsContent({
+export function TaskPopover({
   task: initialTask,
   onEdit,
   onTimeTracking,

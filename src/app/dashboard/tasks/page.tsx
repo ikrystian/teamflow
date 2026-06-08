@@ -13,7 +13,7 @@ export default async function TasksPage() {
 
   return (
     <DashboardLayout>
-      <TasksContent />
+      <></>
     </DashboardLayout>
   )
 }

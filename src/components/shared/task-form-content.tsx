@@ -499,7 +499,7 @@ export function TaskFormContent({
       {/* Header Section */}
       <div className="space-y-3">
         <h2 className="text-xl font-semibold">
-          {isCreateMode ? "Utwórz nowe zadanie" : "Edytuj zadanie"}
+          {isCreateMode ? "Utwórz nowe zadanie" : "Edytuj zadaniea"}
         </h2>
       </div>
 

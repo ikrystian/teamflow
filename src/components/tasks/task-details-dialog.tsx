@@ -1,8 +1,8 @@
 "use client"
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { TaskDetailsContent } from "@/components/tasks/task-details-content"
 import type { Task } from "@/types"
+import { TaskFormContent } from "../shared/task-form-content"
 
 interface TaskDetailsDialogProps {
   open: boolean
@@ -33,16 +33,9 @@ export function TaskDetailsDialog({
         <DialogHeader>
           <DialogTitle className="sr-only">{task.title}</DialogTitle>
         </DialogHeader>
-        <TaskDetailsContent
-          task={task}
-          onEdit={onEdit}
-          onTimeTracking={onTimeTracking}
-          onDelete={onDelete}
-          onTaskUpdated={onTaskUpdated}
-          canEdit={canEdit}
-          onClose={() => onOpenChange(false)}
-          showCommentsInTabs={true}
-        />
+        <div>
+          <TaskFormContent task={task} mode="edit" onClose={() => onOpenChange(false)} />
+        </div>
       </DialogContent>
     </Dialog>
   )

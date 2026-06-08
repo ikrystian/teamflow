@@ -26,9 +26,8 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { KanbanBoard } from "@/components/shared/kanban-board"
-import { TaskFormSheet } from "@/components/shared/task-form-sheet"
 import { ProjectDailyView } from "./project-daily-view"
-import { TaskDetailsSheet } from "../tasks/task-details-sheet"
+import { TaskDetailsDialog } from "../tasks/task-details-dialog"
 import { TimeTrackingSheet } from "../tasks/time-tracking-sheet"
 import { TaskBoardFilters } from "./task-board-filters"
 import { QuickAddTaskCommand } from "./quick-add-task-command"
@@ -587,22 +586,9 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
           </div>
         )}
 
-      <TaskFormSheet
-        open={editSheetOpen}
-        onOpenChange={setEditSheetOpen}
-        mode="edit"
-        task={selectedTask}
-        projects={project ? [{
-          id: project.id,
-          name: project.name,
-          color: project.color,
-          slackChannelId: project.slackChannelId,
-        }] : []}
-        projectId={projectId}
-        onTaskUpdated={handleTaskUpdated}
-      />
 
-      <TaskDetailsSheet
+
+      <TaskDetailsDialog
         open={taskDetailsDialogOpen}
         onOpenChange={setTaskDetailsDialogOpen}
         task={transformTaskForDialog(selectedTask)}

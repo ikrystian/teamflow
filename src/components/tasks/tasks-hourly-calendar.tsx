@@ -2,15 +2,11 @@
 
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, CalendarDays, CalendarRange } from "lucide-react"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { TaskDetailsSheet } from "./task-details-sheet"
-import { TaskPopover } from "./task-popover"
 import type { Task, TaskUpdateData } from "@/types"
 import type { Session } from "next-auth"
-import { formatAssignee, getPriorityColor } from "@/lib/task-format-utils"
 
 interface TasksHourlyCalendarProps {
   tasks: Task[]
@@ -169,7 +165,7 @@ export function TasksHourlyCalendar({
   }
 
   // Oblicz dni do wyświetlenia w zależności od trybu
-  const weekStart =  getWeekStart(currentWeek)
+  const weekStart = getWeekStart(currentWeek)
   const viewDays = getViewDays(weekStart, viewMode)
 
   // Oblicz koniec zakresu dla nagłówka
@@ -244,9 +240,8 @@ export function TasksHourlyCalendar({
                 {viewDays.map((day) => (
                   <div
                     key={day.toISOString()}
-                    className={`p-2 text-center border-r ${
-                      isToday(day) ? 'bg-blue-50' : ''
-                    }`}
+                    className={`p-2 text-center border-r ${isToday(day) ? 'bg-blue-50' : ''
+                      }`}
                   >
                     <div className={`text-xs font-medium ${isToday(day) ? 'text-blue-600' : 'text-muted-foreground'}`}>
                       {getDayName(day)}
@@ -276,50 +271,13 @@ export function TasksHourlyCalendar({
                     return (
                       <div
                         key={`${day.toISOString()}-${hour}`}
-                        className={`border-r p-1 cursor-pointer hover:bg-muted/30 transition-colors ${
-                          isCurrent ? 'bg-blue-50/50' : ''
-                        } ${isToday(day) ? 'bg-blue-50/20' : ''}`}
+                        className={`border-r p-1 cursor-pointer hover:bg-muted/30 transition-colors ${isCurrent ? 'bg-blue-50/50' : ''
+                          } ${isToday(day) ? 'bg-blue-50/20' : ''}`}
                         onClick={(e) => handleTimeSlotClick(day, hour, e)}
                       >
                         <div className="space-y-1">
                           {tasksForHour.map((task) => (
-                            <TaskPopover
-                              key={task.id}
-                              task={task}
-                              onTaskClick={handleTaskClick}
-                              onTaskUpdate={onTaskUpdate}
-                              onTimeLogged={onTaskUpdated}
-                              canEdit={canEditTask(task)}
-                              side="right"
-                              align="start"
-                            >
-                              <div
-                                data-task-card
-                                className="p-1.5 rounded border cursor-pointer hover:shadow-sm transition-shadow text-xs bg-white"
-                                style={{
-                                  borderLeftWidth: '3px',
-                                  borderLeftColor: task.project?.color || '#3B82F6'
-                                }}
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleTaskClick(task)
-                                }}
-                              >
-                                <div className="font-medium line-clamp-1 text-xs">
-                                  {task.title}
-                                </div>
-                                {task.assignee && (
-                                  <div className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-                                    {formatAssignee(task.assignee).displayName.split(' ')[0]}
-                                  </div>
-                                )}
-                                {task.priority && (
-                                  <Badge variant="outline" className={`text-xs h-4 px-1 mt-1 ${getPriorityColor(task.priority)}`}>
-                                    {task.priority === "Low" ? "N" : task.priority === "Medium" ? "Ś" : "W"}
-                                  </Badge>
-                                )}
-                              </div>
-                            </TaskPopover>
+                            <div></div>
                           ))}
                         </div>
                       </div>
@@ -332,15 +290,6 @@ export function TasksHourlyCalendar({
         </CardContent>
       </Card>
 
-      {/* Sheet szczegółów zadania */}
-      {selectedTask && (
-        <TaskDetailsSheet
-          task={selectedTask}
-          open={taskDetailsDialogOpen}
-          onOpenChange={setTaskDetailsDialogOpen}
-          onTaskUpdated={onTaskUpdated}
-        />
-      )}
     </>
   )
 }

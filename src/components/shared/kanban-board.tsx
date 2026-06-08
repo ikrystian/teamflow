@@ -33,6 +33,7 @@ import {
   formatEstimatedHours,
   formatProjectDisplay,
 } from "@/lib/task-format-utils"
+import { TaskDetailsDialog } from "../tasks/task-details-dialog"
 
 export interface KanbanBoardProps {
   /** If provided, tasks will be created in this project by default and project select is hidden. */
@@ -140,10 +141,10 @@ function SortableTaskCard({
     >
       <Card
         className={`mb-2 cursor-pointer hover:shadow-md transition-all border-l-4 ${isUpdating
-            ? 'border-l-yellow-500 bg-yellow-50/50'
-            : completed
-              ? 'bg-green-50/80 border-l-green-500'
-              : ''
+          ? 'border-l-yellow-500 bg-yellow-50/50'
+          : completed
+            ? 'bg-green-50/80 border-l-green-500'
+            : ''
           }`}
         style={{
           borderLeftColor: isUpdating
@@ -790,7 +791,7 @@ export function KanbanBoard({
         )}
       </div>
 
-      <TaskDetailsSheet
+      <TaskDetailsDialog
         open={taskDetailsDialogOpen}
         onOpenChange={setTaskDetailsDialogOpen}
         task={selectedTask}
