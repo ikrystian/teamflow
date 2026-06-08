@@ -8,42 +8,41 @@ datasource db {
 }
 
 model User {
-  id                String            @id @default(cuid())
-  name              String?
-  email             String            @unique
-  password          String
-  avatarUrl         String?
-  phone             String?
-  location          String?
-  bio               String?
-  jobTitle          String?
-  company           String?
-  website           String?
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
-  role              String            @default("user")
-
-  comments          Comment[]
-  uploadedDocuments ProjectDocument[]
-  sessions          Session[]
-  assignedTasks     Task[]
-  createdTasks      Task[]            @relation("TaskCreator")
-  timeEntries       TimeEntry[]
-  pushSubscriptions PushSubscription[]
-  createdChatRooms  ChatRoom[]        @relation("ChatRoomCreator")
-  sentMessages      Message[]         @relation("MessageSender")
-  chatRooms         UserChatRoom[]
-  taskAttachments   TaskAttachment[]
+  id                  String               @id @default(cuid())
+  name                String?
+  email               String               @unique
+  password            String
+  avatarUrl           String?
+  phone               String?
+  location            String?
+  bio                 String?
+  jobTitle            String?
+  company             String?
+  website             String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  role                String               @default("user")
+  createdChatRooms    ChatRoom[]           @relation("ChatRoomCreator")
+  comments            Comment[]
+  sentMessages        Message[]            @relation("MessageSender")
   passwordResetTokens PasswordResetToken[]
-  createdProjects   Project[]         @relation("ProjectCreator")
-  projectMemberships ProjectMember[]
+  createdProjects     Project[]            @relation("ProjectCreator")
+  uploadedDocuments   ProjectDocument[]
+  projectMemberships  ProjectMember[]
+  pushSubscriptions   PushSubscription[]
+  sessions            Session[]
+  createdTasks        Task[]               @relation("TaskCreator")
+  assignedTasks       Task[]
+  taskAttachments     TaskAttachment[]
+  timeEntries         TimeEntry[]
+  chatRooms           UserChatRoom[]
 }
 
 model Project {
   id            String            @id @default(cuid())
   name          String
   description   String?
-  readme        String?           // README content with WYSIWYG editor
+  readme        String?
   status        String            @default("In Progress")
   imageUrl      String?
   repositoryUrl String?
@@ -54,77 +53,56 @@ model Project {
   stagingUrl    String?
   productionUrl String?
   credentials   String?
-  shareToken    String?           @unique // Token for public sharing
+  shareToken    String?           @unique
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
-  createdById   String            // Project creator/owner
+  createdById   String
   color         String            @default("#3B82F6")
   icon          String?
   archived      Boolean           @default(false)
-  createdBy     User              @relation("ProjectCreator", fields: [createdById], references: [id])
-  members       ProjectMember[]   // Individual project members
-  documents     ProjectDocument[]
-  tasks         Task[]
   chatRooms     ChatRoom[]
+  createdBy     User              @relation("ProjectCreator", fields: [createdById], references: [id])
+  documents     ProjectDocument[]
+  members       ProjectMember[]
+  tasks         Task[]
 }
 
 model Task {
-  id             String      @id @default(cuid())
-  title          String
-  description    String?
-  statusId       String?
-  priority       String?
-  dueDate        DateTime?
-  startTime      DateTime?   // Czas rozpoczęcia zadania
-  endTime        DateTime?   // Czas zakończenia zadania
-  estimatedHours Float?
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-  projectId      String?
-  assigneeId     String?
-  createdById    String?
-  reminderEnabled Boolean    @default(false)
-  reminderTime   DateTime?   // Kiedy wysłać przypomnienie
-  reminderType   String?     // "hours" lub "days"
-  reminderValue  Int?        // Ile godzin/dni przed zadaniem
-  comments       Comment[]
-  subtasks       Subtask[]
-  assignee       User?       @relation(fields: [assigneeId], references: [id])
-  createdBy      User?       @relation("TaskCreator", fields: [createdById], references: [id])
-  project        Project?    @relation(fields: [projectId], references: [id])
-  taskStatus     TaskStatus? @relation(fields: [statusId], references: [id])
-  images         TaskImage[]
-  attachments    TaskAttachment[]
-  timeEntries    TimeEntry[]
-  todos          Todo[]
-  taskTags       TaskTag[]
-}
-
-model Tag {
-  id        String    @id @default(cuid())
-  name      String    @unique
-  color     String    @default("#6B7280")
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  taskTags  TaskTag[]
-}
-
-model TaskTag {
-  id        String   @id @default(cuid())
-  taskId    String
-  tagId     String
-  createdAt DateTime @default(now())
-  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
-
-  @@unique([taskId, tagId])
+  id              String           @id @default(cuid())
+  title           String
+  description     String?
+  statusId        String?
+  priority        String?
+  dueDate         DateTime?
+  startTime       DateTime?
+  endTime         DateTime?
+  estimatedHours  Float?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  projectId       String?
+  assigneeId      String?
+  createdById     String?
+  reminderEnabled Boolean          @default(false)
+  reminderTime    DateTime?
+  reminderType    String?
+  reminderValue   Int?
+  comments        Comment[]
+  subtasks        Subtask[]
+  taskStatus      TaskStatus?      @relation(fields: [statusId], references: [id])
+  project         Project?         @relation(fields: [projectId], references: [id])
+  createdBy       User?            @relation("TaskCreator", fields: [createdById], references: [id])
+  assignee        User?            @relation(fields: [assigneeId], references: [id])
+  attachments     TaskAttachment[]
+  images          TaskImage[]
+  timeEntries     TimeEntry[]
+  todos           Todo[]
 }
 
 model Todo {
   id          String   @id @default(cuid())
   title       String
   isCompleted Boolean  @default(false)
-  timeSpent   Float?   // Time spent in hours
+  timeSpent   Float?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   taskId      String
@@ -164,19 +142,19 @@ model TaskImage {
 }
 
 model TaskAttachment {
-  id          String   @id @default(cuid())
-  filename    String
+  id           String   @id @default(cuid())
+  filename     String
   originalName String
-  url         String
-  mimeType    String
-  size        Int
-  description String?
-  category    String?
-  createdAt   DateTime @default(now())
-  taskId      String
+  url          String
+  mimeType     String
+  size         Int
+  description  String?
+  category     String?
+  createdAt    DateTime @default(now())
+  taskId       String
   uploadedById String
-  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  uploadedBy  User     @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+  task         Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
 }
 
 model Comment {
@@ -186,8 +164,8 @@ model Comment {
   updatedAt DateTime @updatedAt
   taskId    String
   authorId  String
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
 }
 
 model TimeEntry {
@@ -199,8 +177,8 @@ model TimeEntry {
   updatedAt   DateTime @updatedAt
   taskId      String
   userId      String
-  task        Task     @relation(fields: [taskId], references: [id])
   user        User     @relation(fields: [userId], references: [id])
+  task        Task     @relation(fields: [taskId], references: [id])
 }
 
 model ProjectDocument {
@@ -215,11 +193,9 @@ model ProjectDocument {
   updatedAt    DateTime @updatedAt
   projectId    String
   uploadedById String
-  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
-
-
 
 model Session {
   id           String   @id @default(cuid())
@@ -231,10 +207,6 @@ model Session {
   createdAt    DateTime @default(now())
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
-
-
-
-
 
 model PushSubscription {
   id        String   @id @default(cuid())
@@ -253,13 +225,13 @@ model PushSubscription {
 model ChatRoom {
   id          String         @id @default(cuid())
   name        String?
-  type        String         @default("group") // "direct", "group", or "project"
+  type        String         @default("group")
   projectId   String?
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
   createdById String
-  createdBy   User           @relation("ChatRoomCreator", fields: [createdById], references: [id])
   project     Project?       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy   User           @relation("ChatRoomCreator", fields: [createdById], references: [id])
   messages    Message[]
   members     UserChatRoom[]
 }
@@ -271,23 +243,21 @@ model Message {
   updatedAt  DateTime @updatedAt
   chatRoomId String
   senderId   String
-  chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
   sender     User     @relation("MessageSender", fields: [senderId], references: [id])
+  chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
 }
 
 model UserChatRoom {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   userId     String
   chatRoomId String
-  joinedAt   DateTime @default(now())
+  joinedAt   DateTime  @default(now())
   lastReadAt DateTime?
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  chatRoom   ChatRoom  @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, chatRoomId])
 }
-
-
 
 model PasswordResetToken {
   id        String   @id @default(cuid())
@@ -303,10 +273,10 @@ model ProjectMember {
   id        String   @id @default(cuid())
   projectId String
   userId    String
-  role      String   @default("member") // "member", "admin", "viewer"
+  role      String   @default("member")
   addedAt   DateTime @default(now())
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, userId])
 }
