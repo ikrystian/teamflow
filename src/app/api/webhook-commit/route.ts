@@ -34,6 +34,11 @@ interface MainTask {
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 const OPENROUTER_MODEL = "deepseek/deepseek-v4-flash"
 
+// Map known pushers to the user that should own the generated tasks.
+const PUSHER_USER_MAP: Record<string, string> = {
+  ikrystian: "cmq52nknm0005fyk3n94mm0z6",
+}
+
 // Convert a public GitHub commit URL into raw diff content so the model has
 // the actual changes to reason about. Falls back to null on any failure.
 async function fetchCommitContent(commitUrl: string): Promise<string | null> {
@@ -268,6 +273,9 @@ export async function POST(request: NextRequest) {
       where: { isDefault: true },
     })
 
+    // Resolve the owning user from the pusher, if it maps to a known user.
+    const ownerId = PUSHER_USER_MAP[payload.pusher] ?? null
+
     // Single commit -> a single task, no todos.
     if (commitTasks.length === 1) {
       const single = commitTasks[0]
@@ -280,6 +288,8 @@ export async function POST(request: NextRequest) {
           estimatedHours: single.workHours > 0 ? single.workHours : null,
           projectId: payload.projectId,
           statusId: defaultStatus?.id ?? null,
+          assigneeId: ownerId,
+          createdById: ownerId,
         },
       }))
 
@@ -308,6 +318,8 @@ export async function POST(request: NextRequest) {
         estimatedHours: totalHours > 0 ? totalHours : null,
         projectId: payload.projectId,
         statusId: defaultStatus?.id ?? null,
+        assigneeId: ownerId,
+        createdById: ownerId,
         todos: {
           create: commitTasks.map((t) => ({
             title: t.title,
