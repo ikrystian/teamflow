@@ -76,6 +76,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
   const [taskDetailsDialogOpen, setTaskDetailsDialogOpen] = useState(false)
+  const [createTaskDialogOpen, setCreateTaskDialogOpen] = useState(false)
   const [timeTrackingDialogOpen, setTimeTrackingDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [editSheetOpen, setEditSheetOpen] = useState(false)
@@ -121,6 +122,15 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     fetchProject()
     checkAdminStatus()
   }, [fetchProject, checkAdminStatus])
+
+  const handleCreateTask = () => {
+    setCreateTaskDialogOpen(true)
+  }
+
+  const handleTaskCreated = () => {
+    fetchProject()
+    setCreateTaskDialogOpen(false)
+  }
 
   // Set page header content
   usePageHeader(
@@ -183,7 +193,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
             </Button>
           </Link>
 
-          <Button onClick={() => router.push(`/dashboard/tasks/new?projectId=${projectId}`)}>
+          <Button onClick={handleCreateTask}>
             <Plus className="mr-2 h-4 w-4" />
             Dodaj zadanie
           </Button>
@@ -415,7 +425,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                   onFilterChange={handleFilterChange}
                   taskCounts={getTaskCounts(project.tasks || [])}
                 />
-                <Button onClick={() => router.push(`/dashboard/tasks/new?projectId=${projectId}`)} size="sm">
+                <Button onClick={handleCreateTask} size="sm">
                   <Plus className="mr-2 h-4 w-4" />
                   Dodaj zadanie
                 </Button>
@@ -436,7 +446,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                     taskFilter === "mine" ? "Brak zadań przypisanych Tobie w tym projekcie" :
                       "Ten członek zespołu nie ma przypisanych zadań w tym projekcie"}
                 </p>
-                <Button onClick={() => router.push(`/dashboard/tasks/new?projectId=${projectId}`)}>
+                <Button onClick={handleCreateTask}>
                   <Plus className="mr-2 h-4 w-4" />
                   Utwórz zadanie
                 </Button>
@@ -504,7 +514,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
           <ProjectDailyView
             tasks={getFilteredTasks(project.tasks || [])}
             onTaskClick={handleTaskDetails}
-            onCreateTask={() => router.push(`/dashboard/tasks/new?projectId=${projectId}`)}
+            onCreateTask={handleCreateTask}
             onTaskCreated={fetchProject}
             projectId={projectId}
             onTaskUpdate={async (taskId: string, updates: { startTime?: string; endTime?: string; assigneeId?: string }) => {
@@ -564,7 +574,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                         taskFilter === "mine" ? "Brak zadań przypisanych Tobie w tym projekcie" :
                           "Ten członek zespołu nie ma przypisanych zadań w tym projekcie"}
                     </p>
-                    <Button onClick={() => router.push(`/dashboard/tasks/new?projectId=${projectId}`)}>
+                    <Button onClick={handleCreateTask}>
                       <Plus className="mr-2 h-4 w-4" />
                       Utwórz zadanie
                     </Button>
@@ -580,7 +590,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                 onTimeTracking={handleTimeTracking}
                 onTaskDelete={handleDeleteTask}
                 canEditTask={canEditTask}
-                onCreateTask={() => router.push(`/dashboard/tasks/new?projectId=${projectId}`)}
+                onCreateTask={handleCreateTask}
               />
             )}
           </div>
@@ -597,6 +607,15 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         onDelete={handleDeleteTask}
         onTaskUpdated={handleTaskUpdated}
         canEdit={selectedTask ? canEditTask(selectedTask) : false}
+      />
+
+      <TaskDetailsDialog
+        open={createTaskDialogOpen}
+        onOpenChange={setCreateTaskDialogOpen}
+        task={null}
+        mode="create"
+        projectId={projectId}
+        onTaskCreated={handleTaskCreated}
       />
 
       <TimeTrackingSheet

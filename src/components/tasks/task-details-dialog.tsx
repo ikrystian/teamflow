@@ -12,24 +12,44 @@ interface TaskDetailsDialogProps {
   onTimeTracking?: (task: Task, e: React.MouseEvent) => void
   onDelete?: (task: Task, e: React.MouseEvent) => void
   onTaskUpdated?: () => void
+  onTaskCreated?: () => void
   canEdit?: boolean
+
+  // For create mode
+  mode?: "create" | "edit"
+  projectId?: string
 }
 
 export function TaskDetailsDialog({
   open,
   onOpenChange,
   task,
+  onTaskUpdated,
+  onTaskCreated,
+  mode = "edit",
+  projectId,
 }: TaskDetailsDialogProps) {
-  if (!task) return null
+  const isCreateMode = mode === "create"
+
+  if (!isCreateMode && !task) return null
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-12xl max-h-[90vh] overflow-hidden">
         <DialogHeader>
-          <DialogTitle className="hidden">{task.title}</DialogTitle>
+          <DialogTitle className="hidden">
+            {isCreateMode ? "Utwórz zadanie" : task?.title}
+          </DialogTitle>
         </DialogHeader>
         <div>
-          <TaskFormContent task={task} mode="edit" onClose={() => onOpenChange(false)} />
+          <TaskFormContent
+            task={task}
+            mode={mode}
+            projectId={projectId}
+            onClose={() => onOpenChange(false)}
+            onTaskUpdated={onTaskUpdated}
+            onTaskCreated={onTaskCreated}
+          />
         </div>
       </DialogContent>
     </Dialog>
