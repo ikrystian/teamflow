@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 import { prisma } from "@/lib/prisma"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -199,16 +201,17 @@ export default async function PublicTaskPage({
           </section>
         )}
 
-        {/* Changes / what was done */}
-        {task.changes && task.changes !== "<p></p>" && (
+        {/* Changes / what was done — stored as markdown */}
+        {task.changes && task.changes.trim() && (
           <section className="rounded-xl border bg-card p-6 shadow-sm">
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               Co zostało zrobione
             </h2>
-            <div
-              className="prose prose-sm max-w-none dark:prose-invert"
-              dangerouslySetInnerHTML={{ __html: task.changes }}
-            />
+            <div className="prose prose-sm max-w-none dark:prose-invert">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {task.changes}
+              </ReactMarkdown>
+            </div>
           </section>
         )}
 
