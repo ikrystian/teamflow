@@ -169,11 +169,14 @@ function SortableTaskCard({
           }}
           onContextMenu={handleContextMenu}
         >
+          {/* Hidden anchor so the context menu (opened via right-click) has a position reference */}
           <DropdownMenuTrigger asChild>
-            <CardContent
-              className="py-2 px-3 select-none pb-4 kanban-card cursor-pointer"
-              onClick={(event) => { onViewDetails(task); event.stopPropagation() }}
-            >
+            <span className="sr-only" aria-hidden="true" tabIndex={-1} />
+          </DropdownMenuTrigger>
+          <CardContent
+            className="py-2 px-3 select-none pb-4 kanban-card cursor-pointer"
+            onClick={(event) => { onViewDetails(task); event.stopPropagation() }}
+          >
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-2 flex-1 min-w-0">
               <div className="flex-1 min-w-0">
@@ -238,8 +241,7 @@ function SortableTaskCard({
               )}
             </div>
           </div>
-            </CardContent>
-          </DropdownMenuTrigger>
+          </CardContent>
           <DropdownMenuContent align="end" className="w-32">
             <DropdownMenuItem onClick={handleDelete} className="text-red-600">
               <Trash2 className="mr-2 h-4 w-4" />
