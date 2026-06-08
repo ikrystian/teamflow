@@ -97,6 +97,7 @@ function SortableTaskCard({
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [isContextMenuOpen, setIsContextMenuOpen] = useState(false)
 
   useEffect(() => {
     const element = ref.current
@@ -132,34 +133,47 @@ function SortableTaskCard({
 
   const completed = isTaskDone(task, taskStatuses)
 
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsContextMenuOpen(true)
+  }
+
+  const handleDelete = () => {
+    setIsContextMenuOpen(false)
+    onDelete(task)
+  }
+
   return (
     <div
       ref={ref}
       style={style}
       className="touch-none cursor-grab active:cursor-grabbing"
     >
-      <Card
-        className={`relative mb-2 cursor-pointer hover:shadow-md transition-all border-l-4 ${isUpdating
-          ? 'border-l-yellow-500 bg-yellow-50/50'
-          : completed
-            ? 'bg-green-50/80 border-l-green-500'
-            : ''
-          }`}
-        style={{
-          borderLeftColor: isUpdating
-            ? undefined
+      <DropdownMenu open={isContextMenuOpen} onOpenChange={setIsContextMenuOpen}>
+        <Card
+          className={`relative mb-2 cursor-pointer hover:shadow-md transition-all border-l-4 ${isUpdating
+            ? 'border-l-yellow-500 bg-yellow-50/50'
             : completed
-              ? '#10B981'
-              : (task.project?.color || '#3B82F6'),
-          paddingTop: 5,
-          paddingBottom: 0,
-        }}
-      >
-        <CardContent
-          className="py-2 px-3 select-none pb-4 kanban-card"
-
-          onClick={(event) => { onViewDetails(task); event.stopPropagation() }}
+              ? 'bg-green-50/80 border-l-green-500'
+              : ''
+            }`}
+          style={{
+            borderLeftColor: isUpdating
+              ? undefined
+              : completed
+                ? '#10B981'
+                : (task.project?.color || '#3B82F6'),
+            paddingTop: 5,
+            paddingBottom: 0,
+          }}
+          onContextMenu={handleContextMenu}
         >
+          <DropdownMenuTrigger asChild>
+            <CardContent
+              className="py-2 px-3 select-none pb-4 kanban-card cursor-pointer"
+              onClick={(event) => { onViewDetails(task); event.stopPropagation() }}
+            >
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-2 flex-1 min-w-0">
               <div className="flex-1 min-w-0">
@@ -224,9 +238,17 @@ function SortableTaskCard({
               )}
             </div>
           </div>
-        </CardContent >
-      </Card >
-    </div >
+            </CardContent>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-32">
+            <DropdownMenuItem onClick={handleDelete} className="text-red-600">
+              <Trash2 className="mr-2 h-4 w-4" />
+              Usuń
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </Card>
+      </DropdownMenu>
+    </div>
   )
 }
 

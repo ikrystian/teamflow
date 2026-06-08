@@ -568,11 +568,21 @@ export async function DELETE(
 
     // Check if user has permission to delete the task
     const userIsAdmin = await isAdmin()
-    const canDelete =
+    let canDelete =
       userIsAdmin || // Admin can delete any task
       existingTask.createdById === session.user.id || // Task creator
-      existingTask.assigneeId === session.user.id || // Assigned user
-      (existingTask.project) // Team member (only for tasks with projects)
+      existingTask.assigneeId === session.user.id // Assigned user
+
+    // If task has a project, also check if user is a project member
+    if (!canDelete && existingTask.project) {
+      const isMember = await prisma.projectMember.findFirst({
+        where: {
+          projectId: existingTask.project.id,
+          userId: session.user.id
+        }
+      })
+      canDelete = !!isMember
+    }
 
     if (!canDelete) {
       return NextResponse.json(
