@@ -19,18 +19,13 @@ export function TaskDetailsDialog({
   open,
   onOpenChange,
   task,
-  onEdit,
-  onTimeTracking,
-  onDelete,
-  onTaskUpdated,
-  canEdit = false
 }: TaskDetailsDialogProps) {
   if (!task) return null
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden">
-        <DialogHeader>
+      <DialogContent className="max-w-12xl max-h-[90vh] overflow-hidden">
+        <DialogHeader>1
           <DialogTitle className="sr-only">{task.title}</DialogTitle>
         </DialogHeader>
         <div>

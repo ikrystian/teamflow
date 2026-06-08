@@ -21,7 +21,6 @@ import {
   selectValueToHours,
   formatAssignee,
   getPriorityOptions,
-  formatProjectDisplay
 } from "@/lib/task-format-utils"
 
 
@@ -45,8 +44,6 @@ interface TaskFormContentProps {
   // Mode determination
   mode: "create" | "edit"
 
-  // Layout variant (reserved for future use)
-  variant?: "dialog" | "sheet"
 }
 
 export function TaskFormContent({
@@ -104,8 +101,6 @@ export function TaskFormContent({
   const isCreateMode = mode === "create"
   const isEditMode = mode === "edit"
 
-  // Determine if we should show project selector
-  const showProjectSelector = ((isCreateMode && !projectId) || isEditMode) && projects.length > 0
 
   // Get current project for member selection
   const currentProject = projects.find(p => p.id === (projectId || selectedProjectId));
@@ -496,13 +491,6 @@ export function TaskFormContent({
 
   return (
     <>
-      {/* Header Section */}
-      <div className="space-y-3">
-        <h2 className="text-xl font-semibold">
-          {isCreateMode ? "Utwórz nowe zadanie" : "Edytuj zadaniea"}
-        </h2>
-      </div>
-
       {/* Form Content */}
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-4">
@@ -531,311 +519,295 @@ export function TaskFormContent({
             </div>
           </div>
 
-          {/* AI-generated changes (Slack mrkdwn) with a "send to Slack" action */}
-          {isEditMode && task?.changes && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium">Zmiany</Label>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSendToSlack}
-                  disabled={sendingToSlack}
-                  title="Wyślij na Slacka"
-                >
-                  <Send className="h-4 w-4" />
-                  <span className="ml-2">{sendingToSlack ? "Wysyłanie..." : "Wyślij na Slacka"}</span>
-                </Button>
-              </div>
-              <pre className="whitespace-pre-wrap break-words rounded-md border bg-muted/50 p-3 text-sm font-sans">
-                {task.changes}
-              </pre>
-            </div>
-          )}
-
-          {/* Project selector */}
-          {showProjectSelector && !isEditMode && (
-            <div className="space-y-2">
-              <Label htmlFor="project" className="text-sm font-medium">
-                Projekt
-              </Label>
-              <select
-                id="project"
-                value={selectedProjectId || "no-project"}
-                onChange={(e) => setSelectedProjectId(e.target.value === "no-project" ? "" : e.target.value)}
-                className="h-10 w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-              >
-                <option value="no-project">Brak projektu</option>
-                {projects.map((project) => (
-                  <option key={project.id} value={project.id}>
-                    {formatProjectDisplay(project)}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Assignee selector */}
-            <div className="space-y-2">
-              <Label htmlFor="assignee" className="text-sm font-medium">
-                {(isCreateMode && !projectId && !currentProject) || forceAssignToCurrentUser
-                  ? "Przypisany (automatycznie przypisane do Ciebie)"
-                  : "Przypisany"
-                }
-              </Label>
-              {(isCreateMode && !projectId && !currentProject) || forceAssignToCurrentUser ? (
-                <div className="h-10 px-3 py-2 border border-input bg-muted/50 rounded-md flex items-center space-x-2">
-                  <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary">
-                    {formatAssignee(session?.user).initials}
-                  </div>
-                  <span className="text-sm text-muted-foreground">
-                    {formatAssignee(session?.user).displayName}
-                  </span>
+          <div className="bg-red-200 h-[200px] overflow-y-hidden">
+            {isEditMode && task?.changes && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">Zmiany</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSendToSlack}
+                    disabled={sendingToSlack}
+                    title="Wyślij na Slacka"
+                  >
+                    <Send className="h-4 w-4" />
+                    <span className="ml-2">{sendingToSlack ? "Wysyłanie..." : "Wyślij na Slacka"}</span>
+                  </Button>
                 </div>
-              ) : (
-                <select
-                  id="assignee"
-                  value={assigneeId}
-                  onChange={(e) => setAssigneeId(e.target.value)}
-                  className="h-10 w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                >
-                  <option value="">Wybierz osobę</option>
-                </select>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="priority" className="text-sm font-medium">Priorytet</Label>
-              <select
-                id="priority"
-                value={priority || "none"}
-                onChange={(e) => setPriority(e.target.value === "none" ? "" : e.target.value)}
-                className="h-10 w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-              >
-                <option value="none">Brak priorytetu</option>
-                {getPriorityOptions().map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Tags Selection */}
-          {availableTags.length > 0 && (
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Tagi</Label>
-              <div className="flex flex-wrap gap-2 p-3 border rounded-md min-h-[42px]">
-                {availableTags.map((tag) => {
-                  const isSelected = selectedTagIds.includes(tag.id)
-                  return (
-                    <Badge
-                      key={tag.id}
-                      variant={isSelected ? "default" : "outline"}
-                      className="cursor-pointer transition-all hover:scale-105"
-                      style={isSelected ? {
-                        backgroundColor: tag.color,
-                        borderColor: tag.color,
-                        color: '#fff'
-                      } : {
-                        borderColor: tag.color,
-                        color: tag.color
-                      }}
-                      onClick={() => {
-                        if (isSelected) {
-                          setSelectedTagIds(prev => prev.filter(id => id !== tag.id))
-                        } else {
-                          setSelectedTagIds(prev => [...prev, tag.id])
-                        }
-                      }}
-                    >
-                      {tag.name}
-                    </Badge>
-                  )
-                })}
+                <pre className="whitespace-pre-wrap break-words rounded-md border bg-muted/50 p-3 text-sm font-sans">
+                  {task.changes}
+                </pre>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Kliknij na tag, aby go zaznaczyć lub odznaczyć
-              </p>
-            </div>
-          )}
+            )}
 
-          {/* Time Planning Mode Selection */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">Sposób planowania czasu</Label>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant={timePlanningMode === "reporting" ? "default" : "outline"}
-                size="sm"
-                onClick={() => handleTimePlanningModeChange("reporting")}
-                className="flex-1"
-              >
-                Raportowanie czasu
-              </Button>
-              <Button
-                type="button"
-                variant={timePlanningMode === "scheduled" ? "default" : "outline"}
-                size="sm"
-                onClick={() => handleTimePlanningModeChange("scheduled")}
-                className="flex-1"
-              >
-                Zaplanowana praca
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {timePlanningMode === "reporting"
-                ? "Ustaw termin wykonania i szacowaną ilość godzin do przepracowania"
-                : "Ustaw zakres dat z godzinami - szacowany czas zostanie obliczony automatycznie"
-              }
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="dueDate" className="text-sm font-medium">
-                {timePlanningMode === "reporting" ? "Termin wykonania" : "Termin wykonania (opcjonalnie)"}
-              </Label>
-              <DateTimePicker
-                value={dueDate}
-                onChange={setDueDate}
-                className="rounded-lg border shadow-sm"
-              />
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="estimatedHours" className="text-sm font-medium">
-                Szacowany czas
-                {timePlanningMode === "scheduled" && " (wyliczane)"}
-              </Label>
-              {timePlanningMode === "reporting" ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Assignee selector */}
+              <div className="space-y-2">
+                <Label htmlFor="assignee" className="text-sm font-medium">
+                  {(isCreateMode && !projectId && !currentProject) || forceAssignToCurrentUser
+                    ? "Przypisany (automatycznie przypisane do Ciebie)"
+                    : "Przypisany"
+                  }
+                </Label>
+                {(isCreateMode && !projectId && !currentProject) || forceAssignToCurrentUser ? (
+                  <div className="h-10 px-3 py-2 border border-input bg-muted/50 rounded-md flex items-center space-x-2">
+                    <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary">
+                      {formatAssignee(session?.user).initials}
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      {formatAssignee(session?.user).displayName}
+                    </span>
+                  </div>
+                ) : (
+                  <select
+                    id="assignee"
+                    value={assigneeId}
+                    onChange={(e) => setAssigneeId(e.target.value)}
+                    className="h-10 w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  >
+                    <option value="">Wybierz osobę</option>
+                  </select>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="priority" className="text-sm font-medium">Priorytet</Label>
                 <select
-                  id="estimatedHours"
-                  value={estimatedHours}
-                  onChange={(e) => setEstimatedHours(e.target.value)}
+                  id="priority"
+                  value={priority || "none"}
+                  onChange={(e) => setPriority(e.target.value === "none" ? "" : e.target.value)}
                   className="h-10 w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 >
-                  {getEstimatedHoursOptions().map((option) => (
+                  <option value="none">Brak priorytetu</option>
+                  {getPriorityOptions().map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
                   ))}
                 </select>
-              ) : (
-                <div className="h-10 px-3 py-2 border border-input bg-muted/50 rounded-md flex items-center text-sm text-muted-foreground">
-                  {estimatedHours && estimatedHours !== "none"
-                    ? `${selectValueToHours(estimatedHours)}h`
-                    : "Wybierz czas rozpoczęcia i zakończenia"
-                  }
-                </div>
-              )}
+              </div>
             </div>
-          </div>
 
-          {/* Time Fields */}
-          {timePlanningMode === "scheduled" && (
+            {/* Tags Selection */}
+            {availableTags.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Tagi</Label>
+                <div className="flex flex-wrap gap-2 p-3 border rounded-md min-h-[42px]">
+                  {availableTags.map((tag) => {
+                    const isSelected = selectedTagIds.includes(tag.id)
+                    return (
+                      <Badge
+                        key={tag.id}
+                        variant={isSelected ? "default" : "outline"}
+                        className="cursor-pointer transition-all hover:scale-105"
+                        style={isSelected ? {
+                          backgroundColor: tag.color,
+                          borderColor: tag.color,
+                          color: '#fff'
+                        } : {
+                          borderColor: tag.color,
+                          color: tag.color
+                        }}
+                        onClick={() => {
+                          if (isSelected) {
+                            setSelectedTagIds(prev => prev.filter(id => id !== tag.id))
+                          } else {
+                            setSelectedTagIds(prev => [...prev, tag.id])
+                          }
+                        }}
+                      >
+                        {tag.name}
+                      </Badge>
+                    )
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Kliknij na tag, aby go zaznaczyć lub odznaczyć
+                </p>
+              </div>
+            )}
+
+            {/* Time Planning Mode Selection */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Sposób planowania czasu</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={timePlanningMode === "reporting" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleTimePlanningModeChange("reporting")}
+                  className="flex-1"
+                >
+                  Raportowanie czasu
+                </Button>
+                <Button
+                  type="button"
+                  variant={timePlanningMode === "scheduled" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleTimePlanningModeChange("scheduled")}
+                  className="flex-1"
+                >
+                  Zaplanowana praca
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {timePlanningMode === "reporting"
+                  ? "Ustaw termin wykonania i szacowaną ilość godzin do przepracowania"
+                  : "Ustaw zakres dat z godzinami - szacowany czas zostanie obliczony automatycznie"
+                }
+              </p>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="startTime" className="text-sm font-medium">
-                  Czas rozpoczęcia
-                  <span className="text-destructive"> *</span>
+                <Label htmlFor="dueDate" className="text-sm font-medium">
+                  {timePlanningMode === "reporting" ? "Termin wykonania" : "Termin wykonania (opcjonalnie)"}
                 </Label>
                 <DateTimePicker
-                  value={startTime}
-                  onChange={setStartTime}
-                  placeholder="Wybierz czas rozpoczęcia"
+                  value={dueDate}
+                  onChange={setDueDate}
                   className="rounded-lg border shadow-sm"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="endTime" className="text-sm font-medium">
-                  Czas zakończenia
-                  <span className="text-destructive"> *</span>
+                <Label htmlFor="estimatedHours" className="text-sm font-medium">
+                  Szacowany czas
+                  {timePlanningMode === "scheduled" && " (wyliczane)"}
                 </Label>
-                <DateTimePicker
-                  value={endTime}
-                  onChange={setEndTime}
-                  placeholder="Wybierz czas zakończenia"
-                  className="rounded-lg border shadow-sm"
-                />
+                {timePlanningMode === "reporting" ? (
+                  <select
+                    id="estimatedHours"
+                    value={estimatedHours}
+                    onChange={(e) => setEstimatedHours(e.target.value)}
+                    className="h-10 w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  >
+                    {getEstimatedHoursOptions().map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="h-10 px-3 py-2 border border-input bg-muted/50 rounded-md flex items-center text-sm text-muted-foreground">
+                    {estimatedHours && estimatedHours !== "none"
+                      ? `${selectValueToHours(estimatedHours)}h`
+                      : "Wybierz czas rozpoczęcia i zakończenia"
+                    }
+                  </div>
+                )}
               </div>
             </div>
-          )}
 
-          {/* File Attachments */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">Załączniki</Label>
-            {isCreateMode ? (
-              <div className="space-y-2">
+            {/* Time Fields */}
+            {timePlanningMode === "scheduled" && (
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="startTime" className="text-sm font-medium">
+                    Czas rozpoczęcia
+                    <span className="text-destructive"> *</span>
+                  </Label>
+                  <DateTimePicker
+                    value={startTime}
+                    onChange={setStartTime}
+                    placeholder="Wybierz czas rozpoczęcia"
+                    className="rounded-lg border shadow-sm"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="endTime" className="text-sm font-medium">
+                    Czas zakończenia
+                    <span className="text-destructive"> *</span>
+                  </Label>
+                  <DateTimePicker
+                    value={endTime}
+                    onChange={setEndTime}
+                    placeholder="Wybierz czas zakończenia"
+                    className="rounded-lg border shadow-sm"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* File Attachments */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Załączniki</Label>
+              {isCreateMode ? (
+                <div className="space-y-2">
+                  <FileUpload
+                    files={attachments.map((file, index) => ({
+                      id: `temp-${index}`,
+                      filename: file.name,
+                      originalName: file.name,
+                      url: '',
+                      mimeType: file.type,
+                      size: file.size,
+                      createdAt: new Date().toISOString(),
+                      uploadedBy: { id: '', name: '', email: '', avatarUrl: '' }
+                    }))}
+                    onFileUpload={handleFileUpload}
+                    onFileDelete={async (fileId) => {
+                      const index = parseInt(fileId.replace('temp-', ''))
+                      setAttachments(prev => prev.filter((_, i) => i !== index))
+                    }}
+                    editable={true}
+                    accept="*/*"
+                    maxSize={10 * 1024 * 1024} // 10MB
+                    maxFiles={10}
+                    title="Załączniki"
+                    description="Dodaj pliki do zadania (max 10MB każdy)"
+                    categories={["specification", "design", "manual", "other"]}
+                    showCategories={false}
+                    showDescriptions={false}
+                    className="border rounded-lg p-4"
+                  />
+                  {uploadingFiles && (
+                    <div className="text-sm text-muted-foreground">
+                      Przesyłanie plików...
+                    </div>
+                  )}
+                </div>
+              ) : task?.attachments ? (
                 <FileUpload
-                  files={attachments.map((file, index) => ({
-                    id: `temp-${index}`,
-                    filename: file.name,
-                    originalName: file.name,
-                    url: '',
-                    mimeType: file.type,
-                    size: file.size,
-                    createdAt: new Date().toISOString(),
-                    uploadedBy: { id: '', name: '', email: '', avatarUrl: '' }
-                  }))}
+                  files={task.attachments}
                   onFileUpload={handleFileUpload}
-                  onFileDelete={async (fileId) => {
-                    const index = parseInt(fileId.replace('temp-', ''))
-                    setAttachments(prev => prev.filter((_, i) => i !== index))
-                  }}
+                  onFileDelete={handleFileDelete}
                   editable={true}
                   accept="*/*"
                   maxSize={10 * 1024 * 1024} // 10MB
                   maxFiles={10}
                   title="Załączniki"
-                  description="Dodaj pliki do zadania (max 10MB każdy)"
+                  description="Zarządzaj plikami zadania"
                   categories={["specification", "design", "manual", "other"]}
-                  showCategories={false}
-                  showDescriptions={false}
+                  showCategories={true}
+                  showDescriptions={true}
                   className="border rounded-lg p-4"
                 />
-                {uploadingFiles && (
-                  <div className="text-sm text-muted-foreground">
-                    Przesyłanie plików...
-                  </div>
-                )}
-              </div>
-            ) : task?.attachments ? (
-              <FileUpload
-                files={task.attachments}
-                onFileUpload={handleFileUpload}
-                onFileDelete={handleFileDelete}
-                editable={true}
-                accept="*/*"
-                maxSize={10 * 1024 * 1024} // 10MB
-                maxFiles={10}
-                title="Załączniki"
-                description="Zarządzaj plikami zadania"
-                categories={["specification", "design", "manual", "other"]}
-                showCategories={true}
-                showDescriptions={true}
-                className="border rounded-lg p-4"
-              />
-            ) : (
-              <div className="text-sm text-muted-foreground border rounded-lg p-4">
-                Brak załączników
-              </div>
-            )}
+              ) : (
+                <div className="text-sm text-muted-foreground border rounded-lg p-4">
+                  Brak załączników
+                </div>
+              )}
+            </div>
+
+            {/* Reminder Settings */}
+            <ReminderSettings
+              reminderEnabled={reminderEnabled}
+              reminderType={reminderType}
+              reminderValue={reminderValue}
+              dueDate={dueDate}
+              onReminderChange={handleReminderChange}
+            />
           </div>
 
-          {/* Reminder Settings */}
-          <ReminderSettings
-            reminderEnabled={reminderEnabled}
-            reminderType={reminderType}
-            reminderValue={reminderValue}
-            dueDate={dueDate}
-            onReminderChange={handleReminderChange}
-          />
+
+
 
           {error && (
             <div className="p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
@@ -846,9 +818,6 @@ export function TaskFormContent({
 
         {/* Action Buttons */}
         <div className="flex flex-col-reverse sm:flex-row gap-2 pt-6">
-          <Button type="button" variant="outline" onClick={handleClose} className="h-10">
-            Anuluj
-          </Button>
           <Button
             type="submit"
             disabled={loading || !isFormValid() || (isEditMode && !hasChanges)}
