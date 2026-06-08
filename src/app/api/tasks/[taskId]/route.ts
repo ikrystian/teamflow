@@ -174,7 +174,7 @@ export async function PATCH(
     }
 
     const { taskId } = await params
-    const { title, description, changes, statusId, priority, dueDate, startTime, endTime, assigneeId, estimatedHours, projectId, reminderEnabled, reminderType, reminderValue, tagIds, subtasksToCreate, subtasksToUpdate, deletedSubtaskIds } = await request.json()
+    const { title, description, changes, statusId, priority, dueDate, startTime, endTime, assigneeId, estimatedHours, projectId, reminderEnabled, reminderType, reminderValue, tagIds, subtasksToCreate, subtasksToUpdate, deletedSubtaskIds, createdAt } = await request.json()
 
     // Fetch task to check permissions (taskId may be a key like "PS-12" or an id)
     const existingTask = await prisma.task.findFirst({
@@ -332,7 +332,9 @@ export async function PATCH(
       reminderType?: string | null;
       reminderValue?: number | null;
       reminderTime?: Date | null;
+      createdAt?: Date;
     } = {}
+    if (createdAt !== undefined) updateData.createdAt = new Date(createdAt)
     if (title !== undefined) updateData.title = title
     if (description !== undefined) updateData.description = description
     if (changes !== undefined) updateData.changes = changes || null

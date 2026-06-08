@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useSession } from "next-auth/react"
 import type { Session } from "next-auth"
+import TextareaAutosize from "react-textarea-autosize"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,13 +14,12 @@ import type { Task, TaskStatus, Project, Tag } from "@/types"
 import { ReminderSettings } from "@/components/tasks/reminder-settings"
 import { FileUpload } from "@/components/ui/file-upload"
 import { Badge } from "@/components/ui/badge"
-import { Send } from "lucide-react"
+import { Send, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import {
   getEstimatedHoursOptions,
   hoursToSelectValue,
   selectValueToHours,
-  formatAssignee,
   getPriorityOptions,
 } from "@/lib/task-format-utils"
 
@@ -118,9 +118,25 @@ export function TaskFormContent({
   // Auto-save state (edit mode only)
   const [isSaving, setIsSaving] = useState(false)
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  // Latest onTaskUpdated callback, accessed via ref so autoSave stays stable
+  // even when the parent passes a new (non-memoized) callback each render.
+  const onTaskUpdatedRef = useRef(onTaskUpdated)
+  onTaskUpdatedRef.current = onTaskUpdated
+  // Snapshot of the last loaded/saved field values, used to avoid spurious saves.
+  const lastSavedSnapshotRef = useRef<string | null>(null)
+  // True right after the form is (re)populated from a task, so the first
+  // snapshot run just captures the baseline instead of triggering a save.
+  const justLoadedRef = useRef(true)
 
-  // Get current project for member selection
-  const currentProject = projects.find(p => p.id === (projectId || selectedProjectId));
+  // Full list of projects for the project selector. Falls back to fetching when
+  // the parent doesn't pass a list (e.g. opened from a single-project board).
+  const [projectsList, setProjectsList] = useState<Array<{ id: string; name: string }>>(projects)
+
+  // Time entries reported directly on the task (edit mode)
+  const [timeEntries, setTimeEntries] = useState<Array<{ id: string; hours: number; description?: string | null; date: string; user?: { id: string; name?: string | null } }>>([])
+  const [newTimeHours, setNewTimeHours] = useState("")
+  const [newTimeDescription, setNewTimeDescription] = useState("")
+  const [loggingTime, setLoggingTime] = useState(false)
 
 
   const fetchTaskStatuses = useCallback(async () => {
@@ -195,6 +211,55 @@ export function TaskFormContent({
     }
   }, [])
 
+  // Fetch the full list of projects for the selector (when not provided by parent)
+  const fetchProjectsList = useCallback(async () => {
+    try {
+      const response = await fetch('/api/projects')
+      if (response.ok) {
+        const data = await response.json()
+        setProjectsList(
+          (data.projects || []).map((p: { id: string; name: string }) => ({ id: p.id, name: p.name }))
+        )
+      }
+    } catch (error) {
+      console.error("Error fetching projects:", error)
+    }
+  }, [])
+
+  // Fetch time entries reported on the task (edit mode)
+  const fetchTimeEntries = useCallback(async (tid: string) => {
+    try {
+      const response = await fetch(`/api/tasks/${tid}/time-entries`)
+      if (response.ok) {
+        const data = await response.json()
+        setTimeEntries(data.timeEntries || [])
+      }
+    } catch (error) {
+      console.error("Error fetching time entries:", error)
+    }
+  }, [])
+
+  // Keep projectsList in sync with the prop, and fetch once when it's empty.
+  // Depend on the length (a primitive) so a fresh `[]` default each render
+  // doesn't retrigger this effect into a fetch loop.
+  const projectsFetchedRef = useRef(false)
+  useEffect(() => {
+    if (projects.length > 0) {
+      setProjectsList(projects)
+    } else if (!projectsFetchedRef.current) {
+      projectsFetchedRef.current = true
+      fetchProjectsList()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projects.length, fetchProjectsList])
+
+  // Load time entries when editing a task.
+  useEffect(() => {
+    if (isEditMode && task?.id) {
+      fetchTimeEntries(task.id)
+    }
+  }, [isEditMode, task?.id, fetchTimeEntries])
+
   // Initialize form
   useEffect(() => {
     fetchTaskStatuses()
@@ -240,8 +305,16 @@ export function TaskFormContent({
       setSelectedTagIds(task.tags?.map(t => t.id) || [])
       setSubtasks(task.subtasks || [])
       setError("")
+
+      // Mark as freshly loaded so the auto-save watcher captures this as the
+      // baseline instead of immediately PATCHing it back to the server.
+      justLoadedRef.current = true
     }
-  }, [isCreateMode, isEditMode, task, projectId, session?.user?.id, fetchTaskStatuses, fetchTags, defaultDate, defaultStartTime, defaultEndTime])
+    // Only re-run when switching to a different task (by id) or mode — not on
+    // every new `task` object reference, which would wipe in-progress edits and
+    // cause an auto-save feedback loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCreateMode, isEditMode, task?.id, projectId, session?.user?.id, fetchTaskStatuses, fetchTags, defaultDate, defaultStartTime, defaultEndTime])
 
   // Force assign to current user when forceAssignToCurrentUser is true
   useEffect(() => {
@@ -305,33 +378,68 @@ export function TaskFormContent({
     setReminderValue(value)
   }
 
-  // Auto-save function for edit mode
-  const autoSave = useCallback(async () => {
+  // Serialized snapshot of the auto-saved fields. Recomputed every render so the
+  // watcher effect below can compare content (not object identity) and only save
+  // when the user actually changed something.
+  const autoSaveSnapshot = JSON.stringify({
+    title: title.trim(),
+    description: description.trim(),
+    changes: changes.trim(),
+    statusId,
+    assigneeId,
+    priority,
+    dueDate: dueDate ? dueDate.toISOString() : null,
+    startTime: startTime ? startTime.toISOString() : null,
+    endTime: endTime ? endTime.toISOString() : null,
+    estimatedHours,
+    selectedProjectId,
+    reminderEnabled,
+    reminderType,
+    reminderValue,
+    tagIds: [...selectedTagIds].sort(),
+  })
+
+  // Keep the latest values reachable from the (stable) autoSave closure.
+  const formStateRef = useRef<Record<string, unknown>>({})
+  formStateRef.current = {
+    title, description, changes, statusId, assigneeId, priority,
+    dueDate, startTime, endTime, estimatedHours, selectedProjectId,
+    reminderEnabled, reminderType, reminderValue, selectedTagIds,
+  }
+
+  // Stable auto-save: reads current values from a ref so its identity never
+  // changes, which prevents the watcher effect from re-firing in a loop.
+  const autoSave = useCallback(async (snapshotAtCall: string) => {
     if (!isEditMode || !task) return
+    const v = formStateRef.current as {
+      title: string; description: string; changes: string; statusId: string;
+      assigneeId: string; priority: string; dueDate?: Date; startTime?: Date;
+      endTime?: Date; estimatedHours: string; selectedProjectId: string;
+      reminderEnabled: boolean; reminderType: string; reminderValue: number;
+      selectedTagIds: string[];
+    }
 
     try {
       setIsSaving(true)
       const response = await fetch(`/api/tasks/${task.id}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: title.trim(),
-          description: description.trim() || undefined,
-          changes: changes.trim() || undefined,
-          statusId: statusId || undefined,
-          assigneeId: assigneeId || undefined,
-          priority: priority || undefined,
-          dueDate: dueDate ? dueDate.toISOString() : undefined,
-          startTime: startTime ? startTime.toISOString() : undefined,
-          endTime: endTime ? endTime.toISOString() : undefined,
-          estimatedHours: selectValueToHours(estimatedHours),
-          projectId: selectedProjectId && selectedProjectId !== "no-project" ? selectedProjectId : undefined,
-          reminderEnabled,
-          reminderType: reminderEnabled ? reminderType : undefined,
-          reminderValue: reminderEnabled ? reminderValue : undefined,
-          tagIds: selectedTagIds,
+          title: v.title.trim(),
+          description: v.description.trim() || undefined,
+          changes: v.changes.trim() || undefined,
+          statusId: v.statusId || undefined,
+          assigneeId: v.assigneeId || undefined,
+          priority: v.priority || undefined,
+          dueDate: v.dueDate ? v.dueDate.toISOString() : undefined,
+          startTime: v.startTime ? v.startTime.toISOString() : undefined,
+          endTime: v.endTime ? v.endTime.toISOString() : undefined,
+          estimatedHours: selectValueToHours(v.estimatedHours),
+          projectId: v.selectedProjectId && v.selectedProjectId !== "no-project" ? v.selectedProjectId : undefined,
+          reminderEnabled: v.reminderEnabled,
+          reminderType: v.reminderEnabled ? v.reminderType : undefined,
+          reminderValue: v.reminderEnabled ? v.reminderValue : undefined,
+          tagIds: v.selectedTagIds,
         }),
       })
 
@@ -339,32 +447,41 @@ export function TaskFormContent({
         const data = await response.json()
         console.error("Auto-save error:", data.error)
       } else {
-        onTaskUpdated?.()
+        // Remember what we just persisted so the refetch below doesn't bounce.
+        lastSavedSnapshotRef.current = snapshotAtCall
+        onTaskUpdatedRef.current?.()
       }
     } catch (error) {
       console.error("Auto-save error:", error)
     } finally {
       setIsSaving(false)
     }
-  }, [isEditMode, task, title, description, changes, statusId, assigneeId, priority, dueDate, startTime, endTime, estimatedHours, selectedProjectId, reminderEnabled, reminderType, reminderValue, selectedTagIds, onTaskUpdated])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditMode, task?.id])
 
-  // Debounced auto-save for field changes
-  const debouncedAutoSave = useCallback(() => {
+  // Watch the content snapshot and debounce a save when it changes in edit mode.
+  useEffect(() => {
     if (!isEditMode) return
 
-    if (autoSaveTimeoutRef.current) {
-      clearTimeout(autoSaveTimeoutRef.current)
+    // First run after (re)loading a task: capture the baseline, don't save.
+    if (justLoadedRef.current) {
+      justLoadedRef.current = false
+      lastSavedSnapshotRef.current = autoSaveSnapshot
+      return
     }
 
-    autoSaveTimeoutRef.current = setTimeout(() => {
-      autoSave()
-    }, 500)
-  }, [isEditMode, autoSave])
+    // Nothing actually changed since the last load/save.
+    if (autoSaveSnapshot === lastSavedSnapshotRef.current) return
 
-  // Auto-save on field changes in edit mode
-  useEffect(() => {
-    debouncedAutoSave()
-  }, [isEditMode ? title : null, isEditMode ? description : null, isEditMode ? statusId : null, isEditMode ? assigneeId : null, isEditMode ? priority : null, isEditMode ? dueDate : null, isEditMode ? selectedProjectId : null, debouncedAutoSave])
+    if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current)
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      autoSave(autoSaveSnapshot)
+    }, 800)
+
+    return () => {
+      if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current)
+    }
+  }, [autoSaveSnapshot, isEditMode, autoSave])
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -374,6 +491,60 @@ export function TaskFormContent({
       }
     }
   }, [])
+
+  // Log a new time entry directly on the task (edit mode).
+  const handleAddTimeEntry = async () => {
+    if (!task) return
+    const hours = parseFloat(newTimeHours)
+    if (!hours || hours <= 0) {
+      toast.error("Podaj liczbę godzin większą od zera")
+      return
+    }
+    setLoggingTime(true)
+    try {
+      const response = await fetch(`/api/tasks/${task.id}/time-entries`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hours, description: newTimeDescription.trim() || undefined }),
+      })
+      if (response.ok) {
+        setNewTimeHours("")
+        setNewTimeDescription("")
+        await fetchTimeEntries(task.id)
+        onTaskUpdated?.()
+        toast.success("Zaraportowano czas")
+      } else {
+        const data = await response.json()
+        toast.error(data.error || "Nie udało się zaraportować czasu")
+      }
+    } catch (error) {
+      console.error("Error logging time:", error)
+      toast.error("Nie udało się zaraportować czasu")
+    } finally {
+      setLoggingTime(false)
+    }
+  }
+
+  const handleDeleteTimeEntry = async (entryId: string) => {
+    if (!task) return
+    try {
+      const response = await fetch(`/api/tasks/${task.id}/time-entries?entryId=${entryId}`, {
+        method: "DELETE",
+      })
+      if (response.ok) {
+        await fetchTimeEntries(task.id)
+        onTaskUpdated?.()
+      } else {
+        const data = await response.json()
+        toast.error(data.error || "Nie udało się usunąć wpisu")
+      }
+    } catch (error) {
+      console.error("Error deleting time entry:", error)
+      toast.error("Nie udało się usunąć wpisu")
+    }
+  }
+
+  const totalReportedHours = timeEntries.reduce((sum, e) => sum + e.hours, 0)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -719,7 +890,7 @@ export function TaskFormContent({
                   className="h-8 w-full px-2 py-1 border border-input bg-background rounded text-xs focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="no-project">Bez projektu</option>
-                  {projects.map((project) => (
+                  {projectsList.map((project) => (
                     <option key={project.id} value={project.id}>
                       {project.name}
                     </option>
@@ -730,9 +901,9 @@ export function TaskFormContent({
           )}
 
           {/* Time Info Row */}
-          {isEditMode && subtasks.some(s => s.timeSpent) && (
+          {isEditMode && (totalReportedHours > 0 || (estimatedHours && estimatedHours !== "none")) && (
             <div className="p-2 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded text-xs text-blue-700 dark:text-blue-300">
-              <span>⏱️ Zaraportowany czas: {subtasks.reduce((sum, s) => sum + (s.timeSpent || 0), 0).toFixed(1)}h</span>
+              <span>⏱️ Zaraportowany czas: {totalReportedHours.toFixed(1)}h</span>
               {estimatedHours && estimatedHours !== "none" && (
                 <span className="ml-4">| Szacowany czas: {selectValueToHours(estimatedHours)}h</span>
               )}
@@ -741,13 +912,14 @@ export function TaskFormContent({
 
           {/* Title */}
           <div className="space-y-2">
-            <Input
+            <TextareaAutosize
               id="title"
               placeholder="Tytuł zadania"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              className="p-0 font-medium text-xl px-3 border-none cursor-pointer hover:text-primary focus:border-none"
+              minRows={1}
+              className="w-full resize-none p-0 px-3 font-medium text-xl border-none bg-transparent outline-none hover:text-primary focus:border-none focus:outline-none"
             />
           </div>
           <div className="space-y-2">
@@ -843,6 +1015,78 @@ export function TaskFormContent({
                 <p className="text-xs text-muted-foreground">
                   Kliknij na tag, aby go zaznaczyć lub odznaczyć
                 </p>
+              </div>
+            )}
+
+            {/* Time Reporting (edit mode) */}
+            {isEditMode && (
+              <div className="space-y-3 border rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">Raportowanie czasu</Label>
+                  <span className="text-xs text-muted-foreground">
+                    Razem: {totalReportedHours.toFixed(1)}h
+                  </span>
+                </div>
+
+                {/* Existing entries */}
+                {timeEntries.length > 0 && (
+                  <div className="space-y-1">
+                    {timeEntries.map((entry) => (
+                      <div key={entry.id} className="flex items-center gap-2 text-sm p-2 bg-muted/40 rounded-md">
+                        <span className="font-medium w-14 shrink-0">{entry.hours}h</span>
+                        <span className="flex-1 truncate text-muted-foreground">
+                          {entry.description || "Bez opisu"}
+                        </span>
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          {new Date(entry.date).toLocaleDateString("pl-PL")}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteTimeEntry(entry.id)}
+                          className="text-destructive hover:text-destructive/80 shrink-0"
+                          title="Usuń wpis"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add new entry */}
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    placeholder="Godz."
+                    value={newTimeHours}
+                    onChange={(e) => setNewTimeHours(e.target.value)}
+                    className="h-9 w-24 text-sm"
+                  />
+                  <Input
+                    placeholder="Opis (opcjonalnie)"
+                    value={newTimeDescription}
+                    onChange={(e) => setNewTimeDescription(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault()
+                        handleAddTimeEntry()
+                      }
+                    }}
+                    className="h-9 flex-1 text-sm"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAddTimeEntry}
+                    disabled={loggingTime}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Dodaj
+                  </Button>
+                </div>
               </div>
             )}
 

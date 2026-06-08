@@ -123,7 +123,7 @@ function SortableTaskCard({
       onDragEnter: () => setIsDragOverAbove(true),
       onDragLeave: () => setIsDragOverAbove(false),
       onDrop: () => setIsDragOverAbove(false),
-      getData: () => ({ type: "task", taskId: task.id, statusId: task.statusId }),
+      getData: () => ({ type: "task-position", insertBeforeTaskId: task.id, statusId: task.statusId }),
     })
   }, [task.id, task.statusId])
 
@@ -611,14 +611,15 @@ export function KanbanBoard({
         if (!target) return
         handleTaskDrop(
           source.data.taskId as string,
-          target.data.statusId as string
+          target.data.statusId as string,
+          target.data.insertBeforeTaskId as string | undefined
         )
       },
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const handleTaskDrop = async (taskId: string, newStatusId: string) => {
+  const handleTaskDrop = async (taskId: string, newStatusId: string, insertBeforeTaskId?: string) => {
     const currentTasks = displayTasksRef.current
 
     // Ignore drops that don't resolve to a real status column
@@ -627,19 +628,50 @@ export function KanbanBoard({
     const task = currentTasks.find(t => t.id === taskId)
     if (!task) return
 
-    // If the task is already in this status, do nothing
-    if (task.statusId === newStatusId) return
-
     const newStatus = taskStatusesRef.current.find(status => status.id === newStatusId)
     if (!newStatus) return
 
     // Mark task as updating
     setUpdatingTasks(prev => new Set(prev).add(taskId))
 
+    // Calculate new createdAt based on insertion position to maintain order
+    let newCreatedAt: string | undefined = undefined
+    if (insertBeforeTaskId && insertBeforeTaskId !== taskId) {
+      const tasksInNewStatus = currentTasks
+        .filter(t => t.statusId === newStatusId && t.id !== taskId)
+        .sort((a, b) => {
+          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0
+          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0
+          return aTime - bTime
+        })
+
+      const insertBeforeIndex = tasksInNewStatus.findIndex(t => t.id === insertBeforeTaskId)
+
+      if (insertBeforeIndex === 0) {
+        // Insert at the beginning - set createdAt to just before the first task
+        const firstTask = tasksInNewStatus[0]
+        if (firstTask?.createdAt) {
+          const firstTime = new Date(firstTask.createdAt).getTime()
+          newCreatedAt = new Date(firstTime - 60000).toISOString() // 1 minute before
+        }
+      } else if (insertBeforeIndex > 0) {
+        // Insert in the middle - set createdAt to between two tasks
+        const beforeTask = tasksInNewStatus[insertBeforeIndex - 1]
+        const afterTask = tasksInNewStatus[insertBeforeIndex]
+        if (beforeTask?.createdAt && afterTask?.createdAt) {
+          const beforeTime = new Date(beforeTask.createdAt).getTime()
+          const afterTime = new Date(afterTask.createdAt).getTime()
+          const middleTime = (beforeTime + afterTime) / 2
+          newCreatedAt = new Date(middleTime).toISOString()
+        }
+      }
+    }
+
     // Optimistic update
     const previousStatusId = task.statusId
+    const previousCreatedAt = task.createdAt
     setOptimisticTasks(prevTasks =>
-      prevTasks.map(t => t.id === taskId ? { ...t, statusId: newStatusId } : t)
+      prevTasks.map(t => t.id === taskId ? { ...t, statusId: newStatusId, ...(newCreatedAt && { createdAt: newCreatedAt }) } : t)
     )
 
     // Show immediate feedback
@@ -654,7 +686,10 @@ export function KanbanBoard({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ statusId: newStatusId }),
+        body: JSON.stringify({
+          statusId: newStatusId,
+          ...(newCreatedAt && { createdAt: newCreatedAt })
+        }),
       })
 
       if (response.ok) {
@@ -665,7 +700,7 @@ export function KanbanBoard({
       } else {
         // Rollback on error
         setOptimisticTasks(prevTasks =>
-          prevTasks.map(t => t.id === taskId ? { ...t, statusId: previousStatusId } : t)
+          prevTasks.map(t => t.id === taskId ? { ...t, statusId: previousStatusId, createdAt: previousCreatedAt } : t)
         )
         toast.error("Nie udało się zaktualizować statusu zadania", {
           id: `move-task-${taskId}`,
@@ -675,7 +710,7 @@ export function KanbanBoard({
       console.error("Error updating task status:", error)
       // Rollback on error
       setOptimisticTasks(prevTasks =>
-        prevTasks.map(t => t.id === taskId ? { ...t, statusId: previousStatusId } : t)
+        prevTasks.map(t => t.id === taskId ? { ...t, statusId: previousStatusId, createdAt: previousCreatedAt } : t)
       )
       toast.error("Wystąpił błąd podczas aktualizacji statusu", {
         id: `move-task-${taskId}`,
