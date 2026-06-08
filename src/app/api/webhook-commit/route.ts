@@ -145,8 +145,8 @@ async function generateTaskFromCommit(
     "use *bold* for emphasis and `code` for identifiers. Do NOT use standard " +
     "markdown like ** or # headings. " +
     "The workHours field is a realistic estimate, in hours (a number, may be " +
-    "fractional), of how long it would potentially take to code this task from " +
-    "scratch, accounting for analysis and testing. " +
+    "fractional), min is 0.5 of how long it would potentially take to code this task from " +
+    "scratch, accounting for analysis, implementation and testing and fixing. " +
     "Write the title, description and changes in Polish."
 
   const userPrompt =
