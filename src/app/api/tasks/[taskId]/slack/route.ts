@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { buildTaskShareUrl, getOrCreateTaskShareToken } from "@/lib/task-share"
 import type { Session } from "next-auth"
 
 // Send a task's "changes" (already formatted as Slack mrkdwn) to the project's
@@ -62,8 +63,13 @@ export async function POST(
       )
     }
 
-    // A short header above the changes so the Slack message has context.
-    const text = `*${task.title}*\n\n${task.changes}`
+    // Public, read-only link so recipients who aren't logged in can open the task.
+    const shareToken = await getOrCreateTaskShareToken(task.id)
+    const shareUrl = buildTaskShareUrl(shareToken)
+
+    // A short header above the changes so the Slack message has context, plus a
+    // link to the full read-only task view at the bottom.
+    const text = `*${task.title}*\n\n${task.changes}\n\n<${shareUrl}|🔗 Zobacz zadanie>`
 
     const res = await fetch("https://slack.com/api/chat.postMessage", {
       method: "POST",

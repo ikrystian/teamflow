@@ -71,6 +71,7 @@ model Project {
 model Task {
   id              String           @id @default(cuid())
   key             String?          @unique
+  shareToken      String?          @unique
   title           String
   description     String?
   changes         String?
