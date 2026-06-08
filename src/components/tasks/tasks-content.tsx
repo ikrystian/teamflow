@@ -14,6 +14,7 @@ import { Plus, CheckSquare, Calendar, User as UserIcon, Filter, Edit, Clock, Mor
 import { TimeTrackingSheet } from "./time-tracking-sheet"
 import { TaskDetailsSheet } from "./task-details-sheet"
 import { KanbanBoard } from "@/components/shared/kanban-board"
+import { TaskFormSheet } from "@/components/shared/task-form-sheet"
 import { TasksHourlyCalendar } from "./tasks-hourly-calendar"
 import { usePageHeader } from "@/contexts/header-context"
 import {
@@ -67,6 +68,7 @@ export function TasksContent() {
   const [deletingTask, setDeletingTask] = useState(false)
   const [activeTab, setActiveTab] = useState("board")
   const [isAdmin, setIsAdmin] = useState(false)
+  const [editSheetOpen, setEditSheetOpen] = useState(false)
 
 
 
@@ -195,9 +197,21 @@ export function TasksContent() {
     router.push("/dashboard/tasks/new")
   }
 
-  const handleEditTask = async (task: Task, e: React.MouseEvent) => {
-    e.stopPropagation();
-    router.push(`/dashboard/tasks/${task.key ?? task.id}/edit`)
+  const handleEditTask = (task: Task, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    // Fetch the latest task data so the form has the full record (assignee, project, etc.)
+    fetch(`/api/tasks/${task.id}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        setSelectedTask(data?.task ?? task)
+        setEditSheetOpen(true)
+      })
+      .catch(() => {
+        setSelectedTask(task)
+        setEditSheetOpen(true)
+      })
   }
 
   const handleTaskUpdate = async (taskId: string, updates: TaskUpdateData) => {
@@ -719,6 +733,17 @@ export function TasksContent() {
         onDelete={handleDeleteTask}
         onTaskUpdated={fetchTasks}
         canEdit={selectedTask ? canEditTask(selectedTask) : false}
+      />
+
+      <TaskFormSheet
+        open={editSheetOpen}
+        onOpenChange={setEditSheetOpen}
+        mode="edit"
+        task={selectedTask}
+        projects={projects}
+        onTaskUpdated={() => {
+          fetchTasks()
+        }}
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
