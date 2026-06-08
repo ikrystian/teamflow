@@ -151,7 +151,7 @@ model Subtask {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   taskId      String
-  task        Task     @relation(fields: [taskId], references: [id])
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
 }
 
 model TaskImage {
@@ -202,7 +202,7 @@ model TimeEntry {
   taskId      String
   userId      String
   user        User     @relation(fields: [userId], references: [id])
-  task        Task     @relation(fields: [taskId], references: [id])
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
 }
 
 model ProjectDocument {
