@@ -58,11 +58,11 @@ export function TaskDetailsDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-4xl max-h-[90vh] overflow-hidden"
+        className="xl:max-w-3xl max-h-[90vh] overflow-hidden"
         showCloseButton={false}
         disableAnimation
       >
-        <DialogHeader>
+        <DialogHeader className="hidden">
           <DialogTitle className="hidden">
             {isCreateMode ? "Utwórz zadanie" : task?.title}
           </DialogTitle>

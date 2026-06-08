@@ -78,12 +78,10 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   const [taskDetailsDialogOpen, setTaskDetailsDialogOpen] = useState(false)
   const [createTaskDialogOpen, setCreateTaskDialogOpen] = useState(false)
   const [timeTrackingDialogOpen, setTimeTrackingDialogOpen] = useState(false)
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [editSheetOpen, setEditSheetOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const { viewMode, updateViewMode, isLoaded: viewPreferencesLoaded } = useProjectViewPreferences(projectId)
   const [taskFilter, setTaskFilter] = useState<"all" | "mine" | string>("all")
-  const [deletingTask, setDeletingTask] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const router = useRouter()
   // const { projects } = useProjects()
@@ -236,24 +234,14 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     setTimeTrackingDialogOpen(true)
   }
 
-  const handleDeleteTask = (task: Task) => {
-    setSelectedTask(task)
-    setDeleteDialogOpen(true)
-  }
-
-  const confirmDeleteTask = async () => {
-    if (!selectedTask) return
-
-    setDeletingTask(true)
+  const handleDeleteTask = async (task: Task) => {
     try {
-      const response = await fetch(`/api/tasks/${selectedTask.id}`, {
+      const response = await fetch(`/api/tasks/${task.id}`, {
         method: "DELETE",
       })
 
       if (response.ok) {
         fetchProject() // Refresh the project data
-        setDeleteDialogOpen(false)
-        setSelectedTask(null)
       } else {
         const data = await response.json()
         alert(data.error || "Nie udało się usunąć zadania")
@@ -261,8 +249,6 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     } catch (error) {
       console.error("Error deleting task:", error)
       alert("Wystąpił błąd podczas usuwania zadania")
-    } finally {
-      setDeletingTask(false)
     }
   }
 
@@ -625,27 +611,6 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         task={selectedTask}
       />
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Usuń zadanie</AlertDialogTitle>
-            <AlertDialogDescription>
-              Czy na pewno chcesz usunąć zadanie &quot;{selectedTask?.title}&quot;?
-              Ta operacja jest nieodwracalna i usunie również wszystkie podzadania, komentarze i wpisy czasu.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Anuluj</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDeleteTask}
-              disabled={deletingTask}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {deletingTask ? "Usuwanie..." : "Usuń"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   )
 }

@@ -820,14 +820,14 @@ export function TaskFormContent({
   // selectable so the default assignment (the task creator) shows up.
   const assigneeOptions = session?.user?.id && !projectMembers.some(m => m.id === session.user.id)
     ? [
-        {
-          id: session.user.id,
-          name: session.user.name ?? null,
-          email: session.user.email ?? "",
-          avatarUrl: session.user.image ?? null,
-        },
-        ...projectMembers,
-      ]
+      {
+        id: session.user.id,
+        name: session.user.name ?? null,
+        email: session.user.email ?? "",
+        avatarUrl: session.user.image ?? null,
+      },
+      ...projectMembers,
+    ]
     : projectMembers
 
   return (
@@ -837,14 +837,13 @@ export function TaskFormContent({
         <div className="space-y-4">
           {/* Header Row with Status, Assignee, Priority, Project */}
           {isEditMode && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-0 bg-muted/30 rounded-lg">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 p-0 bg-muted/30 rounded-lg">
               {/* Status */}
               <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">Status</label>
                 <select
                   value={statusId}
                   onChange={(e) => setStatusId(e.target.value)}
-                  className="h-8 w-full px-2 py-1 border border-input bg-background rounded text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                  className="h-8 w-full px-2 py-1 border border-1  bg-background rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="">Status</option>
                   {taskStatuses.map((status) => (
@@ -857,11 +856,10 @@ export function TaskFormContent({
 
               {/* Assignee */}
               <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">Osoba</label>
                 <select
                   value={assigneeId}
                   onChange={(e) => setAssigneeId(e.target.value)}
-                  className="h-8 w-full px-2 py-1 border border-input bg-background rounded text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                  className="h-8 w-full px-2 py-1 border border-input bg-background rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="">Osoba</option>
                   {assigneeOptions.map((member) => (
@@ -875,11 +873,10 @@ export function TaskFormContent({
 
               {/* Priority */}
               <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">Priorytet</label>
                 <select
                   value={priority || "none"}
                   onChange={(e) => setPriority(e.target.value === "none" ? "" : e.target.value)}
-                  className="h-8 w-full px-2 py-1 border border-input bg-background rounded text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                  className="h-8 w-full px-2 py-1 border border-input bg-background rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="none">Priorytet</option>
                   {getPriorityOptions().map((option) => (
@@ -892,11 +889,10 @@ export function TaskFormContent({
 
               {/* Project */}
               <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">Projekt</label>
                 <select
                   value={selectedProjectId || "no-project"}
                   onChange={(e) => setSelectedProjectId(e.target.value === "no-project" ? "" : e.target.value)}
-                  className="h-8 w-full px-2 py-1 border border-input bg-background rounded text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                  className="h-8 w-full px-2 py-1 border border-input bg-background rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="no-project">Projekt</option>
                   {projectsList.map((project) => (
@@ -906,29 +902,35 @@ export function TaskFormContent({
                   ))}
                 </select>
               </div>
+              {isEditMode && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowTimeReporting((v) => !v)}
+                  className="gap-1.5"
+                  title="Zaraportowany / planowany czas"
+                >
+                  <Clock className="h-4 w-4" />
+                  <span className="font-medium">
+                    {Number.isInteger(totalReportedHours) ? totalReportedHours : totalReportedHours.toFixed(1)}
+                    /{Number.isInteger(plannedHours) ? plannedHours : plannedHours.toFixed(1)}h
+                  </span>
+                </Button>
+              )}
+
             </div>
           )}
+
+
 
           {/* Time summary button — reported / planned hours, toggles quick add */}
           {isEditMode && (
             <div className="space-y-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setShowTimeReporting((v) => !v)}
-                className="gap-1.5"
-                title="Zaraportowany / planowany czas"
-              >
-                <Clock className="h-4 w-4" />
-                <span className="font-medium">
-                  {Number.isInteger(totalReportedHours) ? totalReportedHours : totalReportedHours.toFixed(1)}
-                  /{Number.isInteger(plannedHours) ? plannedHours : plannedHours.toFixed(1)}h
-                </span>
-              </Button>
+
 
               {showTimeReporting && (
-                <div className="space-y-3 border rounded-lg p-3 bg-muted/20">
+                <div>
                   {/* Existing entries (task-level time) */}
                   {timeEntries.length > 0 && (
                     <div className="space-y-1">
@@ -1002,14 +1004,13 @@ export function TaskFormContent({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="description" className="text-sm font-medium">Opis</Label>
-            <div className="border rounded-md">
+            <div className="rounded-md">
               <RichTextEditor
                 content={description}
                 onChange={setDescription}
                 placeholder="Wprowadź szczegółowy opis zadania..."
                 showToolbarOnFocus={true}
-              />
+             />
             </div>
           </div>
 
@@ -1130,111 +1131,111 @@ export function TaskFormContent({
                 {isEditMode && (
                   <div className="space-y-3 border rounded-lg p-4 bg-background">
 
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-sm font-medium">Podzadania</Label>
-                    <span className="text-xs text-muted-foreground">
-                      {subtasks.filter(s => s.isCompleted).length}/{subtasks.length} ukończone
-                    </span>
-                  </div>
-                  {subtasks.length > 0 && subtasks.some(s => s.timeSpent) && (
-                    <div className="text-xs text-muted-foreground">
-                      Zaraportowany czas: {subtasks.reduce((sum, s) => sum + (s.timeSpent || 0), 0)}h
-                    </div>
-                  )}
-                </div>
-
-                {/* Existing subtasks */}
-                {subtasks.length > 0 && (
-                  <div className="space-y-2">
-                    {subtasks.map((subtask) => (
-                      <div key={subtask.id} className="flex items-center gap-2 p-2 bg-background border rounded-md">
-                        <input
-                          type="checkbox"
-                          checked={subtask.isCompleted}
-                          onChange={(e) => {
-                            setSubtasks(prev => prev.map(s =>
-                              s.id === subtask.id ? { ...s, isCompleted: e.target.checked } : s
-                            ))
-                          }}
-                          className="w-4 h-4 cursor-pointer"
-                        />
-                        <input
-                          type="text"
-                          value={subtask.title}
-                          onChange={(e) => {
-                            setSubtasks(prev => prev.map(s =>
-                              s.id === subtask.id ? { ...s, title: e.target.value } : s
-                            ))
-                          }}
-                          className="flex-1 px-2 py-1 text-sm border-0 bg-transparent focus:outline-none"
-                        />
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.5"
-                          value={subtask.timeSpent || ""}
-                          onChange={(e) => {
-                            setSubtasks(prev => prev.map(s =>
-                              s.id === subtask.id ? { ...s, timeSpent: e.target.value ? parseFloat(e.target.value) : 0 } : s
-                            ))
-                          }}
-                          className="w-16 px-2 py-1 text-sm border-0 bg-transparent focus:outline-none text-right"
-                          placeholder="h"
-                          title="Zaraportowany czas w godzinach"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSubtasks(prev => prev.filter(s => s.id !== subtask.id))
-                          }}
-                          className="text-xs text-destructive hover:text-destructive/80 px-2"
-                        >
-                          Usuń
-                        </button>
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-medium">Podzadania</Label>
+                        <span className="text-xs text-muted-foreground">
+                          {subtasks.filter(s => s.isCompleted).length}/{subtasks.length} ukończone
+                        </span>
                       </div>
-                    ))}
-                  </div>
-                )}
+                      {subtasks.length > 0 && subtasks.some(s => s.timeSpent) && (
+                        <div className="text-xs text-muted-foreground">
+                          Zaraportowany czas: {subtasks.reduce((sum, s) => sum + (s.timeSpent || 0), 0)}h
+                        </div>
+                      )}
+                    </div>
 
-                {/* Add new subtask */}
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Dodaj nowe podzadanie..."
-                    value={newSubtaskTitle}
-                    onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && newSubtaskTitle.trim()) {
-                        setSubtasks(prev => [...prev, {
-                          id: `temp-${Date.now()}`,
-                          title: newSubtaskTitle.trim(),
-                          isCompleted: false,
-                          isNew: true
-                        }])
-                        setNewSubtaskTitle("")
-                      }
-                    }}
-                    className="h-9 text-sm"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      if (newSubtaskTitle.trim()) {
-                        setSubtasks(prev => [...prev, {
-                          id: `temp-${Date.now()}`,
-                          title: newSubtaskTitle.trim(),
-                          isCompleted: false,
-                          isNew: true
-                        }])
-                        setNewSubtaskTitle("")
-                      }
-                    }}
-                  >
-                    Dodaj
-                  </Button>
-                </div>
+                    {/* Existing subtasks */}
+                    {subtasks.length > 0 && (
+                      <div className="space-y-2">
+                        {subtasks.map((subtask) => (
+                          <div key={subtask.id} className="flex items-center gap-2 p-2 bg-background border rounded-md">
+                            <input
+                              type="checkbox"
+                              checked={subtask.isCompleted}
+                              onChange={(e) => {
+                                setSubtasks(prev => prev.map(s =>
+                                  s.id === subtask.id ? { ...s, isCompleted: e.target.checked } : s
+                                ))
+                              }}
+                              className="w-4 h-4 cursor-pointer"
+                            />
+                            <input
+                              type="text"
+                              value={subtask.title}
+                              onChange={(e) => {
+                                setSubtasks(prev => prev.map(s =>
+                                  s.id === subtask.id ? { ...s, title: e.target.value } : s
+                                ))
+                              }}
+                              className="flex-1 px-2 py-1 text-sm border-0 bg-transparent focus:outline-none"
+                            />
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.5"
+                              value={subtask.timeSpent || ""}
+                              onChange={(e) => {
+                                setSubtasks(prev => prev.map(s =>
+                                  s.id === subtask.id ? { ...s, timeSpent: e.target.value ? parseFloat(e.target.value) : 0 } : s
+                                ))
+                              }}
+                              className="w-16 px-2 py-1 text-sm border-0 bg-transparent focus:outline-none text-right"
+                              placeholder="h"
+                              title="Zaraportowany czas w godzinach"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSubtasks(prev => prev.filter(s => s.id !== subtask.id))
+                              }}
+                              className="text-xs text-destructive hover:text-destructive/80 px-2"
+                            >
+                              Usuń
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Add new subtask */}
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Dodaj nowe podzadanie..."
+                        value={newSubtaskTitle}
+                        onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && newSubtaskTitle.trim()) {
+                            setSubtasks(prev => [...prev, {
+                              id: `temp-${Date.now()}`,
+                              title: newSubtaskTitle.trim(),
+                              isCompleted: false,
+                              isNew: true
+                            }])
+                            setNewSubtaskTitle("")
+                          }
+                        }}
+                        className="h-9 text-sm"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (newSubtaskTitle.trim()) {
+                            setSubtasks(prev => [...prev, {
+                              id: `temp-${Date.now()}`,
+                              title: newSubtaskTitle.trim(),
+                              isCompleted: false,
+                              isNew: true
+                            }])
+                            setNewSubtaskTitle("")
+                          }
+                        }}
+                      >
+                        Dodaj
+                      </Button>
+                    </div>
                   </div>
                 )}
 
@@ -1308,7 +1309,6 @@ export function TaskFormContent({
 
             {/* Time Planning Mode Selection */}
             <div className="space-y-3">
-              <Label className="text-sm font-medium">Sposób planowania czasu</Label>
               <div className="flex gap-2">
                 <Button
                   type="button"
@@ -1329,12 +1329,6 @@ export function TaskFormContent({
                   Zaplanowana praca
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground">
-                {timePlanningMode === "reporting"
-                  ? "Ustaw termin wykonania i szacowaną ilość godzin do przepracowania"
-                  : "Ustaw zakres dat z godzinami - szacowany czas zostanie obliczony automatycznie"
-                }
-              </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -99,6 +99,7 @@ function SortableTaskCard({
   const [isDragging, setIsDragging] = useState(false)
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false)
   const [isDragOverAbove, setIsDragOverAbove] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     const element = ref.current
@@ -155,8 +156,11 @@ function SortableTaskCard({
     setIsContextMenuOpen(true)
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     setIsContextMenuOpen(false)
+    setIsDeleting(true)
+    // Wait for animation to complete before actually deleting
+    await new Promise(resolve => setTimeout(resolve, 200))
     onDelete(task)
   }
 
@@ -168,108 +172,118 @@ function SortableTaskCard({
       <div
         ref={ref}
         style={style}
-        className="touch-none cursor-grab active:cursor-grabbing"
+        className={`touch-none cursor-grab active:cursor-grabbing transition-all duration-200 ${
+          isDeleting ? 'opacity-0 scale-95' : 'opacity-100 scale-100 animate-in fade-in'
+        }`}
       >
         <DropdownMenu open={isContextMenuOpen} onOpenChange={setIsContextMenuOpen}>
-        <Card
-          className={`relative mb-2 cursor-pointer hover:shadow-md transition-all border-l-4 ${isUpdating
-            ? 'border-l-yellow-500 bg-yellow-50/50'
-            : completed
-              ? 'bg-green-50/80 border-l-green-500'
-              : ''
-            }`}
-          style={{
-            borderLeftColor: isUpdating
-              ? undefined
+          <Card
+            className={`relative mb-2 cursor-pointer hover:shadow-md transition-all border-l-4 ${isUpdating
+              ? 'border-l-yellow-500 bg-yellow-50/50'
               : completed
-                ? '#10B981'
-                : (task.project?.color || '#3B82F6'),
-            paddingTop: 5,
-            paddingBottom: 0,
-          }}
-          onContextMenu={handleContextMenu}
-        >
-          {/* Hidden anchor so the context menu (opened via right-click) has a position reference */}
-          <DropdownMenuTrigger asChild>
-            <span className="sr-only" aria-hidden="true" tabIndex={-1} />
-          </DropdownMenuTrigger>
-          <CardContent
-            className="py-2 px-3 select-none pb-4 kanban-card cursor-pointer"
-            onClick={(event) => { onViewDetails(task); event.stopPropagation() }}
+                ? 'bg-green-50/80 border-l-green-500'
+                : ''
+              }`}
+            style={{
+              borderLeftColor: isUpdating
+                ? undefined
+                : completed
+                  ? '#10B981'
+                  : (task.project?.color || '#3B82F6'),
+              paddingTop: 5,
+              paddingBottom: 0,
+            }}
           >
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-2 flex-1 min-w-0">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1">
-                  <h4 className="font-medium text-sm leading-tight cursor-pointer hover:text-primary">
-                    {task.title}
-                  </h4>
-                </div>
-              </div>
-              {isUpdating && (
-                <Loader2 className="h-3 w-3 animate-spin text-yellow-600 flex-shrink-0" />
-              )}
-            </div>
+            <CardContent
+                    onContextMenu={handleContextMenu}
 
-          </div>
-
-          <div className="space-y-2">
-            {showProjectName && task?.project?.name && (
-              <div className="text-xs text-muted-foreground">
-                {task.project.name}
-              </div>
-            )}
-
-            <div className="flex items-center gap-2 mt-2 flex-wrap">
-              {task.priority && (
-                <Badge
-                  variant="outline"
-                  className={`text-xs ${getPriorityColor(task.priority)}`}
-                  title={getPriorityDisplayName(task.priority)}
-                >
-                  {getPriorityShortName(task.priority)}
-                </Badge>
-              )}
-
-              {task.dueDate && (
-                <div
-                  className={`flex items-center gap-1 text-xs ${isOverdue(task.dueDate) ? 'text-red-600' : 'text-muted-foreground'
-                    }`}
-                >
-                  <Calendar className="h-3 w-3" />
-                  {formatTaskDueDateWithRelative(task.dueDate)}
-                  {isOverdue(task.dueDate) && <AlertCircle className="h-3 w-3 text-red-600" />}
-                </div>
-              )}
-
-              {task.estimatedHours ? (
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Clock className="h-3 w-3" />
-                  {formatEstimatedHours(task.estimatedHours)}
-                </div>
-              ) : null}
-
-              {task.assignee && (
-
-                <ClickableAvatar
-                  userId={task.assignee.id}
-                  avatarUrl={task.assignee.avatarUrl}
-                  name={task.assignee.name}
+              className="py-2 px-3 pr-6  select-none pb-3 kanban-card cursor-pointer group relative"
+              onClick={(event) => { onViewDetails(task); event.stopPropagation() }}
+            >
+              {/* Menu button - visible on card hover */}
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  onClick={(e) => e.stopPropagation()}
                   size="sm"
-                  className="absolute left-1 bottom-1"
-                />
-              )}
-            </div>
-          </div>
-          </CardContent>
-          <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem onClick={handleDelete} className="text-red-600">
-              <Trash2 className="mr-2 h-4 w-4" />
-              Usuń
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </Card>
-      </DropdownMenu>
+                  className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 focus:outline-none bg:white transition-opacity duration-200"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <div className="flex items-start justify-between">
+                <div className="flex items-start gap-2 flex-1 min-w-0">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1">
+                      <h4 className="kanban-card-text font-medium text-sm leading-tight cursor-pointer transition-transform duration-200 ease-in-out group-hover:translate-x-3">
+                        {task.title}
+                      </h4>
+                    </div>
+                  </div>
+                  {isUpdating && (
+                    <Loader2 className="h-3 w-3 animate-spin text-yellow-600 flex-shrink-0" />
+                  )}
+                </div>
+
+              </div>
+
+              <div className="space-y-2">
+                {showProjectName && task?.project?.name && (
+                  <div className="text-xs text-muted-foreground">
+                    {task.project.name}
+                  </div>
+                )}
+
+                <div className="flex justify-between align-center w-full pt-3">
+                  <div className="flex gap-3 items-center">
+                    {task.priority && (
+                      <Badge
+                        variant="outline"
+                        className={`text-xs ${getPriorityColor(task.priority)}`}
+                        title={getPriorityDisplayName(task.priority)}
+                      >
+                        {getPriorityShortName(task.priority)}
+                      </Badge>
+                    )}
+
+                    {task.dueDate && (
+                      <div
+                        className={`flex items-center gap-1 text-xs ${isOverdue(task.dueDate) ? 'text-red-600' : 'text-muted-foreground'
+                          }`}
+                      >
+                        <Calendar className="h-3 w-3" />
+                        {formatTaskDueDateWithRelative(task.dueDate)}
+                        {isOverdue(task.dueDate) && <AlertCircle className="h-3 w-3 text-red-600" />}
+                      </div>
+                    )}
+                    {task.estimatedHours ? (
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        {formatEstimatedHours(task.estimatedHours)}
+                      </div>
+                    ) : null}
+                  </div>
+                  {task.assignee && (
+
+                    <ClickableAvatar
+                      userId={task.assignee.id}
+                      avatarUrl={task.assignee.avatarUrl}
+                      name={task.assignee.name}
+                      size="sm"
+                      className="relative -right-2 -bottom-1"
+                    />
+                  )}
+                </div>
+              </div>
+            </CardContent>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem onClick={handleDelete} className="text-red-600">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Usuń
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </Card>
+        </DropdownMenu>
       </div>
     </>
   )
