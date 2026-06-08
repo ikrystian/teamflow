@@ -250,9 +250,9 @@ export function ReportsContent() {
                 <YAxis />
                 <Tooltip
                   labelFormatter={(value) => new Date(value).toLocaleDateString('pl-PL')}
-                  formatter={(value: number) => [`${value}h`, 'Godziny']}
+                  formatter={(value: any) => `${value}h`}
                 />
-                <Bar dataKey="hours" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="hours" name="Godziny" fill="#3b82f6" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -328,7 +328,7 @@ export function ReportsContent() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="project" />
                 <YAxis />
-                <Tooltip formatter={(value: number) => `${value}h`} />
+                <Tooltip formatter={(value: any) => `${value}h`} />
                 <Legend />
                 <Bar dataKey="estimated" name="Szacowany" fill="#94a3b8" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="actual" name="Rzeczywisty" fill="#3b82f6" radius={[4, 4, 0, 0]} />
@@ -356,7 +356,7 @@ export function ReportsContent() {
                 <YAxis />
                 <Tooltip
                   labelFormatter={(value) => `Tydzień ${new Date(value).toLocaleDateString('pl-PL')}`}
-                  formatter={(value: number) => [`${value}h`, 'Godziny']}
+                  formatter={(value: any) => [`${value}h`, 'Godziny']}
                 />
                 <Line
                   type="monotone"

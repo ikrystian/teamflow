@@ -15,7 +15,7 @@ import {
   Redo,
   ImageIcon
 } from 'lucide-react'
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 
 interface RichTextEditorProps {
   content: string
@@ -48,6 +48,13 @@ export function RichTextEditor({
       onChange(editor.getHTML())
     },
   })
+
+  // Synchronize editor content with the content prop
+  useEffect(() => {
+    if (editor && content !== editor.getHTML()) {
+      editor.commands.setContent(content)
+    }
+  }, [content, editor])
 
   const addImage = useCallback(async () => {
     if (!onImageUpload) return
