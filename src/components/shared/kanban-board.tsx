@@ -8,7 +8,7 @@ import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar, Clock, MoreHorizontal, Plus, AlertCircle, Trash2, X, Check, Loader2 } from "lucide-react"
+import { Calendar, Clock, MoreHorizontal, Plus, AlertCircle, Trash2, X, Check, Loader2, Send } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -218,6 +218,11 @@ function SortableTaskCard({
                       <h4 className="kanban-card-text font-medium text-sm leading-tight cursor-pointer transition-transform duration-200 ease-in-out group-hover:translate-x-3">
                         {task.title}
                       </h4>
+                      {task.changesSentAt && (
+                        <div title="Wiadomość wysłana na Slack" className="inline-flex">
+                          <Send className="h-3 w-3 text-green-600 flex-shrink-0" />
+                        </div>
+                      )}
                     </div>
                   </div>
                   {isUpdating && (

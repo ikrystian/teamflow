@@ -143,6 +143,7 @@ export function TaskFormContent({
   const [slackScheduledSendAt, setSlackScheduledSendAt] = useState<Date | undefined>(
     task?.changesScheduledSendAt ? new Date(task.changesScheduledSendAt) : undefined
   )
+  const [serverTime, setServerTime] = useState<Date>(new Date())
 
 
   const fetchTaskStatuses = useCallback(async () => {
@@ -499,6 +500,17 @@ export function TaskFormContent({
       }
     }
   }, [])
+
+  // Update server time every second when Slack send is scheduled
+  useEffect(() => {
+    if (!slackScheduledSendAt || slackSentAt) return
+
+    const interval = setInterval(() => {
+      setServerTime(new Date())
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [slackScheduledSendAt, slackSentAt])
 
   // Log a new time entry directly on the task (edit mode).
   const handleAddTimeEntry = async () => {
@@ -1096,10 +1108,15 @@ export function TaskFormContent({
                       </p>
                     )}
                     {slackScheduledSendAt && !slackSentAt && (
-                      <p className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        Zaplanowano na {slackScheduledSendAt.toLocaleString("pl-PL")}
-                      </p>
+                      <div className="text-xs text-blue-600 dark:text-blue-400 space-y-1">
+                        <p className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          Zaplanowano na {slackScheduledSendAt.toLocaleString("pl-PL")}
+                        </p>
+                        <p className="text-blue-500 dark:text-blue-300 flex items-center gap-1">
+                          Obecny czas: {serverTime.toLocaleString("pl-PL")}
+                        </p>
+                      </div>
                     )}
                   </div>
                 </div>
