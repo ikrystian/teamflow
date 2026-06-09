@@ -8,11 +8,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RichTextEditor } from "@/components/ui/rich-text-editor"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
 import { DateTimePicker } from "@/components/ui/datetime-picker"
 import type { Task, TaskStatus, Project, Tag } from "@/types"
 import { ReminderSettings } from "@/components/tasks/reminder-settings"
@@ -148,7 +143,6 @@ export function TaskFormContent({
   const [slackScheduledSendAt, setSlackScheduledSendAt] = useState<Date | undefined>(
     task?.changesScheduledSendAt ? new Date(task.changesScheduledSendAt) : undefined
   )
-  const [showSlackScheduler, setShowSlackScheduler] = useState(false)
 
 
   const fetchTaskStatuses = useCallback(async () => {
@@ -693,7 +687,10 @@ export function TaskFormContent({
 
   // Send the AI-generated "changes" to the project's Slack channel.
   const handleSendToSlack = async (scheduledTime?: Date) => {
-    if (!task) return
+    if (!task || !changes.trim()) {
+      toast.error("Nie możesz wysłać pustych notatek")
+      return
+    }
     setSendingToSlack(true)
     try {
       const response = await fetch(`/api/tasks/${task.id}/slack`, {
@@ -714,7 +711,6 @@ export function TaskFormContent({
           setSlackSentAt(data.changesSentAt ?? new Date().toISOString())
           toast.success("Wysłano na Slacka")
         }
-        setShowSlackScheduler(false)
       } else {
         toast.error(data.error || "Nie udało się wysłać na Slacka")
       }
@@ -1031,7 +1027,7 @@ export function TaskFormContent({
                 onChange={setDescription}
                 placeholder="Wprowadź szczegółowy opis zadania..."
                 showToolbarOnFocus={true}
-             />
+              />
             </div>
           </div>
 
@@ -1045,99 +1041,16 @@ export function TaskFormContent({
                 onClick={() => setShowNotes(!showNotes)}
                 className="w-full justify-start"
               >
-                {showNotes ? "▼" : "▶"} Pokaż notatki ze zmian
+                {showNotes ? "▼" : "▶"} Notatki ze zmian
               </Button>
 
               {showNotes && (
-                <div className="space-y-2 p-3 border rounded-md bg-muted/20">
-                  <div className="flex items-center justify-between gap-2">
-                    <Label htmlFor="changes" className="text-sm font-medium">Notatki (do wysłania na Slack)</Label>
-                    <div className="flex items-center gap-2">
-                      {slackSentAt && (
-                        <span className="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-                          <Check className="h-3.5 w-3.5" />
-                          Wysłano {new Date(slackSentAt).toLocaleDateString("pl-PL")}
-                        </span>
-                      )}
-                      {slackScheduledSendAt && !slackSentAt && (
-                        <span className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400">
-                          <Clock className="h-3.5 w-3.5" />
-                          Zaplanowano na {slackScheduledSendAt.toLocaleString("pl-PL")}
-                        </span>
-                      )}
-                      {task?.changes && (
-                        <Popover open={showSlackScheduler} onOpenChange={setShowSlackScheduler}>
-                          <PopoverTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              disabled={sendingToSlack}
-                              title="Wyślij notatki na Slacka"
-                            >
-                              <Send className="h-4 w-4" />
-                              <span className="ml-1 text-xs">
-                                {sendingToSlack ? "Wysyłanie..." : slackSentAt ? "Wyślij ponownie" : "Wyślij"}
-                              </span>
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-80" align="end">
-                            <div className="space-y-2">
-                              <p className="text-sm font-medium">Wyślij na Slacka</p>
-                              <DateTimePicker
-                                value={slackScheduledSendAt}
-                                onChange={setSlackScheduledSendAt}
-                              />
-                              <div className="flex gap-2 justify-end">
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    setShowSlackScheduler(false)
-                                    setSlackScheduledSendAt(undefined)
-                                  }}
-                                >
-                                  Anuluj
-                                </Button>
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  onClick={() => {
-                                    if (slackScheduledSendAt) {
-                                      handleSendToSlack(slackScheduledSendAt)
-                                    }
-                                  }}
-                                >
-                                  Wyślij teraz
-                                </Button>
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="default"
-                                  onClick={() => {
-                                    if (slackScheduledSendAt) {
-                                      handleSendToSlack(slackScheduledSendAt)
-                                    } else {
-                                      handleSendToSlack()
-                                    }
-                                  }}
-                                >
-                                  {slackScheduledSendAt ? "Zaplanuj" : "Wyślij"}
-                                </Button>
-                              </div>
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-                      )}
-                    </div>
-                  </div>
+                <div className="space-y-3 p-3 border rounded-md bg-muted/20">
                   <TextareaAutosize
                     id="changes"
                     value={changes}
                     onChange={(e) => {
                       setChanges(e.target.value)
-                      // Editing the note invalidates the "sent" and "scheduled" status.
                       if (slackSentAt) setSlackSentAt(null)
                       if (slackScheduledSendAt) setSlackScheduledSendAt(undefined)
                     }}
@@ -1145,6 +1058,50 @@ export function TaskFormContent({
                     minRows={4}
                     className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 font-mono resize-none"
                   />
+
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium">Wyślij na Slack</Label>
+                    <div className="flex gap-2 items-end">
+                      <div className="flex-1">
+                        <DateTimePicker
+                          value={slackScheduledSendAt}
+                          onChange={setSlackScheduledSendAt}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSlackScheduledSendAt(undefined)
+                        }}
+                        disabled={!slackScheduledSendAt}
+                      >
+                        Wyczyść
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => handleSendToSlack(slackScheduledSendAt)}
+                        disabled={sendingToSlack || !changes.trim()}
+                      >
+                        <Send className="h-4 w-4 mr-1" />
+                        {sendingToSlack ? "Wysyłanie..." : "Wyślij"}
+                      </Button>
+                    </div>
+                    {slackSentAt && (
+                      <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                        <Check className="h-3 w-3" />
+                        Wysłano {new Date(slackSentAt).toLocaleDateString("pl-PL")}
+                      </p>
+                    )}
+                    {slackScheduledSendAt && !slackSentAt && (
+                      <p className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        Zaplanowano na {slackScheduledSendAt.toLocaleString("pl-PL")}
+                      </p>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
