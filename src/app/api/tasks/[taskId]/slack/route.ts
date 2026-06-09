@@ -5,8 +5,13 @@ import { prisma } from "@/lib/prisma"
 import { buildTaskShareUrl, getOrCreateTaskShareToken } from "@/lib/task-share"
 import type { Session } from "next-auth"
 
+interface SlackSendRequest {
+  scheduledFor?: string; // ISO date string for scheduled send, null to send immediately
+}
+
 // Send a task's "changes" (already formatted as Slack mrkdwn) to the project's
 // configured Slack channel via the Slack Web API (chat.postMessage).
+// Can be sent immediately or scheduled for later.
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ taskId: string }> }
@@ -19,6 +24,7 @@ export async function POST(
     }
 
     const { taskId } = await params
+    const body = (await request.json()) as SlackSendRequest
 
     const task = await prisma.task.findFirst({
       where: {
@@ -55,6 +61,21 @@ export async function POST(
       )
     }
 
+    // Schedule for later or send immediately
+    if (body.scheduledFor) {
+      const scheduledDate = new Date(body.scheduledFor)
+      await prisma.task.update({
+        where: { id: task.id },
+        data: { changesScheduledSendAt: scheduledDate },
+      })
+      return NextResponse.json({
+        success: true,
+        scheduled: true,
+        changesScheduledSendAt: scheduledDate,
+      })
+    }
+
+    // Send immediately
     const token = process.env.SLACK_BOT_TOKEN
     if (!token) {
       return NextResponse.json(
@@ -98,7 +119,7 @@ export async function POST(
     const sentAt = new Date()
     await prisma.task.update({
       where: { id: task.id },
-      data: { changesSentAt: sentAt },
+      data: { changesSentAt: sentAt, changesScheduledSendAt: null },
     })
 
     return NextResponse.json({ success: true, changesSentAt: sentAt })

@@ -69,38 +69,39 @@ model Project {
 }
 
 model Task {
-  id              String           @id @default(cuid())
-  key             String?          @unique
-  shareToken      String?          @unique
-  title           String
-  description     String?
-  changes         String?
-  changesSentAt   DateTime?
-  statusId        String?
-  priority        String?
-  dueDate         DateTime?
-  startTime       DateTime?
-  endTime         DateTime?
-  estimatedHours  Float?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  projectId       String?
-  assigneeId      String?
-  createdById     String?
-  reminderEnabled Boolean          @default(false)
-  reminderTime    DateTime?
-  reminderType    String?
-  reminderValue   Int?
-  comments        Comment[]
-  taskStatus      TaskStatus?      @relation(fields: [statusId], references: [id])
-  project         Project?         @relation(fields: [projectId], references: [id])
-  createdBy       User?            @relation("TaskCreator", fields: [createdById], references: [id])
-  assignee        User?            @relation(fields: [assigneeId], references: [id])
-  attachments     TaskAttachment[]
-  images          TaskImage[]
-  timeEntries     TimeEntry[]
-  todos           Todo[]
-  taskTags        TaskTag[]
+  id                      String           @id @default(cuid())
+  key                     String?          @unique
+  shareToken              String?          @unique
+  title                   String
+  description             String?
+  changes                 String?
+  changesSentAt           DateTime?
+  changesScheduledSendAt  DateTime?
+  statusId                String?
+  priority                String?
+  dueDate                 DateTime?
+  startTime               DateTime?
+  endTime                 DateTime?
+  estimatedHours          Float?
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+  projectId               String?
+  assigneeId              String?
+  createdById             String?
+  reminderEnabled         Boolean          @default(false)
+  reminderTime            DateTime?
+  reminderType            String?
+  reminderValue           Int?
+  comments                Comment[]
+  taskStatus              TaskStatus?      @relation(fields: [statusId], references: [id])
+  project                 Project?         @relation(fields: [projectId], references: [id])
+  createdBy               User?            @relation("TaskCreator", fields: [createdById], references: [id])
+  assignee                User?            @relation(fields: [assigneeId], references: [id])
+  attachments             TaskAttachment[]
+  images                  TaskImage[]
+  timeEntries             TimeEntry[]
+  todos                   Todo[]
+  taskTags                TaskTag[]
 }
 
 model Tag {

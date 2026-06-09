@@ -90,6 +90,7 @@ export interface Task {
   description?: string;
   changes?: string;
   changesSentAt?: string | null;
+  changesScheduledSendAt?: string | null;
   statusId?: string;
   priority?: string;
   dueDate?: string;
