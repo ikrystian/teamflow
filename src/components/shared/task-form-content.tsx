@@ -1046,16 +1046,71 @@ export function TaskFormContent({
           {/* Changes field - collapsible in edit mode with Slack sending option */}
           {isEditMode && (
             <div className="space-y-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setShowNotes(!showNotes)}
-                className="w-full justify-start"
-              >
-                {showNotes ? "▼" : "▶"} Notatki ze zmian
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowNotes(!showNotes)}
+                  className="flex-1 justify-start"
+                >
+                  {showNotes ? "▼" : "▶"} Notatki ze zmian
+                </Button>
+                <div className="space-y-2">
+                  <div className="flex gap-2 items-center">
+                    <div className="flex-1">
+                      <DateTimePicker
+                        value={slackScheduledSendAt}
+                        onChange={setSlackScheduledSendAt}
+                      />
+                      {slackScheduledSendAt && !slackSentAt && (
+                        <div className="text-xs text-blue-600 dark:text-blue-400 space-y-1">
+                          <p className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            Zaplanowano na {slackScheduledSendAt.toLocaleString("pl-PL")}
+                          </p>
 
+                        </div>
+                      )}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSlackScheduledSendAt(undefined)
+                      }}
+                      disabled={!slackScheduledSendAt}
+                    >
+                      Wyczyść
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => handleSendToSlack(slackScheduledSendAt)}
+                      disabled={sendingToSlack || !changes.trim()}
+                    >
+                      <Send className="h-4 w-4 mr-1" />
+                      {sendingToSlack ? "Wysyłanie..." : "Wyślij na Slack"}
+                    </Button>
+                  </div>
+                  {slackSentAt && (
+                    <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                      <Check className="h-3 w-3" />
+                      Wysłano {new Date(slackSentAt).toLocaleDateString("pl-PL")}
+                    </p>
+                  )}
+                  {slackScheduledSendAt && !slackSentAt && (
+                    <div className="text-xs text-blue-600 dark:text-blue-400 space-y-1">
+
+                      <p className="text-blue-500 dark:text-blue-300 flex items-center gap-1">
+                        Obecny czas: {serverTime.toLocaleString("pl-PL")}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+              </div>
               {showNotes && (
                 <div className="space-y-3 p-3 border rounded-md bg-muted/20">
                   <TextareaAutosize
@@ -1071,54 +1126,7 @@ export function TaskFormContent({
                     className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 font-mono resize-none"
                   />
 
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium">Wyślij na Slack</Label>
-                    <div className="flex gap-2 items-end">
-                      <div className="flex-1">
-                        <DateTimePicker
-                          value={slackScheduledSendAt}
-                          onChange={setSlackScheduledSendAt}
-                        />
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSlackScheduledSendAt(undefined)
-                        }}
-                        disabled={!slackScheduledSendAt}
-                      >
-                        Wyczyść
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={() => handleSendToSlack(slackScheduledSendAt)}
-                        disabled={sendingToSlack || !changes.trim()}
-                      >
-                        <Send className="h-4 w-4 mr-1" />
-                        {sendingToSlack ? "Wysyłanie..." : "Wyślij"}
-                      </Button>
-                    </div>
-                    {slackSentAt && (
-                      <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
-                        <Check className="h-3 w-3" />
-                        Wysłano {new Date(slackSentAt).toLocaleDateString("pl-PL")}
-                      </p>
-                    )}
-                    {slackScheduledSendAt && !slackSentAt && (
-                      <div className="text-xs text-blue-600 dark:text-blue-400 space-y-1">
-                        <p className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          Zaplanowano na {slackScheduledSendAt.toLocaleString("pl-PL")}
-                        </p>
-                        <p className="text-blue-500 dark:text-blue-300 flex items-center gap-1">
-                          Obecny czas: {serverTime.toLocaleString("pl-PL")}
-                        </p>
-                      </div>
-                    )}
-                  </div>
+
                 </div>
               )}
             </div>
