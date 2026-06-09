@@ -39,69 +39,69 @@ model User {
 }
 
 model Project {
-  id            String            @id @default(cuid())
-  name          String
-  description   String?
-  readme        String?
-  status        String            @default("In Progress")
-  imageUrl      String?
-  repositoryUrl String?
-  databaseUrl   String?
-  serverUrl     String?
-  apiUrl        String?
-  adminPanelUrl String?
-  stagingUrl    String?
-  productionUrl String?
-  credentials   String?
-  shareToken    String?           @unique
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-  createdById   String
-  color         String            @default("#3B82F6")
-  icon          String?
-  archived      Boolean           @default(false)
+  id             String            @id @default(cuid())
+  name           String
+  description    String?
+  readme         String?
+  status         String            @default("In Progress")
+  imageUrl       String?
+  repositoryUrl  String?
+  databaseUrl    String?
+  serverUrl      String?
+  apiUrl         String?
+  adminPanelUrl  String?
+  stagingUrl     String?
+  productionUrl  String?
+  credentials    String?
+  shareToken     String?           @unique
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  createdById    String
+  color          String            @default("#3B82F6")
+  icon           String?
+  archived       Boolean           @default(false)
   slackChannelId String?
-  chatRooms     ChatRoom[]
-  createdBy     User              @relation("ProjectCreator", fields: [createdById], references: [id])
-  documents     ProjectDocument[]
-  members       ProjectMember[]
-  tasks         Task[]
+  chatRooms      ChatRoom[]
+  createdBy      User              @relation("ProjectCreator", fields: [createdById], references: [id])
+  documents      ProjectDocument[]
+  members        ProjectMember[]
+  tasks          Task[]
 }
 
 model Task {
-  id                      String           @id @default(cuid())
-  key                     String?          @unique
-  shareToken              String?          @unique
-  title                   String
-  description             String?
-  changes                 String?
-  changesSentAt           DateTime?
-  changesScheduledSendAt  DateTime?
-  statusId                String?
-  priority                String?
-  dueDate                 DateTime?
-  startTime               DateTime?
-  endTime                 DateTime?
-  estimatedHours          Float?
-  createdAt               DateTime         @default(now())
-  updatedAt               DateTime         @updatedAt
-  projectId               String?
-  assigneeId              String?
-  createdById             String?
-  reminderEnabled         Boolean          @default(false)
-  reminderTime            DateTime?
-  reminderType            String?
-  reminderValue           Int?
-  comments                Comment[]
-  taskStatus              TaskStatus?      @relation(fields: [statusId], references: [id])
-  project                 Project?         @relation(fields: [projectId], references: [id])
-  createdBy               User?            @relation("TaskCreator", fields: [createdById], references: [id])
-  assignee                User?            @relation(fields: [assigneeId], references: [id])
-  attachments             TaskAttachment[]
-  images                  TaskImage[]
-  timeEntries             TimeEntry[]
-  todos                   Todo[]
-  taskTags                TaskTag[]
+  id                     String           @id @default(cuid())
+  title                  String
+  description            String?
+  statusId               String?
+  priority               String?
+  dueDate                DateTime?
+  startTime              DateTime?
+  endTime                DateTime?
+  estimatedHours         Float?
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+  projectId              String?
+  assigneeId             String?
+  createdById            String?
+  reminderEnabled        Boolean          @default(false)
+  reminderTime           DateTime?
+  reminderType           String?
+  reminderValue          Int?
+  changes                String?
+  key                    String?          @unique
+  changesSentAt          DateTime?
+  shareToken             String?          @unique
+  changesScheduledSendAt DateTime?
+  comments               Comment[]
+  taskStatus             TaskStatus?      @relation(fields: [statusId], references: [id])
+  project                Project?         @relation(fields: [projectId], references: [id])
+  createdBy              User?            @relation("TaskCreator", fields: [createdById], references: [id])
+  assignee               User?            @relation(fields: [assigneeId], references: [id])
+  attachments            TaskAttachment[]
+  images                 TaskImage[]
+  taskTags               TaskTag[]
+  timeEntries            TimeEntry[]
+  todos                  Todo[]
 }
 
 model Tag {
@@ -118,8 +118,8 @@ model TaskTag {
   taskId    String
   tagId     String
   createdAt DateTime @default(now())
-  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
   tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
   @@unique([tagId, taskId])
 }
@@ -193,8 +193,8 @@ model TimeEntry {
   updatedAt   DateTime @updatedAt
   taskId      String
   userId      String
-  user        User     @relation(fields: [userId], references: [id])
   task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id])
 }
 
 model ProjectDocument {
