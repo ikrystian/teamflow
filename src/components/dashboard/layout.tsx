@@ -122,8 +122,8 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
           </div>
         </header>
         <DashboardBreadcrumbs />
-        <main className={`flex-1 transition-all duration-300 `}>
-          <div className="min-w-0 w-full h-[calc(100vh-101px)] ">
+        <main className={`flex-1 transition-all duration-300 overflow-hidden`}>
+          <div className="min-w-0 w-full ">
             {children}
           </div>
         </main>

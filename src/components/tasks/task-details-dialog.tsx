@@ -58,7 +58,7 @@ export function TaskDetailsDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="xl:max-w-3xl max-h-[90vh] overflow-hidden"
+        className="xl:max-w-3xl overflow-hidden"
         showCloseButton={false}
         disableAnimation
       >
@@ -67,7 +67,7 @@ export function TaskDetailsDialog({
             {isCreateMode ? "Utwórz zadanie" : task?.title}
           </DialogTitle>
         </DialogHeader>
-        <div className="max-h-[80vh] overflow-y-auto pr-1">
+        <div className=" overflow-y-auto pr-1">
           <TaskFormContent
             task={task}
             mode={mode}

@@ -543,20 +543,15 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
           <div>
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-lg font-semibold">Tablica zadań</h2>
-                <p className="text-sm text-gray-500">Przeciągnij zadania między kolumnami, aby zaktualizować ich status</p>
+                <h2 className="text-lg font-semibold text-white">Tablica zadań</h2>
+                <p className="text-sm text-white">Przeciągnij zadania między kolumnami, aby zaktualizować ich status</p>
               </div>
               <div className="flex items-center space-x-2">
                 <QuickAddTaskCommand
                   projectId={projectId}
                   onTaskCreated={fetchProject}
                 />
-                <TaskBoardFilters
-                  currentUserId={session?.user?.id}
-                  selectedFilter={taskFilter}
-                  onFilterChange={handleFilterChange}
-                  taskCounts={getTaskCounts(project.tasks || [])}
-                />
+
               </div>
             </div>
             {getFilteredTasks(project.tasks || []).length === 0 ? (

@@ -503,7 +503,7 @@ function KanbanColumn({
   }, [status.id])
 
   return (
-    <div className="flex-shrink-0 w-80 max-h-[calc(100vh-200px)] overflow-y-scroll">
+    <div className="flex-shrink-0 w-80 overflow-y-scroll max-h-[calc(100vh-237px)]">
       <div
         className={`bg-muted/70 rounded-lg p-4 h-full transition-colors ${isOver ? 'bg-primary/10 ring-2 ring-primary/20' : ''
           }`}
@@ -822,7 +822,7 @@ export function KanbanBoard({
 
   return (
     <>
-      <div className="flex space-x-4 overflow-x-auto pb-4">
+      <div className="flex space-x-4 overflow-x-auto pb-0">
         {taskStatuses.length > 0 ? taskStatuses.map((status) => (
           <KanbanColumn
             key={status.id}
