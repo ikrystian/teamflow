@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/sheet"
 import { ProjectImageSelector } from "./project-image-selector"
 import { ProjectIconSelector } from "./project-icon-selector"
+import { ProjectClientSelect } from "./project-client-select"
 import { editProjectSchema, type EditProjectFormData } from "@/lib/project-validations"
 import { type Project } from "@/types" // Import from types
 
@@ -38,6 +39,7 @@ export function EditProjectSheet({
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [color, setColor] = useState("#3B82F6")
   const [icon, setIcon] = useState<string | null>(null)
+  const [clientId, setClientId] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [fieldErrors, setFieldErrors] = useState<Partial<EditProjectFormData>>({})
@@ -50,6 +52,7 @@ export function EditProjectSheet({
       setImageUrl(project.imageUrl || null)
       setColor(project.color || "#3B82F6")
       setIcon(project.icon || null)
+      setClientId(project.clientId ?? project.client?.id ?? null)
       setError("")
     }
   }, [project])
@@ -68,7 +71,8 @@ export function EditProjectSheet({
       description: description || undefined,
       imageUrl,
       color,
-      icon
+      icon,
+      clientId
     })
 
     if (!validation.success) {
@@ -159,6 +163,12 @@ export function EditProjectSheet({
               <p className="text-sm text-destructive">{fieldErrors.description}</p>
             )}
           </div>
+
+          <ProjectClientSelect
+            value={clientId}
+            onChange={setClientId}
+            disabled={loading}
+          />
 
           <div className="grid gap-2">
             <Label htmlFor="edit-color">Kolor projektu</Label>

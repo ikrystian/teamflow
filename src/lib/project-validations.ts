@@ -24,6 +24,10 @@ export const createProjectSchema = z.object({
   icon: z
     .string()
     .optional()
+    .nullable(),
+  clientId: z
+    .string()
+    .optional()
     .nullable()
 })
 
@@ -49,6 +53,10 @@ export const editProjectSchema = z.object({
     .optional()
     .nullable(),
   icon: z
+    .string()
+    .optional()
+    .nullable(),
+  clientId: z
     .string()
     .optional()
     .nullable()

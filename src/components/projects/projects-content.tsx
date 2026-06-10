@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
-import { Plus, FolderOpen, Calendar, Users, ImageIcon, Edit, MoreVertical, Archive, ArchiveX, Trash2 } from "lucide-react"
+import { Plus, FolderOpen, Calendar, Users, ImageIcon, Edit, MoreVertical, Archive, ArchiveX, Trash2, Contact } from "lucide-react"
 import { CreateProjectSheet } from "./create-project-sheet"
 import { EditProjectSheet } from "./edit-project-sheet"
 import { usePageHeader } from "@/contexts/header-context"
@@ -344,6 +344,13 @@ export function ProjectsContent() {
                         <Users className="h-4 w-4 mr-2" />
                         Projekt osobisty
                       </div>
+
+                      {project.client && (
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Contact className="h-4 w-4 mr-2" />
+                          <span className="truncate">{project.client.name}</span>
+                        </div>
+                      )}
 
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">

@@ -54,6 +54,12 @@ export async function GET(request: NextRequest) {
             avatarUrl: true
           }
         },
+        client: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
         members: {
           include: {
             user: {
@@ -110,7 +116,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { name, description, imageUrl, color, icon } = await request.json()
+    const { name, description, imageUrl, color, icon, clientId } = await request.json()
 
     if (!name) {
       return NextResponse.json(
@@ -128,6 +134,7 @@ export async function POST(request: NextRequest) {
         imageUrl,
         color: color || "#3B82F6",
         icon,
+        clientId: clientId || null,
         // Automatically add creator as project member
         members: {
           create: {
@@ -143,6 +150,12 @@ export async function POST(request: NextRequest) {
             id: true,
             name: true,
             email: true
+          }
+        },
+        client: {
+          select: {
+            id: true,
+            name: true
           }
         },
         members: {

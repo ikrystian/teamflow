@@ -74,6 +74,12 @@ export async function GET(
             avatarUrl: true
           }
         },
+        client: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
         members: {
           include: {
             user: {
@@ -188,7 +194,8 @@ export async function PATCH(
       stagingUrl,
       productionUrl,
       credentials,
-      slackChannelId
+      slackChannelId,
+      clientId
     } = await request.json()
 
     // Verify user has access to the project
@@ -243,10 +250,17 @@ export async function PATCH(
         ...(stagingUrl !== undefined && { stagingUrl }),
         ...(productionUrl !== undefined && { productionUrl }),
         ...(credentials !== undefined && { credentials }),
-        ...(slackChannelId !== undefined && { slackChannelId })
+        ...(slackChannelId !== undefined && { slackChannelId }),
+        ...(clientId !== undefined && { clientId: clientId || null })
       },
       include: {
 
+        client: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
         tasks: {
           select: {
             id: true,

@@ -42,11 +42,39 @@ export interface TaskStatus {
   isDefault: boolean;
 }
 
+export interface Client {
+  id: string;
+  name: string;
+  contactPerson?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  website?: string | null;
+  address?: string | null;
+  taxId?: string | null;
+  notes?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  createdById?: string;
+  createdBy?: {
+    id: string;
+    name: string | null;
+    email: string;
+    avatarUrl?: string | null;
+  };
+  projects?: { id: string; name: string; color?: string; archived?: boolean }[];
+  _count?: { projects: number };
+}
+
 export interface Project {
   id: string;
   name: string;
   description?: string;
   status?: string;
+  clientId?: string | null;
+  client?: {
+    id: string;
+    name: string;
+  } | null;
   color?: string;
   icon?: string;
   imageUrl?: string;

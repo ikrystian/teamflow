@@ -27,6 +27,7 @@ model User {
   sentMessages        Message[]            @relation("MessageSender")
   passwordResetTokens PasswordResetToken[]
   createdProjects     Project[]            @relation("ProjectCreator")
+  createdClients      Client[]             @relation("ClientCreator")
   uploadedDocuments   ProjectDocument[]
   projectMemberships  ProjectMember[]
   pushSubscriptions   PushSubscription[]
@@ -61,11 +62,30 @@ model Project {
   icon           String?
   archived       Boolean           @default(false)
   slackChannelId String?
+  clientId       String?
   chatRooms      ChatRoom[]
   createdBy      User              @relation("ProjectCreator", fields: [createdById], references: [id])
+  client         Client?           @relation(fields: [clientId], references: [id])
   documents      ProjectDocument[]
   members        ProjectMember[]
   tasks          Task[]
+}
+
+model Client {
+  id            String    @id @default(cuid())
+  name          String
+  contactPerson String?
+  email         String?
+  phone         String?
+  website       String?
+  address       String?
+  taxId         String?
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  createdById   String
+  createdBy     User      @relation("ClientCreator", fields: [createdById], references: [id])
+  projects      Project[]
 }
 
 model Task {

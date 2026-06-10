@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { ProjectImageSelector } from "./project-image-selector"
 import { ProjectIconSelector } from "./project-icon-selector"
+import { ProjectClientSelect } from "./project-client-select"
 import { createProjectSchema, type CreateProjectFormData } from "@/lib/project-validations"
 
 interface CreateProjectContentProps {
@@ -27,6 +28,7 @@ export function CreateProjectContent({
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [color, setColor] = useState("#3B82F6")
   const [icon, setIcon] = useState<string | null>(null)
+  const [clientId, setClientId] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [fieldErrors, setFieldErrors] = useState<Partial<CreateProjectFormData>>({})
@@ -43,7 +45,8 @@ export function CreateProjectContent({
       description: description || undefined,
       imageUrl,
       color,
-      icon: showIconSelector ? icon : null
+      icon: showIconSelector ? icon : null,
+      clientId
     })
 
     if (!validation.success) {
@@ -90,6 +93,7 @@ export function CreateProjectContent({
     setImageUrl(null)
     setColor("#3B82F6")
     setIcon(null)
+    setClientId(null)
     setError("")
     setFieldErrors({})
   }
@@ -157,6 +161,12 @@ export function CreateProjectContent({
             <p className="text-sm text-destructive">{fieldErrors.description}</p>
           )}
         </div>
+
+        <ProjectClientSelect
+          value={clientId}
+          onChange={setClientId}
+          disabled={loading}
+        />
 
         <div className="grid gap-2">
           <Label htmlFor="color">Kolor projektu</Label>
