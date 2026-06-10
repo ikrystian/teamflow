@@ -110,7 +110,7 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
   useEffect(() => {
     if (project) {
       // Parse credentials from JSON if exists
-      let parsedCredentials: Array<{id: string, name: string, content: string}> = []
+      let parsedCredentials: Array<{ id: string, name: string, content: string }> = []
       if (project.credentials) {
         try {
           const parsed = JSON.parse(project.credentials)
@@ -303,7 +303,7 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-8 pt-6">
+    <div className="space-y-6 p-4 md:p-8 pt-6" id="settings">
       {/* Header */}
 
       {/* Project Members */}

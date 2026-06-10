@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {  LoadingCard } from "@/components/ui/loading-skeleton"
+import { LoadingCard } from "@/components/ui/loading-skeleton"
 import {
   MapPin,
   Briefcase,
@@ -182,7 +182,7 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
 
   if (loading) {
     return (
-      <div className="space-y-6 p-4 md:p-8 pt-6">
+      <div className="space-y-6 p-4 md:p-8 pt-6" id="profile-content">
         <LoadingCard className="max-w-4xl" headerLines={3} contentLines={5} />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -233,258 +233,258 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
   ]
 
   return (
-    <div className="space-y-6 p-4 md:p-8 pt-6">
-            {/* Profile Header */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-start space-x-6">
-                  <Avatar className="h-24 w-24">
-                    <AvatarImage src={userProfile.avatarUrl || ""} />
-                    <AvatarFallback className="text-2xl">
-                      {userProfile.name?.charAt(0) || "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h2 className="text-2xl font-bold text-foreground">
-                          {userProfile.name}
-                        </h2>
-                        <p className="text-muted-foreground">{userProfile.email}</p>
-                      </div>
-                      {userProfile.stats.completionRate > 0 && (
-                        <Badge variant="secondary" className="flex items-center gap-1">
-                          <TrendingUp className="h-3 w-3" />
-                          {userProfile.stats.completionRate}% ukończonych
-                        </Badge>
-                      )}
-                    </div>
-
-                    <div className="mt-4 space-y-2">
-                      {userProfile.jobTitle && (
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Briefcase className="h-4 w-4 mr-2" />
-                          {userProfile.jobTitle}
-                          {userProfile.company && ` w ${userProfile.company}`}
-                        </div>
-                      )}
-                      {userProfile.location && (
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <MapPin className="h-4 w-4 mr-2" />
-                          {userProfile.location}
-                        </div>
-                      )}
-                      {userProfile.website && (
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Globe className="h-4 w-4 mr-2" />
-                          <a
-                            href={userProfile.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline"
-                          >
-                            {userProfile.website}
-                          </a>
-                        </div>
-                      )}
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Dołączył {formatDate(userProfile.createdAt)}
-                      </div>
-                    </div>
-
-                    {userProfile.bio && (
-                      <div className="mt-4">
-                        <p className="text-sm text-foreground">{userProfile.bio}</p>
-                      </div>
-                    )}
-                  </div>
+    <div className="space-y-6 p-4 md:p-8 pt-6" id="profile-content">
+      {/* Profile Header */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-start space-x-6">
+            <Avatar className="h-24 w-24">
+              <AvatarImage src={userProfile.avatarUrl || ""} />
+              <AvatarFallback className="text-2xl">
+                {userProfile.name?.charAt(0) || "U"}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground">
+                    {userProfile.name}
+                  </h2>
+                  <p className="text-muted-foreground">{userProfile.email}</p>
                 </div>
-              </CardContent>
-            </Card>
+                {userProfile.stats.completionRate > 0 && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3" />
+                    {userProfile.stats.completionRate}% ukończonych
+                  </Badge>
+                )}
+              </div>
 
-            {/* Statistics */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {statsConfig.map((stat) => (
-                <Card key={stat.name}>
-                  <CardContent className="p-6">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0">
-                        <stat.icon className={`h-6 w-6 ${stat.color}`} />
-                      </div>
-                      <div className="ml-4 w-0 flex-1">
-                        <dl>
-                          <dt className="text-sm font-medium text-muted-foreground truncate">
-                            {stat.name}
-                          </dt>
-                          <dd className="text-lg font-medium text-foreground">
-                            {stat.value}
-                          </dd>
-                        </dl>
-                      </div>
-                    </div>
-                    <div className="mt-4">
-                      <div className="text-sm text-muted-foreground">
-                        {stat.description}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+              <div className="mt-4 space-y-2">
+                {userProfile.jobTitle && (
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <Briefcase className="h-4 w-4 mr-2" />
+                    {userProfile.jobTitle}
+                    {userProfile.company && ` w ${userProfile.company}`}
+                  </div>
+                )}
+                {userProfile.location && (
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <MapPin className="h-4 w-4 mr-2" />
+                    {userProfile.location}
+                  </div>
+                )}
+                {userProfile.website && (
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <Globe className="h-4 w-4 mr-2" />
+                    <a
+                      href={userProfile.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      {userProfile.website}
+                    </a>
+                  </div>
+                )}
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Dołączył {formatDate(userProfile.createdAt)}
+                </div>
+              </div>
+
+              {userProfile.bio && (
+                <div className="mt-4">
+                  <p className="text-sm text-foreground">{userProfile.bio}</p>
+                </div>
+              )}
             </div>
+          </div>
+        </CardContent>
+      </Card>
 
-            {/* Activity Tabs */}
-            <Tabs defaultValue="tasks" className="space-y-4">
-              <TabsList>
-                <TabsTrigger value="tasks">Zadania</TabsTrigger>
-                <TabsTrigger value="activity">Aktywność</TabsTrigger>
-                <TabsTrigger value="time">Czas pracy</TabsTrigger>
-                {isOwnProfile && <TabsTrigger value="settings">Ustawienia</TabsTrigger>}
-              </TabsList>
+      {/* Statistics */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {statsConfig.map((stat) => (
+          <Card key={stat.name}>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <stat.icon className={`h-6 w-6 ${stat.color}`} />
+                </div>
+                <div className="ml-4 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-muted-foreground truncate">
+                      {stat.name}
+                    </dt>
+                    <dd className="text-lg font-medium text-foreground">
+                      {stat.value}
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+              <div className="mt-4">
+                <div className="text-sm text-muted-foreground">
+                  {stat.description}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
-              <TabsContent value="tasks" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Przypisane zadania</CardTitle>
-                    <CardDescription>
-                      Ostatnie zadania przypisane do użytkownika
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {userProfile.assignedTasks.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-4">
-                        Brak przypisanych zadań
-                      </p>
-                    ) : (
-                      <div className="space-y-3">
-                        {userProfile.assignedTasks.map((task) => (
-                          <div key={task.id} className="flex items-center justify-between p-3 border rounded-lg">
-                            <div className="flex-1">
-                              <h4 className="font-medium text-sm">{task.title}</h4>
-                              <div className="flex items-center gap-2 mt-1">
+      {/* Activity Tabs */}
+      <Tabs defaultValue="tasks" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="tasks">Zadania</TabsTrigger>
+          <TabsTrigger value="activity">Aktywność</TabsTrigger>
+          <TabsTrigger value="time">Czas pracy</TabsTrigger>
+          {isOwnProfile && <TabsTrigger value="settings">Ustawienia</TabsTrigger>}
+        </TabsList>
 
-                                {task.priority && (
-                                  <Badge variant="outline" className={getPriorityColor(task.priority)}>
-                                    {getPriorityDisplayName(task.priority)}
-                                  </Badge>
-                                )}
-                                <span className="text-xs text-muted-foreground">
-                                  {formatProjectDisplay(task.project)}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {task.dueDate ? formatDate(task.dueDate) : formatDate(task.createdAt)}
-                            </div>
-                          </div>
-                        ))}
+        <TabsContent value="tasks" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Przypisane zadania</CardTitle>
+              <CardDescription>
+                Ostatnie zadania przypisane do użytkownika
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {userProfile.assignedTasks.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Brak przypisanych zadań
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {userProfile.assignedTasks.map((task) => (
+                    <div key={task.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-sm">{task.title}</h4>
+                        <div className="flex items-center gap-2 mt-1">
+
+                          {task.priority && (
+                            <Badge variant="outline" className={getPriorityColor(task.priority)}>
+                              {getPriorityDisplayName(task.priority)}
+                            </Badge>
+                          )}
+                          <span className="text-xs text-muted-foreground">
+                            {formatProjectDisplay(task.project)}
+                          </span>
+                        </div>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="activity" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Ostatnie komentarze</CardTitle>
-                    <CardDescription>
-                      Najnowsze komentarze użytkownika
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {userProfile.comments.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-4">
-                        Brak komentarzy
-                      </p>
-                    ) : (
-                      <div className="space-y-3">
-                        {userProfile.comments.map((comment) => (
-                          <div key={comment.id} className="p-3 border rounded-lg">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <p className="text-sm">{comment.content}</p>
-                                <div className="flex items-center gap-2 mt-2">
-                                  <span className="text-xs text-muted-foreground">
-                                    {comment.task.project.name} • {comment.task.title}
-                                  </span>
-                                </div>
-                              </div>
-                              <span className="text-xs text-muted-foreground">
-                                {formatDateTime(comment.createdAt)}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
+                      <div className="text-xs text-muted-foreground">
+                        {task.dueDate ? formatDate(task.dueDate) : formatDate(task.createdAt)}
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-              <TabsContent value="time" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Wpisy czasu pracy</CardTitle>
-                    <CardDescription>
-                      Ostatnie wpisy czasu pracy użytkownika
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {userProfile.timeEntries.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-4">
-                        Brak wpisów czasu pracy
-                      </p>
-                    ) : (
-                      <div className="space-y-3">
-                        {userProfile.timeEntries.map((entry) => (
-                          <div key={entry.id} className="flex items-center justify-between p-3 border rounded-lg">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <Clock className="h-4 w-4 text-muted-foreground" />
-                                <span className="font-medium">{entry.hours}h</span>
-                                <span className="text-sm text-muted-foreground">
-                                  {entry.task.project.name} • {entry.task.title}
-                                </span>
-                              </div>
-                              {entry.description && (
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  {entry.description}
-                                </p>
-                              )}
-                            </div>
+        <TabsContent value="activity" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Ostatnie komentarze</CardTitle>
+              <CardDescription>
+                Najnowsze komentarze użytkownika
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {userProfile.comments.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Brak komentarzy
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {userProfile.comments.map((comment) => (
+                    <div key={comment.id} className="p-3 border rounded-lg">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <p className="text-sm">{comment.content}</p>
+                          <div className="flex items-center gap-2 mt-2">
                             <span className="text-xs text-muted-foreground">
-                              {formatDate(entry.date)}
+                              {comment.task.project.name} • {comment.task.title}
                             </span>
                           </div>
-                        ))}
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {formatDateTime(comment.createdAt)}
+                        </span>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {isOwnProfile && (
-                <TabsContent value="settings" className="space-y-4">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Settings className="h-5 w-5" />
-                        Ustawienia
-                      </CardTitle>
-                      <CardDescription>
-                        Zarządzaj ustawieniami swojego konta
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      <p className="text-sm text-muted-foreground">
-                        Brak dostępnych ustawień integracji.
-                      </p>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
+                    </div>
+                  ))}
+                </div>
               )}
-            </Tabs>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="time" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Wpisy czasu pracy</CardTitle>
+              <CardDescription>
+                Ostatnie wpisy czasu pracy użytkownika
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {userProfile.timeEntries.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Brak wpisów czasu pracy
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {userProfile.timeEntries.map((entry) => (
+                    <div key={entry.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium">{entry.hours}h</span>
+                          <span className="text-sm text-muted-foreground">
+                            {entry.task.project.name} • {entry.task.title}
+                          </span>
+                        </div>
+                        {entry.description && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {entry.description}
+                          </p>
+                        )}
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {formatDate(entry.date)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {isOwnProfile && (
+          <TabsContent value="settings" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="h-5 w-5" />
+                  Ustawienia
+                </CardTitle>
+                <CardDescription>
+                  Zarządzaj ustawieniami swojego konta
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <p className="text-sm text-muted-foreground">
+                  Brak dostępnych ustawień integracji.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
+      </Tabs>
     </div>
   )
 }

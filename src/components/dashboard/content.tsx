@@ -181,7 +181,7 @@ export function DashboardContent() {
   }).sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime()).slice(0, 10)
 
   return (
-    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6" id="dashboard-content">
       {/* User Report Summary */}
       <UserReportSummary />
 

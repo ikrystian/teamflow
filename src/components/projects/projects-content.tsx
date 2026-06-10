@@ -221,7 +221,7 @@ export function ProjectsContent() {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-8 pt-6">
+    <div className="space-y-6 p-4 md:p-8 pt-6" id="project-content">
 
 
       {getFilteredProjects().length === 0 ? (
@@ -230,11 +230,11 @@ export function ProjectsContent() {
             <FolderOpen className="h-12 w-12 text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
               {projectFilter === "archived" ? "Brak zarchiwizowanych projektów" :
-               projectFilter === "all" ? "Brak projektów" : "Brak aktywnych projektów"}
+                projectFilter === "all" ? "Brak projektów" : "Brak aktywnych projektów"}
             </h3>
             <p className="text-gray-500 text-center mb-4">
               {projectFilter === "archived" ? "Nie masz żadnych zarchiwizowanych projektów" :
-               "Utwórz swój pierwszy projekt, aby rozpocząć organizowanie zadań i współpracę"}
+                "Utwórz swój pierwszy projekt, aby rozpocząć organizowanie zadań i współpracę"}
             </p>
             {projectFilter !== "archived" && (
               <Button onClick={() => setCreateDialogOpen(true)}>
@@ -249,9 +249,8 @@ export function ProjectsContent() {
           {getFilteredProjects().map((project) => {
             const stats = getTaskStats(project.tasks)
             return (
-              <Card key={project.id} className={`hover:shadow-md transition-shadow overflow-hidden relative pt-0 ${
-                project.archived ? 'opacity-60 bg-muted/30' : ''
-              }`}>
+              <Card key={project.id} className={`hover:shadow-md transition-shadow overflow-hidden relative pt-0 ${project.archived ? 'opacity-60 bg-muted/30' : ''
+                }`}>
                 {/* Edit Button */}
                 <div className="absolute top-2 right-2 z-10">
                   <DropdownMenu>
