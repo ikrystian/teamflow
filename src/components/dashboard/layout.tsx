@@ -124,7 +124,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
         <DashboardBreadcrumbs />
         <main className={`flex-1 transition-all duration-300 `}>
           <div className="min-w-0 w-full h-[calc(100vh-101px)] ">
-              {children}
+            {children}
           </div>
         </main>
       </SidebarInset>

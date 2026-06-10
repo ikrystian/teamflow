@@ -386,17 +386,17 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
 
   return (
     <div
-      className="space-y-6 p-4 md:p-8 pt-6 relative min-h-screen"
+      className="space-y-6 p-4 md:p-8 pt-6 relative"
       id="tasks"
       style={{
         ...(project.imageUrl
           ? {
-              backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.55), rgba(0,0,0,0.7)), url(${project.imageUrl})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
-              backgroundAttachment: 'fixed',
-            }
+            backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.45)), url(${project.imageUrl})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            backgroundAttachment: 'fixed',
+          }
           : {}),
       }}
     >

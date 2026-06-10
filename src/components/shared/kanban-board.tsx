@@ -172,9 +172,8 @@ function SortableTaskCard({
       <div
         ref={ref}
         style={style}
-        className={`touch-none cursor-grab active:cursor-grabbing transition-all duration-200 ${
-          isDeleting ? 'opacity-0 scale-95' : 'opacity-100 scale-100 animate-in fade-in'
-        }`}
+        className={`touch-none cursor-grab active:cursor-grabbing transition-all duration-200 ${isDeleting ? 'opacity-0 scale-95' : 'opacity-100 scale-100 animate-in fade-in'
+          }`}
       >
         <DropdownMenu open={isContextMenuOpen} onOpenChange={setIsContextMenuOpen}>
           <Card
@@ -195,7 +194,7 @@ function SortableTaskCard({
             }}
           >
             <CardContent
-                    onContextMenu={handleContextMenu}
+              onContextMenu={handleContextMenu}
 
               className="py-2 px-3 pr-6  select-none pb-3 kanban-card cursor-pointer group relative"
               onClick={(event) => { onViewDetails(task); event.stopPropagation() }}
@@ -504,9 +503,9 @@ function KanbanColumn({
   }, [status.id])
 
   return (
-    <div className="flex-shrink-0 w-80">
+    <div className="flex-shrink-0 w-80 max-h-[calc(100vh-200px)] overflow-y-scroll">
       <div
-        className={`bg-muted/30 rounded-lg p-4 h-full transition-colors ${isOver ? 'bg-primary/10 ring-2 ring-primary/20' : ''
+        className={`bg-muted/70 rounded-lg p-4 h-full transition-colors ${isOver ? 'bg-primary/10 ring-2 ring-primary/20' : ''
           }`}
       >
         <div className="flex items-center justify-between mb-4">
