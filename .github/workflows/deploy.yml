@@ -49,6 +49,6 @@ jobs:
 
             bunx prisma migrate deploy
 
-            pm2 reload 10
+            pm2 reload 11
             echo "Deploy zakończony pomyślnie."
           EOF
