@@ -503,7 +503,7 @@ function KanbanColumn({
   }, [status.id])
 
   return (
-    <div className="flex-shrink-0 w-80 overflow-y-scroll max-h-[calc(100vh-237px)]">
+    <div className="flex-shrink-0 w-80 overflow-y-scroll h-[calc(100vh-237px)] max-h-[calc(100vh-237px)]">
       <div
         className={`bg-muted/70 rounded-lg p-4 h-full transition-colors ${isOver ? 'bg-primary/10 ring-2 ring-primary/20' : ''
           }`}
