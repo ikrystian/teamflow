@@ -579,7 +579,7 @@ function KanbanColumn({
             </div>
           )}
 
-          {tasks.map((task) => (
+          {visibleTasks.map((task) => (
             <SortableTaskCard
               key={task.id}
               task={task}
@@ -596,6 +596,14 @@ function KanbanColumn({
               enableMarkComplete={enableMarkComplete}
             />
           ))}
+
+          {/* Bottom sentinel: when it scrolls into view the next page is revealed */}
+          {hasMore && (
+            <div ref={sentinelRef} className="flex items-center justify-center py-2 text-xs text-muted-foreground">
+              <Loader2 className="h-3 w-3 animate-spin mr-2" />
+              Ładowanie zadań...
+            </div>
+          )}
 
           {/* Show add task button only in the default column */}
           {status.isDefault && (
