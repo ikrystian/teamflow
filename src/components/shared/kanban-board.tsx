@@ -672,9 +672,9 @@ function KanbanColumn({
   }, [hasMore, tasks.length, serverMode, onLoadMore, status.id])
 
   return (
-    <div ref={scrollContainerRef} className="flex-shrink-0 w-80 overflow-y-scroll h-[calc(100vh-237px)] max-h-[calc(100vh-237px)]">
+    <div ref={scrollContainerRef} className="flex-shrink-0 w-80">
       <div
-        className={`bg-muted/70 rounded-lg p-4 h-full transition-colors ${isOver ? 'bg-primary/10 ring-2 ring-primary/20' : ''
+        className={`bg-muted/70 rounded-lg p-4 h-full overflow-y-scroll h-[calc(100vh-237px)] max-h-[calc(100vh-237px)]" transition-colors ${isOver ? 'bg-primary/10 ring-2 ring-primary/20' : ''
           }`}
       >
         <div className="flex items-center justify-between mb-4">

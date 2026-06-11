@@ -953,7 +953,7 @@ export function TaskFormContent({
                 <select
                   value={statusId}
                   onChange={(e) => setStatusId(e.target.value)}
-                  className="h-8 w-full px-2 py-1 border border-1  bg-background rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  className="h-8 w-full px-2 py-1 appearance-none bg-background rounded text-sm focus:outline-none"
                 >
                   <option value="">Status</option>
                   {taskStatuses.map((status) => (
@@ -969,7 +969,7 @@ export function TaskFormContent({
                 <select
                   value={assigneeId}
                   onChange={(e) => setAssigneeId(e.target.value)}
-                  className="h-8 w-full px-2 py-1 border border-input bg-background rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  className="h-8 w-full px-2 py-1 appearance-none bg-background rounded text-sm focus:outline-none"
                 >
                   <option value="">Osoba</option>
                   {assigneeOptions.map((member) => (
@@ -986,7 +986,7 @@ export function TaskFormContent({
                 <select
                   value={priority || "none"}
                   onChange={(e) => setPriority(e.target.value === "none" ? "" : e.target.value)}
-                  className="h-8 w-full px-2 py-1 border border-input bg-background rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  className="h-8 w-full px-2 py-1 appearance-none bg-background rounded text-sm focus:outline-none"
                 >
                   <option value="none">Priorytet</option>
                   {getPriorityOptions().map((option) => (
@@ -1002,7 +1002,7 @@ export function TaskFormContent({
                 <select
                   value={selectedProjectId || "no-project"}
                   onChange={(e) => setSelectedProjectId(e.target.value === "no-project" ? "" : e.target.value)}
-                  className="h-8 w-full px-2 py-1 border border-input bg-background rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  className="h-8 w-full px-2 py-1 appearance-none bg-background rounded text-sm focus:outline-none"
                 >
                   <option value="no-project">Projekt</option>
                   {projectsList.map((project) => (
