@@ -1,455 +1,388 @@
-# 🔍 Analiza projektu Nexus (TeamFlow) — Alternatywa dla Asana/Trello
+# 🔍 Dokładna Analiza Systemu TeamFlow/Nexus
 
-**Data analizy:** 8 czerwca 2026
-**Wersja:** 0.1.0
-**Stack:** Next.js 16, React 19, Prisma 5, SQLite, Socket.IO, NextAuth
-
----
-
-## 📋 Spis treści
-
-1. [Podsumowanie projektu](#podsumowanie)
-2. [Krytyczne problemy do naprawy](#krytyczne-problemy)
-3. [Problemy w bazie danych](#baza-danych)
-4. [Problemy w API](#api)
-5. [Problemy w frontendzie](#frontend)
-6. [Problemy z bezpieczeństwem](#bezpieczenstwo)
-7. [Brakujące funkcje (vs Asana/Trello)](#brakujace-funkcje)
-8. [Problemy z architekturą i kodem](#architektura)
-9. [Rekomendacje priorytetowe](#rekomendacje)
+**Data analizy:** 2026-06-11  
+**Pliki źródłowe:** 184 plików TS/TSX  
+**Łączna ilość kodu:** ~34,312 linii  
+**Stack:** Next.js 16, React 19, Prisma 5.22 (SQLite), NextAuth v4, TailwindCSS v4, shadcn/ui
 
 ---
 
-## <a id="podsumowanie"></a>1. Podsumowanie projektu
+## 📊 1. Statystyki Projektu
 
-Nexus to aplikacja do zarządzania projektami zbudowana na Next.js z Prisma ORM i SQLite. Posiada:
-- ✅ Zarządzanie projektami i zadaniami
-- ✅ Tablicę Kanban z drag & drop
-- ✅ Śledzenie czasu (time tracking)
-- ✅ Komentarze do zadań
-- ✅ System tagów
-- ✅ Chat w czasie rzeczywistym (Socket.IO)
-- ✅ Powiadomienia push
-- ✅ Raporty i analityka
-- ✅ Webhook do commitów (AI-powered)
-- ✅ Integracja ze Slack
-- ✅ Zarządzanie użytkownikami (admin)
+| Metryka | Wartość |
+|---------|---------|
+| Modele Prisma | 16 |
+| API Routes | ~30+ endpointów |
+| Komponenty UI (shadcn) | 35 |
+| Komponenty aplikacji | ~45 |
+| Hooki niestandardowe | 3 |
+| Konteksty React | 2 |
+| Pliki lib/ | 16 |
+| GitHub Workflows | 2 |
+| Skrypty bash | 5 |
 
----
-
-## <a id="krytyczne-problemy"></a>2. 🚨 Krytyczne problemy do naprawy
-
-### 2.1. Hardcoded DONE_STATUS_ID
-**Plik:** `src/app/api/tasks/[taskId]/route.ts`, linia 11
-```typescript
-const DONE_STATUS_ID = "cmq52n2wu0004fyk33tyehmwj"
-```
-Hardcoded ID statusu "Done" — to się zepsuje na każdej innej instancji bazy danych. Powinno być dynamicznie wyszukiwane po nazwie statusu.
-
-### 2.2. Hardcoded email admina
-**Plik:** `src/lib/admin.ts`, linia 25
-```typescript
-if (session.user.email === 'krystian@bpcoders.pl') {
-  return true
-}
-```
-Email admina jest hardcoded. Powinien być pobierany z konfiguracji/zmiennych środowiskowych lub oparty wyłącznie na roli w bazie.
-
-### 2.3. SQLite jako baza produkcyjna
-SQLite nie nadaje się do aplikacji wieloużytkownikowej z real-time chat i współbieżnym dostępem. Brak wsparcia dla:
-- Współbieżnych zapisów (write locking)
-- Skalowania na wiele procesów
-- `mode: "insensitive"` w wyszukiwaniu (użyte w `admin/users/route.ts` — nie działa na SQLite!)
-
-### 2.4. Puste obiekty OR w zapytaniach Prisma
-**Pliki:** `src/app/api/projects/[projectId]/route.ts`, wiele miejsc
-```typescript
-OR: [
-  {
-    // pusty obiekt - matchuje WSZYSTKIE rekordy!
-  },
-  {
-    members: { some: { userId: session.user.id } }
-  },
-```
-Puste obiekty `{}` w tablicy `OR` oznaczają, że warunek zawsze jest spełniony — każdy użytkownik ma dostęp do wszystkich projektów!
-
-### 2.5. Bug w walidacji przypisania użytkownika
-**Plik:** `src/app/api/tasks/[taskId]/route.ts`, linie 286-298
-```typescript
-if (existingTask.project) {
-  return NextResponse.json(
-    { error: "Project exists but has no associated team..." },
-    { status: 400 }
-  )
-}
-```
-Jeśli zadanie ma projekt, **zawsze** zwraca błąd 400 przy próbie przypisania użytkownika. To sprawia, że nie można zmienić assignee na zadaniach w projektach!
-
-### 2.6. Brak kaskadowego usuwania w niektórych relacjach
-**Model Subtask** nie ma `onDelete: Cascade` — usunięcie taska spowoduje błąd klucza obcego. Podobnie z `TimeEntry`.
+### Największe pliki (kompleksowość):
+| Plik | Linie |
+|------|-------|
+| `task-form-content.tsx` | 1,679 |
+| `kanban-board.tsx` | 1,085 |
+| `project-details-content.tsx` | 884 |
+| `github-webhook-logs.tsx` | 835 |
+| `sidebar.tsx` | 750 |
+| `settings-content.tsx` | 737 |
+| `project-settings-content.tsx` | 721 |
+| `public/task/[token]/page.tsx` | 700 |
+| `merge-request/route.ts` | 623 |
 
 ---
 
-## <a id="baza-danych"></a>3. 🗄️ Problemy w bazie danych (Prisma Schema)
+## 🗑️ 2. Martwy Kod i Nieużywane Elementy
 
-### 3.1. Brakujące indeksy
-```
-- Task.projectId — brak indeksu (częste filtrowanie)
-- Task.assigneeId — brak indeksu
-- Task.createdById — brak indeksu
-- Task.statusId — brak indeksu
-- TimeEntry.taskId — brak indeksu
-- TimeEntry.userId — brak indeksu
-- TimeEntry.date — brak indeksu (używane w raportach)
-- Comment.taskId — brak indeksu
-- Comment.authorId — brak indeksu
-- ProjectDocument.projectId — brak indeksu
-```
-**Wpływ:** Wolne zapytania przy większej ilości danych.
+### 2.1 Nieużywane modele w Prisma Schema
 
-### 3.2. Redundancja Subtask vs Todo
-Istnieją dwa modele do tego samego celu:
-- **Subtask** — `title`, `isCompleted`
-- **Todo** — `title`, `isCompleted`, `timeSpent`
+| Model | Problem |
+|-------|---------|
+| **`ChatRoom`** | Zdefiniowany w schema, ale **nigdzie w `src/` nie jest używany** — żaden komponent ani API go nie referencjuje |
+| **`Message`** | j.w. — powiązany z ChatRoom, nieużywany |
+| **`UserChatRoom`** | j.w. — tabela pośrednia, nieużywana |
+| **`PushSubscription`** | Model istnieje w schemacie, ale **brak API route** `/api/push/subscribe` ani `/api/push/unsubscribe` ani `/api/push/vapid-key` — hook `usePushNotifications` wywołuje te endpointy, ale **nie istnieją** |
 
-Powinny być zmergowane w jeden model (Todo ma więcej funkcji).
+> **⚠️ UWAGA:** Modele ChatRoom/Message/UserChatRoom zajmują miejsce w bazie i schema, ale system czatu **nie został zaimplementowany**. Jeśli nie planujesz go wdrażać w najbliższym czasie, powinny zostać usunięte.
 
-### 3.3. Brak soft-delete na taskach
-Taski są usuwane bezpowrotnie (`DELETE`). Brak mechanizmu kosza/archiwum dla zadań (jest tylko dla projektów).
+### 2.2 Nieużywane pliki i katalogi
 
-### 3.4. Brak pola `updatedAt` na `TaskAttachment` i `TaskImage`
-Brak możliwości śledzenia kiedy załącznik/obraz został zaktualizowany.
+| Element | Ścieżka | Problem |
+|---------|---------|---------|
+| **`webhook-git/`** | `src/app/api/webhook-git/` | **Pusty katalog** — brak pliku `route.ts` |
+| **`sample.json`** | `/sample.json` | Plik testowy z hardcoded `projectId` i commitami — powinien być w `.gitignore` lub usunięty |
+| **`env.sample`** | `/env.sample` | Duplikat — istnieje już `.env.example` z bardziej kompletną listą zmiennych |
+| **`proxy.ts`** | `src/proxy.ts` | Plik middleware, ale Next.js szuka `middleware.ts` w katalogu głównym lub `src/` — **ten plik może nie być aktywny** jako middleware! |
 
-### 3.5. Status zadania jako osobny model globalny
-`TaskStatus` jest globalny (nie per-projekt). Asana/Trello pozwalają na różne workflowy per projekt/board. To ogranicza elastyczność.
+> **🚨 KRYTYCZNE:** `src/proxy.ts` jako middleware — Next.js wymaga, aby plik middleware nazywał się `middleware.ts` (nie `proxy.ts`). Plik prawdopodobnie **NIE jest aktywnie ładowany** przez Next.js. Oznacza to, że **ochrona tras dashboard nie działa** na poziomie middleware!
 
-### 3.6. Priorytet jako string bez walidacji
-`Task.priority` to `String?` bez enum/walidacji — można wpisać dowolną wartość.
+### 2.3 Nieużywane eksporty i typy
 
-### 3.7. Brak modelu ActivityLog / HistoriaZmian
-Nie ma żadnego logowania zmian na taskach (kto zmienił status, kto przypisał). Pole `changes` w Task to coś innego (webhook commit changes).
+| Element | Plik | Problem |
+|---------|------|---------|
+| `TaskUpdateData` | `types/index.ts` | Typ zdefiniowany, ale **nieużywany nigdzie** poza definicją |
+| `formatTaskDueDate` | `lib/date-utils.ts` | Funkcja lokalna (nie eksportowana), ale `formatEstimatedHours` ma zbędną logikę (ternary `hours % 1 === 0 ? hours.toString() : hours.toString()` — obie gałęzie robią to samo) |
+| `Subtask` vs `Todo` | `types/index.ts` | W `Task` interface istnieją **oba** pola `subtasks: Subtask[]` i `todos?: Subtask[]` — duplikacja typów |
 
-### 3.8. Brak relacji Task -> Task (zależności)
-Nie ma możliwości definiowania zależności między zadaniami (`blocks`, `blocked by`, `relates to`). Migracja `remove_blocking_and_system_changes` sugeruje, że to kiedyś istniało i zostało usunięte.
+### 2.4 Nieużywane/niedokończone funkcjonalności
 
----
-
-## <a id="api"></a>4. 🔌 Problemy w API
-
-### 4.1. Brak paginacji na liście zadań
-`GET /api/tasks` zwraca **WSZYSTKIE** zadania naraz z pełnymi `include` (komentarze, time entries, attachments). Przy 1000+ zadaniach to będzie bardzo wolne.
-
-### 4.2. Brak paginacji na liście projektów
-`GET /api/projects` zwraca wszystkie projekty ze wszystkimi taskami. N+1 problem i ogromne payloady.
-
-### 4.3. Brak rate limiting
-Żadne endpointy nie mają rate limitingu. Podatne na brute-force (login), DDoS, spam komentarzy.
-
-### 4.4. Brak walidacji inputu
-- Brak walidacji Zod (mimo że jest w dependencies!) na body requestów
-- `title` jest jedynym walidowanym polem przy tworzeniu tasku
-- Brak walidacji długości stringów
-- Brak sanityzacji HTML w opisach (XSS przez `dangerouslySetInnerHTML`)
-
-### 4.5. Webhook bez uwierzytelniania
-**Plik:** `src/app/api/webhook-commit/route.ts`
-Endpoint webhookowy nie weryfikuje podpisu/tokenu. Każdy może wysłać POST i tworzyć taski w dowolnym projekcie.
-
-### 4.6. Brak API do masowych operacji
-- Brak bulk update statusów
-- Brak bulk delete
-- Brak bulk assign
-
-### 4.7. Niespójne odpowiedzi API
-Niektóre endpointy zwracają `{ tasks }`, inne `{ task }`, inne `{ success: true }`. Brak standardowego formatu odpowiedzi/błędów.
-
-### 4.8. Console.log w produkcji
-**Plik:** `src/components/tasks/tasks-content.tsx`, linia 148
-```typescript
-console.log(data.tasks)
-```
-Debug logi pozostawione w kodzie.
-
-### 4.9. Brak API wersjonowania
-Endpointy nie mają wersji (`/api/v1/...`), co utrudni przyszłe breaking changes.
+| Funkcjonalność | Stan |
+|----------------|------|
+| **Push Notifications** | Hook `usePushNotifications` istnieje, `ServiceWorkerProvider` jest w layout, `sw.js` jest minimalny (passthrough), ale brak API routes: `/api/push/subscribe`, `/api/push/unsubscribe`, `/api/push/vapid-key` |
+| **Service Worker** | Rejestrowany globalnie w `layout.tsx`, ale **robi absolutnie nic** (passthrough fetch) |
+| **Chat/Messaging** | 3 modele w DB (ChatRoom, Message, UserChatRoom), ale **zero implementacji** w frontend i backend |
+| **Project README** | Pole `readme` w modelu `Project` — używane tylko w 2 miejscach (`project-info-content.tsx` i API), ale **brak edytora README** |
+| **Project Share Token** | Pole `shareToken` w modelu `Project` — istnieje logika generowania, ale prawdopodobnie niedokończona |
+| **Reminders** | Pola `reminderEnabled/Time/Type/Value` na Task — istnieje `reminder-settings.tsx`, ale **brak mechanizmu CRON** który faktycznie wysyła przypomnienia |
 
 ---
 
-## <a id="frontend"></a>5. 🖥️ Problemy w frontendzie
+## ⚠️ 3. Problemy z Kodem i Jakość
 
-### 5.1. Ustawienia powiadomień nie są persystowane
-**Plik:** `src/components/settings/settings-content.tsx`
-Ustawienia powiadomień, prywatności i wyglądu istnieją tylko jako lokalny state React — nie są zapisywane nigdzie (brak API, brak tabeli w bazie). Wiele switchów jest `disabled`.
+### 3.1 Zduplikowany kod
 
-### 5.2. Język/strefa czasowa nie działają
-Przyciski "Polski"/"English" i strefy czasowe są `disabled`. Mimo że `i18next` jest w dependencies, nie jest zintegrowany.
+| Duplikacja | Pliki | Problem |
+|-----------|-------|---------|
+| **`callOpenRouterJson()`** | `webhook-commit/route.ts` i `merge-request/route.ts` | **Identyczna funkcja** (~40 linii) zduplikowana w dwóch plikach |
+| **`fetchCommitContent()` / `fetchGithubDiff()`** | j.w. | Prawie identyczne funkcje do pobierania diffów z GitHub |
+| **Logika Done status** | `github-webhook/route.ts` vs `merge-request/route.ts` | Różne implementacje szukania statusu "Done" — github-webhook używa `OR` z hardcoded wariantami, merge-request używa tablicy `DONE_STATUS_NAMES` |
+| **`createProjectSchema` / `editProjectSchema`** | `project-validations.ts` | Oba schematy są **identyczne** — powinien być jeden bazowy schemat |
+| **`createClientSchema` / `editClientSchema`** | `client-validations.ts` | j.w. — obie definicje to `z.object(clientFields)` |
 
-### 5.3. Brak responsywności w ustawieniach
-`TabsList` z 10 tabami w jednym wierszu `grid-cols-10` nie zmieści się na mobilnych ekranach.
+> **💡 TIP:** Stwórz wspólny moduł `lib/openrouter.ts` z `callOpenRouterJson()` i `fetchGithubDiff()` aby wyeliminować duplikację.
 
-### 5.4. Duplikacja logiki isOverdue
-Funkcja `isOverdue` jest zduplikowana w wielu komponentach:
-- `kanban-board.tsx`
-- `tasks-content.tsx`
-- Powinna być w `lib/date-utils.ts`
+### 3.2 `@ts-ignore` i TypeScript safety
 
-### 5.5. Duplikacja formatowania czasu
-`formatHours` jest zduplikowane w wielu komponentach zamiast być w shared utility.
-
-### 5.6. Brak error boundaries
-Żaden komponent nie ma error boundary — crash jednego komponentu zabija całą stronę.
-
-### 5.7. Brak potwierdzeń w destrukcyjnych akcjach
-Niektóre akcje (np. usunięcie komentarza, usunięcie time entry) mogą nie mieć potwierdzenia.
-
-### 5.8. Brak stanu pustego/onboardingowego
-Dashboard nie ma sensownego onboardingu dla nowych użytkowników — po rejestracji widzi puste karty bez wskazówek co robić.
-
-### 5.9. Hack z pointer-events
-**Plik:** `src/components/tasks/tasks-content.tsx`, linie 92-100
-```typescript
-document.body.style.pointerEvents = ''
 ```
-Bezpośrednia manipulacja DOM body w React — wskazuje na nierozwiązany bug z dialogami.
-
-### 5.10. Fałszywe statystyki w mailu powitalnym
-**Plik:** `src/lib/email.ts`
-```html
-<div>10,000+ Aktywni użytkownicy</div>
-<div>50,000+ Ukończone projekty</div>
-<div>98% Zadowolenie</div>
+src/app/api/admin/users/[userId]/route.ts:
+  Linia 70:  // @ts-ignore - role field exists in database but Prisma types are not updated
+  Linia 180: // @ts-ignore - role field exists in database but Prisma types are not updated  
+  Linia 223: // @ts-ignore - role field exists in database but Prisma types are not updated
 ```
-Hardcoded fałszywe statystyki marketingowe w szablonie maila.
+
+> **ℹ️ WAŻNE:** 3 użycia `@ts-ignore` — pole `role` **jest** w schema Prisma, więc po `prisma generate` powinno być widoczne. Sugeruje to, że klient Prisma nie jest aktualny.
+
+### 3.3 ESLint disable'y
+
+- **13 wystąpień** `eslint-disable` w kodzie
+- Najczęstszy: `react-hooks/exhaustive-deps` (5x) — sugeruje problemy z zarządzaniem zależnościami w hookach
+- `@typescript-eslint/ban-ts-comment` (3x) — maskuje problemy TypeScript
+- `@typescript-eslint/no-unused-vars` (1x) — zmienne zadeklarowane, ale nieużywane
+
+### 3.4 Hardcoded wartości
+
+| Wartość | Plik | Problem |
+|---------|------|---------|
+| Email admina | `lib/admin.ts` | `krystian@bpcoders.pl` hardcoded jako fallback admin |
+| Pusher email map | `webhook-commit/route.ts` | `PUSHER_EMAIL_MAP = { ikrystian: "krystian@bpcoders.pl" }` — powinno być w konfiguracji |
+| OpenRouter model | `webhook-commit/route.ts`, `merge-request/route.ts` | `"deepseek/deepseek-v4-flash"` — powinien być w env |
+| `allowedDevOrigins` | `next.config.ts` | Jeden specyficzny dev origin hardcoded |
+
+### 3.5 Nazewnictwo niespójne
+
+| Problem | Przykład |
+|---------|---------|
+| **Nazwa projektu** | `package.json` → `"name": "Nexus"`, tytuł → `"Nexus - Project Management"`, folder → `teamflow`, dokumentacja → `TeamFlow` |
+| **Konwencja hooków** | `usePushNotifications.ts` (camelCase) vs `use-mobile.ts` (kebab-case) vs `use-project-view-preferences.ts` (kebab-case) |
+| **Komentarze** | Mieszanka polskiego i angielskiego — `// Pobierz ustawienia SMTP`, `// Check if user is admin` |
+| **Plik middleware** | Nazwany `proxy.ts` zamiast `middleware.ts` |
 
 ---
 
-## <a id="bezpieczenstwo"></a>6. 🔒 Problemy z bezpieczeństwem
+## 🔐 4. Bezpieczeństwo
 
-### 6.1. XSS przez dangerouslySetInnerHTML
-**Plik:** `src/components/tasks/tasks-content.tsx`, linia 649
-```tsx
-<div dangerouslySetInnerHTML={{ __html: task.description }} />
-```
-Opisy zadań renderowane są jako raw HTML bez sanityzacji. Atakujący może wstrzyknąć `<script>` w opisie.
+### 4.1 Krytyczne problemy
 
-### 6.2. Brak CSRF protection
-Middleware nie zawiera ochrony przed CSRF. Formularze POST mogą być sfałszowane z zewnętrznych stron.
+| Problem | Priorytet | Opis |
+|---------|----------|------|
+| **Middleware może nie działać** | 🔴 KRYTYCZNY | `src/proxy.ts` — Next.js wymaga `middleware.ts` w `src/` lub głównym katalogu. Plik `proxy.ts` prawdopodobnie **nie jest automatycznie ładowany**, co oznacza brak ochrony tras |
+| **Brak rate limiting** | 🔴 WYSOKI | Żaden endpoint API nie ma rate limitingu — podatność na brute force na login, abuse webhooków |
+| **`.env.example` zawiera secret** | 🟡 ŚREDNI | `NEXTAUTH_SECRET="LQKhD5l9kA1vCpKc593EdHqngsRFgV1yD6k/xoQfyVY="` — prawdziwy secret w pliku przykładowym |
+| **Brak CSRF protection** | 🟡 ŚREDNI | Webhook endpointy (`merge-request`, `webhook-commit`) nie mają walidacji CSRF ani tokenu — ktoś kto zna `projectId` może tworzyć/modyfikować taski |
+| **`webhook-commit` bez auth** | 🟡 ŚREDNI | Endpoint `/api/webhook-commit` nie wymaga żadnej autoryzacji — każdy może wysłać payload i stworzyć taski |
+| **SQLite w produkcji** | 🟡 ŚREDNI | SQLite nie nadaje się do aplikacji produkcyjnej z wieloma użytkownikami — brak concurrent writes |
+| **`localStorage.clear()` w logout** | 🟢 NISKI | Czyści CAŁY localStorage, nie tylko dane aplikacji — może usunąć dane innych aplikacji na tej samej domenie |
 
-### 6.3. Credentials w bazie jako plain text
-**Model Project:** `credentials String?` — dane logowania do projektów przechowywane jako czysty tekst. Powinny być szyfrowane.
+### 4.2 Brakujące zabezpieczenia
 
-### 6.4. Pliki uploadowane do public/
-Pliki są zapisywane bezpośrednio w katalogu `public/uploads/` — dostępne dla każdego bez autentykacji. Powinny być servowane przez API z kontrolą dostępu.
-
-### 6.5. Brak limitu rozmiaru plików
-API uploadów nie sprawdza rozmiaru plików — duże pliki mogą wypełnić dysk.
-
-### 6.6. JWT secret w env.sample jest placeholder
-```
-NEXTAUTH_SECRET="your-secret-key-here"
-```
-Jeśli ktoś nie zmieni tego — podpisywane tokeny będą podatne.
-
-### 6.7. Brak ochrony endpointów API
-Middleware pozwala na dostęp do wszystkich endpointów `/api/` które nie są w `/api/auth/`:
-```typescript
-// For dashboard routes, require authentication
-if (req.nextUrl.pathname.startsWith("/dashboard")) {
-  return !!token
-}
-// Allow public routes
-return true
-```
-AI: Endpointy jak `/api/tasks`, `/api/projects` itp. **nie są chronione** przez middleware. Polegają na wewnętrznym `getServerSession`, ale middleware powinno to odrzucać wcześniej.
-
-### 6.8. Socket.IO bez autentykacji
-**Plik:** `server.js`
-Socket.IO nie weryfikuje tokenów sesji — każdy może nasłuchiwać na wiadomości chat i live updates.
+- Brak **Content Security Policy** (CSP) headers
+- Brak **X-Frame-Options** / clickjacking protection
+- Brak walidacji **CORS** na API routes
+- Brak **input sanitization** na webhook payloadach (raw body parsowany bez walidacji schematu)
+- Brak **token expiration** na share tokenach (raz wygenerowany, ważny na zawsze)
 
 ---
 
-## <a id="brakujace-funkcje"></a>7. 📊 Brakujące funkcje (porównanie z Asana/Trello)
+## 🚀 5. Wydajność
 
-### Zarządzanie zadaniami
-| Funkcja | Asana | Trello | Nexus | Status |
-|---|---|---|---|---|
-| Podzadania (subtasks) | ✅ | ✅ (via checklists) | ⚠️ (redundantne Subtask+Todo) | Wymaga refaktoru |
-| Zależności między zadaniami | ✅ | ❌ | ❌ | **Brak** |
-| Recurring tasks (powtarzalne) | ✅ | ✅ | ❌ | **Brak** |
-| Custom fields | ✅ | ✅ (power-ups) | ❌ | **Brak** |
-| Task templates | ✅ | ✅ | ❌ | **Brak** |
-| Multiple assignees | ✅ | ✅ | ❌ (tylko 1) | **Brak** |
-| Task dependencies / blocking | ✅ | ❌ | ❌ (usunięte!) | **Brak** |
-| Due date ranges (start+end) | ✅ | ✅ | ⚠️ (jest startTime/endTime) | Częściowo |
-| Milestones | ✅ | ❌ | ❌ | **Brak** |
-| Approval workflows | ✅ | ❌ | ❌ | **Brak** |
+### 5.1 Problemy z wydajnością
 
-### Widoki i nawigacja
-| Funkcja | Asana | Trello | Nexus | Status |
-|---|---|---|---|---|
-| Board (Kanban) | ✅ | ✅ | ✅ | ✅ |
-| List view | ✅ | ❌ | ✅ | ✅ |
-| Calendar view | ✅ | ✅ | ✅ | ✅ |
-| Timeline / Gantt chart | ✅ | ❌ | ❌ | **Brak** |
-| Workload view | ✅ | ❌ | ❌ | **Brak** |
-| Dashboard/overview | ✅ | ❌ | ✅ | ✅ |
-| Portfolio view (multi-project) | ✅ | ❌ | ❌ | **Brak** |
-| Sortowanie/filtrowanie zaawansowane | ✅ | ✅ | ⚠️ (podstawowe) | Wymaga rozbudowy |
-| Wyszukiwanie globalne | ✅ | ✅ | ❌ | **Brak** |
-| Widok "Mój dzień" / Focus mode | ✅ | ❌ | ❌ | **Brak** |
+| Problem | Plik | Wpływ |
+|---------|------|-------|
+| **N+1 queries** | `tasks/route.ts` GET | Pobiera WSZYSTKIE taski z pełnymi relacjami (todos, comments, timeEntries, images, attachments, tags) — brak paginacji |
+| **Over-fetching** | `tasks/route.ts` GET | Ładuje kompletne dane tasków na liście, mimo że kanban potrzebuje tylko tytuł, status, priorytet |
+| **Brak cache'owania** | Wszystkie API | Żaden endpoint nie ustawia `Cache-Control` headers — każde odświeżenie strony = pełne zapytania do DB |
+| **Ciężkie komponenty** | `task-form-content.tsx` (1,679 linii) | Mega-komponent — powinien być rozbity na mniejsze |
+| **ProjectsContext fetchuje globalnie** | `projects-context.tsx` | Projekty pobierane na każdej stronie dashboardu, nawet gdy nie są potrzebne |
+| **OpenRouter sequential calls** | `merge-request/route.ts` | Diffy commitów pobierane sekwencyjnie w `buildMergeDiff`, model wywoływany wielokrotnie |
+| **`getSMTPSettings()` jest async bez potrzeby** | `lib/email.ts` | Czyta sync zmienne środowiskowe, ale oznaczona jako `async` — wywoływana 2x w `sendWelcomeEmail` (raz dla transportera, raz dla ustawień) |
 
-### Współpraca
-| Funkcja | Asana | Trello | Nexus | Status |
-|---|---|---|---|---|
-| Komentarze | ✅ | ✅ | ✅ | ✅ |
-| @mentions | ✅ | ✅ | ❌ | **Brak** |
-| Followers / watchers | ✅ | ✅ | ❌ | **Brak** |
-| Activity feed / historia zmian | ✅ | ✅ | ❌ | **Brak** |
-| Real-time updates na taskach | ✅ | ✅ | ❌ (tylko chat) | **Brak** |
-| Reactions na komentarzach | ❌ | ✅ | ❌ | **Brak** |
-| File attachments | ✅ | ✅ | ✅ | ✅ |
-| Proofing / review | ✅ | ❌ | ❌ | **Brak** |
+### 5.2 Brakujące optymalizacje Next.js
 
-### Automatyzacja i integracje
-| Funkcja | Asana | Trello | Nexus | Status |
-|---|---|---|---|---|
-| Automation rules | ✅ | ✅ (Butler) | ❌ | **Brak** |
-| Email integration | ✅ | ✅ | ⚠️ (tylko SMTP) | Podstawowe |
-| Slack integration | ✅ | ✅ | ⚠️ (jednokierunkowa) | Częściowo |
-| GitHub/Git integration | ✅ | ✅ | ⚠️ (webhook AI) | Częściowo |
-| API publiczne / Webhooks | ✅ | ✅ | ❌ | **Brak** |
-| Zapier / Make | ✅ | ✅ | ❌ | **Brak** |
-| Import/Export danych | ✅ | ✅ | ⚠️ (tylko raporty) | Częściowo |
-
-### Administracja
-| Funkcja | Asana | Trello | Nexus | Status |
-|---|---|---|---|---|
-| Role i uprawnienia | ✅ | ✅ | ⚠️ (admin/user) | Podstawowe |
-| Guest access | ✅ | ✅ | ❌ | **Brak** |
-| Audit log | ✅ | ✅ | ❌ | **Brak** |
-| SSO / OAuth providers | ✅ | ✅ | ❌ (tylko credentials) | **Brak** |
-| Two-factor auth (2FA) | ✅ | ✅ | ❌ | **Brak** |
-| Project templates | ✅ | ✅ | ❌ | **Brak** |
-| Data export (GDPR) | ✅ | ✅ | ❌ | **Brak** |
-| Backup / restore | ✅ | ✅ | ❌ | **Brak** |
+| Brak | Wpływ |
+|------|-------|
+| **`loading.tsx`** | Brak jakiegokolwiek pliku `loading.tsx` — użytkownik widzi białą stronę podczas ładowania |
+| **`error.tsx`** | Brak error boundaries — nieobsłużone błędy powodują biały ekran |
+| **`not-found.tsx`** | Brak custom 404 strony |
+| **`generateMetadata()`** | Brak dynamicznych meta tagów na podstronach (projekty, taski) |
+| **React Suspense** | Brak użycia Suspense boundaries dla ciężkich komponentów |
+| **`revalidatePath()`/`revalidateTag()`** | Brak ISR/revalidation — każde żądanie jest dynamiczne |
 
 ---
 
-## <a id="architektura"></a>8. 🏗️ Problemy z architekturą i kodem
+## 🏗️ 6. Architektura i Struktura
 
-### 8.1. Global state w server.js
-```javascript
-global.socketServer = io
-global.userSockets = userSockets
-global.onlineUsers = onlineUsers
-```
-Użycie `global` do przechowywania stanu Socket.IO nie skaluje się na wiele procesów/workerów.
+### 6.1 Problemy architektoniczne
 
-### 8.2. Brak testów
-Zero testów jednostkowych, integracyjnych ani E2E. Brak konfiguracji test runnera (Jest, Vitest, Playwright).
+| Problem | Opis |
+|---------|------|
+| **Brak warstwy serwisowej** | Logika biznesowa bezpośrednio w route handlerach (np. `merge-request/route.ts` ma 624 linie logiki) |
+| **Brak middleware auth** | `proxy.ts` nie jest prawidłowym middleware (zła nazwa pliku) |
+| **Monolityczne komponenty** | `task-form-content.tsx` (1,679 linii), `kanban-board.tsx` (1,085 linii) — trudne w utrzymaniu |
+| **Brak React Query/SWR** | Cały data fetching ręczny przez `fetch()` + `useState` — brak cache'owania, refetching, optimistic updates na poziomie biblioteki |
+| **Kontekst zamiast data fetching** | `ProjectsContext` zarządza stanem globalnym projektów — lepiej byłoby użyć React Query |
+| **Brak error handling pattern** | Każdy API endpoint powtarza ten sam try/catch z `console.error` — brak centralnego error handling |
+| **Mieszane odpowiedzialności** | `merge-request/route.ts` — obsługuje HTTP, parsuje payload, wywołuje AI, zarządza DB, loguje czas, tworzy subtaski — wszystko w jednym pliku |
 
-### 8.3. Mieszanie języków PL/EN
-Komentarze i komunikaty mieszają polski i angielski:
-- UI w całości po polsku
-- Komentarze w kodzie mieszane
-- Nazwy zmiennych po angielsku
-Brak spójnej strategii i18n.
+### 6.2 Konfiguracja Tailwind v3 vs v4
 
-### 8.4. Brak Docker / docker-compose
-Brak konfiguracji konteneryzacji co utrudnia deployment i development.
-
-### 8.5. Brak CI/CD
-Brak konfiguracji GitHub Actions, GitLab CI ani innego CI/CD pipeline.
-
-### 8.6. Brak seed data
-Brak pliku `prisma/seed.ts` z domyślnymi danymi (np. statusy zadań, admin user).
-
-### 8.7. Fat components
-Wiele komponentów ma 600+ linii (kanban-board, tasks-content, settings-content, project-details-content). Powinny być rozbite na mniejsze.
-
-### 8.8. Duplikacja include/select w Prisma
-Zapytania Prisma powtarzają te same `include` i `select` w wielu endpointach. Powinny być wyekstrahowane do współdzielonych obiektów.
-
-### 8.9. Brak loading states dla wielu operacji
-Wiele akcji nie pokazuje stanu ładowania (np. zmiana statusu w liście vs kanban).
-
-### 8.10. Brak proper error handling
-Większość catch bloków robi `console.error` + generyczny "Internal server error" bez szczegółów przydatnych dla debugowania.
-
-### 8.11. Brak TypeScript strict mode
-Liczne użycia `any` w callbackach auth:
-```typescript
-async jwt({ token, user }: { token: any; user: any })
-```
-
-### 8.12. Unused imports i zmienne
-```typescript
-const [, setUsers] = useState<User[]>([])
-const [, setTaskStatuses] = useState<TaskStatus[]>([])
-```
-State jest ustawiany, ale nigdy odczytywany (dashboard content).
+> **🚨 UWAGA:** Projekt ma **tailwind.config.js** (format v3) ale w devDependencies jest `"tailwindcss": "^4"` i `"@tailwindcss/postcss": "^4"`. TailwindCSS v4 używa `@theme` w CSS (co jest w `globals.css`), ale `tailwind.config.js` jest artefaktem z v3. Konfiguracja jest **zduplikowana** — kolory zdefiniowane i w config.js i w globals.css.
 
 ---
 
-## <a id="rekomendacje"></a>9. 🎯 Rekomendacje priorytetowe
+## 📦 7. Zależności
 
-### 🔴 Priorytet KRYTYCZNY (zrobić natychmiast)
-1. **Naprawić puste obiekty OR w zapytaniach Prisma** — każdy widzi wszystkie projekty
-2. **Naprawić bug z assigneem (linia 286-298)** — nie można przypisywać użytkowników do zadań w projektach
-3. **Usunąć hardcoded DONE_STATUS_ID** — dynamiczne wyszukiwanie statusu
-4. **Dodać sanityzację HTML** — zapobiec XSS przez `dangerouslySetInnerHTML`
-5. **Dodać uwierzytelnianie webhook** — token/signature verification
-6. **Zabezpieczyć Socket.IO** — autentykacja połączeń
+### 7.1 Potencjalnie nieużywane dependencies
 
-### 🟠 Priorytet WYSOKI (w następnych sprintach)
-7. Migracja z SQLite na PostgreSQL
-8. Dodać paginację na listach zadań i projektów
-9. Dodać walidację Zod na wszystkie endpointy
-10. Dodać indeksy do bazy danych
-11. Zmergować Subtask i Todo w jeden model
-12. Dodać Activity Log / historia zmian
-13. Dodać globalne wyszukiwanie
-14. Dodać @mentions w komentarzach
-15. Persystować ustawienia użytkownika (powiadomienia, prywatność)
+| Pakiet | Status |
+|--------|--------|
+| `@tiptap/extension-image` | Użyty w `rich-text-editor.tsx` |
+| `cmdk` | Użyty w `command.tsx` |
+| `react-day-picker` | Użyty w `calendar.tsx` |
+| `react-is` | Peer dependency Recharts — zainstalowany jako workaround |
 
-### 🟡 Priorytet ŚREDNI (budowanie wartości)
-16. Dodać Timeline/Gantt view
-17. Dodać zależności między zadaniami
-18. Dodać recurring tasks
-19. Dodać custom fields
-20. Dodać task templates i project templates
-21. Dodać multiple assignees
-22. Dodać SSO (Google, GitHub OAuth)
-23. Dodać 2FA
-24. Implementacja i18n (polski + angielski)
-25. Dodać testy (unit + E2E)
+### 7.2 Brakujące devDependencies
 
-### 🟢 Priorytet NISKI (nice to have)
-26. Dodać Gantt chart / Workload view
-27. Dodać Portfolio view
-28. Dodać publiczne API z dokumentacją
-29. Dodać Zapier/Make integrację
-30. Dodać audit log
-31. Docker + CI/CD
-32. Data export (GDPR compliance)
-33. Guest access / public boards
-34. Automation rules (Trello Butler-like)
+| Pakiet | Do czego |
+|--------|----------|
+| `prettier` | Formatowanie kodu — brak konfiguracji formatowania |
+| `husky` / `lint-staged` | Pre-commit hooks — brak automatycznego lintingu |
+| `@testing-library/*` | Testy — **brak jakichkolwiek testów** w projekcie |
+
+### 7.3 Wersjonowanie
+
+| Problem | Opis |
+|---------|------|
+| `prisma` w `dependencies` | `"prisma": "5.22.0"` powinno być w `devDependencies` — CLI narzędzie, nie runtime dependency |
+| `@prisma/client` | Wersja `5.22.0` jest mocno przestarzała (obecna to 6.x+) |
+| `next-auth` v4 | Używany z Next.js 16 — NextAuth v4 nie jest oficjalnie kompatybilny z React 19 / Next.js 16. Powinno być Auth.js v5 |
 
 ---
 
-## 📈 Ocena ogólna
+## 🗄️ 8. Problemy z Bazą Danych
 
-| Kategoria | Ocena | Komentarz |
-|---|---|---|
-| **Funkcjonalność** | 5/10 | Podstawy są, ale brakuje wielu kluczowych funkcji |
-| **Bezpieczeństwo** | 3/10 | Krytyczne luki (XSS, auth bypass, brak auth na webhookach) |
-| **Jakość kodu** | 5/10 | Spójny stack, ale dużo duplikacji i brak testów |
-| **Baza danych** | 4/10 | SQLite, brak indeksów, redundancja modeli |
-| **UX/UI** | 6/10 | Ładny UI z Radix/Tailwind, ale brak onboardingu i sporo disabled features |
-| **Skalowalność** | 3/10 | SQLite + global state + brak paginacji = problemy przy wzroście |
-| **DevOps** | 2/10 | Brak testów, CI/CD, Docker, monitoring |
+### 8.1 Schema issues
 
-**Ogólna gotowość do produkcji: 4/10**
+| Problem | Model/Pole | Opis |
+|---------|-----------|------|
+| **Brak indeksów** | Task: `projectId`, `assigneeId`, `statusId` | Foreign keys bez indeksów — wolne filtrowanie i joiny |
+| **Brak cascade na Task.projectId** | Task → Project | `onDelete` nie jest ustawione — usunięcie projektu nie usuwa tasków |
+| **Brak cascade na Task.assigneeId** | Task → User | j.w. — usunięcie użytkownika nie czyści przypisań |
+| **Brak soft delete** | Wszystkie modele | Usuwanie jest hard delete — brak możliwości odzyskania danych |
+| **`key` na Task opcjonalny** | `Task.key` | Unikalny ale nullable — pozwala na taski bez klucza |
+| **Brak `updatedAt` na `GithubWebhookLog`** | | Logi nie mają `updatedAt` |
+| **SQLite ograniczenia** | Cały system | Brak concurrent writes, brak full-text search, brak JSON queries, limit na rozmiar DB |
+| **`dev.db` w repozytorium** | `prisma/dev.db` | Baza danych znajduje się w katalogu repozytorium — nie powinna być commitowana |
 
-Projekt ma solidny fundament (Next.js, Prisma, Socket.IO, Radix UI) i wiele dobrych pomysłów (webhook AI, kanban, time tracking), ale wymaga znacznej pracy nad bezpieczeństwem, skalowalnością i dokończeniem wielu rozpoczętych funkcji zanim będzie stanowił realną alternatywę dla Asana/Trello.
+### 8.2 Relacje bez zastosowania
+
+| Relacja | Model | Status |
+|---------|-------|--------|
+| `createdChatRooms` | User → ChatRoom | Nigdzie nie używana |
+| `sentMessages` | User → Message | Nigdzie nie używana |
+| `chatRooms` | User → UserChatRoom | Nigdzie nie używana |
+| `pushSubscriptions` | User → PushSubscription | Tylko w hooku bez backend API |
+
+---
+
+## 🧪 9. Brakujące Testy
+
+> **⚠️ UWAGA:** **W projekcie nie ma żadnych testów** — ani unit, ani integration, ani e2e.
+
+Rekomendowane minimum:
+- Unit testy dla `lib/` utilities (`task-key.ts`, `github.ts`, `date-utils.ts`, `task-format-utils.ts`)
+- Integration testy dla kluczowych API routes (`tasks/route.ts`, `merge-request/route.ts`)
+- E2E testy dla krytycznych flows (login, tworzenie tasków, kanban drag & drop)
+
+---
+
+## 🛠️ 10. Rzeczy Do Poprawienia (Priorytetyzowane)
+
+### 🔴 Priorytet KRYTYCZNY
+
+1. **Naprawić middleware** — zmienić nazwę `src/proxy.ts` → `src/middleware.ts` lub zweryfikować, że jest poprawnie ładowany
+2. **Dodać rate limiting** — przynajmniej na `/api/auth/*` i webhook endpoints
+3. **Usunąć secret z `.env.example`** — zamienić na placeholder
+4. **Zabezpieczyć `/api/webhook-commit`** — dodać token/secret validation
+
+### 🟡 Priorytet WYSOKI
+
+5. **Wyodrębnić `callOpenRouterJson`** do `lib/openrouter.ts`
+6. **Dodać `loading.tsx`, `error.tsx`, `not-found.tsx`** do route grup
+7. **Dodać paginację** do `GET /api/tasks`
+8. **Usunąć modele ChatRoom/Message/UserChatRoom** z schema (lub je zaimplementować)
+9. **Naprawić `@ts-ignore`** — uruchomić `prisma generate` i naprawić typy
+10. **Przenieść `prisma` do `devDependencies`**
+
+### 🟢 Priorytet NORMALNY
+
+11. **Rozbić `task-form-content.tsx`** na mniejsze komponenty (tabs, sekcje)
+12. **Zunifikować konwencję nazewnictwa** plików (kebab-case)
+13. **Dodać React Query** / TanStack Query zamiast ręcznego fetch
+14. **Wyczyścić `tailwind.config.js`** — zostawić konfigurację w `globals.css` (v4)
+15. **Usunąć `env.sample`** (duplikat `.env.example`)
+16. **Usunąć pusty `src/app/api/webhook-git/`**
+17. **Usunąć `sample.json`** lub przenieść do `scripts/examples/`
+18. **Dodać indeksy DB** na foreign keys
+19. **Zunifikować język komentarzy** — albo PL albo EN
+20. **Dodać `onDelete: Cascade`** na relacji Task → Project
+
+---
+
+## ✨ 11. Rekomendowane Nowe Funkcjonalności
+
+### 11.1 Szybkie Wygrane (Low Effort, High Impact)
+
+| Funkcjonalność | Opis |
+|----------------|------|
+| **Global search** (`⌘K`) | Szukanie tasków, projektów, użytkowników z jednego miejsca |
+| **Activity log/Feed** | Timeline aktywności na projekcie (kto co zmienił) |
+| **Notification center** | Centrum powiadomień (in-app) — nowe komentarze, przypisania, zmiany statusu |
+| **Task templates** | Szablony tasków dla powtarzalnych zadań |
+| **Bulk actions** | Zaznaczanie wielu tasków i masowe operacje (zmiana statusu, przypisanie) |
+| **Quick filters** | Preset filtrów na kanban (moje taski, overdue, dziś) |
+| **Keyboard shortcuts** | Nawigacja klawiaturowa po kanban |
+
+### 11.2 Średni Nakład Pracy
+
+| Funkcjonalność | Opis |
+|----------------|------|
+| **Dashboard z metrykami** | Wykresy: velocity, burn-down, lead time, task distribution |
+| **Eksport raportów** | PDF/CSV export raportów i time entries |
+| **File preview** | Podgląd załączników (obrazy, PDF) bezpośrednio w tassku |
+| **Task dependencies** | Relacje blocked/blocking między taskami |
+| **Sprint/Milestone** | Grupowanie tasków w sprinty/kamienie milowe |
+| **Email notifications** | Powiadomienia mailowe o zmianach w przypisanych taskach |
+| **Audit log** | Kto co zmienił, kiedy — pełna historia zmian |
+| **User preferences** | Język interfejsu, timezone, notification preferences |
+
+### 11.3 Wyższy Nakład Pracy
+
+| Funkcjonalność | Opis |
+|----------------|------|
+| **Real-time updates** | WebSocket/SSE dla live updates na kanban |
+| **API keys management** | Panel do zarządzania kluczami API |
+| **Role-based access control** | Granularne uprawnienia (viewer, editor, admin per project) |
+| **Import/Export** | Import tasków z Jira, Trello, GitHub Issues |
+| **Mobile PWA** | Pełna obsługa mobilna z offline mode |
+| **Multi-tenant** | Wsparcie dla wielu organizacji/workspace'ów |
+| **Migracja do PostgreSQL** | Wsparcie dla produkcyjnej bazy danych |
+
+---
+
+## 🔧 12. Szczegółowa Checklista Porządkowa
+
+```
+Pliki do usunięcia/przeniesienia:
+  ❌ src/app/api/webhook-git/     (pusty katalog)
+  ❌ sample.json                   (plik testowy)
+  ❌ env.sample                    (duplikat .env.example)
+  
+Pliki do zmiany nazwy:
+  📝 src/proxy.ts → src/middleware.ts
+  📝 usePushNotifications.ts → use-push-notifications.ts
+
+Kod do wyodrębnienia:
+  📦 callOpenRouterJson → lib/openrouter.ts
+  📦 fetchGithubDiff → lib/openrouter.ts
+  📦 Done status finding → lib/task-status.ts
+  📦 Task form sections → components/tasks/form/*.tsx
+
+Pliki do wyczyszczenia:
+  🧹 .env.example — usunąć hardcoded secret
+  🧹 tailwind.config.js — rozważyć usunięcie (v4 używa @theme)
+  🧹 types/index.ts — usunąć TaskUpdateData, zunifikować subtasks/todos
+  🧹 lib/date-utils.ts — wyeksportować formatTaskDueDate
+  🧹 lib/task-format-utils.ts — naprawić formatEstimatedHours ternary
+
+Modele DB do usunięcia (jeśli nie planowane):
+  ❌ ChatRoom
+  ❌ Message  
+  ❌ UserChatRoom
+  ❌ PushSubscription (+ usunąć usePushNotifications hook)
+
+Brakujące pliki Next.js:
+  ➕ src/app/loading.tsx
+  ➕ src/app/error.tsx
+  ➕ src/app/not-found.tsx
+  ➕ src/app/dashboard/loading.tsx
+  ➕ src/app/dashboard/error.tsx
+```
+
+---
+
+> **ℹ️ NOTA:** Ta analiza obejmuje cały kod źródłowy projektu. Rekomenduje rozpoczęcie od priorytetów krytycznych (middleware, bezpieczeństwo), następnie porządkowanie martwego kodu, a na końcu wdrażanie nowych funkcjonalności.
