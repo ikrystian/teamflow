@@ -304,12 +304,17 @@ function SortableTaskCard({
                         {isOverdue(task.dueDate) && <AlertCircle className="h-3 w-3 text-red-600" />}
                       </div>
                     )}
-                    {task.estimatedHours ? (
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        {formatEstimatedHours(task.estimatedHours)}
-                      </div>
-                    ) : null}
+                    {task.estimatedHours ? (() => {
+                      const reportedHours = task.timeEntries?.reduce((sum, entry) => sum + entry.hours, 0) ?? 0;
+                      const formattedReported = reportedHours % 1 === 0 ? reportedHours.toString() : reportedHours.toFixed(1);
+                      const formattedEstimated = task.estimatedHours % 1 === 0 ? task.estimatedHours.toString() : task.estimatedHours.toFixed(1);
+                      return (
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground propo-hours" title={`Zaraportowane: ${formattedReported}h / Planowane: ${formattedEstimated}h`}>
+                          <Clock className="h-3 w-3" />
+                          <span>{formattedReported} / {formattedEstimated}h</span>
+                        </div>
+                      );
+                    })() : null}
                   </div>
                   {task.assignee && (
 

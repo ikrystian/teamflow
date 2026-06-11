@@ -11,6 +11,24 @@ import {
   getPriorityColor,
   getPriorityDisplayName,
 } from "@/lib/task-format-utils"
+import {
+  Calendar,
+  User,
+  Clock,
+  Paperclip,
+  Image as ImageIcon,
+  MessageSquare,
+  Tag,
+  CheckCircle2,
+  Circle,
+  ExternalLink,
+  FileText,
+  Sparkles,
+  Info,
+  CalendarRange,
+  Timer,
+  UserCheck
+} from "lucide-react"
 
 export const dynamic = "force-dynamic"
 
@@ -58,6 +76,12 @@ function htmlToMarkdown(html: string): string {
   return md
 }
 
+function isDescriptionEmpty(html: string | null): boolean {
+  if (!html) return true
+  const clean = html.replace(/<[^>]+>/g, "").replace(/&nbsp;/g, "").trim()
+  return clean === ""
+}
+
 function ProjectIcon({ iconName, color, className = "w-5 h-5" }: {
   iconName?: string | null,
   color?: string,
@@ -94,20 +118,20 @@ function ProjectIcon({ iconName, color, className = "w-5 h-5" }: {
 function getMarkdownComponents(projectColor: string): Record<string, React.ComponentType<any>> {
   return {
     h1: ({ node, ...props }) => (
-      <h1 className="text-xl font-bold text-foreground mt-6 mb-4 border-b pb-2 border-border/60 transition-colors" {...props} />
+      <h1 className="text-lg font-bold text-neutral-900 dark:text-neutral-50 mt-6 mb-3 border-b pb-1.5 border-neutral-100 dark:border-neutral-800" {...props} />
     ),
     h2: ({ node, ...props }) => (
       <h2 
-        className="text-lg font-semibold text-foreground mt-5 mb-3 border-l-2 pl-2 transition-colors" 
+        className="text-base font-semibold text-neutral-900 dark:text-neutral-50 mt-5 mb-2.5 border-l-2 pl-2" 
         style={{ borderLeftColor: projectColor }}
         {...props} 
       />
     ),
     h3: ({ node, ...props }) => (
-      <h3 className="text-base font-semibold text-foreground mt-4 mb-2 transition-colors" {...props} />
+      <h3 className="text-sm font-semibold text-neutral-800 dark:text-neutral-100 mt-4 mb-2" {...props} />
     ),
     p: ({ node, ...props }) => (
-      <p className="text-sm text-foreground leading-relaxed mb-4" {...props} />
+      <p className="text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed mb-3" {...props} />
     ),
     a: ({ node, ...props }) => (
       <a 
@@ -119,17 +143,17 @@ function getMarkdownComponents(projectColor: string): Record<string, React.Compo
       />
     ),
     ul: ({ node, ...props }) => (
-      <ul className="list-disc pl-5 mb-4 space-y-1.5 text-sm text-foreground" {...props} />
+      <ul className="list-disc pl-5 mb-3.5 space-y-1 text-sm text-neutral-600 dark:text-neutral-300" {...props} />
     ),
     ol: ({ node, ...props }) => (
-      <ol className="list-decimal pl-5 mb-4 space-y-1.5 text-sm text-foreground" {...props} />
+      <ol className="list-decimal pl-5 mb-3.5 space-y-1 text-sm text-neutral-600 dark:text-neutral-300" {...props} />
     ),
     li: ({ node, ...props }) => (
-      <li className="mb-0.5 text-foreground/90" {...props} />
+      <li className="mb-0.5 text-neutral-600 dark:text-neutral-300" {...props} />
     ),
     blockquote: ({ node, ...props }) => (
       <blockquote 
-        className="border-l-4 pl-4 italic my-4 text-muted-foreground py-2.5 pr-4 rounded-r-md" 
+        className="border-l-2 pl-4 italic my-3 text-neutral-500 dark:text-neutral-400" 
         style={{ borderLeftColor: projectColor, backgroundColor: `${projectColor}08` }}
         {...props} 
       />
@@ -137,14 +161,14 @@ function getMarkdownComponents(projectColor: string): Record<string, React.Compo
     code({ node, className, children, ...props }) {
       const match = /language-(\w+)/.exec(className || "")
       return match ? (
-        <pre className="bg-muted/80 p-4 rounded-lg overflow-x-auto my-4 border border-border/80 font-mono text-xs text-foreground shadow-inner">
+        <pre className="bg-neutral-50 dark:bg-neutral-900/60 p-3 rounded-lg overflow-x-auto my-3 border border-neutral-200/50 dark:border-neutral-800/50 font-mono text-[11px] text-neutral-800 dark:text-neutral-200">
           <code className={className} {...props}>
             {children}
           </code>
         </pre>
       ) : (
         <code 
-          className="px-1.5 py-0.5 rounded font-mono text-xs font-semibold" 
+          className="px-1 py-0.5 rounded font-mono text-[11px] font-medium" 
           style={{ color: projectColor, backgroundColor: `${projectColor}15` }}
           {...props}
         >
@@ -153,21 +177,21 @@ function getMarkdownComponents(projectColor: string): Record<string, React.Compo
       )
     },
     table: ({ node, ...props }) => (
-      <div className="overflow-x-auto my-4 rounded-lg border border-border/60">
-        <table className="w-full border-collapse text-sm" {...props} />
+      <div className="overflow-x-auto my-3.5 rounded-xl border border-neutral-200/60 dark:border-neutral-800/60">
+        <table className="w-full border-collapse text-xs" {...props} />
       </div>
     ),
     thead: ({ node, ...props }) => (
-      <thead className="bg-muted border-b border-border" {...props} />
+      <thead className="bg-neutral-50 dark:bg-neutral-900/40 border-b border-neutral-200 dark:border-neutral-800" {...props} />
     ),
     th: ({ node, ...props }) => (
-      <th className="border border-border/60 px-4 py-2.5 font-semibold text-left text-foreground" {...props} />
+      <th className="border-r border-neutral-200/60 dark:border-neutral-800/60 last:border-r-0 px-3 py-2 font-semibold text-left text-neutral-800 dark:text-neutral-200" {...props} />
     ),
     td: ({ node, ...props }) => (
-      <td className="border border-border/60 px-4 py-2 text-foreground/90" {...props} />
+      <td className="border-r border-b border-neutral-200/60 dark:border-neutral-800/60 last:border-r-0 px-3 py-2 text-neutral-600 dark:text-neutral-300" {...props} />
     ),
     hr: ({ node, ...props }) => (
-      <hr className="my-6 border-t border-border/40" {...props} />
+      <hr className="my-5 border-t border-neutral-200 dark:border-neutral-800" {...props} />
     ),
   }
 }
@@ -305,22 +329,6 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-function Field({ label, icon, children }: { label: string; icon: React.ReactNode; children: React.ReactNode }) {
-  return (
-    <div className="flex items-start gap-2.5">
-      <div className="mt-0.5 shrink-0 text-muted-foreground/80">
-        {icon}
-      </div>
-      <div className="space-y-0.5">
-        <dt className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
-          {label}
-        </dt>
-        <dd className="text-sm font-semibold text-foreground leading-snug">{children}</dd>
-      </div>
-    </div>
-  )
-}
-
 export default async function PublicTaskPage({
   params,
 }: {
@@ -341,94 +349,64 @@ export default async function PublicTaskPage({
   const markdownComponents = getMarkdownComponents(projectColor)
 
   return (
-    <div className="min-h-screen bg-muted/30 pb-16">
-      {/* Banner Header */}
-      <div 
-        className="relative w-full h-48 md:h-64 flex items-end overflow-hidden"
-        style={{
-          ...(task.project?.imageUrl
-            ? {
-                backgroundImage: `linear-gradient(to bottom, rgba(15, 23, 42, 0.25), rgba(15, 23, 42, 0.8)), url(${task.project.imageUrl})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }
-            : {
-                backgroundImage: `linear-gradient(135deg, ${projectColor} 0%, #0f172a 100%)`,
-              }),
-        }}
-      >
-        <div 
-          className="absolute bottom-0 left-0 right-0 h-1.5 shadow-lg" 
-          style={{ backgroundColor: projectColor }}
-        />
-        
-        <div className="mx-auto max-w-3xl w-full px-4 pb-8 md:pb-12 relative z-10">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <span 
-                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/10 text-white backdrop-blur-sm border border-white/15"
-              >
-                <ProjectIcon iconName={task.project?.icon} color="#FFFFFF" className="h-3 w-3" />
-                Projekt
-              </span>
-            </div>
-            
-            <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight drop-shadow-md">
-              {task.project?.name || "Projekt"}
-            </h1>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-neutral-50/50 text-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 font-sans antialiased relative overflow-hidden pb-16">
+      
+      {/* Decorative top blur blob */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[400px] bg-gradient-to-b from-blue-500/5 to-transparent blur-3xl pointer-events-none" />
 
-      <div className="mx-auto max-w-3xl px-4 -mt-6 md:-mt-10 relative z-20 space-y-6">
-        {/* Header card */}
-        <div 
-          className="rounded-xl border bg-card p-6 shadow-sm border-t-4"
-          style={{ borderTopColor: projectColor }}
-        >
-          <div className="mb-3 flex flex-wrap items-center gap-2">
-            {task.project && (
-              <span 
-                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border"
-                style={{
-                  backgroundColor: `${projectColor}12`,
-                  color: projectColor,
-                  borderColor: `${projectColor}30`,
-                }}
-              >
-                <ProjectIcon iconName={task.project.icon} color={projectColor} className="h-3.5 w-3.5" />
-                {task.project.name}
-              </span>
-            )}
+      {/* Floating navigation header */}
+      <nav className="sticky top-0 z-40 w-full border-b border-neutral-200/60 bg-white/70 backdrop-blur-md dark:border-neutral-800/60 dark:bg-neutral-955/70">
+        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 sm:px-6">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 font-bold text-sm tracking-tighter">
+              N
+            </span>
+            <span className="font-semibold text-sm tracking-tight">Nexus</span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2.5 py-0.5 text-[10px] font-medium text-blue-600 dark:bg-blue-500/20 dark:text-blue-400">
+              <span className="h-1 w-1 rounded-full bg-blue-500 animate-pulse" />
+              Karta zadania
+            </span>
+          </div>
+          {task.project && (
+            <div className="flex items-center gap-2 text-xs font-medium text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-900 px-3 py-1 rounded-full border border-neutral-200/40 dark:border-neutral-800/40">
+              <ProjectIcon iconName={task.project.icon} color={task.project.color || "#3B82F6"} className="h-3.5 w-3.5" />
+              <span>{task.project.name}</span>
+            </div>
+          )}
+        </div>
+      </nav>
+
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8 relative z-10">
+         {/* Main Title Section */}
+        <div className="border-b border-neutral-200/60 dark:border-neutral-800/60 pb-8 mb-8">
+          <div className="flex flex-wrap items-center gap-2 mb-4">
             {task.key && (
-              <Badge 
-                variant="outline" 
-                className="font-mono text-xs font-semibold"
-                style={{ 
-                  borderColor: `${projectColor}40`,
-                  color: projectColor,
-                  backgroundColor: `${projectColor}08`
-                }}
-              >
+              <span className="font-mono text-xs font-semibold text-neutral-500 bg-neutral-100 dark:bg-neutral-900 dark:text-neutral-400 px-2.5 py-0.5 rounded-md border border-neutral-200/50 dark:border-neutral-800/50">
                 {task.key}
-              </Badge>
+              </span>
             )}
             {task.taskStatus && (
-              <Badge
-                variant="outline"
+              <span 
+                className="text-xs font-semibold px-2.5 py-0.5 rounded-full border"
                 style={{
                   borderColor: `${task.taskStatus.color}40`,
+                  backgroundColor: `${task.taskStatus.color}12`,
                   color: task.taskStatus.color,
-                  backgroundColor: `${task.taskStatus.color}08`,
                 }}
               >
                 {task.taskStatus.name}
-              </Badge>
+              </span>
             )}
             {task.priority && (
-              <Badge variant="outline" className={getPriorityColor(task.priority)}>
+              <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
+                task.priority === "HIGH" || task.priority === "URGENT"
+                  ? "border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-400"
+                  : task.priority === "MEDIUM"
+                  ? "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                  : "border-neutral-500/20 bg-neutral-500/10 text-neutral-600 dark:text-neutral-400"
+              }`}>
                 {getPriorityDisplayName(task.priority)}
-              </Badge>
+              </span>
             )}
           </div>
           
@@ -437,263 +415,348 @@ export default async function PublicTaskPage({
           </h1>
 
           {tags.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-1.5 border-t pt-3 border-border/40">
+            <div className="flex flex-wrap gap-1.5 mt-3">
               {tags.map((tag) => (
-                <Badge
+                <span
                   key={tag.id}
-                  variant="outline"
-                  style={{ borderColor: `${tag.color}50`, color: tag.color, backgroundColor: `${tag.color}08` }}
+                  className="text-xs font-medium px-2.5 py-0.5 rounded-full border"
+                  style={{
+                    borderColor: `${tag.color}40`,
+                    backgroundColor: `${tag.color}10`,
+                    color: tag.color
+                  }}
                 >
                   {tag.name}
-                </Badge>
+                </span>
               ))}
             </div>
           )}
         </div>
 
-        {/* Meta */}
-        <div className="rounded-xl border bg-card p-6 shadow-sm">
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3">
-            <Field 
-              label="Przypisane do" 
-              icon={<LucideIcons.User className="h-4 w-4" style={{ color: projectColor }} />}
-            >
-              {displayName(task.assignee)}
-            </Field>
-            <Field 
-              label="Utworzone przez" 
-              icon={<LucideIcons.UserCheck className="h-4 w-4" style={{ color: projectColor }} />}
-            >
-              {displayName(task.createdBy)}
-            </Field>
-            <Field 
-              label="Szacowany czas" 
-              icon={<LucideIcons.Timer className="h-4 w-4" style={{ color: projectColor }} />}
-            >
-              {formatEstimatedHours(task.estimatedHours)}
-            </Field>
-            {task.dueDate && (
-              <Field 
-                label="Termin" 
-                icon={<LucideIcons.Calendar className="h-4 w-4" style={{ color: projectColor }} />}
-              >
-                {formatDate(task.dueDate)}
-              </Field>
+        {/* Dashboard Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+          
+          {/* Left / Main Column */}
+          <div className="lg:col-span-2 space-y-6">
+            
+            {/* Description */}
+            {task.description && !isDescriptionEmpty(task.description) && (
+              <section className="rounded-2xl border border-neutral-200/80 bg-white dark:border-neutral-900/40 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.015)] backdrop-blur-sm">
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-4 flex items-center gap-1.5">
+                  <FileText className="h-4 w-4 text-neutral-400" /> Opis zadania
+                </h2>
+                
+                <div className="prose prose-neutral max-w-none dark:prose-invert prose-sm sm:prose-base prose-headings:font-bold prose-headings:tracking-tight">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm, remarkBreaks]}
+                    components={markdownComponents}
+                  >
+                    {htmlToMarkdown(task.description)}
+                  </ReactMarkdown>
+                </div>
+              </section>
             )}
-            {task.startTime && (
-              <Field 
-                label="Początek" 
-                icon={<LucideIcons.CalendarRange className="h-4 w-4" style={{ color: projectColor }} />}
-              >
-                {formatDateTime(task.startTime)}
-              </Field>
+
+            {/* Subtasks */}
+            {task.todos.length > 0 && (
+              <section className="rounded-2xl border border-neutral-200/80 bg-white dark:border-neutral-900/40 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.015)] backdrop-blur-sm">
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-4 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Lista podzadań
+                  </span>
+                  <span className="text-xs font-semibold text-neutral-500 bg-neutral-100 dark:bg-neutral-900 dark:text-neutral-400 px-2.5 py-0.5 rounded-full border border-neutral-200/20 dark:border-neutral-800/20">
+                    {completedTodos} z {task.todos.length}
+                  </span>
+                </h2>
+                
+                <div className="space-y-2">
+                  {task.todos.map((todo) => (
+                    <div
+                      key={todo.id}
+                      className="flex items-center gap-3 p-3.5 rounded-xl border border-neutral-100/50 bg-neutral-50/20 hover:bg-neutral-50/55 dark:border-neutral-800/30 dark:bg-neutral-900/10 dark:hover:bg-neutral-800/20 transition-colors"
+                    >
+                      <span className="flex shrink-0">
+                        {todo.isCompleted ? (
+                          <CheckCircle2 className="h-5 w-5 text-emerald-500 fill-emerald-500/5" />
+                        ) : (
+                          <Circle className="h-5 w-5 text-neutral-300 dark:text-neutral-800" />
+                        )}
+                      </span>
+                      <span
+                        className={`text-sm ${
+                          todo.isCompleted
+                            ? "text-neutral-400 line-through dark:text-neutral-500 font-normal"
+                            : "text-neutral-800 dark:text-neutral-200 font-medium"
+                        }`}
+                      >
+                        {todo.title}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </section>
             )}
-            {task.endTime && (
-              <Field 
-                label="Koniec" 
-                icon={<LucideIcons.CalendarDays className="h-4 w-4" style={{ color: projectColor }} />}
-              >
-                {formatDateTime(task.endTime)}
-              </Field>
+
+            {/* Changes / What was done */}
+            {task.changes && task.changes.trim() && (
+              <section className="rounded-2xl border border-neutral-200/80 bg-white dark:border-neutral-900/40 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.015)] backdrop-blur-sm">
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-4 flex items-center gap-1.5">
+                  <Sparkles className="h-4 w-4 text-amber-500" /> Co zostało zrobione
+                </h2>
+                
+                <div className="prose prose-neutral max-w-none dark:prose-invert prose-sm sm:prose-base prose-headings:font-bold prose-headings:tracking-tight">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm, remarkBreaks]}
+                    components={markdownComponents}
+                  >
+                    {task.changes}
+                  </ReactMarkdown>
+                </div>
+              </section>
             )}
-            <Field 
-              label="Utworzono" 
-              icon={<LucideIcons.CalendarDays className="h-4 w-4" style={{ color: projectColor }} />}
-            >
-              {formatDate(task.createdAt)}
-            </Field>
-          </dl>
+
+            {/* Images */}
+            {task.images.length > 0 && (
+              <section className="rounded-2xl border border-neutral-200/80 bg-white dark:border-neutral-900/40 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.015)] backdrop-blur-sm">
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-4 flex items-center gap-1.5">
+                  <ImageIcon className="h-4 w-4 text-neutral-400" /> Obrazy i zrzuty ekranu
+                </h2>
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                  {task.images.map((image) => (
+                    <div 
+                      key={image.id} 
+                      className="group relative overflow-hidden rounded-xl border border-neutral-200/80 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 aspect-video"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={image.url}
+                        alt={image.filename}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-neutral-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2.5">
+                        <span className="text-[10px] font-medium text-white truncate w-full">
+                          {image.filename}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Attachments */}
+            {task.attachments.length > 0 && (
+              <section className="rounded-2xl border border-neutral-200/80 bg-white dark:border-neutral-900/40 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.015)] backdrop-blur-sm">
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-4 flex items-center gap-1.5">
+                  <Paperclip className="h-4 w-4 text-neutral-400" /> Załączone pliki ({task.attachments.length})
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {task.attachments.map((file) => (
+                    <a
+                      key={file.id}
+                      href={file.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between p-3.5 rounded-xl border border-neutral-200/60 dark:border-neutral-800/80 hover:border-neutral-300 dark:hover:border-neutral-700 bg-neutral-50/30 hover:bg-neutral-50 dark:bg-neutral-900/10 dark:hover:bg-neutral-800/20 transition-all group"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="h-8 w-8 rounded-lg bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 flex items-center justify-center shrink-0">
+                          <FileText className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 truncate group-hover:text-blue-500 transition-colors">
+                            {file.originalName}
+                          </p>
+                          <span className="text-[10px] text-neutral-400 dark:text-neutral-500">
+                            {formatFileSize(file.size)}
+                          </span>
+                        </div>
+                      </div>
+                      <ExternalLink className="h-3.5 w-3.5 text-neutral-400 group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors shrink-0 ml-2" />
+                    </a>
+                  ))}
+                </div>
+              </section>
+            )}
+
+          </div>
+
+          {/* Right Column / Sidebar */}
+          <div className="space-y-6">
+            
+            {/* Meta Properties Pane */}
+            <div className="rounded-2xl border border-neutral-200/80 bg-white dark:border-neutral-900/40 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.015)] backdrop-blur-sm">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-5 flex items-center gap-1.5">
+                <Info className="h-3.5 w-3.5" /> Informacje
+              </h3>
+              
+              <div className="space-y-4">
+                {/* Assignee */}
+                <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800/60 pb-3">
+                  <span className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center gap-2">
+                    <User className="h-3.5 w-3.5 text-neutral-400 shrink-0" /> Przypisane do
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <div className="h-6 w-6 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-[10px] font-semibold text-white">
+                      {displayName(task.assignee)[0].toUpperCase()}
+                    </div>
+                    <span className="text-sm font-medium text-neutral-800 dark:text-neutral-300">
+                      {displayName(task.assignee)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Creator */}
+                <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800/60 pb-3">
+                  <span className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center gap-2">
+                    <UserCheck className="h-3.5 w-3.5 text-neutral-400 shrink-0" /> Utworzone przez
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <div className="h-6 w-6 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-[10px] font-semibold text-white">
+                      {displayName(task.createdBy)[0].toUpperCase()}
+                    </div>
+                    <span className="text-sm font-medium text-neutral-800 dark:text-neutral-300">
+                      {displayName(task.createdBy)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Estimated Hours */}
+                <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800/60 pb-3">
+                  <span className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center gap-2">
+                    <Clock className="h-3.5 w-3.5 text-neutral-400 shrink-0" /> Szacowany czas
+                  </span>
+                  <span className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">
+                    {formatEstimatedHours(task.estimatedHours) || "Brak"}
+                  </span>
+                </div>
+
+                {/* Due Date */}
+                {task.dueDate && (
+                  <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800/60 pb-3">
+                    <span className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center gap-2">
+                      <Calendar className="h-3.5 w-3.5 text-neutral-400 shrink-0" /> Termin
+                    </span>
+                    <span className="text-sm font-semibold text-red-500 dark:text-red-400">
+                      {formatDate(task.dueDate)}
+                    </span>
+                  </div>
+                )}
+
+                {/* Dates Range */}
+                {(task.startTime || task.endTime) && (
+                  <div className="space-y-2 border-b border-neutral-100 dark:border-neutral-800/60 pb-3">
+                    <span className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center gap-2">
+                      <CalendarRange className="h-3.5 w-3.5 text-neutral-400 shrink-0" /> Okres realizacji
+                    </span>
+                    <div className="pl-5 text-xs space-y-1 text-neutral-600 dark:text-neutral-400">
+                      {task.startTime && (
+                        <div>
+                          <span className="text-neutral-400 dark:text-neutral-500 mr-1">Od:</span> {formatDateTime(task.startTime)}
+                        </div>
+                      )}
+                      {task.endTime && (
+                        <div>
+                          <span className="text-neutral-400 dark:text-neutral-500 mr-1">Do:</span> {formatDateTime(task.endTime)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Created At */}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center gap-2">
+                    <Calendar className="h-3.5 w-3.5 text-neutral-400 shrink-0" /> Utworzono
+                  </span>
+                  <span className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
+                    {formatDate(task.createdAt)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Time Tracking Widget */}
+            {task.timeEntries.length > 0 && (
+              <div className="rounded-2xl border border-neutral-200/80 bg-white dark:border-neutral-900/40 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.015)] backdrop-blur-sm">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-4 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Timer className="h-3.5 w-3.5 text-neutral-400 shrink-0" /> Zarejestrowany czas
+                  </span>
+                  <span className="font-bold text-neutral-800 dark:text-neutral-200 bg-neutral-100 dark:bg-neutral-900 px-2 py-0.5 rounded text-[11px] border border-neutral-200/40 dark:border-neutral-800/40">
+                    {totalTime % 1 === 0 ? totalTime : totalTime.toFixed(1)}h
+                  </span>
+                </h3>
+                
+                <ul className="space-y-3 max-h-48 overflow-y-auto pr-1">
+                  {task.timeEntries.map((entry) => (
+                    <li key={entry.id} className="flex justify-between items-start text-xs border-b border-neutral-100/40 dark:border-neutral-800/40 pb-2.5 last:border-0 last:pb-0">
+                      <div className="space-y-0.5">
+                        <span className="font-semibold text-neutral-800 dark:text-neutral-200">
+                          {displayName(entry.user)}
+                        </span>
+                        {entry.description && (
+                          <p className="text-neutral-500 dark:text-neutral-400 text-[11px] line-clamp-1 leading-normal">
+                            {entry.description}
+                          </p>
+                        )}
+                        <span className="text-[10px] text-neutral-400 block">
+                          {formatDate(entry.date)}
+                        </span>
+                      </div>
+                      <span className="font-bold text-neutral-700 dark:text-neutral-300 shrink-0 ml-2">
+                        {entry.hours}h
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Comments List */}
+            {task.comments.length > 0 && (
+              <div className="rounded-2xl border border-neutral-200/80 bg-white dark:border-neutral-900/40 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.015)] backdrop-blur-sm">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-4 flex items-center gap-1.5">
+                  <MessageSquare className="h-3.5 w-3.5 text-neutral-400" /> Komentarze ({task.comments.length})
+                </h3>
+
+                <ul className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                  {task.comments.map((comment) => (
+                    <li 
+                      key={comment.id} 
+                      className="text-xs space-y-1 bg-neutral-50/40 dark:bg-neutral-900/20 p-3 rounded-xl border border-neutral-100/50 dark:border-neutral-800/40"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <div className="h-5 w-5 rounded-full bg-gradient-to-tr from-neutral-200 to-neutral-300 dark:from-neutral-800 dark:to-neutral-700 flex items-center justify-center text-[9px] font-bold text-neutral-700 dark:text-neutral-300">
+                            {displayName(comment.author)[0].toUpperCase()}
+                          </div>
+                          <span className="font-semibold text-neutral-800 dark:text-neutral-200">
+                            {displayName(comment.author)}
+                          </span>
+                        </div>
+                        <span className="text-[9px] text-neutral-400 dark:text-neutral-500">
+                          {formatDateTime(comment.createdAt)}
+                        </span>
+                      </div>
+                      <p className="whitespace-pre-wrap text-neutral-600 dark:text-neutral-350 pl-6 leading-relaxed">
+                        {comment.content}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+          </div>
+
         </div>
 
-        {/* Description */}
-        {task.description && task.description !== "<p></p>" && (
-          <section className="rounded-xl border bg-card p-6 shadow-sm">
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
-              <LucideIcons.FileText className="h-4.5 w-4.5" style={{ color: projectColor }} />
-              Opis
-            </h2>
-            <div className="prose prose-sm max-w-none dark:prose-invert">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm, remarkBreaks]}
-                components={markdownComponents}
-              >
-                {htmlToMarkdown(task.description)}
-              </ReactMarkdown>
-            </div>
-          </section>
-        )}
+        {/* Footer */}
+        <footer className="mt-16 pt-8 border-t border-neutral-200/40 dark:border-neutral-800/40 text-center text-xs text-neutral-400 dark:text-neutral-500">
+          <p>Widok tylko do odczytu · Nexus</p>
+        </footer>
 
-        {/* Changes / what was done — stored as markdown */}
-        {task.changes && task.changes.trim() && (
-          <section className="rounded-xl border bg-card p-6 shadow-sm">
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
-              <LucideIcons.CheckSquare className="h-4.5 w-4.5" style={{ color: projectColor }} />
-              Co zostało zrobione
-            </h2>
-            <div className="prose prose-sm max-w-none dark:prose-invert">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm, remarkBreaks]}
-                components={markdownComponents}
-              >
-                {task.changes}
-              </ReactMarkdown>
-            </div>
-          </section>
-        )}
-
-        {/* Subtasks */}
-        {task.todos.length > 0 && (
-          <section className="rounded-xl border bg-card p-6 shadow-sm">
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
-              <LucideIcons.ListChecks className="h-4.5 w-4.5" style={{ color: projectColor }} />
-              Lista zadań ({completedTodos}/{task.todos.length})
-            </h2>
-            <ul className="space-y-2.5">
-              {task.todos.map((todo) => (
-                <li key={todo.id} className="flex items-center gap-3 text-sm">
-                  <span
-                    className={`flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded border transition-colors ${
-                      todo.isCompleted
-                        ? "border-green-500 bg-green-500 text-white"
-                        : "border-muted-foreground/30 hover:border-muted-foreground/50"
-                    }`}
-                  >
-                    {todo.isCompleted && (
-                      <svg
-                        viewBox="0 0 16 16"
-                        className="h-3 w-3"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                      >
-                        <path d="M3 8.5l3 3 7-7" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    )}
-                  </span>
-                  <span
-                    className={`font-medium ${
-                      todo.isCompleted ? "text-muted-foreground line-through" : "text-foreground"
-                    }`}
-                  >
-                    {todo.title}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        {/* Images */}
-        {task.images.length > 0 && (
-          <section className="rounded-xl border bg-card p-6 shadow-sm">
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
-              <LucideIcons.Image className="h-4.5 w-4.5" style={{ color: projectColor }} />
-              Obrazy
-            </h2>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {task.images.map((image) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={image.id}
-                  src={image.url}
-                  alt={image.filename}
-                  className="h-32 w-full rounded-lg border object-cover hover:opacity-90 transition-opacity cursor-zoom-in"
-                />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Attachments */}
-        {task.attachments.length > 0 && (
-          <section className="rounded-xl border bg-card p-6 shadow-sm">
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
-              <LucideIcons.Paperclip className="h-4.5 w-4.5" style={{ color: projectColor }} />
-              Załączniki
-            </h2>
-            <ul className="space-y-2">
-              {task.attachments.map((file) => (
-                <li key={file.id}>
-                  <a
-                    href={file.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm transition-colors hover:bg-accent"
-                  >
-                    <span className="truncate font-medium flex items-center gap-2">
-                      <LucideIcons.File className="h-4 w-4 text-muted-foreground" />
-                      {file.originalName}
-                    </span>
-                    <span className="ml-3 shrink-0 text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
-                      {formatFileSize(file.size)}
-                    </span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        {/* Time entries */}
-        {task.timeEntries.length > 0 && (
-          <section className="rounded-xl border bg-card p-6 shadow-sm">
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
-              <LucideIcons.Clock className="h-4.5 w-4.5" style={{ color: projectColor }} />
-              Zarejestrowany czas ({totalTime % 1 === 0 ? totalTime : totalTime.toFixed(1)}h)
-            </h2>
-            <ul className="divide-y divide-border/40">
-              {task.timeEntries.map((entry) => (
-                <li
-                  key={entry.id}
-                  className="flex items-start justify-between gap-3 py-3 text-sm"
-                >
-                  <div className="space-y-1">
-                    <span className="font-semibold text-foreground">{displayName(entry.user)}</span>
-                    {entry.description && (
-                      <p className="text-muted-foreground text-xs">{entry.description}</p>
-                    )}
-                    <p className="text-[10px] text-muted-foreground">
-                      {formatDate(entry.date)}
-                    </p>
-                  </div>
-                  <span className="shrink-0 font-bold bg-muted/80 px-2 py-1 rounded text-xs">
-                    {entry.hours}h
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        {/* Comments */}
-        {task.comments.length > 0 && (
-          <section className="rounded-xl border bg-card p-6 shadow-sm">
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
-              <LucideIcons.MessageSquare className="h-4.5 w-4.5" style={{ color: projectColor }} />
-              Komentarze ({task.comments.length})
-            </h2>
-            <ul className="space-y-4">
-              {task.comments.map((comment) => (
-                <li key={comment.id} className="text-sm border-b border-border/30 last:border-0 pb-3 last:pb-0">
-                  <div className="mb-1.5 flex items-center gap-2">
-                    <span className="font-semibold text-foreground">{displayName(comment.author)}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {formatDateTime(comment.createdAt)}
-                    </span>
-                  </div>
-                  <p className="whitespace-pre-wrap text-foreground/90 pl-1 leading-relaxed">
-                    {comment.content}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        <p className="pt-4 text-center text-xs text-muted-foreground/60 flex items-center justify-center gap-1.5">
-          <LucideIcons.Lock className="h-3 w-3" />
-          Widok tylko do odczytu · Nexus
-        </p>
       </div>
     </div>
   )
