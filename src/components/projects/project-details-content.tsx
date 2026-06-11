@@ -79,6 +79,8 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   // for the create request + refetch to complete.
   const [tasks, setTasks] = useState<Task[]>([])
   const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
+  // IDs of tasks currently playing the delete animation (optimistic removal)
+  const [deletingTaskIds, setDeletingTaskIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [taskDetailsDialogOpen, setTaskDetailsDialogOpen] = useState(false)
   const [createTaskDialogOpen, setCreateTaskDialogOpen] = useState(false)
@@ -297,19 +299,35 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   }
 
   const handleDeleteTask = async (task: Task) => {
+    // 1. Mark as deleting → triggers CSS exit animation
+    setDeletingTaskIds(prev => new Set(prev).add(task.id))
+
+    // 2. Wait for animation to finish, then remove from local state
+    await new Promise(resolve => setTimeout(resolve, 350))
+    setTasks(prev => prev.filter(t => t.id !== task.id))
+    setDeletingTaskIds(prev => { const next = new Set(prev); next.delete(task.id); return next })
+
+    // 3. Close any open task details dialog
+    if (selectedTask?.id === task.id) {
+      setTaskDetailsDialogOpen(false)
+    }
+
+    // 4. Fire the DELETE request in the background
     try {
       const response = await fetch(`/api/tasks/${task.id}`, {
         method: "DELETE",
       })
 
-      if (response.ok) {
-        fetchProject() // Refresh the project data
-      } else {
+      if (!response.ok) {
+        // Roll back: restore the deleted task
         const data = await response.json()
+        setTasks(prev => [...prev, task])
         alert(data.error || "Nie udało się usunąć zadania")
       }
     } catch (error) {
       console.error("Error deleting task:", error)
+      // Roll back
+      setTasks(prev => [...prev, task])
       alert("Wystąpił błąd podczas usuwania zadania")
     }
   }
@@ -520,11 +538,11 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                 {getFilteredTasks(tasks).map((task) => (
                   <div
                     key={task.id}
-                    className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors border-l-4"
+                    className={`border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors border-l-4${deletingTaskIds.has(task.id) ? ' task-deleting' : ''}`}
                     style={{
                       borderLeftColor: project.color || '#3B82F6'
                     }}
-                    onClick={() => handleTaskDetails(task)}
+                    onClick={() => !deletingTaskIds.has(task.id) && handleTaskDetails(task)}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
