@@ -431,10 +431,10 @@ export default async function PublicTaskPage({
               </Badge>
             )}
           </div>
-
-          <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-neutral-900 dark:text-neutral-50 leading-tight mb-4">
             {task.title}
-          </h2>
+          </h1>
 
           {tags.length > 0 && (
             <div className="mt-4 flex flex-wrap gap-1.5 border-t pt-3 border-border/40">
