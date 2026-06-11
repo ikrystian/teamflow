@@ -752,8 +752,11 @@ export function TaskFormContent({
       })
       const data = await response.json()
       if (response.ok) {
-        setBranchCreated({ name: data.branchName, url: data.url })
+        const branchUrl = data.url || makeBranchUrl(data.branchName, task.project?.githubRepo)
+        setBranchCreated({ name: data.branchName, url: branchUrl })
         toast.success(`Branch "${data.branchName}" został utworzony`)
+        // Automatically open the branch in a new tab
+        if (branchUrl) window.open(branchUrl, '_blank', 'noopener,noreferrer')
         onTaskUpdated?.()
       } else {
         toast.error(data.error || 'Nie udało się utworzyć brancha')
@@ -1618,9 +1621,10 @@ export function TaskFormContent({
             <div className="flex items-center gap-2">
               {branchCreated ? (
                 <a
-                  href={branchCreated.url || '#'}
+                  href={branchCreated.url || makeBranchUrl(branchCreated.name, task?.project?.githubRepo) || '#'}
                   target="_blank"
                   rel="noopener noreferrer"
+                  title={`Otwórz branch ${branchCreated.name} na GitHub`}
                   className="inline-flex items-center gap-1.5 text-sm font-mono px-3 py-2 rounded-md border bg-muted/50 hover:bg-muted transition-colors"
                 >
                   <GitBranch className="h-4 w-4 text-green-600" />
