@@ -24,7 +24,9 @@ jobs:
       - name: Check for existing PR
         id: existing
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Use PAT_TOKEN so gh CLI can create PRs (GITHUB_TOKEN is blocked by default)
+          # Fallback to GITHUB_TOKEN for read-only operations if PAT is not set
+          GH_TOKEN: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           COUNT=$(gh pr list --head "${{ github.ref_name }}" --base main --state open --json number --jq 'length')
           echo "count=$COUNT" >> "$GITHUB_OUTPUT"
@@ -80,7 +82,10 @@ jobs:
       - name: Create Pull Request
         if: steps.existing.outputs.count == '0'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # PAT_TOKEN required — GITHUB_TOKEN cannot create PRs unless
+          # "Allow GitHub Actions to create and approve pull requests" is
+          # enabled in Settings → Actions → General → Workflow permissions
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           PR_URL=$(gh pr create \
             --base main \

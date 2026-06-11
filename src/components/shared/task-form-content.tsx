@@ -23,6 +23,14 @@ import {
 } from "@/lib/task-format-utils"
 
 
+// Domyślny termin wykonania dla nowych zadań: teraz + 1 dzień + 1 godzina.
+function getDefaultDueDate(): Date {
+  const date = new Date()
+  date.setDate(date.getDate() + 1)
+  date.setHours(date.getHours() + 1)
+  return date
+}
+
 interface TaskFormContentProps {
   onTaskCreated?: () => void
   onTaskUpdated?: () => void
@@ -294,7 +302,7 @@ export function TaskFormContent({
       setSelectedProjectId(projectId || "")
       setAssigneeId(session?.user?.id || "")
       setPriority("")
-      setDueDate(defaultDate)
+      setDueDate(defaultDate ?? getDefaultDueDate())
       setStartTime(defaultStartTime || undefined)
       setEndTime(defaultEndTime || undefined)
       setEstimatedHours("")
