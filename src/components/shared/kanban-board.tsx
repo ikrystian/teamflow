@@ -8,7 +8,7 @@ import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar, Clock, MoreHorizontal, Plus, AlertCircle, Trash2, X, Check, Loader2, Send } from "lucide-react"
+import { Calendar, Clock, MoreHorizontal, Plus, AlertCircle, Trash2, X, Check, Loader2, Send, GitBranch } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -218,6 +218,11 @@ function SortableTaskCard({
                       {task.changesSentAt && (
                         <div title="Wiadomość wysłana na Slack" className="inline-flex">
                           <Send className="h-3 w-3 text-green-600 flex-shrink-0" />
+                        </div>
+                      )}
+                      {task.githubBranchName && (
+                        <div title={`Branch: ${task.githubBranchName}`} className="inline-flex">
+                          <GitBranch className="h-3 w-3 text-purple-500 flex-shrink-0" />
                         </div>
                       )}
                     </div>
@@ -928,6 +933,7 @@ export function KanbanBoard({
         onTimeTracking={onTimeTracking}
         onDelete={onTaskDelete}
         onTaskUpdated={onTaskUpdated}
+        onTaskDeleted={onTaskUpdated}
         canEdit={selectedTask ? canEditTask(selectedTask) : false}
         projects={projects}
       />

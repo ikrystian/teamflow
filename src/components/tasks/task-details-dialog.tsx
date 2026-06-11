@@ -14,6 +14,7 @@ interface TaskDetailsDialogProps {
   onDelete?: (task: Task, e: React.MouseEvent) => void
   onTaskUpdated?: () => void
   onTaskCreated?: () => void
+  onTaskDeleted?: () => void
   canEdit?: boolean
 
   // For create mode
@@ -28,6 +29,7 @@ export function TaskDetailsDialog({
   task,
   onTaskUpdated,
   onTaskCreated,
+  onTaskDeleted,
   mode = "edit",
   projectId,
   projects = [],
@@ -76,6 +78,7 @@ export function TaskDetailsDialog({
             onClose={() => onOpenChange(false)}
             onTaskUpdated={onTaskUpdated}
             onTaskCreated={onTaskCreated}
+            onTaskDeleted={() => { onTaskDeleted?.(); onOpenChange(false) }}
           />
         </div>
       </DialogContent>
