@@ -237,6 +237,11 @@ function SortableTaskCard({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1">
                       <h4 className="kanban-card-text font-medium text-sm leading-tight cursor-pointer transition-transform duration-200 ease-in-out group-hover:translate-x-3">
+                        {task.key && (
+                          <span className="text-muted-foreground font-mono mr-1">
+                            [{task.key}]
+                          </span>
+                        )}
                         {task.title}
                       </h4>
                       {task.changesSentAt && (
