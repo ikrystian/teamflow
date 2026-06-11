@@ -82,10 +82,11 @@ jobs:
       - name: Create Pull Request
         if: steps.existing.outputs.count == '0'
         env:
-          # PAT_TOKEN required — GITHUB_TOKEN cannot create PRs unless
-          # "Allow GitHub Actions to create and approve pull requests" is
-          # enabled in Settings → Actions → General → Workflow permissions
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          # Prefer PAT_TOKEN (needed to create PRs when the default GITHUB_TOKEN is restricted).
+          # Falls back to github.token so the step never crashes with "GH_TOKEN not set"
+          # even if PAT_TOKEN secret hasn't been added yet (PR creation will still fail at
+          # the GraphQL level if the repo setting is also disabled — see notes below).
+          GH_TOKEN: ${{ secrets.PAT_TOKEN || github.token }}
         run: |
           PR_URL=$(gh pr create \
             --base main \
