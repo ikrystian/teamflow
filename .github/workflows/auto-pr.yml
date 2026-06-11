@@ -12,7 +12,9 @@ permissions:
 
 jobs:
   create-pr:
+    environment: dev
     runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false && github.event.pull_request.user.login == 'krystian1337'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
