@@ -27,30 +27,39 @@ export async function POST(request: NextRequest) {
     request.headers.get("x-real-ip") ??
     null
 
-  // Helper: persist the log entry and return the NextResponse
-  async function respondWithLog(body: Record<string, unknown>, status = 200) {
+  let parsedPayload: Record<string, unknown> = {}
+  try { parsedPayload = JSON.parse(rawBody) } catch { /* non-JSON body */ }
+
+  // Create the log entry immediately so every request is captured,
+  // even if processing throws before we reach the respond() helper.
+  const logEntry = await prisma.githubWebhookLog.create({
+    data: {
+      event: event ?? "unknown",
+      action: typeof parsedPayload?.action === "string" ? parsedPayload.action : null,
+      payload: rawBody || "{}",
+      headers: JSON.stringify({
+        "x-github-event": event,
+        "x-github-delivery": delivery,
+        "x-hub-signature-256": signature,
+        "user-agent": userAgent,
+      }),
+      signature,
+      ipAddress,
+    },
+  }).catch((err) => {
+    console.error("[GitHub Webhook] Failed to create log entry:", err)
+    return null
+  })
+
+  // Helper: update the log with the final response and return NextResponse
+  async function respond(body: Record<string, unknown>, status = 200) {
     const responseJson = JSON.stringify(body)
-    let parsedPayload: Record<string, unknown> = {}
-    try { parsedPayload = JSON.parse(rawBody) } catch { /* non-JSON body */ }
-
-    await prisma.githubWebhookLog.create({
-      data: {
-        event: event ?? "unknown",
-        action: typeof parsedPayload?.action === "string" ? parsedPayload.action : null,
-        payload: rawBody || "{}",
-        headers: JSON.stringify({
-          "x-github-event": event,
-          "x-github-delivery": delivery,
-          "x-hub-signature-256": signature,
-          "user-agent": userAgent,
-        }),
-        signature,
-        response: responseJson,
-        statusCode: status,
-        ipAddress,
-      },
-    }).catch((err) => console.error("[GitHub Webhook] Failed to save log:", err))
-
+    if (logEntry) {
+      await prisma.githubWebhookLog.update({
+        where: { id: logEntry.id },
+        data: { response: responseJson, statusCode: status },
+      }).catch((err) => console.error("[GitHub Webhook] Failed to update log:", err))
+    }
     return NextResponse.json(body, { status })
   }
 
@@ -60,33 +69,33 @@ export async function POST(request: NextRequest) {
     if (secret) {
       const valid = await verifyGithubWebhookSignature(rawBody, signature, secret)
       if (!valid) {
-        return respondWithLog({ error: "Invalid signature" }, 401)
+        return respond({ error: "Invalid signature" }, 401)
       }
     }
 
     // Only handle pull_request events
     if (event !== "pull_request") {
-      return respondWithLog({ message: "Event ignored" })
+      return respond({ message: "Event ignored" })
     }
 
     let payload: Record<string, unknown>
     try {
       payload = JSON.parse(rawBody)
     } catch {
-      return respondWithLog({ error: "Invalid JSON body" }, 400)
+      return respond({ error: "Invalid JSON body" }, 400)
     }
 
     const pr = payload.pull_request as Record<string, unknown> | undefined
 
     // Only handle merged PRs
     if (payload.action !== "closed" || !pr?.merged) {
-      return respondWithLog({ message: "Not a merge event" })
+      return respond({ message: "Not a merge event" })
     }
 
     const headBranch = (pr.head as Record<string, unknown>)?.ref as string | undefined
 
     if (!headBranch) {
-      return respondWithLog({ message: "No head branch" })
+      return respond({ message: "No head branch" })
     }
 
     // Find task matching the branch
@@ -96,7 +105,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (!task) {
-      return respondWithLog({ message: `No task found for branch: ${headBranch}` })
+      return respond({ message: `No task found for branch: ${headBranch}` })
     }
 
     // Find the "Done" status
@@ -116,11 +125,11 @@ export async function POST(request: NextRequest) {
       (await prisma.taskStatus.findFirst({ orderBy: { order: "desc" } }))
 
     if (!targetStatus) {
-      return respondWithLog({ message: "No task status found" }, 500)
+      return respond({ message: "No task status found" }, 500)
     }
 
     if (task.statusId === targetStatus.id) {
-      return respondWithLog({ message: "Task already in done status" })
+      return respond({ message: "Task already in done status" })
     }
 
     await prisma.task.update({
@@ -132,7 +141,7 @@ export async function POST(request: NextRequest) {
       `[GitHub Webhook] Task ${task.key || task.id} moved to "${targetStatus.name}" after PR merge on branch "${headBranch}"`
     )
 
-    return respondWithLog({
+    return respond({
       message: "Task updated",
       taskId: task.id,
       taskKey: task.key,
@@ -140,7 +149,7 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error("GitHub webhook error:", error)
-    return respondWithLog({ error: "Internal server error" }, 500)
+    return respond({ error: "Internal server error" }, 500)
   }
 }
 
