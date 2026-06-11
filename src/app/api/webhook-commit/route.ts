@@ -34,9 +34,9 @@ interface MainTask {
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 const OPENROUTER_MODEL = "deepseek/deepseek-v4-flash"
 
-// Map known pushers to the user that should own the generated tasks.
-const PUSHER_USER_MAP: Record<string, string> = {
-  ikrystian: "cmq96uv1s00003bu13v562jjr",
+// Map known pushers to their registered email addresses.
+const PUSHER_EMAIL_MAP: Record<string, string> = {
+  ikrystian: "krystian@bpcoders.pl",
 }
 
 // Convert a public GitHub commit URL into raw diff content so the model has
@@ -273,8 +273,15 @@ export async function POST(request: NextRequest) {
       where: { isDefault: true },
     })
 
-    // Resolve the owning user from the pusher, if it maps to a known user.
-    const ownerId = PUSHER_USER_MAP[payload.pusher] ?? null
+    // Resolve the owning user from the pusher dynamically using their email.
+    let ownerId: string | null = null
+    const pusherEmail = PUSHER_EMAIL_MAP[payload.pusher]
+    if (pusherEmail) {
+      const user = await prisma.user.findUnique({
+        where: { email: pusherEmail },
+      })
+      ownerId = user?.id ?? null
+    }
 
     // Single commit -> a single task, no todos.
     if (commitTasks.length === 1) {

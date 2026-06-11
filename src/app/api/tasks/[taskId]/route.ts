@@ -6,9 +6,18 @@ import { isAdmin } from "@/lib/admin"
 import { deleteGithubBranch } from "@/lib/github"
 import type { Session } from "next-auth"
 
-// Status "Done". When a task is moved here (board) or selected from the list
-// and it has no reported time yet, we auto-log its estimatedHours as a TimeEntry.
-const DONE_STATUS_ID = "cmq52n2wu0004fyk33tyehmwj"
+// Done-equivalent status names, lowercased. SQLite equality is case-sensitive,
+// so we match in JS rather than relying on Prisma's `mode: "insensitive"`.
+const DONE_STATUS_NAMES = [
+  "done",
+  "zrobione",
+  "completed",
+  "gotowe",
+  "ukończone",
+  "ukonczone",
+  "zakończone",
+  "zakonczone",
+]
 
 export async function GET(
   request: NextRequest,
@@ -427,7 +436,25 @@ export async function PATCH(
     // Auto-log estimated time when a task is marked as Done with no reported time yet.
     // Triggers regardless of how the status was changed (board drag or list selection),
     // since both go through this PATCH endpoint.
-    if (statusId === DONE_STATUS_ID && existingTask.statusId !== DONE_STATUS_ID) {
+    let isMovingToDone = false
+    if (statusId !== undefined && statusId !== existingTask.statusId) {
+      const statusesToCheck = await prisma.taskStatus.findMany({
+        where: {
+          id: { in: [statusId, existingTask.statusId].filter(Boolean) as string[] }
+        }
+      })
+      const targetStatus = statusesToCheck.find(s => s.id === statusId)
+      const currentStatus = statusesToCheck.find(s => s.id === existingTask.statusId)
+      
+      const targetIsDone = targetStatus ? DONE_STATUS_NAMES.includes(targetStatus.name.trim().toLowerCase()) : false
+      const currentIsDone = currentStatus ? DONE_STATUS_NAMES.includes(currentStatus.name.trim().toLowerCase()) : false
+      
+      if (targetIsDone && !currentIsDone) {
+        isMovingToDone = true
+      }
+    }
+
+    if (isMovingToDone) {
       // Delete GitHub branch if assigned to the task
       if (existingTask.githubBranchName && existingTask.project?.githubRepo) {
         try {
