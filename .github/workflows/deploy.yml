@@ -57,6 +57,60 @@ jobs:
           curl -X POST "$WEBHOOK_URL" \
             -H "Content-Type: application/json" \
             --data @commits.json
+
+      - name: Generate merge request payload
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_HEAD_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          GITHUB_COMMITS: ${{ toJson(github.event.commits) }}
+        run: |
+          echo "Creating merge-request.json..."
+          python3 -c '
+          import json, os
+
+          commits_raw = os.environ.get("GITHUB_COMMITS", "[]")
+          try:
+              commits = json.loads(commits_raw)
+          except Exception:
+              commits = []
+
+          commit_urls = [c.get("url") for c in commits if c.get("url")]
+
+          payload = {
+              "repository": os.environ.get("GITHUB_REPOSITORY", ""),
+              "branch": os.environ.get("GITHUB_REF_NAME", ""),
+              "projectId": "cmq8o3b0k000b4vvp039r6r89",
+              "headCommitMessage": os.environ.get("GITHUB_HEAD_COMMIT_MESSAGE", ""),
+              "before": os.environ.get("GITHUB_EVENT_BEFORE", ""),
+              "after": os.environ.get("GITHUB_SHA", ""),
+              "commits": commit_urls
+          }
+
+          with open("merge-request.json", "w") as f:
+              json.dump(payload, f, indent=2)
+          '
+          cat merge-request.json
+
+      - name: Send merge request details
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+          # Optional: set a dedicated secret to point at the endpoint directly.
+          # When unset, the URL is derived from WEBHOOK_URL (…/api/webhook-commit
+          # -> …/api/merge-request).
+          MERGE_REQUEST_URL: ${{ secrets.MERGE_REQUEST_URL }}
+        run: |
+          MERGE_URL="$MERGE_REQUEST_URL"
+          if [ -z "$MERGE_URL" ]; then
+            MERGE_URL="${WEBHOOK_URL%/*}/merge-request"
+          fi
+          echo "Sending merge request details to $MERGE_URL"
+          curl -X POST "$MERGE_URL" \
+            -H "Content-Type: application/json" \
+            --data @merge-request.json
+
       - name: Setup SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
