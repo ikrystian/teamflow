@@ -411,6 +411,33 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // Log the planned time (estimated hours) to the task if set and greater than 0
+    if (task.estimatedHours && task.estimatedHours > 0) {
+      const loggedUserId = task.assigneeId || task.createdById || project.createdById
+      
+      const existingEntry = await prisma.timeEntry.findFirst({
+        where: {
+          taskId: task.id,
+          description: "Automatyczne zalogowanie czasu zaplanowanego (merge-request)",
+        },
+      })
+
+      if (!existingEntry) {
+        await prisma.timeEntry.create({
+          data: {
+            hours: task.estimatedHours,
+            description: "Automatyczne zalogowanie czasu zaplanowanego (merge-request)",
+            date: new Date(),
+            taskId: task.id,
+            userId: loggedUserId,
+          },
+        })
+        console.log(
+          `[Merge Request] Logged ${task.estimatedHours} hours of estimated time for task ${task.key || task.id}`
+        )
+      }
+    }
+
     console.log(
       `[Merge Request] Task ${task.key || task.id} updated with changes and moved to "${doneStatus?.name ?? "(unchanged)"}" for branch "${branch}"`
     )
