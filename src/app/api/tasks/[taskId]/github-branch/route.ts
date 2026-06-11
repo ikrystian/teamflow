@@ -46,11 +46,11 @@ export async function POST(
       )
     }
 
-    // Build branch name: <task-key>-<slugified-title>
-    // e.g. PS-12-fix-user-authentication
+    // Build branch name: feature/<task-key>-<slugified-title>
+    // e.g. feature/ps-12-fix-user-authentication
     const keyPart = task.key || task.id.slice(0, 8)
     const titlePart = slugifyBranchName(task.title)
-    const branchName = `${keyPart.toLowerCase()}-${titlePart}`
+    const branchName = `feature/${keyPart.toLowerCase()}-${titlePart}`
 
     const { branchName: createdBranchName, url } = await createGithubBranch(
       task.project.githubRepo,
