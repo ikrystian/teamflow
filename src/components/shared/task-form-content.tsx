@@ -1065,6 +1065,11 @@ export function TaskFormContent({
 
           {/* Title */}
           <div className="space-y-2">
+            {isEditMode && task?.key && (
+              <span className="inline-block text-xs font-mono font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded select-all">
+                {task.key}
+              </span>
+            )}
             <TextareaAutosize
               id="title"
               placeholder="Tytuł zadania"
