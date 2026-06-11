@@ -13,6 +13,7 @@ import type { Task, TaskStatus, Project, Tag } from "@/types"
 import { ReminderSettings } from "@/components/tasks/reminder-settings"
 import { FileUpload } from "@/components/ui/file-upload"
 import { Badge } from "@/components/ui/badge"
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import { Send, Plus, Trash2, Clock, Check, GitBranch, AlertTriangle } from "lucide-react"
 import { toast } from "sonner"
 import {
@@ -1012,91 +1013,95 @@ export function TaskFormContent({
                 </select>
               </div>
               {isEditMode && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowTimeReporting((v) => !v)}
-                  className="gap-1.5"
-                  title="Zaraportowany / planowany czas"
-                >
-                  <Clock className="h-4 w-4" />
-                  <span className="font-medium">
-                    {Number.isInteger(totalReportedHours) ? totalReportedHours : totalReportedHours.toFixed(1)}
-                    /{Number.isInteger(plannedHours) ? plannedHours : plannedHours.toFixed(1)}h
-                  </span>
-                </Button>
-              )}
-
-            </div>
-          )}
-
-
-
-          {/* Time summary button — reported / planned hours, toggles quick add */}
-          {isEditMode && (
-            <div className="space-y-2">
-
-
-              {showTimeReporting && (
-                <div>
-                  {/* Existing entries (task-level time) */}
-                  {timeEntries.length > 0 && (
-                    <div className="space-y-1">
-                      {timeEntries.map((entry) => (
-                        <div key={entry.id} className="flex items-center gap-2 text-sm p-2 bg-background rounded-md">
-                          <span className="font-medium w-14 shrink-0">{entry.hours}h</span>
-                          <span className="text-xs text-muted-foreground shrink-0 ml-auto">
-                            {new Date(entry.date).toLocaleDateString("pl-PL")}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteTimeEntry(entry.id)}
-                            className="text-destructive hover:text-destructive/80 shrink-0"
-                            title="Usuń wpis"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Quick add (hours only, no description) */}
-                  <div className="flex gap-2">
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.5"
-                      placeholder="Godz."
-                      value={newTimeHours}
-                      onChange={(e) => setNewTimeHours(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault()
-                          handleAddTimeEntry()
-                        }
-                      }}
-                      className="h-9 w-28 text-sm"
-                    />
+                <Popover open={showTimeReporting} onOpenChange={setShowTimeReporting}>
+                  <PopoverTrigger asChild>
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={handleAddTimeEntry}
-                      disabled={loggingTime}
+                      className="gap-1.5"
+                      title="Zaraportowany / planowany czas"
                     >
-                      <Plus className="h-4 w-4 mr-1" />
-                      Raportuj czas
+                      <Clock className="h-4 w-4" />
+                      <span className="font-medium">
+                        {Number.isInteger(totalReportedHours) ? totalReportedHours : totalReportedHours.toFixed(1)}
+                        /{Number.isInteger(plannedHours) ? plannedHours : plannedHours.toFixed(1)}h
+                      </span>
                     </Button>
-                  </div>
-                  {subtaskReportedHours > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      W tym z podzadań: {subtaskReportedHours}h · bezpośrednio: {taskReportedHours}h
-                    </p>
-                  )}
-                </div>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 p-4 space-y-4 z-[9999]" align="end">
+                    <div className="space-y-1.5">
+                      <h4 className="font-semibold text-sm leading-none">Raportowanie czasu</h4>
+                      <p className="text-xs text-muted-foreground">
+                        Zaraportowano {Number.isInteger(totalReportedHours) ? totalReportedHours : totalReportedHours.toFixed(1)}h z planowanych {Number.isInteger(plannedHours) ? plannedHours : plannedHours.toFixed(1)}h.
+                      </p>
+                    </div>
+
+                    {/* Existing entries (task-level time) */}
+                    {timeEntries.length > 0 && (
+                      <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                        {timeEntries.map((entry) => (
+                          <div key={entry.id} className="flex items-center justify-between gap-2 text-xs p-2 bg-muted/50 border rounded-md">
+                            <span className="font-semibold">{entry.hours}h</span>
+                            <span className="text-muted-foreground text-[10px]">
+                              {new Date(entry.date).toLocaleDateString("pl-PL")}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteTimeEntry(entry.id)}
+                              className="text-destructive hover:text-destructive/80 transition-colors"
+                              title="Usuń wpis"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Quick add */}
+                    <div className="space-y-2 border-t pt-3">
+                      <Label className="text-xs font-semibold">Dodaj nowy wpis</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.5"
+                          placeholder="Godz."
+                          value={newTimeHours}
+                          onChange={(e) => setNewTimeHours(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault()
+                              handleAddTimeEntry()
+                            }
+                          }}
+                          className="h-9 w-24 text-sm"
+                        />
+                        <Button
+                          type="button"
+                          variant="default"
+                          size="sm"
+                          onClick={handleAddTimeEntry}
+                          disabled={loggingTime}
+                          className="flex-1"
+                        >
+                          <Plus className="h-4 w-4 mr-1 shrink-0" />
+                          Dodaj
+                        </Button>
+                      </div>
+                    </div>
+
+                    {subtaskReportedHours > 0 && (
+                      <div className="text-[10px] text-muted-foreground border-t pt-2 space-y-0.5">
+                        <p>W podzadaniach: {subtaskReportedHours}h</p>
+                        <p>Zadanie bezpośrednio: {taskReportedHours}h</p>
+                      </div>
+                    )}
+                  </PopoverContent>
+                </Popover>
               )}
+
             </div>
           )}
 
