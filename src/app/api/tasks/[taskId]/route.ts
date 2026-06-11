@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { isAdmin } from "@/lib/admin"
+import { deleteGithubBranch } from "@/lib/github"
 import type { Session } from "next-auth"
 
 // Status "Done". When a task is moved here (board) or selected from the list
@@ -582,11 +583,7 @@ export async function DELETE(
       include: {
         createdBy: true,
         assignee: true,
-        project: {
-          include: {
-
-          }
-        }
+        project: true
       }
     })
 
@@ -620,6 +617,15 @@ export async function DELETE(
         { error: "You don't have permission to delete this task" },
         { status: 403 }
       )
+    }
+
+    // Delete GitHub branch if assigned to the task
+    if (existingTask.githubBranchName && existingTask.project?.githubRepo) {
+      try {
+        await deleteGithubBranch(existingTask.project.githubRepo, existingTask.githubBranchName)
+      } catch (error) {
+        console.error("Error deleting GitHub branch during task deletion:", error)
+      }
     }
 
     // Delete the task (cascade delete will handle related records)
