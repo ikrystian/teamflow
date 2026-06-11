@@ -297,6 +297,19 @@ model UserChatRoom {
   @@unique([userId, chatRoomId])
 }
 
+model GithubWebhookLog {
+  id           String   @id @default(cuid())
+  event        String?
+  action       String?
+  payload      String
+  headers      String?
+  signature    String?
+  response     String?
+  statusCode   Int      @default(200)
+  processedAt  DateTime @default(now())
+  ipAddress    String?
+}
+
 model PasswordResetToken {
   id        String   @id @default(cuid())
   token     String   @unique

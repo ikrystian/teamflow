@@ -11,6 +11,7 @@ import {
   BarChart3,
   Zap,
   Contact,
+  Webhook,
 } from "lucide-react"
 import {
   Sidebar,
@@ -54,6 +55,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
     { name: "Projekty", href: "/dashboard/projects", icon: FolderOpen },
     { name: "Klienci", href: "/dashboard/clients", icon: Contact },
     { name: "Raporty", href: "/dashboard/reports", icon: BarChart3 },
+    { name: "GitHub Webhooks", href: "/dashboard/github-webhook", icon: Webhook },
   ]
 
   // Function to check if a navigation item is active

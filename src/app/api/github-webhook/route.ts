@@ -5,6 +5,7 @@ import { verifyGithubWebhookSignature } from "@/lib/github"
 /**
  * GitHub webhook endpoint.
  *
+ * Every incoming request is stored in GithubWebhookLog before processing.
  * Handles `pull_request` events with action `closed` and `merged = true`.
  * When a PR is merged, we look for tasks whose githubBranchName matches the
  * PR head branch and move them to the "Done" status.
@@ -16,89 +17,156 @@ import { verifyGithubWebhookSignature } from "@/lib/github"
  *   Events: Pull requests
  */
 export async function POST(request: NextRequest) {
-  try {
-    const rawBody = await request.text()
-    const signature = request.headers.get("x-hub-signature-256")
-    const event = request.headers.get("x-github-event")
+  const rawBody = await request.text()
+  const signature = request.headers.get("x-hub-signature-256")
+  const event = request.headers.get("x-github-event")
+  const delivery = request.headers.get("x-github-delivery")
+  const userAgent = request.headers.get("user-agent")
+  const ipAddress =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    request.headers.get("x-real-ip") ??
+    null
 
+  // Helper: persist the log entry and return the NextResponse
+  async function respondWithLog(body: Record<string, unknown>, status = 200) {
+    const responseJson = JSON.stringify(body)
+    let parsedPayload: Record<string, unknown> = {}
+    try { parsedPayload = JSON.parse(rawBody) } catch { /* non-JSON body */ }
+
+    await prisma.githubWebhookLog.create({
+      data: {
+        event: event ?? "unknown",
+        action: typeof parsedPayload?.action === "string" ? parsedPayload.action : null,
+        payload: rawBody || "{}",
+        headers: JSON.stringify({
+          "x-github-event": event,
+          "x-github-delivery": delivery,
+          "x-hub-signature-256": signature,
+          "user-agent": userAgent,
+        }),
+        signature,
+        response: responseJson,
+        statusCode: status,
+        ipAddress,
+      },
+    }).catch((err) => console.error("[GitHub Webhook] Failed to save log:", err))
+
+    return NextResponse.json(body, { status })
+  }
+
+  try {
     // Verify signature if secret is configured
     const secret = process.env.GITHUB_WEBHOOK_SECRET
     if (secret) {
       const valid = await verifyGithubWebhookSignature(rawBody, signature, secret)
       if (!valid) {
-        return NextResponse.json({ error: "Invalid signature" }, { status: 401 })
+        return respondWithLog({ error: "Invalid signature" }, 401)
       }
     }
 
     // Only handle pull_request events
     if (event !== "pull_request") {
-      return NextResponse.json({ message: "Event ignored" })
+      return respondWithLog({ message: "Event ignored" })
     }
 
-    const payload = JSON.parse(rawBody)
+    let payload: Record<string, unknown>
+    try {
+      payload = JSON.parse(rawBody)
+    } catch {
+      return respondWithLog({ error: "Invalid JSON body" }, 400)
+    }
+
+    const pr = payload.pull_request as Record<string, unknown> | undefined
 
     // Only handle merged PRs
-    if (payload.action !== "closed" || !payload.pull_request?.merged) {
-      return NextResponse.json({ message: "Not a merge event" })
+    if (payload.action !== "closed" || !pr?.merged) {
+      return respondWithLog({ message: "Not a merge event" })
     }
 
-    const headBranch: string = payload.pull_request.head.ref
+    const headBranch = (pr.head as Record<string, unknown>)?.ref as string | undefined
 
     if (!headBranch) {
-      return NextResponse.json({ message: "No head branch" })
+      return respondWithLog({ message: "No head branch" })
     }
 
     // Find task matching the branch
     const task = await prisma.task.findFirst({
       where: { githubBranchName: headBranch },
-      include: { taskStatus: true }
+      include: { taskStatus: true },
     })
 
     if (!task) {
-      return NextResponse.json({ message: `No task found for branch: ${headBranch}` })
+      return respondWithLog({ message: `No task found for branch: ${headBranch}` })
     }
 
-    // Find the "Done" status (highest order, or the one named "Done")
+    // Find the "Done" status
     const doneStatus = await prisma.taskStatus.findFirst({
       where: {
         OR: [
           { name: { equals: "Done", mode: "insensitive" } },
           { name: { equals: "Zrobione", mode: "insensitive" } },
           { name: { equals: "Completed", mode: "insensitive" } },
-        ]
+        ],
       },
-      orderBy: { order: "desc" }
+      orderBy: { order: "desc" },
     })
 
-    // Fallback: pick the status with the highest order number
-    const targetStatus = doneStatus ?? await prisma.taskStatus.findFirst({
-      orderBy: { order: "desc" }
-    })
+    const targetStatus =
+      doneStatus ??
+      (await prisma.taskStatus.findFirst({ orderBy: { order: "desc" } }))
 
     if (!targetStatus) {
-      return NextResponse.json({ message: "No task status found" }, { status: 500 })
+      return respondWithLog({ message: "No task status found" }, 500)
     }
 
-    // Skip if already in that status
     if (task.statusId === targetStatus.id) {
-      return NextResponse.json({ message: "Task already in done status" })
+      return respondWithLog({ message: "Task already in done status" })
     }
 
     await prisma.task.update({
       where: { id: task.id },
-      data: { statusId: targetStatus.id }
+      data: { statusId: targetStatus.id },
     })
 
-    console.log(`[GitHub Webhook] Task ${task.key || task.id} moved to "${targetStatus.name}" after PR merge on branch "${headBranch}"`)
+    console.log(
+      `[GitHub Webhook] Task ${task.key || task.id} moved to "${targetStatus.name}" after PR merge on branch "${headBranch}"`
+    )
 
-    return NextResponse.json({
+    return respondWithLog({
       message: "Task updated",
       taskId: task.id,
       taskKey: task.key,
-      newStatus: targetStatus.name
+      newStatus: targetStatus.name,
     })
   } catch (error) {
     console.error("GitHub webhook error:", error)
+    return respondWithLog({ error: "Internal server error" }, 500)
+  }
+}
+
+/**
+ * GET /api/github-webhook
+ * Returns a paginated list of all logged webhook requests.
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10))
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") ?? "50", 10)))
+    const skip = (page - 1) * limit
+
+    const [logs, total] = await Promise.all([
+      prisma.githubWebhookLog.findMany({
+        orderBy: { processedAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.githubWebhookLog.count(),
+    ])
+
+    return NextResponse.json({ logs, total, page, limit })
+  } catch (error) {
+    console.error("GitHub webhook log fetch error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
