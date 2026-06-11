@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -41,7 +42,7 @@ jobs:
               "repository": os.environ.get("GITHUB_REPOSITORY", ""),
               "branch": os.environ.get("GITHUB_REF_NAME", ""),
               "pusher": "ikrystian",
-              "projectId": "cmq96v4rn00023bu11ujr98q0",
+              "projectId": os.environ.get("TEAM_PROJECT_ID", ""),
               "commits": commit_urls
           }
 
@@ -66,6 +67,7 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
           GITHUB_HEAD_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
           GITHUB_COMMITS: ${{ toJson(github.event.commits) }}
+          TEAM_PROJECT_ID: ${{ secrets.TEAM_PROJECT_ID }}
         run: |
           echo "Creating merge-request.json..."
           python3 -c '
@@ -82,7 +84,7 @@ jobs:
           payload = {
               "repository": os.environ.get("GITHUB_REPOSITORY", ""),
               "branch": os.environ.get("GITHUB_REF_NAME", ""),
-              "projectId": "cmq96v4rn00023bu11ujr98q0",
+              "projectId": os.environ.get("TEAM_PROJECT_ID", "cmq96v4rn00023bu11ujr98q0"),
               "headCommitMessage": os.environ.get("GITHUB_HEAD_COMMIT_MESSAGE", ""),
               "before": os.environ.get("GITHUB_EVENT_BEFORE", ""),
               "after": os.environ.get("GITHUB_SHA", ""),
