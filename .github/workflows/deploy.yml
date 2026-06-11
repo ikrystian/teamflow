@@ -1,54 +1,107 @@
-name: Deploy on push to main
+# name: Deploy on push to main
 
-on:
-  push:
-    branches:
-      - main
+# on:
+#   push:
+#     branches:
+#       - main
 
-jobs:
-  deploy:
-    environment: dev # Upewnij się, że w GitHub Settings -> Environments masz stworzone środowisko o nazwie "env"
-    runs-on: ubuntu-latest
+# jobs:
+#   deploy:
+#     environment: dev # Upewnij się, że w GitHub Settings -> Environments masz stworzone środowisko o nazwie "env"
+#     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
+#         with:
+#           fetch-depth: 0
 
-      - name: Setup SSH
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-        run: |
-          mkdir -p ~/.ssh
-          # Użycie cudzysłowu zapobiega problemom z nowymi liniami w kluczu prywatnym
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
+#       - name: Generate commits payload
+#         env:
+#           GITHUB_REPOSITORY: ${{ github.repository }}
+#           GITHUB_ACTOR: ${{ github.actor }}
+#           GITHUB_REF_NAME: ${{ github.ref_name }}
+#           GITHUB_EVENT_BEFORE: ${{ github.event.before }}
+#           GITHUB_SHA: ${{ github.sha }}
+#           GITHUB_COMMITS: ${{ toJson(github.event.commits) }}
+#         run: |
+#           echo "Creating commits.json with commit URLs..."
+#           python2 -c 3
+#           import json, os
 
-      - name: Deploy via SSH
-        env:
-          SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-        run: |
-          ssh "$SSH_USER@$SSH_HOST" << 'EOF'
-            set -e
-            cd /root/projects/teamflow
+#           commits_raw = os.environ.get("GITHUB_COMMITS", "[]")
+#           try:
+#               commits = json.loads(commits_raw)
+#           except Exception:
+#               commits = []
+
+#           commit_urls = [c.get("url") for c in commits if c.get("url")]
+
+#           payload = {
+#               "repository": os.environ.get("GITHUB_REPOSITORY", ""),
+#               "branch": os.environ.get("GITHUB_REF_NAME", ""),
+#               "pusher": "ikrystian",
+#               "projectId": "cmq8o3b0k000b4vvp039r6r89",
+#               "commits": commit_urls
+#           }
+
+#           with open("commits.json", "w") as f:
+#               json.dump(payload, f, indent=2)
+#           '
+#           cat commits.json
+
+#       - name: Send webhook with commits
+#         env:
+#           WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+#         run: |
+#           curl -X POST "$WEBHOOK_URL" \
+#             -H "Content-Type: application/json" \
+#             --data @commits.json
+#       - name: Setup SSH
+#         env:
+#           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+#           SSH_HOST: ${{ secrets.SSH_HOST }}
+#         run: |
+#           mkdir -p ~/.ssh
+#           # Użycie cudzysłowu zapobiega problemom z nowymi liniami w kluczu prywatnym
+#           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+#           chmod 600 ~/.ssh/id_rsa
+#           ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
+
+#       - name: Deploy via SSH
+#         env:
+#           SSH_USER: ${{ secrets.SSH_USER }}
+#           SSH_HOST: ${{ secrets.SSH_HOST }}
+#         run: |
+#           ssh "$SSH_USER@$SSH_HOST" << 'EOF'
+#             set -e
+#             cd /root/projects/teamflow
       
-            export PATH="$HOME/.bun/bin:$PATH"
-            if ! command -v bun &> /dev/null; then
-              echo "Bun is not installed. Installing Bun..."
-              curl -fsSL https://bun.sh/install | bash
-            fi
+#             export PATH="$HOME/.bun/bin:$PATH"
+#             if ! command -v bun &> /dev/null; then
+#               echo "Bun is not installed. Installing Bun..."
+#               curl -fsSL https://bun.sh/install | bash
+#             fi
       
-            # === Deploy ===
-            git pull origin main
-            bun install
-            bun run build
-
-            bunx prisma migrate deploy
-
-            pm2 reload 11
-            echo "Deploy zakończony pomyślnie."
-          EOF
+#             # === BACKUP przed deployem!! ===
+#             mkdir -p backups/db
+#             chmod +x scripts/db-backup.sh
+#             BACKUP_FILE=$(scripts/db-backup.sh pre-deploy)
+#             echo "Backup przed deployem: $BACKUP_FILE"
+      
+#             # === Deploy ===
+#             git pull origin main
+#             bun install
+#             bun run build
+      
+#             # === Migracje z automatycznym rollbackiem przy błędzie ===
+#             if ! bunx prisma migrate deploy; then
+#               echo "ERROR: Migracja nie powiodła się - przywracam backup..."
+#               scripts/db-restore.sh "$BACKUP_FILE"
+#               echo "Rollback zakończony. Deploy przerwany."
+#               exit 1
+#             fi
+      
+#             pm2 reload 
+#             echo "Deploy zakończony pomyślnie."
+#           EOF
