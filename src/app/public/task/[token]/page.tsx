@@ -2,6 +2,7 @@ import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
+import remarkBreaks from "remark-breaks"
 import { prisma } from "@/lib/prisma"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -11,6 +12,111 @@ import {
 } from "@/lib/task-format-utils"
 
 export const dynamic = "force-dynamic"
+
+// Convert basic HTML (stored from TipTap editor) to Markdown so ReactMarkdown can render it properly.
+function htmlToMarkdown(html: string): string {
+  if (!html) return ""
+  
+  // If it doesn't look like HTML (no tag-like structure), return it as is
+  if (!/<[a-z][\s\S]*>/i.test(html)) {
+    return html
+  }
+
+  let md = html
+    // Replace headings
+    .replace(/<h1>([\s\S]*?)<\/h1>/gi, "# $1\n\n")
+    .replace(/<h2>([\s\S]*?)<\/h2>/gi, "## $1\n\n")
+    .replace(/<h3>([\s\S]*?)<\/h3>/gi, "### $1\n\n")
+    // Replace strong/bold
+    .replace(/<strong>([\s\S]*?)<\/strong>/gi, "**$1**")
+    .replace(/<b>([\s\S]*?)<\/b>/gi, "**$1**")
+    // Replace em/italic
+    .replace(/<em>([\s\S]*?)<\/em>/gi, "*$1*")
+    .replace(/<i>([\s\S]*?)<\/i>/gi, "*$1*")
+    // Replace code blocks
+    .replace(/<pre><code>([\s\S]*?)<\/code><\/pre>/gi, "```\n$1\n```\n\n")
+    .replace(/<code>([\s\S]*?)<\/code>/gi, "`$1`")
+    // Replace lists
+    .replace(/<ul>([\s\S]*?)<\/ul>/gi, "$1\n")
+    .replace(/<ol>([\s\S]*?)<\/ol>/gi, "$1\n")
+    .replace(/<li>([\s\S]*?)<\/li>/gi, "- $1\n")
+    // Replace paragraphs
+    .replace(/<p>([\s\S]*?)<\/p>/gi, "$1\n\n")
+    // Replace breaks
+    .replace(/<br\s*\/?>/gi, "\n")
+    // Replace links
+    .replace(/<a\s+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi, "[$2]($1)")
+    // Strip blockquotes
+    .replace(/<blockquote>([\s\S]*?)<\/blockquote>/gi, "> $1\n\n")
+    // Trim extra spaces and double newlines
+    .trim()
+
+  // Remove other HTML tags if any remain
+  md = md.replace(/<[^>]+>/g, "")
+
+  return md
+}
+
+const markdownComponents: Record<string, React.ComponentType<any>> = {
+  h1: ({ node, ...props }) => (
+    <h1 className="text-xl font-bold text-foreground mt-6 mb-4 border-b pb-2 border-border/60 hover:text-primary transition-colors" {...props} />
+  ),
+  h2: ({ node, ...props }) => (
+    <h2 className="text-lg font-semibold text-foreground mt-5 mb-3 border-l-2 border-primary pl-2 hover:text-primary transition-colors" {...props} />
+  ),
+  h3: ({ node, ...props }) => (
+    <h3 className="text-base font-semibold text-foreground mt-4 mb-2 hover:text-primary transition-colors" {...props} />
+  ),
+  p: ({ node, ...props }) => (
+    <p className="text-sm text-foreground leading-relaxed mb-4" {...props} />
+  ),
+  a: ({ node, ...props }) => (
+    <a className="text-primary hover:underline font-medium transition-colors hover:text-primary/80" target="_blank" rel="noopener noreferrer" {...props} />
+  ),
+  ul: ({ node, ...props }) => (
+    <ul className="list-disc pl-5 mb-4 space-y-1.5 text-sm text-foreground marker:text-primary" {...props} />
+  ),
+  ol: ({ node, ...props }) => (
+    <ol className="list-decimal pl-5 mb-4 space-y-1.5 text-sm text-foreground marker:text-primary" {...props} />
+  ),
+  li: ({ node, ...props }) => (
+    <li className="mb-0.5 text-foreground/90" {...props} />
+  ),
+  blockquote: ({ node, ...props }) => (
+    <blockquote className="border-l-4 border-primary pl-4 italic my-4 text-muted-foreground bg-primary/5 py-2.5 pr-4 rounded-r-md" {...props} />
+  ),
+  code({ node, className, children, ...props }) {
+    const match = /language-(\w+)/.exec(className || "")
+    return match ? (
+      <pre className="bg-muted/80 p-4 rounded-lg overflow-x-auto my-4 border border-border/80 font-mono text-xs text-foreground shadow-inner">
+        <code className={className} {...props}>
+          {children}
+        </code>
+      </pre>
+    ) : (
+      <code className="bg-primary/10 text-primary px-1.5 py-0.5 rounded font-mono text-xs font-semibold" {...props}>
+        {children}
+      </code>
+    )
+  },
+  table: ({ node, ...props }) => (
+    <div className="overflow-x-auto my-4 rounded-lg border border-border/60">
+      <table className="w-full border-collapse text-sm" {...props} />
+    </div>
+  ),
+  thead: ({ node, ...props }) => (
+    <thead className="bg-primary/5 border-b border-border" {...props} />
+  ),
+  th: ({ node, ...props }) => (
+    <th className="border border-border/60 px-4 py-2.5 font-semibold text-left text-foreground" {...props} />
+  ),
+  td: ({ node, ...props }) => (
+    <td className="border border-border/60 px-4 py-2 text-foreground/90" {...props} />
+  ),
+  hr: ({ node, ...props }) => (
+    <hr className="my-6 border-t border-primary/20" {...props} />
+  ),
+}
 
 // Fetch a task purely by its public share token. No session is required — this
 // is the read-only view shared with people who don't have an account.
@@ -194,10 +300,14 @@ export default async function PublicTaskPage({
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               Opis
             </h2>
-            <div
-              className="prose prose-sm max-w-none dark:prose-invert"
-              dangerouslySetInnerHTML={{ __html: task.description }}
-            />
+            <div className="prose prose-sm max-w-none dark:prose-invert">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm, remarkBreaks]}
+                components={markdownComponents}
+              >
+                {htmlToMarkdown(task.description)}
+              </ReactMarkdown>
+            </div>
           </section>
         )}
 
@@ -208,7 +318,10 @@ export default async function PublicTaskPage({
               Co zostało zrobione
             </h2>
             <div className="prose prose-sm max-w-none dark:prose-invert">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm, remarkBreaks]}
+                components={markdownComponents}
+              >
                 {task.changes}
               </ReactMarkdown>
             </div>
