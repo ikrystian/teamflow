@@ -206,10 +206,6 @@ jobs:
             --body-file /tmp/pr_body.txt)
           echo "Created: $PR_URL"
 
-          # Ensure labels exist, then apply them (non-fatal so labeling never blocks PR creation)
-          gh label create automated-pr --color 0e8a16 2>/dev/null || true
-          gh pr edit "$PR_URL" --add-label automated-pr || true
-
       - name: Update Pull Request
         if: steps.existing.outputs.count != '0'
         env:

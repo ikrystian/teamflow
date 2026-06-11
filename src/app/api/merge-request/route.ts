@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { deleteGithubBranch } from "@/lib/github"
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 const OPENROUTER_MODEL = "deepseek/deepseek-v4-flash"
@@ -223,11 +224,51 @@ async function generateChanges(
 }
 
 export async function POST(request: NextRequest) {
+  const rawBody = await request.text()
+  const userAgent = request.headers.get("user-agent")
+  const ipAddress =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    request.headers.get("x-real-ip") ??
+    null
+
+  const logEntry = await prisma.githubWebhookLog.create({
+    data: {
+      event: "merge-request",
+      action: null,
+      payload: rawBody || "{}",
+      headers: JSON.stringify({
+        "user-agent": userAgent,
+        "content-type": request.headers.get("content-type"),
+      }),
+      signature: null,
+      ipAddress,
+    },
+  }).catch((err) => {
+    console.error("[Merge Request] Failed to create log entry:", err)
+    return null
+  })
+
+  async function respond(body: Record<string, unknown>, status = 200) {
+    const responseJson = JSON.stringify(body)
+    if (logEntry) {
+      await prisma.githubWebhookLog.update({
+        where: { id: logEntry.id },
+        data: { response: responseJson, statusCode: status },
+      }).catch((err) => console.error("[Merge Request] Failed to update log:", err))
+    }
+    return NextResponse.json(body, { status })
+  }
+
   try {
-    const payload = (await request.json()) as MergeRequestPayload
+    let payload: MergeRequestPayload
+    try {
+      payload = JSON.parse(rawBody) as MergeRequestPayload
+    } catch {
+      return respond({ error: "Invalid JSON body" }, 400)
+    }
 
     if (!payload?.projectId) {
-      return NextResponse.json({ error: "projectId is required" }, { status: 400 })
+      return respond({ error: "projectId is required" }, 400)
     }
 
     const project = await prisma.project.findUnique({
@@ -235,15 +276,15 @@ export async function POST(request: NextRequest) {
     })
 
     if (!project) {
-      return NextResponse.json({ error: "Project not found" }, { status: 404 })
+      return respond({ error: "Project not found" }, 404)
     }
 
     // 1. Determine the merged branch.
     const branch = extractMergedBranch(payload)
     if (!branch) {
-      return NextResponse.json(
+      return respond(
         { error: "Could not determine merged branch from payload" },
-        { status: 400 }
+        400
       )
     }
 
@@ -263,26 +304,26 @@ export async function POST(request: NextRequest) {
     }
 
     if (!task) {
-      return NextResponse.json(
+      return respond(
         { message: `No task found for merged branch: ${branch}` },
-        { status: 404 }
+        404
       )
     }
 
     // 3. Fetch the diff and ask the model for the list of changes.
     const diff = await buildMergeDiff(payload)
     if (!diff) {
-      return NextResponse.json(
+      return respond(
         { error: "Could not fetch merge request diff" },
-        { status: 502 }
+        502
       )
     }
 
     const changes = await generateChanges(payload, branch, task, diff)
     if (!changes) {
-      return NextResponse.json(
+      return respond(
         { error: "Failed to generate changes from merge request" },
-        { status: 502 }
+        502
       )
     }
 
@@ -293,6 +334,15 @@ export async function POST(request: NextRequest) {
     const doneStatus =
       statuses.find((s) => DONE_STATUS_NAMES.includes(s.name.trim().toLowerCase())) ??
       statuses[0]
+
+    // Delete GitHub branch if assigned to the task
+    if (task.githubBranchName && project.githubRepo) {
+      try {
+        await deleteGithubBranch(project.githubRepo, task.githubBranchName)
+      } catch (error) {
+        console.error("Error deleting GitHub branch during merge-request:", error)
+      }
+    }
 
     // 5. Save the changes and move the task to Done.
     const updated = await prisma.task.update({
@@ -307,7 +357,7 @@ export async function POST(request: NextRequest) {
       `[Merge Request] Task ${task.key || task.id} updated with changes and moved to "${doneStatus?.name ?? "(unchanged)"}" for branch "${branch}"`
     )
 
-    return NextResponse.json({
+    return respond({
       message: "Task updated",
       taskId: updated.id,
       taskKey: updated.key,
@@ -316,6 +366,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error("Error handling merge-request webhook:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return respond({ error: "Internal server error" }, 500)
   }
 }

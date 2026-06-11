@@ -185,11 +185,7 @@ export async function PATCH(
       include: {
         createdBy: true,
         assignee: true,
-        project: {
-          include: {
-
-          }
-        }
+        project: true
       }
     })
 
@@ -432,6 +428,15 @@ export async function PATCH(
     // Triggers regardless of how the status was changed (board drag or list selection),
     // since both go through this PATCH endpoint.
     if (statusId === DONE_STATUS_ID && existingTask.statusId !== DONE_STATUS_ID) {
+      // Delete GitHub branch if assigned to the task
+      if (existingTask.githubBranchName && existingTask.project?.githubRepo) {
+        try {
+          await deleteGithubBranch(existingTask.project.githubRepo, existingTask.githubBranchName)
+        } catch (error) {
+          console.error("Error deleting GitHub branch on status change to Done:", error)
+        }
+      }
+
       const finalEstimatedHours =
         updateData.estimatedHours !== undefined
           ? updateData.estimatedHours
