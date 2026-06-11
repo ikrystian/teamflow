@@ -108,13 +108,18 @@ export async function POST(request: NextRequest) {
       return respond({ message: `No task found for branch: ${headBranch}` })
     }
 
-    // Find the "Done" status
+    // Find the "Done" status.
+    // Note: mode: "insensitive" is PostgreSQL-only; we use SQLite, so we list
+    // all expected name variants explicitly.
     const doneStatus = await prisma.taskStatus.findFirst({
       where: {
         OR: [
-          { name: { equals: "Done", mode: "insensitive" } },
-          { name: { equals: "Zrobione", mode: "insensitive" } },
-          { name: { equals: "Completed", mode: "insensitive" } },
+          { name: "Done" },
+          { name: "done" },
+          { name: "Zrobione" },
+          { name: "zrobione" },
+          { name: "Completed" },
+          { name: "completed" },
         ],
       },
       orderBy: { order: "desc" },
