@@ -27,6 +27,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { NavUser } from "@/components/dashboard/nav-user"
 import { NavProjects } from "@/components/dashboard/nav-projects"
 import { DashboardBreadcrumbs } from "@/components/dashboard/breadcrumbs"
@@ -119,6 +120,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
             <div className="flex-1">
               {headerContent}
             </div>
+            <ThemeToggle />
           </div>
         </header>
         <DashboardBreadcrumbs />

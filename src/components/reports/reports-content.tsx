@@ -144,7 +144,7 @@ export function ReportsContent() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6" id="reports">
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
