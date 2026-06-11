@@ -240,6 +240,163 @@ async function generateChanges(
   return parsed.changes
 }
 
+// One subtask the model estimates for a single commit.
+interface CommitSubtask {
+  commitUrl: string
+  title: string
+  workHours: number
+}
+
+// The exact JSON contract we ask the model to fill in: one entry per commit,
+// each with a Polish title and an estimate of the work hours that commit took.
+const COMMIT_SUBTASK_SCHEMA =
+  "{\n" +
+  '  "subtasks": [\n' +
+  "    {\n" +
+  '      "commitUrl": "<the exact commit URL from the input>",\n' +
+  '      "title": "<short Polish title describing the work done in this commit, max 80 chars>",\n' +
+  '      "workHours": <positive number of work hours, minimum 0.25>\n' +
+  "    }\n" +
+  "  ]\n" +
+  "}"
+
+// Per-commit diffs are kept small so a whole PR's worth of commits fits in one
+// model call.
+const MAX_COMMIT_DIFF_CHARS = 3000
+
+// Ask the model to estimate the work hours for each commit and return them as
+// subtasks following COMMIT_SUBTASK_SCHEMA. Returns a sanitized list (invalid or
+// empty-titled entries dropped); never throws.
+async function estimateCommitSubtasks(
+  task: { key: string | null; title: string },
+  commits: { url: string; diff: string }[]
+): Promise<CommitSubtask[]> {
+  const systemPrompt =
+    "You are an assistant that analyzes git commit diffs and estimates the work " +
+    "hours each commit represents. Respond ONLY with a JSON object that matches " +
+    "this exact structure:\n" +
+    COMMIT_SUBTASK_SCHEMA +
+    "\nReturn exactly one subtask per commit, preserving the input commit URLs. " +
+    "Titles must be written in Polish and stay concise."
+
+  const userPrompt =
+    `Estimate the work hours for each of the following ${commits.length} commits ` +
+    `belonging to task "${task.key ?? ""} ${task.title}":\n\n` +
+    commits
+      .map((c, i) => `Commit #${i + 1} URL: ${c.url}\nDiff:\n${c.diff}`)
+      .join("\n\n---\n\n")
+
+  const parsed = await callOpenRouterJson(systemPrompt, userPrompt)
+  if (!parsed || !Array.isArray(parsed.subtasks)) return []
+
+  return parsed.subtasks
+    .map((raw): CommitSubtask | null => {
+      const rec = raw as Record<string, unknown>
+      const title = String(rec.title ?? "").trim()
+      if (!title) return null
+      const hours = Number(rec.workHours)
+      return {
+        commitUrl: String(rec.commitUrl ?? "").trim(),
+        title: title.slice(0, 80),
+        // Floor every estimate at 0.25h so a subtask never reports zero time.
+        workHours: Number.isFinite(hours) && hours > 0 ? hours : 0.25,
+      }
+    })
+    .filter((st): st is CommitSubtask => st !== null)
+}
+
+// Persist a subtask as a completed Todo plus a matching TimeEntry. Deduplicates
+// by title so the webhook is safe to retry. Returns true when it created
+// something, false when an identically-titled subtask already existed.
+async function persistSubtask(
+  taskId: string,
+  loggedUserId: string,
+  title: string,
+  workHours: number
+): Promise<boolean> {
+  const existing = await prisma.todo.findFirst({ where: { taskId, title } })
+  if (existing) return false
+
+  await prisma.todo.create({
+    data: { taskId, title, isCompleted: true, timeSpent: workHours },
+  })
+
+  await prisma.timeEntry.create({
+    data: {
+      taskId,
+      userId: loggedUserId,
+      hours: workHours,
+      description: `Automatyczne zaraportowanie: ${title}`,
+      date: new Date(),
+    },
+  })
+
+  return true
+}
+
+// Fetch the diffs of the merge's commits, ask the model to estimate each one,
+// and persist them as subtasks with reported time. Never throws.
+async function logCommitSubtasks(
+  payload: MergeRequestPayload,
+  task: { id: string; key: string | null; title: string },
+  loggedUserId: string
+): Promise<void> {
+  try {
+    if (!Array.isArray(payload.commits) || payload.commits.length === 0) return
+
+    const results = await Promise.all(
+      payload.commits.map(async (url) => ({
+        url,
+        diff: await fetchGithubDiff(url, MAX_COMMIT_DIFF_CHARS),
+      }))
+    )
+    const commitDiffs = results.filter(
+      (r): r is { url: string; diff: string } => !!r.diff && r.diff.trim() !== ""
+    )
+    if (commitDiffs.length === 0) return
+
+    const subtasks = await estimateCommitSubtasks(task, commitDiffs)
+    for (const st of subtasks) {
+      const created = await persistSubtask(
+        task.id,
+        loggedUserId,
+        st.title,
+        st.workHours
+      )
+      if (created) {
+        console.log(
+          `[Merge Request] Logged subtask "${st.title}" with ${st.workHours}h for task ${task.key || task.id}`
+        )
+      }
+    }
+  } catch (err) {
+    console.error("Error evaluating commits for subtasks:", err)
+  }
+}
+
+// Invariant guard: every card must carry at least one subtask with reported
+// time. When the merge produced none (no commits, diff/AI failure, or every
+// title was deduped), create a single fallback subtask so the card is never left
+// without reported work.
+async function ensureReportedSubtask(
+  task: { id: string; key: string | null; title: string; estimatedHours: number | null },
+  loggedUserId: string
+): Promise<void> {
+  const existing = await prisma.todo.findFirst({
+    where: { taskId: task.id, timeSpent: { gt: 0 } },
+  })
+  if (existing) return
+
+  const fallbackHours =
+    task.estimatedHours && task.estimatedHours > 0 ? task.estimatedHours : 1
+  const title = `Realizacja zadania: ${task.title}`.slice(0, 80)
+
+  await persistSubtask(task.id, loggedUserId, title, fallbackHours)
+  console.log(
+    `[Merge Request] No commit subtasks created; added fallback subtask "${title}" with ${fallbackHours}h for task ${task.key || task.id}`
+  )
+}
+
 export async function POST(request: NextRequest) {
   const rawBody = await request.text()
   const userAgent = request.headers.get("user-agent")
@@ -411,10 +568,12 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // The user the automatic time/subtasks get attributed to.
+    const loggedUserId =
+      task.assigneeId || task.createdById || project.createdById
+
     // Log the planned time (estimated hours) to the task if set and greater than 0
     if (task.estimatedHours && task.estimatedHours > 0) {
-      const loggedUserId = task.assigneeId || task.createdById || project.createdById
-      
       const existingEntry = await prisma.timeEntry.findFirst({
         where: {
           taskId: task.id,
@@ -438,86 +597,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Evaluate each commit and log as a subtask (Todo) and TimeEntry
-    if (Array.isArray(payload.commits) && payload.commits.length > 0) {
-      try {
-        const commitContents: { url: string; diff: string }[] = []
-        const fetchPromises = payload.commits.map(async (commitUrl) => {
-          const diff = await fetchGithubDiff(commitUrl, 3000)
-          return { url: commitUrl, diff }
-        })
-        const results = await Promise.all(fetchPromises)
-        for (const res of results) {
-          if (res.diff && res.diff.trim()) {
-            commitContents.push({ url: res.url, diff: res.diff })
-          }
-        }
+    // Evaluate each merged commit with the model and log it as a subtask
+    // (completed Todo) with reported time, plus a matching TimeEntry.
+    await logCommitSubtasks(payload, task, loggedUserId)
 
-        if (commitContents.length > 0) {
-          const systemPrompt =
-            "You are an assistant that analyzes git commit diffs and estimates the work hours for each commit. " +
-            "Respond ONLY with a JSON object containing a list of subtasks. " +
-            "The JSON structure MUST be exactly as follows:\n" +
-            "{\n" +
-            '  "subtasks": [\n' +
-            "    {\n" +
-            '      "commitUrl": "exact commit URL from the input",\n' +
-            '      "title": "Short, clear subtask title in Polish describing the work done in this commit (max 80 chars)",\n' +
-            '      "workHours": 1.5 (a positive number representing work hours, minimum 0.5)\n' +
-            "    }\n" +
-            "  ]\n" +
-            "}\n" +
-            "Translate all titles to Polish. Keep descriptions short."
-
-          const userPrompt =
-            `Analyze the following ${commitContents.length} commits for task "${task.key || ''} ${task.title}" and estimate work hours for each:\n\n` +
-            commitContents.map((c, idx) => `Commit #${idx + 1} URL: ${c.url}\nDiff:\n${c.diff}`).join("\n\n---\n\n")
-
-          const parsed = await callOpenRouterJson(systemPrompt, userPrompt)
-          if (parsed && Array.isArray(parsed.subtasks)) {
-            const loggedUserId = task.assigneeId || task.createdById || project.createdById
-            
-            for (const st of parsed.subtasks) {
-              const commitUrl = String(st.commitUrl || "")
-              const title = String(st.title || "Aktualizacja kodu")
-              const workHours = Number.isFinite(Number(st.workHours)) && Number(st.workHours) > 0 ? Number(st.workHours) : 0.5
-
-              // Check if this subtask (Todo) already exists to prevent duplication
-              const existingTodo = await prisma.todo.findFirst({
-                where: {
-                  taskId: task.id,
-                  title: title,
-                },
-              })
-
-              if (!existingTodo) {
-                await prisma.todo.create({
-                  data: {
-                    taskId: task.id,
-                    title: title,
-                    isCompleted: true,
-                    timeSpent: workHours,
-                  },
-                })
-
-                await prisma.timeEntry.create({
-                  data: {
-                    taskId: task.id,
-                    userId: loggedUserId,
-                    hours: workHours,
-                    description: `Automatyczne zaraportowanie: ${title}`,
-                    date: new Date(),
-                  },
-                })
-                console.log(`[Merge Request] Logged subtask "${title}" with ${workHours}h for task ${task.key || task.id}`)
-              }
-            }
-          }
-        }
-      } catch (err) {
-        console.error("Error evaluating commits for subtasks:", err)
-      }
-    }
+    // Invariant: every card must end up with at least one subtask that has
+    // reported time. Add a fallback subtask when the commits produced none.
+    await ensureReportedSubtask(task, loggedUserId)
 
     console.log(
       `[Merge Request] Task ${task.key || task.id} updated with changes and moved to "${doneStatus?.name ?? "(unchanged)"}" for branch "${branch}"`
