@@ -57,7 +57,10 @@ export async function processPendingSlackScheduledMessages() {
         const shareToken = await getOrCreateTaskShareToken(task.id)
         const shareUrl = buildTaskShareUrl(shareToken)
 
-        const text = `*${task.title}*\n\n${task.changes}\n\n<${shareUrl}|🔗 Zobacz zadanie>`
+        let text = `*${task.title}*\n\n${task.changes}\n\n<${shareUrl}|🔗 Zobacz zadanie>`
+        if (task.githubPrUrl) {
+          text += ` | <${task.githubPrUrl}|🐙 Pull Request>`
+        }
 
         const res = await fetch("https://slack.com/api/chat.postMessage", {
           method: "POST",

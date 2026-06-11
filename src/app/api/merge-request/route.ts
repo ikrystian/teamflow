@@ -125,6 +125,13 @@ interface MergeRequestPayload {
   before?: string
   after?: string
   commits?: string[]
+  pullRequestUrl?: string
+}
+
+function extractPrNumber(payload: MergeRequestPayload): string | null {
+  const firstLine = (payload.headCommitMessage ?? "").split("\n")[0]
+  const match = firstLine.match(/Merge pull request #(\d+)/i)
+  return match ? match[1] : null
 }
 
 // Done-equivalent status names, lowercased. SQLite equality is case-sensitive,
@@ -364,12 +371,25 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 5. Save the changes and move the task to Done.
+    // 5. Save the changes and move the task to Done. Set scheduled send time to 1 hour from now.
+    const scheduledSendAt = new Date()
+    scheduledSendAt.setHours(scheduledSendAt.getHours() + 1)
+
+    let githubPrUrl = payload.pullRequestUrl
+    if (!githubPrUrl) {
+      const prNumber = extractPrNumber(payload)
+      if (prNumber && payload.repository) {
+        githubPrUrl = `https://github.com/${payload.repository}/pull/${prNumber}`
+      }
+    }
+
     const updated = await prisma.task.update({
       where: { id: task.id },
       data: {
         changes,
         ...(doneStatus ? { statusId: doneStatus.id } : {}),
+        changesScheduledSendAt: scheduledSendAt,
+        ...(githubPrUrl ? { githubPrUrl } : {}),
       },
     })
 
