@@ -364,12 +364,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 5. Save the changes and move the task to Done.
+    // 5. Save the changes and move the task to Done. Set scheduled send time to 1 hour from now.
+    const scheduledSendAt = new Date()
+    scheduledSendAt.setHours(scheduledSendAt.getHours() + 1)
+
     const updated = await prisma.task.update({
       where: { id: task.id },
       data: {
         changes,
         ...(doneStatus ? { statusId: doneStatus.id } : {}),
+        changesScheduledSendAt: scheduledSendAt,
       },
     })
 
