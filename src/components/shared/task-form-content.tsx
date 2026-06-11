@@ -13,7 +13,7 @@ import type { Task, TaskStatus, Project, Tag } from "@/types"
 import { ReminderSettings } from "@/components/tasks/reminder-settings"
 import { FileUpload } from "@/components/ui/file-upload"
 import { Badge } from "@/components/ui/badge"
-import { Send, Plus, Trash2, Clock, Check, GitBranch } from "lucide-react"
+import { Send, Plus, Trash2, Clock, Check, GitBranch, AlertTriangle } from "lucide-react"
 import { toast } from "sonner"
 import {
   getEstimatedHoursOptions,
@@ -26,6 +26,7 @@ import {
 interface TaskFormContentProps {
   onTaskCreated?: () => void
   onTaskUpdated?: () => void
+  onTaskDeleted?: () => void
   onClose?: () => void
 
   // For create mode
@@ -48,6 +49,7 @@ interface TaskFormContentProps {
 export function TaskFormContent({
   onTaskCreated,
   onTaskUpdated,
+  onTaskDeleted,
   onClose,
   projects = [],
   projectId,
@@ -714,6 +716,30 @@ export function TaskFormContent({
     setError("")
     setAttachments([])
     onClose?.()
+  }
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  const handleDeleteTask = async () => {
+    if (!task) return
+    setDeleting(true)
+    try {
+      const response = await fetch(`/api/tasks/${task.id}`, { method: "DELETE" })
+      if (response.ok) {
+        toast.success("Zadanie zostało usunięte")
+        onTaskDeleted?.()
+        handleClose()
+      } else {
+        const data = await response.json()
+        toast.error(data.error || "Nie udało się usunąć zadania")
+      }
+    } catch {
+      toast.error("Wystąpił błąd podczas usuwania zadania")
+    } finally {
+      setDeleting(false)
+      setShowDeleteConfirm(false)
+    }
   }
 
   // Create a GitHub branch for this task.
@@ -1525,6 +1551,48 @@ export function TaskFormContent({
 
         {/* Action Buttons */}
         <div className="flex flex-col-reverse sm:flex-row gap-2 pt-6">
+          {/* Delete task — edit mode only */}
+          {isEditMode && task && (
+            <div className="sm:mr-auto">
+              {showDeleteConfirm ? (
+                <div className="flex items-center gap-2 p-2 bg-destructive/10 border border-destructive/20 rounded-md">
+                  <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
+                  <span className="text-sm text-destructive">Na pewno usunąć?</span>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDeleteTask}
+                    disabled={deleting}
+                    className="h-7"
+                  >
+                    {deleting ? "Usuwanie..." : "Tak, usuń"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowDeleteConfirm(false)}
+                    disabled={deleting}
+                    className="h-7"
+                  >
+                    Anuluj
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Usuń zadanie
+                </Button>
+              )}
+            </div>
+          )}
           <Button
             type="submit"
             disabled={loading || !isFormValid() || isSaving}
