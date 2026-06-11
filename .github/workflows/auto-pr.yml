@@ -14,7 +14,7 @@ on:
       debug:
         description: 'Enable verbose debug output'
         required: false
-        default: 'true'
+        default: true
         type: boolean
 
 permissions:
