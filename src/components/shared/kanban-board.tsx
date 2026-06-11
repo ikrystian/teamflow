@@ -64,6 +64,12 @@ interface StatusColumn extends TaskStatus {
   tasks: Task[]
 }
 
+// Number of task cards rendered per column on first paint, and how many more
+// are revealed each time the user scrolls near the bottom of a column. The full
+// task list lives in memory; this only limits how many cards are mounted at once
+// so columns with a large number of tasks stay responsive.
+const TASKS_PER_PAGE = 30
+
 function isTaskDone(task: Task, taskStatuses: TaskStatus[]): boolean {
   const doneStatus = taskStatuses.find(status => status.name === "Done")
   return !!(doneStatus && task.statusId === doneStatus.id)
@@ -507,7 +513,15 @@ function KanbanColumn({
   onOptimisticRollback?: (tempId: string) => void
 }) {
   const ref = useRef<HTMLDivElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const sentinelRef = useRef<HTMLDivElement>(null)
   const [isOver, setIsOver] = useState(false)
+
+  // Lazy rendering: only mount the first TASKS_PER_PAGE cards, revealing more as
+  // the user scrolls the column. The badge still reflects the full task count.
+  const [visibleCount, setVisibleCount] = useState(TASKS_PER_PAGE)
+  const visibleTasks = tasks.slice(0, visibleCount)
+  const hasMore = visibleCount < tasks.length
 
   useEffect(() => {
     const element = ref.current
@@ -523,8 +537,27 @@ function KanbanColumn({
     })
   }, [status.id])
 
+  // Reveal the next page of cards when the bottom sentinel scrolls into view.
+  useEffect(() => {
+    if (!hasMore) return
+    const sentinel = sentinelRef.current
+    const root = scrollContainerRef.current
+    if (!sentinel || !root) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisibleCount((count) => Math.min(count + TASKS_PER_PAGE, tasks.length))
+        }
+      },
+      { root, rootMargin: "200px" }
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [hasMore, tasks.length])
+
   return (
-    <div className="flex-shrink-0 w-80 overflow-y-scroll h-[calc(100vh-237px)] max-h-[calc(100vh-237px)]">
+    <div ref={scrollContainerRef} className="flex-shrink-0 w-80 overflow-y-scroll h-[calc(100vh-237px)] max-h-[calc(100vh-237px)]">
       <div
         className={`bg-muted/70 rounded-lg p-4 h-full transition-colors ${isOver ? 'bg-primary/10 ring-2 ring-primary/20' : ''
           }`}
@@ -546,7 +579,7 @@ function KanbanColumn({
             </div>
           )}
 
-          {tasks.map((task) => (
+          {visibleTasks.map((task) => (
             <SortableTaskCard
               key={task.id}
               task={task}
@@ -563,6 +596,14 @@ function KanbanColumn({
               enableMarkComplete={enableMarkComplete}
             />
           ))}
+
+          {/* Bottom sentinel: when it scrolls into view the next page is revealed */}
+          {hasMore && (
+            <div ref={sentinelRef} className="flex items-center justify-center py-2 text-xs text-muted-foreground">
+              <Loader2 className="h-3 w-3 animate-spin mr-2" />
+              Ładowanie zadań...
+            </div>
+          )}
 
           {/* Show add task button only in the default column */}
           {status.isDefault && (

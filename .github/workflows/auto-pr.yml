@@ -14,7 +14,7 @@ on:
       debug:
         description: 'Enable verbose debug output'
         required: false
-        default: 'true'
+        default: true
         type: boolean
 
 permissions:
@@ -25,6 +25,7 @@ permissions:
 jobs:
   create-pr:
     runs-on: ubuntu-latest
+    environment: dev
     if: github.actor == 'ikrystian' || github.event_name == 'workflow_dispatch'
     steps:
       - name: Checkout
