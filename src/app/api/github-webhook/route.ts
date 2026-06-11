@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { verifyGithubWebhookSignature } from "@/lib/github"
+import { verifyGithubWebhookSignature, deleteGithubBranch } from "@/lib/github"
 
 /**
  * GitHub webhook endpoint.
@@ -101,7 +101,10 @@ export async function POST(request: NextRequest) {
     // Find task matching the branch
     const task = await prisma.task.findFirst({
       where: { githubBranchName: headBranch },
-      include: { taskStatus: true },
+      include: {
+        taskStatus: true,
+        project: true
+      },
     })
 
     if (!task) {
@@ -135,6 +138,15 @@ export async function POST(request: NextRequest) {
 
     if (task.statusId === targetStatus.id) {
       return respond({ message: "Task already in done status" })
+    }
+
+    // Delete GitHub branch if assigned to the task
+    if (task.githubBranchName && task.project?.githubRepo) {
+      try {
+        await deleteGithubBranch(task.project.githubRepo, task.githubBranchName)
+      } catch (error) {
+        console.error("Error deleting GitHub branch on webhook merge:", error)
+      }
     }
 
     await prisma.task.update({
