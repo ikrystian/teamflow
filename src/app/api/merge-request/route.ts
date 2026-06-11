@@ -371,6 +371,23 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Find the oldest task in the Done column to put this task at the very top (since columns are sorted by createdAt ASC)
+    let newCreatedAt: Date | undefined = undefined
+    if (doneStatus) {
+      const oldestTaskInDone = await prisma.task.findFirst({
+        where: {
+          projectId: payload.projectId,
+          statusId: doneStatus.id,
+        },
+        orderBy: {
+          createdAt: "asc", // oldest first
+        },
+      })
+      if (oldestTaskInDone) {
+        newCreatedAt = new Date(oldestTaskInDone.createdAt.getTime() - 60000) // 1 minute before
+      }
+    }
+
     // 5. Save the changes and move the task to Done. Set scheduled send time to 1 hour from now.
     const scheduledSendAt = new Date()
     scheduledSendAt.setHours(scheduledSendAt.getHours() + 1)
@@ -390,6 +407,7 @@ export async function POST(request: NextRequest) {
         ...(doneStatus ? { statusId: doneStatus.id } : {}),
         changesScheduledSendAt: scheduledSendAt,
         ...(githubPrUrl ? { githubPrUrl } : {}),
+        ...(newCreatedAt ? { createdAt: newCreatedAt } : {}),
       },
     })
 
