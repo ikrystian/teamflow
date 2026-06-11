@@ -24,38 +24,104 @@ jobs:
       - name: Check for existing PR
         id: existing
         env:
-          # Use PAT_TOKEN so gh CLI can create PRs (GITHUB_TOKEN is blocked by default)
-          # Fallback to GITHUB_TOKEN for read-only operations if PAT is not set
           GH_TOKEN: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           COUNT=$(gh pr list --head "${{ github.ref_name }}" --base main --state open --json number --jq 'length')
           echo "count=$COUNT" >> "$GITHUB_OUTPUT"
           echo "Open PRs for ${{ github.ref_name }} -> main: $COUNT"
 
+      - name: Fetch task details from TeamFlow
+        id: task
+        if: steps.existing.outputs.count == '0'
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          API_TOKEN: ${{ secrets.API_TOKEN }}
+        run: |
+          BRANCH="${{ github.ref_name }}"
+
+          # Extract task key from branch name.
+          # Branch format: feature/<key>-<slug>  e.g. feature/ne-10-fix-login
+          # Key is everything between the first '/' and the part after the second segment that
+          # matches the pattern LETTERS-DIGITS (e.g. ne-10).
+          RAW_KEY=$(echo "$BRANCH" | sed 's|^[^/]*/||' | grep -oP '^[a-zA-Z]+-\d+' || true)
+          TASK_KEY=$(echo "$RAW_KEY" | tr '[:lower:]' '[:upper:]')
+
+          echo "Extracted task key: '$TASK_KEY' from branch: '$BRANCH'"
+          echo "task_key=$TASK_KEY" >> "$GITHUB_OUTPUT"
+
+          TASK_TITLE=""
+          TASK_DESCRIPTION=""
+
+          if [ -n "$TASK_KEY" ] && [ -n "$APP_URL" ]; then
+            # Query the internal API by task key
+            RESPONSE=$(curl -sf \
+              -H "Authorization: Bearer ${API_TOKEN}" \
+              -H "Content-Type: application/json" \
+              "${APP_URL}/api/system/tasks/${TASK_KEY}" 2>/dev/null || true)
+
+            if [ -n "$RESPONSE" ]; then
+              TASK_TITLE=$(echo "$RESPONSE" | jq -r '.task.title // empty' 2>/dev/null || true)
+              TASK_DESCRIPTION=$(echo "$RESPONSE" | jq -r '.task.description // empty' 2>/dev/null || true)
+              echo "Fetched task: '$TASK_TITLE'"
+            else
+              echo "Could not fetch task from API (APP_URL or API_TOKEN may not be set). Continuing without task details."
+            fi
+          fi
+
+          echo "task_title=$TASK_TITLE" >> "$GITHUB_OUTPUT"
+
+          # Build PR title: [KEY] - Task title  (fallback: branch name)
+          if [ -n "$TASK_KEY" ] && [ -n "$TASK_TITLE" ]; then
+            PR_TITLE="[$TASK_KEY] - $TASK_TITLE"
+          elif [ -n "$TASK_KEY" ]; then
+            PR_TITLE="[$TASK_KEY] - $BRANCH"
+          else
+            PR_TITLE="$BRANCH"
+          fi
+
+          echo "$PR_TITLE" > /tmp/pr_title.txt
+          echo "PR title: $PR_TITLE"
+
+          # Persist task description for the AI prompt
+          printf '%s' "$TASK_DESCRIPTION" > /tmp/task_description.txt
+
       - name: Get git diff
         if: steps.existing.outputs.count == '0'
         run: |
           git fetch origin main
-          git diff origin/main...HEAD --stat --unified=3 | head -200 > /tmp/diff.txt
+          git diff origin/main...HEAD --stat --unified=3 | head -300 > /tmp/diff.txt
           cat /tmp/diff.txt
 
-      - name: Generate PR title and body with DeepSeek via OpenRouter
+      - name: Generate PR body with DeepSeek via OpenRouter
         if: steps.existing.outputs.count == '0'
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
           DIFF=$(cat /tmp/diff.txt)
           BRANCH="${{ github.ref_name }}"
+          TASK_KEY="${{ steps.task.outputs.task_key }}"
+          TASK_TITLE="${{ steps.task.outputs.task_title }}"
+          TASK_DESC=$(cat /tmp/task_description.txt 2>/dev/null || true)
+
+          # Build context block for the AI
+          TASK_CONTEXT=""
+          if [ -n "$TASK_TITLE" ]; then
+            TASK_CONTEXT="Task: [$TASK_KEY] $TASK_TITLE"
+            if [ -n "$TASK_DESC" ]; then
+              TASK_CONTEXT="$TASK_CONTEXT\nTask description: $TASK_DESC"
+            fi
+          fi
 
           PAYLOAD=$(jq -n \
             --arg diff "$DIFF" \
             --arg branch "$BRANCH" \
+            --arg task_context "$TASK_CONTEXT" \
             '{
               model: "deepseek/deepseek-v4-flash",
-              max_tokens: 1024,
+              max_tokens: 1500,
               messages: [{
                 role: "user",
-                content: ("You are a helpful assistant that writes pull request descriptions.\nBranch name: " + $branch + "\n\nGit diff:\n" + $diff + "\n\nRespond ONLY with a JSON object (no markdown, no backticks, no extra text):\n{\"title\": \"<short PR title>\", \"body\": \"<markdown PR description with: summary, changes, notes>\"}")
+                content: ("You are a helpful assistant that writes pull request descriptions.\nBranch: " + $branch + "\n" + (if $task_context != "" then $task_context + "\n" else "" end) + "\nGit diff:\n" + $diff + "\n\nWrite a clear, concise PR description in Markdown with sections: ## Summary, ## Changes, ## Notes.\nRespond with ONLY the markdown body text, no JSON wrapper, no code fences.")
               }]
             }')
 
@@ -69,15 +135,17 @@ jobs:
           echo "=== Raw API response ==="
           echo "$RESPONSE"
 
-          AI_JSON=$(echo "$RESPONSE" | jq -r '.choices[0].message.content')
+          AI_BODY=$(echo "$RESPONSE" | jq -r '.choices[0].message.content // empty' 2>/dev/null || true)
 
-          # Parse title/body, with fallbacks so the PR is still created if the AI call fails
-          echo "$AI_JSON" | jq -e -r '.title' > /tmp/pr_title.txt 2>/dev/null || echo "$BRANCH" > /tmp/pr_title.txt
-          echo "$AI_JSON" | jq -e -r '.body'  > /tmp/pr_body.txt  2>/dev/null || printf 'Automated PR for `%s`.\n' "$BRANCH" > /tmp/pr_body.txt
+          # Fallback if AI call failed
+          if [ -z "$AI_BODY" ] || [ "$AI_BODY" = "null" ]; then
+            printf 'Automated PR for `%s`.\n' "$BRANCH" > /tmp/pr_body.txt
+          else
+            printf '%s' "$AI_BODY" > /tmp/pr_body.txt
+          fi
 
-          # Guard against empty/null output
-          [ -s /tmp/pr_title.txt ] && [ "$(cat /tmp/pr_title.txt)" != "null" ] || echo "$BRANCH" > /tmp/pr_title.txt
-          [ -s /tmp/pr_body.txt ]  && [ "$(cat /tmp/pr_body.txt)"  != "null" ] || printf 'Automated PR for `%s`.\n' "$BRANCH" > /tmp/pr_body.txt
+          echo "=== PR body preview ==="
+          head -20 /tmp/pr_body.txt
 
       - name: Create Pull Request
         if: steps.existing.outputs.count == '0'
@@ -85,7 +153,7 @@ jobs:
           # Prefer PAT_TOKEN (needed to create PRs when the default GITHUB_TOKEN is restricted).
           # Falls back to github.token so the step never crashes with "GH_TOKEN not set"
           # even if PAT_TOKEN secret hasn't been added yet (PR creation will still fail at
-          # the GraphQL level if the repo setting is also disabled — see notes below).
+          # the GraphQL level if the repo setting is also disabled).
           GH_TOKEN: ${{ secrets.PAT_TOKEN || github.token }}
         run: |
           PR_URL=$(gh pr create \
