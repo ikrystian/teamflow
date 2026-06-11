@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import remarkBreaks from "remark-breaks"
+import * as LucideIcons from "lucide-react"
 import { prisma } from "@/lib/prisma"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -57,65 +58,118 @@ function htmlToMarkdown(html: string): string {
   return md
 }
 
-const markdownComponents: Record<string, React.ComponentType<any>> = {
-  h1: ({ node, ...props }) => (
-    <h1 className="text-xl font-bold text-foreground mt-6 mb-4 border-b pb-2 border-border/60 hover:text-primary transition-colors" {...props} />
-  ),
-  h2: ({ node, ...props }) => (
-    <h2 className="text-lg font-semibold text-foreground mt-5 mb-3 border-l-2 border-primary pl-2 hover:text-primary transition-colors" {...props} />
-  ),
-  h3: ({ node, ...props }) => (
-    <h3 className="text-base font-semibold text-foreground mt-4 mb-2 hover:text-primary transition-colors" {...props} />
-  ),
-  p: ({ node, ...props }) => (
-    <p className="text-sm text-foreground leading-relaxed mb-4" {...props} />
-  ),
-  a: ({ node, ...props }) => (
-    <a className="text-primary hover:underline font-medium transition-colors hover:text-primary/80" target="_blank" rel="noopener noreferrer" {...props} />
-  ),
-  ul: ({ node, ...props }) => (
-    <ul className="list-disc pl-5 mb-4 space-y-1.5 text-sm text-foreground marker:text-primary" {...props} />
-  ),
-  ol: ({ node, ...props }) => (
-    <ol className="list-decimal pl-5 mb-4 space-y-1.5 text-sm text-foreground marker:text-primary" {...props} />
-  ),
-  li: ({ node, ...props }) => (
-    <li className="mb-0.5 text-foreground/90" {...props} />
-  ),
-  blockquote: ({ node, ...props }) => (
-    <blockquote className="border-l-4 border-primary pl-4 italic my-4 text-muted-foreground bg-primary/5 py-2.5 pr-4 rounded-r-md" {...props} />
-  ),
-  code({ node, className, children, ...props }) {
-    const match = /language-(\w+)/.exec(className || "")
-    return match ? (
-      <pre className="bg-muted/80 p-4 rounded-lg overflow-x-auto my-4 border border-border/80 font-mono text-xs text-foreground shadow-inner">
-        <code className={className} {...props}>
+function ProjectIcon({ iconName, color, className = "w-5 h-5" }: {
+  iconName?: string | null,
+  color?: string,
+  className?: string
+}) {
+  if (!iconName) {
+    return (
+      <LucideIcons.Folder
+        className={className}
+        style={{ color: color || '#3B82F6' }}
+      />
+    )
+  }
+
+  const IconComponent = (LucideIcons as unknown as Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>>)[iconName]
+
+  if (!IconComponent) {
+    return (
+      <LucideIcons.Folder
+        className={className}
+        style={{ color: color || '#3B82F6' }}
+      />
+    )
+  }
+
+  return (
+    <IconComponent
+      className={className}
+      style={{ color: color || '#3B82F6' }}
+    />
+  )
+}
+
+function getMarkdownComponents(projectColor: string): Record<string, React.ComponentType<any>> {
+  return {
+    h1: ({ node, ...props }) => (
+      <h1 className="text-xl font-bold text-foreground mt-6 mb-4 border-b pb-2 border-border/60 transition-colors" {...props} />
+    ),
+    h2: ({ node, ...props }) => (
+      <h2 
+        className="text-lg font-semibold text-foreground mt-5 mb-3 border-l-2 pl-2 transition-colors" 
+        style={{ borderLeftColor: projectColor }}
+        {...props} 
+      />
+    ),
+    h3: ({ node, ...props }) => (
+      <h3 className="text-base font-semibold text-foreground mt-4 mb-2 transition-colors" {...props} />
+    ),
+    p: ({ node, ...props }) => (
+      <p className="text-sm text-foreground leading-relaxed mb-4" {...props} />
+    ),
+    a: ({ node, ...props }) => (
+      <a 
+        className="hover:underline font-medium transition-colors" 
+        style={{ color: projectColor }}
+        target="_blank" 
+        rel="noopener noreferrer" 
+        {...props} 
+      />
+    ),
+    ul: ({ node, ...props }) => (
+      <ul className="list-disc pl-5 mb-4 space-y-1.5 text-sm text-foreground" {...props} />
+    ),
+    ol: ({ node, ...props }) => (
+      <ol className="list-decimal pl-5 mb-4 space-y-1.5 text-sm text-foreground" {...props} />
+    ),
+    li: ({ node, ...props }) => (
+      <li className="mb-0.5 text-foreground/90" {...props} />
+    ),
+    blockquote: ({ node, ...props }) => (
+      <blockquote 
+        className="border-l-4 pl-4 italic my-4 text-muted-foreground py-2.5 pr-4 rounded-r-md" 
+        style={{ borderLeftColor: projectColor, backgroundColor: `${projectColor}08` }}
+        {...props} 
+      />
+    ),
+    code({ node, className, children, ...props }) {
+      const match = /language-(\w+)/.exec(className || "")
+      return match ? (
+        <pre className="bg-muted/80 p-4 rounded-lg overflow-x-auto my-4 border border-border/80 font-mono text-xs text-foreground shadow-inner">
+          <code className={className} {...props}>
+            {children}
+          </code>
+        </pre>
+      ) : (
+        <code 
+          className="px-1.5 py-0.5 rounded font-mono text-xs font-semibold" 
+          style={{ color: projectColor, backgroundColor: `${projectColor}15` }}
+          {...props}
+        >
           {children}
         </code>
-      </pre>
-    ) : (
-      <code className="bg-primary/10 text-primary px-1.5 py-0.5 rounded font-mono text-xs font-semibold" {...props}>
-        {children}
-      </code>
-    )
-  },
-  table: ({ node, ...props }) => (
-    <div className="overflow-x-auto my-4 rounded-lg border border-border/60">
-      <table className="w-full border-collapse text-sm" {...props} />
-    </div>
-  ),
-  thead: ({ node, ...props }) => (
-    <thead className="bg-primary/5 border-b border-border" {...props} />
-  ),
-  th: ({ node, ...props }) => (
-    <th className="border border-border/60 px-4 py-2.5 font-semibold text-left text-foreground" {...props} />
-  ),
-  td: ({ node, ...props }) => (
-    <td className="border border-border/60 px-4 py-2 text-foreground/90" {...props} />
-  ),
-  hr: ({ node, ...props }) => (
-    <hr className="my-6 border-t border-primary/20" {...props} />
-  ),
+      )
+    },
+    table: ({ node, ...props }) => (
+      <div className="overflow-x-auto my-4 rounded-lg border border-border/60">
+        <table className="w-full border-collapse text-sm" {...props} />
+      </div>
+    ),
+    thead: ({ node, ...props }) => (
+      <thead className="bg-muted border-b border-border" {...props} />
+    ),
+    th: ({ node, ...props }) => (
+      <th className="border border-border/60 px-4 py-2.5 font-semibold text-left text-foreground" {...props} />
+    ),
+    td: ({ node, ...props }) => (
+      <td className="border border-border/60 px-4 py-2 text-foreground/90" {...props} />
+    ),
+    hr: ({ node, ...props }) => (
+      <hr className="my-6 border-t border-border/40" {...props} />
+    ),
+  }
 }
 
 // Fetch a task purely by its public share token. No session is required — this
@@ -127,7 +181,7 @@ async function getSharedTask(token: string) {
     where: { shareToken: token },
     include: {
       taskStatus: { select: { name: true, color: true } },
-      project: { select: { name: true, color: true, imageUrl: true } },
+      project: { select: { name: true, color: true, imageUrl: true, icon: true } },
       assignee: { select: { name: true, email: true } },
       createdBy: { select: { name: true, email: true } },
       todos: { orderBy: { createdAt: "asc" } },
@@ -251,13 +305,18 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, icon, children }: { label: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="space-y-1">
-      <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        {label}
-      </dt>
-      <dd className="text-sm text-foreground">{children}</dd>
+    <div className="flex items-start gap-2.5">
+      <div className="mt-0.5 shrink-0 text-muted-foreground/80">
+        {icon}
+      </div>
+      <div className="space-y-0.5">
+        <dt className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
+          {label}
+        </dt>
+        <dd className="text-sm font-semibold text-foreground leading-snug">{children}</dd>
+      </div>
     </div>
   )
 }
@@ -278,23 +337,79 @@ export default async function PublicTaskPage({
   const completedTodos = task.todos.filter((t) => t.isCompleted).length
   const totalTime = task.timeEntries.reduce((sum, e) => sum + e.hours, 0)
 
+  const projectColor = task.project?.color || "#3B82F6"
+  const markdownComponents = getMarkdownComponents(projectColor)
+
   return (
-    <div className="min-h-screen bg-muted/30 py-8 px-4">
-      <div className="mx-auto max-w-3xl space-y-6">
+    <div className="min-h-screen bg-muted/30 pb-16">
+      {/* Banner Header */}
+      <div 
+        className="relative w-full h-48 md:h-64 flex items-end overflow-hidden"
+        style={{
+          ...(task.project?.imageUrl
+            ? {
+                backgroundImage: `linear-gradient(to bottom, rgba(15, 23, 42, 0.25), rgba(15, 23, 42, 0.8)), url(${task.project.imageUrl})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }
+            : {
+                backgroundImage: `linear-gradient(135deg, ${projectColor} 0%, #0f172a 100%)`,
+              }),
+        }}
+      >
+        <div 
+          className="absolute bottom-0 left-0 right-0 h-1.5 shadow-lg" 
+          style={{ backgroundColor: projectColor }}
+        />
+        
+        <div className="mx-auto max-w-3xl w-full px-4 pb-8 md:pb-12 relative z-10">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <span 
+                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/10 text-white backdrop-blur-sm border border-white/15"
+              >
+                <ProjectIcon iconName={task.project?.icon} color="#FFFFFF" className="h-3 w-3" />
+                Projekt
+              </span>
+            </div>
+            
+            <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight drop-shadow-md">
+              {task.project?.name || "Projekt"}
+            </h1>
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-3xl px-4 -mt-6 md:-mt-10 relative z-20 space-y-6">
         {/* Header card */}
-        <div className="rounded-xl border bg-card p-6 shadow-sm">
+        <div 
+          className="rounded-xl border bg-card p-6 shadow-sm border-t-4"
+          style={{ borderTopColor: projectColor }}
+        >
           <div className="mb-3 flex flex-wrap items-center gap-2">
             {task.project && (
-              <span className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
-                <span
-                  className="h-2.5 w-2.5 rounded-full"
-                  style={{ backgroundColor: task.project.color || "#3B82F6" }}
-                />
+              <span 
+                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border"
+                style={{
+                  backgroundColor: `${projectColor}12`,
+                  color: projectColor,
+                  borderColor: `${projectColor}30`,
+                }}
+              >
+                <ProjectIcon iconName={task.project.icon} color={projectColor} className="h-3.5 w-3.5" />
                 {task.project.name}
               </span>
             )}
             {task.key && (
-              <Badge variant="outline" className="font-mono">
+              <Badge 
+                variant="outline" 
+                className="font-mono text-xs font-semibold"
+                style={{ 
+                  borderColor: `${projectColor}40`,
+                  color: projectColor,
+                  backgroundColor: `${projectColor}08`
+                }}
+              >
                 {task.key}
               </Badge>
             )}
@@ -302,8 +417,9 @@ export default async function PublicTaskPage({
               <Badge
                 variant="outline"
                 style={{
-                  borderColor: task.taskStatus.color,
+                  borderColor: `${task.taskStatus.color}40`,
                   color: task.taskStatus.color,
+                  backgroundColor: `${task.taskStatus.color}08`,
                 }}
               >
                 {task.taskStatus.name}
@@ -316,17 +432,17 @@ export default async function PublicTaskPage({
             )}
           </div>
 
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
             {task.title}
-          </h1>
+          </h2>
 
           {tags.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-1.5">
+            <div className="mt-4 flex flex-wrap gap-1.5 border-t pt-3 border-border/40">
               {tags.map((tag) => (
                 <Badge
                   key={tag.id}
                   variant="outline"
-                  style={{ borderColor: tag.color, color: tag.color }}
+                  style={{ borderColor: `${tag.color}50`, color: tag.color, backgroundColor: `${tag.color}08` }}
                 >
                   {tag.name}
                 </Badge>
@@ -337,29 +453,63 @@ export default async function PublicTaskPage({
 
         {/* Meta */}
         <div className="rounded-xl border bg-card p-6 shadow-sm">
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
-            <Field label="Przypisane do">{displayName(task.assignee)}</Field>
-            <Field label="Utworzone przez">{displayName(task.createdBy)}</Field>
-            <Field label="Szacowany czas">
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3">
+            <Field 
+              label="Przypisane do" 
+              icon={<LucideIcons.User className="h-4 w-4" style={{ color: projectColor }} />}
+            >
+              {displayName(task.assignee)}
+            </Field>
+            <Field 
+              label="Utworzone przez" 
+              icon={<LucideIcons.UserCheck className="h-4 w-4" style={{ color: projectColor }} />}
+            >
+              {displayName(task.createdBy)}
+            </Field>
+            <Field 
+              label="Szacowany czas" 
+              icon={<LucideIcons.Timer className="h-4 w-4" style={{ color: projectColor }} />}
+            >
               {formatEstimatedHours(task.estimatedHours)}
             </Field>
             {task.dueDate && (
-              <Field label="Termin">{formatDate(task.dueDate)}</Field>
+              <Field 
+                label="Termin" 
+                icon={<LucideIcons.Calendar className="h-4 w-4" style={{ color: projectColor }} />}
+              >
+                {formatDate(task.dueDate)}
+              </Field>
             )}
             {task.startTime && (
-              <Field label="Początek">{formatDateTime(task.startTime)}</Field>
+              <Field 
+                label="Początek" 
+                icon={<LucideIcons.CalendarRange className="h-4 w-4" style={{ color: projectColor }} />}
+              >
+                {formatDateTime(task.startTime)}
+              </Field>
             )}
             {task.endTime && (
-              <Field label="Koniec">{formatDateTime(task.endTime)}</Field>
+              <Field 
+                label="Koniec" 
+                icon={<LucideIcons.CalendarDays className="h-4 w-4" style={{ color: projectColor }} />}
+              >
+                {formatDateTime(task.endTime)}
+              </Field>
             )}
-            <Field label="Utworzono">{formatDate(task.createdAt)}</Field>
+            <Field 
+              label="Utworzono" 
+              icon={<LucideIcons.CalendarDays className="h-4 w-4" style={{ color: projectColor }} />}
+            >
+              {formatDate(task.createdAt)}
+            </Field>
           </dl>
         </div>
 
         {/* Description */}
         {task.description && task.description !== "<p></p>" && (
           <section className="rounded-xl border bg-card p-6 shadow-sm">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
+              <LucideIcons.FileText className="h-4.5 w-4.5" style={{ color: projectColor }} />
               Opis
             </h2>
             <div className="prose prose-sm max-w-none dark:prose-invert">
@@ -376,7 +526,8 @@ export default async function PublicTaskPage({
         {/* Changes / what was done — stored as markdown */}
         {task.changes && task.changes.trim() && (
           <section className="rounded-xl border bg-card p-6 shadow-sm">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
+              <LucideIcons.CheckSquare className="h-4.5 w-4.5" style={{ color: projectColor }} />
               Co zostało zrobione
             </h2>
             <div className="prose prose-sm max-w-none dark:prose-invert">
@@ -393,17 +544,18 @@ export default async function PublicTaskPage({
         {/* Subtasks */}
         {task.todos.length > 0 && (
           <section className="rounded-xl border bg-card p-6 shadow-sm">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
+              <LucideIcons.ListChecks className="h-4.5 w-4.5" style={{ color: projectColor }} />
               Lista zadań ({completedTodos}/{task.todos.length})
             </h2>
-            <ul className="space-y-2">
+            <ul className="space-y-2.5">
               {task.todos.map((todo) => (
-                <li key={todo.id} className="flex items-center gap-2.5 text-sm">
+                <li key={todo.id} className="flex items-center gap-3 text-sm">
                   <span
-                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                    className={`flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded border transition-colors ${
                       todo.isCompleted
                         ? "border-green-500 bg-green-500 text-white"
-                        : "border-muted-foreground/40"
+                        : "border-muted-foreground/30 hover:border-muted-foreground/50"
                     }`}
                   >
                     {todo.isCompleted && (
@@ -412,16 +564,16 @@ export default async function PublicTaskPage({
                         className="h-3 w-3"
                         fill="none"
                         stroke="currentColor"
-                        strokeWidth="2.5"
+                        strokeWidth="3"
                       >
                         <path d="M3 8.5l3 3 7-7" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     )}
                   </span>
                   <span
-                    className={
-                      todo.isCompleted ? "text-muted-foreground line-through" : ""
-                    }
+                    className={`font-medium ${
+                      todo.isCompleted ? "text-muted-foreground line-through" : "text-foreground"
+                    }`}
                   >
                     {todo.title}
                   </span>
@@ -434,7 +586,8 @@ export default async function PublicTaskPage({
         {/* Images */}
         {task.images.length > 0 && (
           <section className="rounded-xl border bg-card p-6 shadow-sm">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
+              <LucideIcons.Image className="h-4.5 w-4.5" style={{ color: projectColor }} />
               Obrazy
             </h2>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -444,7 +597,7 @@ export default async function PublicTaskPage({
                   key={image.id}
                   src={image.url}
                   alt={image.filename}
-                  className="h-32 w-full rounded-lg border object-cover"
+                  className="h-32 w-full rounded-lg border object-cover hover:opacity-90 transition-opacity cursor-zoom-in"
                 />
               ))}
             </div>
@@ -454,7 +607,8 @@ export default async function PublicTaskPage({
         {/* Attachments */}
         {task.attachments.length > 0 && (
           <section className="rounded-xl border bg-card p-6 shadow-sm">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
+              <LucideIcons.Paperclip className="h-4.5 w-4.5" style={{ color: projectColor }} />
               Załączniki
             </h2>
             <ul className="space-y-2">
@@ -466,8 +620,11 @@ export default async function PublicTaskPage({
                     rel="noopener noreferrer"
                     className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm transition-colors hover:bg-accent"
                   >
-                    <span className="truncate">{file.originalName}</span>
-                    <span className="ml-3 shrink-0 text-xs text-muted-foreground">
+                    <span className="truncate font-medium flex items-center gap-2">
+                      <LucideIcons.File className="h-4 w-4 text-muted-foreground" />
+                      {file.originalName}
+                    </span>
+                    <span className="ml-3 shrink-0 text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
                       {formatFileSize(file.size)}
                     </span>
                   </a>
@@ -480,25 +637,28 @@ export default async function PublicTaskPage({
         {/* Time entries */}
         {task.timeEntries.length > 0 && (
           <section className="rounded-xl border bg-card p-6 shadow-sm">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
+              <LucideIcons.Clock className="h-4.5 w-4.5" style={{ color: projectColor }} />
               Zarejestrowany czas ({totalTime % 1 === 0 ? totalTime : totalTime.toFixed(1)}h)
             </h2>
-            <ul className="divide-y">
+            <ul className="divide-y divide-border/40">
               {task.timeEntries.map((entry) => (
                 <li
                   key={entry.id}
-                  className="flex items-start justify-between gap-3 py-2 text-sm"
+                  className="flex items-start justify-between gap-3 py-3 text-sm"
                 >
-                  <div>
-                    <span className="font-medium">{displayName(entry.user)}</span>
+                  <div className="space-y-1">
+                    <span className="font-semibold text-foreground">{displayName(entry.user)}</span>
                     {entry.description && (
-                      <p className="text-muted-foreground">{entry.description}</p>
+                      <p className="text-muted-foreground text-xs">{entry.description}</p>
                     )}
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[10px] text-muted-foreground">
                       {formatDate(entry.date)}
                     </p>
                   </div>
-                  <span className="shrink-0 font-medium">{entry.hours}h</span>
+                  <span className="shrink-0 font-bold bg-muted/80 px-2 py-1 rounded text-xs">
+                    {entry.hours}h
+                  </span>
                 </li>
               ))}
             </ul>
@@ -508,19 +668,20 @@ export default async function PublicTaskPage({
         {/* Comments */}
         {task.comments.length > 0 && (
           <section className="rounded-xl border bg-card p-6 shadow-sm">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
+              <LucideIcons.MessageSquare className="h-4.5 w-4.5" style={{ color: projectColor }} />
               Komentarze ({task.comments.length})
             </h2>
             <ul className="space-y-4">
               {task.comments.map((comment) => (
-                <li key={comment.id} className="text-sm">
-                  <div className="mb-1 flex items-center gap-2">
-                    <span className="font-medium">{displayName(comment.author)}</span>
+                <li key={comment.id} className="text-sm border-b border-border/30 last:border-0 pb-3 last:pb-0">
+                  <div className="mb-1.5 flex items-center gap-2">
+                    <span className="font-semibold text-foreground">{displayName(comment.author)}</span>
                     <span className="text-xs text-muted-foreground">
                       {formatDateTime(comment.createdAt)}
                     </span>
                   </div>
-                  <p className="whitespace-pre-wrap text-foreground">
+                  <p className="whitespace-pre-wrap text-foreground/90 pl-1 leading-relaxed">
                     {comment.content}
                   </p>
                 </li>
@@ -529,7 +690,8 @@ export default async function PublicTaskPage({
           </section>
         )}
 
-        <p className="pt-2 text-center text-xs text-muted-foreground">
+        <p className="pt-4 text-center text-xs text-muted-foreground/60 flex items-center justify-center gap-1.5">
+          <LucideIcons.Lock className="h-3 w-3" />
           Widok tylko do odczytu · Nexus
         </p>
       </div>
