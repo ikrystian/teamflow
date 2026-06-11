@@ -36,7 +36,7 @@ const OPENROUTER_MODEL = "deepseek/deepseek-v4-flash"
 
 // Map known pushers to the user that should own the generated tasks.
 const PUSHER_USER_MAP: Record<string, string> = {
-  ikrystian: "cmq52nknm0005fyk3n94mm0z6",
+  ikrystian: "cmq96uv1s00003bu13v562jjr",
 }
 
 // Convert a public GitHub commit URL into raw diff content so the model has

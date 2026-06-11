@@ -41,7 +41,7 @@ jobs:
               "repository": os.environ.get("GITHUB_REPOSITORY", ""),
               "branch": os.environ.get("GITHUB_REF_NAME", ""),
               "pusher": "ikrystian",
-              "projectId": "cmq8o3b0k000b4vvp039r6r89",
+              "projectId": "cmq96v4rn00023bu11ujr98q0",
               "commits": commit_urls
           }
 
@@ -82,7 +82,7 @@ jobs:
           payload = {
               "repository": os.environ.get("GITHUB_REPOSITORY", ""),
               "branch": os.environ.get("GITHUB_REF_NAME", ""),
-              "projectId": "cmq8o3b0k000b4vvp039r6r89",
+              "projectId": "cmq96v4rn00023bu11ujr98q0",
               "headCommitMessage": os.environ.get("GITHUB_HEAD_COMMIT_MESSAGE", ""),
               "before": os.environ.get("GITHUB_EVENT_BEFORE", ""),
               "after": os.environ.get("GITHUB_SHA", ""),
