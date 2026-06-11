@@ -34,6 +34,14 @@ import {
 } from "@/lib/task-format-utils"
 import { TaskDetailsDialog } from "../tasks/task-details-dialog"
 
+// Domyślny termin wykonania dla nowych zadań: teraz + 1 dzień + 1 godzina.
+function getDefaultDueDate(): Date {
+  const date = new Date()
+  date.setDate(date.getDate() + 1)
+  date.setHours(date.getHours() + 1)
+  return date
+}
+
 export interface KanbanBoardProps {
   /** If provided, tasks will be created in this project by default and project select is hidden. */
   projectId?: string
@@ -378,6 +386,7 @@ function QuickAddTask({
           projectId: effectiveProjectId,
           statusId: status.id,
           assigneeId: (session?.user as { id?: string })?.id,
+          dueDate: getDefaultDueDate().toISOString(),
         }),
       })
 
@@ -866,6 +875,7 @@ export function KanbanBoard({
         id: tempId,
         title,
         statusId: status.id,
+        dueDate: getDefaultDueDate().toISOString(),
         createdAt: now,
         project,
         assignee: sessionUser?.id

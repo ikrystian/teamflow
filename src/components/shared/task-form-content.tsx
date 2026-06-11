@@ -1101,9 +1101,9 @@ export function TaskFormContent({
           )}
 
           {/* Title */}
-          <div className="space-y-2">
+          <div className="flex items-start gap-2 w-full">
             {isEditMode && task?.key && (
-              <span className="inline-block text-xs font-mono font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded select-all">
+              <span className="inline-block text-xs font-mono font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded select-all shrink-0 mt-1.5">
                 {task.key}
               </span>
             )}
@@ -1114,7 +1114,7 @@ export function TaskFormContent({
               onChange={(e) => setTitle(e.target.value)}
               required
               minRows={1}
-              className="w-full resize-none p-0 px-3 font-medium text-xl border-none bg-transparent outline-none hover:text-primary focus:border-none focus:outline-none"
+              className="flex-1 w-full resize-none p-0 px-1 font-medium text-xl border-none bg-transparent outline-none hover:text-primary focus:border-none focus:outline-none"
             />
           </div>
           <div className="space-y-2">
