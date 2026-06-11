@@ -147,11 +147,21 @@ const MAX_DIFF_CHARS = 14000
 // branch itself may contain slashes (feature/ne-12-...), so we only strip the
 // leading owner segment.
 function extractMergedBranch(payload: MergeRequestPayload): string | null {
-  if (payload.branch?.trim()) return payload.branch.trim()
+  const branch = payload.branch?.trim()
+  if (branch && branch !== "main" && branch !== "refs/heads/main") {
+    return branch
+  }
 
   const firstLine = (payload.headCommitMessage ?? "").split("\n")[0]
   const match = firstLine.match(/Merge pull request #\d+ from [^/\s]+\/(.+)$/)
-  return match ? match[1].trim() : null
+  if (match) return match[1].trim()
+
+  // Try to find a branch-like pattern in the commit message
+  const fullMessage = payload.headCommitMessage ?? ""
+  const branchMatch = fullMessage.match(/(?:feature|bugfix|hotfix|release|chore|refactor|fix|feat)\/[a-zA-Z0-9._-]+/i)
+  if (branchMatch) return branchMatch[0].trim()
+
+  return branch || null
 }
 
 // Pull a task key out of a branch name, e.g. "feature/ne-12-foo" -> "NE-12".
@@ -296,6 +306,16 @@ export async function POST(request: NextRequest) {
 
     if (!task) {
       const key = extractTaskKey(branch)
+      if (key) {
+        task = await prisma.task.findFirst({
+          where: { key, projectId: payload.projectId },
+        })
+      }
+    }
+
+    // Fallback: search the head commit message for the task key directly
+    if (!task && payload.headCommitMessage) {
+      const key = extractTaskKey(payload.headCommitMessage)
       if (key) {
         task = await prisma.task.findFirst({
           where: { key, projectId: payload.projectId },
