@@ -179,9 +179,7 @@ function SortableTaskCard({
           <Card
             className={`relative mb-2 cursor-pointer hover:shadow-md transition-all border-l-4 ${isUpdating
               ? 'border-l-yellow-500 bg-yellow-50/50'
-              : completed
-                ? 'bg-green-50/80 border-l-green-500'
-                : ''
+              : ''
               }`}
             style={{
               borderLeftColor: isUpdating

@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
     const timeRange = searchParams.get("timeRange") || "month" // week, month, quarter, year, custom
     const startDate = searchParams.get("startDate")
     const endDate = searchParams.get("endDate")
+    const projectId = searchParams.get("projectId") // optional: filter by a single project ("all" or null = all projects)
 
     // Calculate date range
     let dateFilter = {}
@@ -66,7 +67,8 @@ export async function GET(request: NextRequest) {
     const tasks = await prisma.task.findMany({
       where: {
         assigneeId: session.user.id,
-        ...(Object.keys(dateFilter).length > 0 && { createdAt: dateFilter })
+        ...(Object.keys(dateFilter).length > 0 && { createdAt: dateFilter }),
+        ...(projectId && projectId !== "all" && { projectId })
       },
       include: {
         taskStatus: true,
@@ -316,6 +318,7 @@ export async function GET(request: NextRequest) {
         }))
       },
       timeRange,
+      projectId: projectId && projectId !== "all" ? projectId : null,
       generatedAt: new Date().toISOString()
     }
 

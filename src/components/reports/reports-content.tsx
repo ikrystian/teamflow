@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useProjects } from "@/contexts/projects-context"
 import {
   ClipboardList,
   Clock,
@@ -83,6 +84,7 @@ interface ReportData {
     }>
   }
   timeRange: string
+  projectId: string | null
   generatedAt: string
 }
 
@@ -97,15 +99,18 @@ const PRIORITY_COLORS: Record<string, string> = {
 }
 
 export function ReportsContent() {
+  const { projects } = useProjects()
   const [reportData, setReportData] = useState<ReportData | null>(null)
   const [loading, setLoading] = useState(true)
   const [timeRange, setTimeRange] = useState("month")
+  const [projectId, setProjectId] = useState("all")
 
   useEffect(() => {
     async function fetchReportData() {
       setLoading(true)
       try {
-        const response = await fetch(`/api/reports?timeRange=${timeRange}`)
+        const params = new URLSearchParams({ timeRange, projectId })
+        const response = await fetch(`/api/reports?${params.toString()}`)
         if (!response.ok) {
           throw new Error("Failed to fetch reports")
         }
@@ -123,7 +128,7 @@ export function ReportsContent() {
     }
 
     fetchReportData()
-  }, [timeRange])
+  }, [timeRange, projectId])
 
   if (loading) {
     return (
@@ -143,6 +148,14 @@ export function ReportsContent() {
     )
   }
 
+  const selectedProject = projects.find((project) => project.id === projectId)
+  const selectedProjectName = projectId === "all" ? "Wszystkie projekty" : (selectedProject?.name ?? "Wybrany projekt")
+  const timeRangeLabel =
+    timeRange === 'week' ? 'Ostatni tydzień' :
+      timeRange === 'month' ? 'Bieżący miesiąc' :
+        timeRange === 'quarter' ? 'Ostatni kwartał' :
+          timeRange === 'year' ? 'Ostatni rok' : timeRange
+
   return (
     <div className="p-6 space-y-6" id="reports">
       {/* Header */}
@@ -150,10 +163,29 @@ export function ReportsContent() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Raporty</h1>
           <p className="text-muted-foreground mt-2">
-            Kompleksowe podsumowanie pracy i statystyk
+            {selectedProjectName} · {timeRangeLabel}
           </p>
         </div>
         <div className="flex gap-2 items-center">
+          <Select value={projectId} onValueChange={setProjectId}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Wybierz projekt" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Wszystkie projekty</SelectItem>
+              {projects.map((project) => (
+                <SelectItem key={project.id} value={project.id}>
+                  <span className="flex items-center gap-2">
+                    <span
+                      className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: project.color || '#3b82f6' }}
+                    />
+                    {project.name}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Select value={timeRange} onValueChange={setTimeRange}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Wybierz okres" />
@@ -557,12 +589,8 @@ export function ReportsContent() {
           <CardTitle className="text-sm">Informacje o raporcie</CardTitle>
         </CardHeader>
         <CardContent className="text-xs text-muted-foreground space-y-1">
-          <p><strong>Okres:</strong> {
-            timeRange === 'week' ? 'Ostatni tydzień' :
-              timeRange === 'month' ? 'Bieżący miesiąc' :
-                timeRange === 'quarter' ? 'Ostatni kwartał' :
-                  timeRange === 'year' ? 'Ostatni rok' : timeRange
-          }</p>
+          <p><strong>Projekt:</strong> {selectedProjectName}</p>
+          <p><strong>Okres:</strong> {timeRangeLabel}</p>
           <p><strong>Wygenerowano:</strong> {new Date(reportData.generatedAt).toLocaleString('pl-PL')}</p>
           <p className="mt-2 pt-2 border-t">
             <strong>Uwaga:</strong> Wszystkie czasy są obliczane na podstawie wpisów czasu pracy (time entries) zarejestrowanych w zadaniach.
