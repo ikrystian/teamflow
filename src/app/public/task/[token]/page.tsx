@@ -332,7 +332,10 @@ const displayName = (
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)}const getAvatarBg = (name: string) => {
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+const getAvatarBg = (name: string) => {
   const colors = [
     "from-blue-500 to-indigo-600",
     "from-emerald-500 to-teal-600",
@@ -836,6 +839,5 @@ export default async function PublicTaskPage({
       </div>
     </div>
   )
-} </div>
-  )
 }
+
