@@ -27,6 +27,7 @@ import {
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuAction,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
@@ -185,23 +186,41 @@ export function NavProjects({ projects, onEditProject, onDeleteProject }: NavPro
       {projects.length > 0 && <SidebarGroupLabel>Lista projektów</SidebarGroupLabel>}
       <SidebarMenu>
         {/* Aktywne projekty */}
-        {activeProjects.map((project) => (
-          <SidebarMenuItem key={project.id}>
-            <SidebarMenuButton
-              asChild
-              tooltip={project.name}
-              isActive={isProjectActive(project.id)}
-            >
-              <Link href={`/dashboard/projects/${project.id}`}>
-                <ProjectIcon
-                  iconName={project.icon}
-                  color={project.color}
-                  className="w-4 h-4 flex-shrink-0"
-                />
-                <span className="truncate">{project.name}</span>
-              </Link>
-            </SidebarMenuButton>
-            <DropdownMenu>
+        {activeProjects.map((project) => {
+          const todoCount = project.tasks?.filter(task => {
+            const statusName = task.taskStatus?.name?.toLowerCase();
+            return statusName !== 'done';
+          }).length || 0;
+
+          const badgeStyle = project.color
+            ? { backgroundColor: `${project.color}15`, color: project.color }
+            : {};
+
+          return (
+            <SidebarMenuItem key={project.id}>
+              <SidebarMenuButton
+                asChild
+                tooltip={project.name}
+                isActive={isProjectActive(project.id)}
+              >
+                <Link href={`/dashboard/projects/${project.id}`}>
+                  <ProjectIcon
+                    iconName={project.icon}
+                    color={project.color}
+                    className="w-4 h-4 flex-shrink-0"
+                  />
+                  <span className="truncate">{project.name}</span>
+                </Link>
+              </SidebarMenuButton>
+              {todoCount > 0 && (
+                <SidebarMenuBadge
+                  className="right-2.5 group-hover/menu-item:right-8 transition-all duration-200 font-semibold"
+                  style={badgeStyle}
+                >
+                  {todoCount}
+                </SidebarMenuBadge>
+              )}
+              <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuAction showOnHover>
                   <MoreHorizontal />
@@ -257,7 +276,8 @@ export function NavProjects({ projects, onEditProject, onDeleteProject }: NavPro
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>
-        ))}
+          );
+        })}
 
         {/* Przycisk "Więcej" z tooltipem pokazującym liczbę archiwizowanych projektów */}
         <SidebarMenuItem>
@@ -281,26 +301,44 @@ export function NavProjects({ projects, onEditProject, onDeleteProject }: NavPro
         </SidebarMenuItem>
 
         {/* Archiwizowane projekty (pokazywane po kliknięciu "Więcej") */}
-        {displayedArchivedProjects.map((project) => (
-          <SidebarMenuItem key={`archived-${project.id}`}>
-            <SidebarMenuButton
-              asChild
-              tooltip={`${project.name} (zarchiwizowany)`}
-              isActive={isProjectActive(project.id)}
-            >
-              <Link href={`/dashboard/projects/${project.id}`}>
-                <div className="opacity-60">
-                  <ProjectIcon
-                    iconName={project.icon}
-                    color={project.color}
-                    className="w-4 h-4 flex-shrink-0"
-                  />
-                </div>
-                <span className="truncate opacity-60">{project.name}</span>
-                <Archive className="h-3 w-3 ml-auto opacity-60" />
-              </Link>
-            </SidebarMenuButton>
-            <DropdownMenu>
+        {displayedArchivedProjects.map((project) => {
+          const todoCount = project.tasks?.filter(task => {
+            const statusName = task.taskStatus?.name?.toLowerCase();
+            return statusName !== 'done';
+          }).length || 0;
+
+          const badgeStyle = project.color
+            ? { backgroundColor: `${project.color}10`, color: project.color, opacity: 0.6 }
+            : { opacity: 0.6 };
+
+          return (
+            <SidebarMenuItem key={`archived-${project.id}`}>
+              <SidebarMenuButton
+                asChild
+                tooltip={`${project.name} (zarchiwizowany)`}
+                isActive={isProjectActive(project.id)}
+              >
+                <Link href={`/dashboard/projects/${project.id}`}>
+                  <div className="opacity-60">
+                    <ProjectIcon
+                      iconName={project.icon}
+                      color={project.color}
+                      className="w-4 h-4 flex-shrink-0"
+                    />
+                  </div>
+                  <span className="truncate opacity-60 pr-4">{project.name}</span>
+                  <Archive className="h-3 w-3 ml-auto opacity-60 mr-4" />
+                </Link>
+              </SidebarMenuButton>
+              {todoCount > 0 && (
+                <SidebarMenuBadge
+                  className="right-8 group-hover/menu-item:right-14 transition-all duration-200 font-semibold"
+                  style={badgeStyle}
+                >
+                  {todoCount}
+                </SidebarMenuBadge>
+              )}
+              <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuAction showOnHover>
                   <MoreHorizontal />
@@ -359,7 +397,8 @@ export function NavProjects({ projects, onEditProject, onDeleteProject }: NavPro
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>
-        ))}
+          );
+        })}
       </SidebarMenu>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
