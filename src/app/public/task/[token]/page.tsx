@@ -262,21 +262,17 @@ export async function generateMetadata({
   const cleanDesc = task.description ? stripMarkdownAndHtml(task.description).substring(0, 160) : ""
   const ogDescription = metaInfo + (cleanDesc ? ` — ${cleanDesc}...` : "")
 
-  const imageUrls: string[] = []
-  if (task.images && task.images.length > 0) {
-    imageUrls.push(task.images[0].url)
-  } else if (task.project?.imageUrl) {
-    imageUrls.push(task.project.imageUrl)
-  }
-
   // Determine metadataBase dynamically if possible or fall back to local
   const base = process.env.NEXTAUTH_URL || "http://localhost:3000"
+  const baseClean = base.endsWith("/") ? base.slice(0, -1) : base
   let metadataBase: URL | undefined = undefined
   try {
-    metadataBase = new URL(base)
+    metadataBase = new URL(baseClean)
   } catch (e) {
     console.error("Invalid NEXTAUTH_URL", e)
   }
+
+  const ogImageUrl = `${baseClean}/public/task/${token}/opengraph-image`
 
   return {
     metadataBase,
@@ -288,13 +284,22 @@ export async function generateMetadata({
       description: ogDescription,
       type: "website",
       siteName: "Nexus",
-      images: imageUrls.length > 0 ? imageUrls.map(url => ({ url })) : undefined,
+      url: `${baseClean}/public/task/${token}`,
+      locale: "pl_PL",
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: `${task.key ? `[${task.key}] ` : ""}${task.title}`,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title: `${task.key ? `[${task.key}] ` : ""}${task.title}`,
       description: ogDescription,
-      images: imageUrls.length > 0 ? imageUrls : undefined,
+      images: [ogImageUrl],
     },
   }
 }
