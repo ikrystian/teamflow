@@ -230,3 +230,15 @@ jobs:
           PR_NUMBER="${{ steps.existing.outputs.number }}"
           echo "Updating PR #$PR_NUMBER with new description..."
           gh pr edit "$PR_NUMBER" --body-file /tmp/pr_body.txt
+
+      - name: Configure Repository Merge Defaults
+        if: steps.check_changes.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN || github.token }}
+        run: |
+          echo "Configuring repository merge defaults to use PR title and description..."
+          gh api --method PATCH "repos/${{ github.repository }}" \
+            -f squash_merge_commit_title=PR_TITLE \
+            -f squash_merge_commit_message=PR_BODY \
+            -f merge_commit_title=PR_TITLE \
+            -f merge_commit_message=PR_BODY || echo "Warning: Could not update repository merge settings. This may require admin permissions on the token."
