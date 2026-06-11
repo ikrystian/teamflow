@@ -81,37 +81,38 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.985 0 0);
-  --sidebar-primary-foreground: oklch(0.205 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* Facebook dark mode palette */
+  --background: #18191a;          /* app background */
+  --foreground: #e4e6eb;          /* primary text */
+  --card: #242526;                /* cards / surfaces */
+  --card-foreground: #e4e6eb;
+  --popover: #242526;             /* menus, dropdowns */
+  --popover-foreground: #e4e6eb;
+  --primary: #2374e1;             /* Facebook blue */
+  --primary-foreground: #ffffff;
+  --secondary: #3a3b3c;           /* secondary surface / button */
+  --secondary-foreground: #e4e6eb;
+  --muted: #3a3b3c;
+  --muted-foreground: #b0b3b8;    /* secondary text */
+  --accent: #3a3b3c;              /* hover / elevated surface */
+  --accent-foreground: #e4e6eb;
+  --destructive: #fa383e;         /* Facebook red */
+  --border: #3e4042;              /* dividers */
+  --input: #3e4042;
+  --ring: #2374e1;                /* focus ring (blue) */
+  --chart-1: #2d88ff;
+  --chart-2: #45bd62;
+  --chart-3: #f7b928;
+  --chart-4: #fa383e;
+  --chart-5: #a033ff;
+  --sidebar: #242526;
+  --sidebar-foreground: #e4e6eb;
+  --sidebar-primary: #2374e1;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #3a3b3c;
+  --sidebar-accent-foreground: #e4e6eb;
+  --sidebar-border: #3e4042;
+  --sidebar-ring: #2374e1;
 }
 
 
