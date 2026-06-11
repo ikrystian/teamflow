@@ -1581,7 +1581,7 @@ export function TaskFormContent({
                     disabled={deleting}
                     className="h-7"
                   >
-                    {deleting ? "Usuwanie..." : "Tak, usuń"}
+                    {deleting ? "Usuwanie..." : "Tak"}
                   </Button>
                   <Button
                     type="button"

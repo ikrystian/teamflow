@@ -134,6 +134,38 @@ export async function createGithubBranch(
 }
 
 /**
+ * Delete a branch in the given repo.
+ */
+export async function deleteGithubBranch(
+  repoString: string,
+  branchName: string
+): Promise<void> {
+  const token = getToken()
+  const { owner, repo } = parseRepo(repoString)
+
+  const res = await fetch(
+    `${GITHUB_API}/repos/${owner}/${repo}/git/refs/heads/${branchName}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    }
+  )
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    // 404 means the branch was already deleted, which is fine for our purposes
+    if (res.status === 404 || res.status === 422) {
+      return
+    }
+    throw new Error(`Failed to delete branch: ${body.message || res.statusText}`)
+  }
+}
+
+/**
  * Validate that a GitHub webhook signature (SHA-256 HMAC) matches the secret.
  * Call this inside your webhook handler to verify requests are from GitHub.
  */
