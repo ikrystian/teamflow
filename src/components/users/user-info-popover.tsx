@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -45,6 +45,43 @@ export function UserInfoPopover({
   const [user, setUser] = useState<User | null>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+
+  const enterTimeoutRef = useRef<any>(null)
+  const leaveTimeoutRef = useRef<any>(null)
+
+  const handleMouseEnter = useCallback(() => {
+    if (leaveTimeoutRef.current) {
+      clearTimeout(leaveTimeoutRef.current)
+      leaveTimeoutRef.current = null
+    }
+    if (!isOpen && !enterTimeoutRef.current) {
+      enterTimeoutRef.current = setTimeout(() => {
+        setIsOpen(true)
+        enterTimeoutRef.current = null
+      }, 1000)
+    }
+  }, [isOpen])
+
+  const handleMouseLeave = useCallback(() => {
+    if (enterTimeoutRef.current) {
+      clearTimeout(enterTimeoutRef.current)
+      enterTimeoutRef.current = null
+    }
+    if (isOpen && !leaveTimeoutRef.current) {
+      leaveTimeoutRef.current = setTimeout(() => {
+        setIsOpen(false)
+        leaveTimeoutRef.current = null
+      }, 200)
+    }
+  }, [isOpen])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (enterTimeoutRef.current) clearTimeout(enterTimeoutRef.current)
+      if (leaveTimeoutRef.current) clearTimeout(leaveTimeoutRef.current)
+    }
+  }, [])
 
   const fetchUserData = useCallback(async () => {
     if (loading) return
@@ -105,8 +142,8 @@ export function UserInfoPopover({
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <div
-          onMouseEnter={() => setIsOpen(true)}
-          onMouseLeave={() => setIsOpen(false)}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
         >
           {children}
         </div>
@@ -115,8 +152,8 @@ export function UserInfoPopover({
         className="w-80 p-0"
         side={side}
         align={align}
-        onMouseEnter={() => setIsOpen(true)}
-        onMouseLeave={() => setIsOpen(false)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         <div className="p-4 space-y-4">
           {loading ? (
