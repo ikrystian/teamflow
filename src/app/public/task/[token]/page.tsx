@@ -27,7 +27,8 @@ import {
   Info,
   CalendarRange,
   Timer,
-  UserCheck
+  UserCheck,
+  Share2
 } from "lucide-react"
 
 export const dynamic = "force-dynamic"
@@ -331,7 +332,20 @@ const displayName = (
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)}const getAvatarBg = (name: string) => {
+  const colors = [
+    "from-blue-500 to-indigo-600",
+    "from-emerald-500 to-teal-600",
+    "from-violet-500 to-purple-600",
+    "from-pink-500 to-rose-600",
+    "from-amber-500 to-orange-600",
+  ]
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const index = Math.abs(hash) % colors.length
+  return colors[index]
 }
 
 export default async function PublicTaskPage({
@@ -349,93 +363,121 @@ export default async function PublicTaskPage({
   const tags = task.taskTags.map((tt) => tt.tag)
   const completedTodos = task.todos.filter((t) => t.isCompleted).length
   const totalTime = task.timeEntries.reduce((sum, e) => sum + e.hours, 0)
+  const progressPercent = task.todos.length > 0 ? Math.round((completedTodos / task.todos.length) * 100) : 0
 
   const projectColor = task.project?.color || "#3B82F6"
   const markdownComponents = getMarkdownComponents(projectColor)
 
   return (
-    <div className="min-h-screen bg-neutral-50/50 text-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 font-sans antialiased relative overflow-hidden pb-16">
+    <div className="min-h-screen bg-slate-50/50 text-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 font-sans antialiased relative overflow-hidden pb-16">
       
       {/* Decorative top blur blob */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[400px] bg-gradient-to-b from-blue-500/5 to-transparent blur-3xl pointer-events-none" />
+      <div 
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[350px] opacity-20 dark:opacity-15 blur-3xl pointer-events-none transition-all duration-1000"
+        style={{
+          background: `radial-gradient(circle 450px at 50% -50px, ${projectColor}, transparent)`
+        }}
+      />
 
       {/* Floating navigation header */}
-      <nav className="sticky top-0 z-40 w-full border-b border-neutral-200/60 bg-white/70 backdrop-blur-md dark:border-neutral-800/60 dark:bg-neutral-955/70">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 font-bold text-sm tracking-tighter">
+      <nav className="sticky top-0 z-40 w-full border-b border-neutral-200/50 bg-white/75 backdrop-blur-md dark:border-neutral-800/50 dark:bg-neutral-900/75">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span 
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-white font-bold text-sm tracking-tighter transition-transform hover:scale-105"
+              style={{ backgroundColor: projectColor }}
+            >
               N
             </span>
-            <span className="font-semibold text-sm tracking-tight">Nexus</span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2.5 py-0.5 text-[10px] font-medium text-blue-600 dark:bg-blue-500/20 dark:text-blue-400">
-              <span className="h-1 w-1 rounded-full bg-blue-500 animate-pulse" />
+            <span className="font-semibold text-sm tracking-tight text-neutral-900 dark:text-neutral-50">Nexus</span>
+            
+            <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium border bg-neutral-50 text-neutral-600 dark:bg-neutral-900 dark:text-neutral-400 dark:border-neutral-800">
+              <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: projectColor }} />
               Karta zadania
             </span>
           </div>
           {task.project && (
-            <div className="flex items-center gap-2 text-xs font-medium text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-900 px-3 py-1 rounded-full border border-neutral-200/40 dark:border-neutral-800/40">
+            <div className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border bg-white/50 dark:bg-neutral-900/50 shadow-sm border-neutral-200/50 dark:border-neutral-800/50">
               <ProjectIcon iconName={task.project.icon} color={task.project.color || "#3B82F6"} className="h-3.5 w-3.5" />
-              <span>{task.project.name}</span>
+              <span className="max-w-[120px] sm:max-w-[200px] truncate text-neutral-700 dark:text-neutral-300">{task.project.name}</span>
             </div>
           )}
         </div>
       </nav>
 
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8 relative z-10">
-         {/* Main Title Section */}
-        <div className="border-b border-neutral-200/60 dark:border-neutral-800/60 pb-8 mb-8">
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-            {task.key && (
-              <span className="font-mono text-xs font-semibold text-neutral-500 bg-neutral-100 dark:bg-neutral-900 dark:text-neutral-400 px-2.5 py-0.5 rounded-md border border-neutral-200/50 dark:border-neutral-800/50">
-                {task.key}
-              </span>
-            )}
-            {task.taskStatus && (
-              <span 
-                className="text-xs font-semibold px-2.5 py-0.5 rounded-full border"
-                style={{
-                  borderColor: `${task.taskStatus.color}40`,
-                  backgroundColor: `${task.taskStatus.color}12`,
-                  color: task.taskStatus.color,
-                }}
-              >
-                {task.taskStatus.name}
-              </span>
-            )}
-            {task.priority && (
-              <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
-                task.priority === "HIGH" || task.priority === "URGENT"
-                  ? "border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-400"
-                  : task.priority === "MEDIUM"
-                  ? "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                  : "border-neutral-500/20 bg-neutral-500/10 text-neutral-600 dark:text-neutral-400"
-              }`}>
-                {getPriorityDisplayName(task.priority)}
-              </span>
-            )}
-          </div>
-          
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-neutral-900 dark:text-neutral-50 leading-tight mb-4">
-            {task.title}
-          </h1>
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 relative z-10">
+        
+        {/* Breadcrumbs & Navigation Path */}
+        <div className="flex items-center gap-1.5 text-[11px] text-neutral-400 dark:text-neutral-500 mb-3 font-semibold tracking-wide uppercase">
+          <span>Projekty</span>
+          <span>/</span>
+          <span className="hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors truncate max-w-[150px]">{task.project?.name || "Bez projektu"}</span>
+          <span>/</span>
+          <span className="font-mono text-neutral-600 dark:text-neutral-400 font-bold">{task.key || "ZADANIE"}</span>
+        </div>
 
-          {tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-3">
-              {tags.map((tag) => (
-                <span
-                  key={tag.id}
-                  className="text-xs font-medium px-2.5 py-0.5 rounded-full border"
-                  style={{
-                    borderColor: `${tag.color}40`,
-                    backgroundColor: `${tag.color}10`,
-                    color: tag.color
-                  }}
-                >
-                  {tag.name}
-                </span>
-              ))}
+        {/* Hero Title Section */}
+        <div className="pb-6 mb-8 border-b border-neutral-200/40 dark:border-neutral-800/40">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="space-y-3 max-w-4xl">
+              <div className="flex flex-wrap items-center gap-2">
+                {task.key && (
+                  <span className="font-mono text-[10px] font-bold text-neutral-500 bg-neutral-100 dark:bg-neutral-900 dark:text-neutral-400 px-2 py-0.5 rounded border border-neutral-200/40 dark:border-neutral-800/40">
+                    {task.key}
+                  </span>
+                )}
+                {task.taskStatus && (
+                  <span 
+                    className="text-[10px] font-bold px-2.5 py-0.5 rounded-full border uppercase tracking-wider"
+                    style={{
+                      borderColor: `${task.taskStatus.color}35`,
+                      backgroundColor: `${task.taskStatus.color}08`,
+                      color: task.taskStatus.color,
+                    }}
+                  >
+                    {task.taskStatus.name}
+                  </span>
+                )}
+                {task.priority && (
+                  <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border uppercase tracking-wider ${
+                    task.priority === "HIGH" || task.priority === "URGENT"
+                      ? "border-red-500/20 bg-red-500/5 text-red-600 dark:text-red-400"
+                      : task.priority === "MEDIUM"
+                      ? "border-amber-500/20 bg-amber-500/5 text-amber-600 dark:text-amber-400"
+                      : "border-neutral-500/20 bg-neutral-50/5 text-neutral-600 dark:text-neutral-400"
+                  }`}>
+                    {getPriorityDisplayName(task.priority)}
+                  </span>
+                )}
+              </div>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-neutral-900 dark:text-neutral-50 leading-tight">
+                {task.title}
+              </h1>
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {tags.map((tag) => (
+                    <span
+                      key={tag.id}
+                      className="text-[10px] font-semibold px-2 py-0.5 rounded-full border"
+                      style={{
+                        borderColor: `${tag.color}30`,
+                        backgroundColor: `${tag.color}08`,
+                        color: tag.color
+                      }}
+                    >
+                      #{tag.name}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+
+            {/* Action / Shared Badge */}
+            <div className="flex shrink-0 self-start md:self-center items-center gap-1.5 text-xs text-neutral-400 dark:text-neutral-500 bg-neutral-100/50 dark:bg-neutral-900/50 px-3 py-1.5 rounded-xl border border-neutral-200/30 dark:border-neutral-800/30 shadow-sm">
+              <Share2 className="h-3.5 w-3.5" style={{ color: projectColor }} />
+              <span>Widok publiczny</span>
+            </div>
+          </div>
         </div>
 
         {/* Dashboard Grid */}
@@ -446,9 +488,9 @@ export default async function PublicTaskPage({
             
             {/* Description */}
             {task.description && !isDescriptionEmpty(task.description) && (
-              <section className="rounded-2xl border border-neutral-200/80 bg-white dark:border-neutral-900/40 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.015)] backdrop-blur-sm">
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-4 flex items-center gap-1.5">
-                  <FileText className="h-4 w-4 text-neutral-400" /> Opis zadania
+              <section className="rounded-2xl border border-neutral-200/50 bg-white/80 dark:bg-neutral-900/60 dark:border-neutral-800/40 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.01)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all duration-300 backdrop-blur-md">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-5 flex items-center gap-2">
+                  <FileText className="h-4 w-4" style={{ color: projectColor }} /> Opis zadania
                 </h2>
                 
                 <div className="prose prose-neutral max-w-none dark:prose-invert prose-sm sm:prose-base prose-headings:font-bold prose-headings:tracking-tight">
@@ -464,31 +506,41 @@ export default async function PublicTaskPage({
 
             {/* Subtasks */}
             {task.todos.length > 0 && (
-              <section className="rounded-2xl border border-neutral-200/80 bg-white dark:border-neutral-900/40 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.015)] backdrop-blur-sm">
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-4 flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Lista podzadań
-                  </span>
-                  <span className="text-xs font-semibold text-neutral-500 bg-neutral-100 dark:bg-neutral-900 dark:text-neutral-400 px-2.5 py-0.5 rounded-full border border-neutral-200/20 dark:border-neutral-800/20">
-                    {completedTodos} z {task.todos.length}
-                  </span>
-                </h2>
+              <section className="rounded-2xl border border-neutral-200/50 bg-white/80 dark:bg-neutral-900/60 dark:border-neutral-800/40 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.01)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all duration-300 backdrop-blur-md">
+                <div className="mb-5">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Lista podzadań
+                    </h2>
+                    <span className="text-xs font-bold text-neutral-500 bg-neutral-100 dark:bg-neutral-900 dark:text-neutral-400 px-2.5 py-0.5 rounded-full border border-neutral-200/20 dark:border-neutral-800/20 shadow-sm">
+                      {completedTodos} z {task.todos.length} ({progressPercent}%)
+                    </span>
+                  </div>
+                  
+                  {/* Beautiful Progress Bar */}
+                  <div className="w-full bg-neutral-100 dark:bg-neutral-800 h-2 rounded-full overflow-hidden mt-3 border border-neutral-200/20 dark:border-neutral-700/20">
+                    <div 
+                      className="h-full transition-all duration-700 ease-out rounded-full shadow-sm" 
+                      style={{ width: `${progressPercent}%`, backgroundColor: projectColor }} 
+                    />
+                  </div>
+                </div>
                 
-                <div className="space-y-2">
+                <div className="grid grid-cols-1 gap-2">
                   {task.todos.map((todo) => (
                     <div
                       key={todo.id}
-                      className="flex items-center gap-3 p-3.5 rounded-xl border border-neutral-100/50 bg-neutral-50/20 hover:bg-neutral-50/55 dark:border-neutral-800/30 dark:bg-neutral-900/10 dark:hover:bg-neutral-800/20 transition-colors"
+                      className="flex items-center gap-3 p-3.5 rounded-xl border border-neutral-100/60 bg-neutral-50/20 hover:bg-neutral-50/60 dark:border-neutral-800/30 dark:bg-neutral-900/20 dark:hover:bg-neutral-800/30 transition-all duration-200 group"
                     >
-                      <span className="flex shrink-0">
+                      <span className="flex shrink-0 transform group-hover:scale-110 transition-transform">
                         {todo.isCompleted ? (
                           <CheckCircle2 className="h-5 w-5 text-emerald-500 fill-emerald-500/5" />
                         ) : (
-                          <Circle className="h-5 w-5 text-neutral-300 dark:text-neutral-800" />
+                          <Circle className="h-5 w-5 text-neutral-300 dark:text-neutral-800 group-hover:text-neutral-400 dark:group-hover:text-neutral-700" />
                         )}
                       </span>
                       <span
-                        className={`text-sm ${
+                        className={`text-sm transition-colors duration-200 ${
                           todo.isCompleted
                             ? "text-neutral-400 line-through dark:text-neutral-500 font-normal"
                             : "text-neutral-800 dark:text-neutral-200 font-medium"
@@ -504,9 +556,12 @@ export default async function PublicTaskPage({
 
             {/* Changes / What was done */}
             {task.changes && task.changes.trim() && (
-              <section className="rounded-2xl border border-neutral-200/80 bg-white dark:border-neutral-900/40 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.015)] backdrop-blur-sm">
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-4 flex items-center gap-1.5">
-                  <Sparkles className="h-4 w-4 text-amber-500" /> Co zostało zrobione
+              <section 
+                className="rounded-2xl border-l-4 bg-white/80 dark:bg-neutral-900/60 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.01)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all duration-300 backdrop-blur-md border-y border-r border-neutral-200/50 dark:border-neutral-800/40"
+                style={{ borderLeftColor: projectColor }}
+              >
+                <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-5 flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" /> Co zostało zrobione
                 </h2>
                 
                 <div className="prose prose-neutral max-w-none dark:prose-invert prose-sm sm:prose-base prose-headings:font-bold prose-headings:tracking-tight">
@@ -522,15 +577,15 @@ export default async function PublicTaskPage({
 
             {/* Images */}
             {task.images.length > 0 && (
-              <section className="rounded-2xl border border-neutral-200/80 bg-white dark:border-neutral-900/40 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.015)] backdrop-blur-sm">
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-4 flex items-center gap-1.5">
+              <section className="rounded-2xl border border-neutral-200/50 bg-white/80 dark:bg-neutral-900/60 dark:border-neutral-800/40 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.01)] backdrop-blur-md">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-5 flex items-center gap-2">
                   <ImageIcon className="h-4 w-4 text-neutral-400" /> Obrazy i zrzuty ekranu
                 </h2>
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {task.images.map((image) => (
                     <div 
                       key={image.id} 
-                      className="group relative overflow-hidden rounded-xl border border-neutral-200/80 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 aspect-video"
+                      className="group relative overflow-hidden rounded-xl border border-neutral-200/60 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 aspect-video shadow-sm hover:shadow-md transition-all duration-300"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
@@ -538,8 +593,8 @@ export default async function PublicTaskPage({
                         alt={image.filename}
                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-neutral-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2.5">
-                        <span className="text-[10px] font-medium text-white truncate w-full">
+                      <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/80 via-neutral-950/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-end p-3.5">
+                        <span className="text-xs font-semibold text-white truncate w-full">
                           {image.filename}
                         </span>
                       </div>
@@ -551,33 +606,36 @@ export default async function PublicTaskPage({
 
             {/* Attachments */}
             {task.attachments.length > 0 && (
-              <section className="rounded-2xl border border-neutral-200/80 bg-white dark:border-neutral-900/40 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.015)] backdrop-blur-sm">
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-4 flex items-center gap-1.5">
+              <section className="rounded-2xl border border-neutral-200/50 bg-white/80 dark:bg-neutral-900/60 dark:border-neutral-800/40 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.01)] backdrop-blur-md">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-5 flex items-center gap-2">
                   <Paperclip className="h-4 w-4 text-neutral-400" /> Załączone pliki ({task.attachments.length})
                 </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   {task.attachments.map((file) => (
                     <a
                       key={file.id}
                       href={file.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between p-3.5 rounded-xl border border-neutral-200/60 dark:border-neutral-800/80 hover:border-neutral-300 dark:hover:border-neutral-700 bg-neutral-50/30 hover:bg-neutral-50 dark:bg-neutral-900/10 dark:hover:bg-neutral-800/20 transition-all group"
+                      className="flex items-center justify-between p-3.5 rounded-xl border border-neutral-200/60 dark:border-neutral-800/80 hover:border-neutral-300 dark:hover:border-neutral-700 bg-neutral-50/20 hover:bg-neutral-50 dark:bg-neutral-900/10 dark:hover:bg-neutral-800/20 transition-all duration-200 group"
                     >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="h-8 w-8 rounded-lg bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 flex items-center justify-center shrink-0">
+                      <div className="flex items-center gap-3.5 min-w-0">
+                        <div 
+                          className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0 transition-colors"
+                          style={{ backgroundColor: `${projectColor}15`, color: projectColor }}
+                        >
                           <FileText className="h-4 w-4" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 truncate group-hover:text-blue-500 transition-colors">
+                          <p className="text-xs font-bold text-neutral-800 dark:text-neutral-200 truncate group-hover:text-neutral-950 dark:group-hover:text-white transition-colors">
                             {file.originalName}
                           </p>
-                          <span className="text-[10px] text-neutral-400 dark:text-neutral-500">
+                          <span className="text-[10px] font-medium text-neutral-400 dark:text-neutral-500">
                             {formatFileSize(file.size)}
                           </span>
                         </div>
                       </div>
-                      <ExternalLink className="h-3.5 w-3.5 text-neutral-400 group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors shrink-0 ml-2" />
+                      <ExternalLink className="h-3.5 w-3.5 text-neutral-400 group-hover:text-neutral-750 dark:group-hover:text-neutral-200 transition-colors shrink-0 ml-2" />
                     </a>
                   ))}
                 </div>
@@ -590,59 +648,59 @@ export default async function PublicTaskPage({
           <div className="space-y-6">
             
             {/* Meta Properties Pane */}
-            <div className="rounded-2xl border border-neutral-200/80 bg-white dark:border-neutral-900/40 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.015)] backdrop-blur-sm">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-5 flex items-center gap-1.5">
-                <Info className="h-3.5 w-3.5" /> Informacje
+            <div className="rounded-2xl border border-neutral-200/50 bg-white/80 dark:bg-neutral-900/60 dark:border-neutral-800/40 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.01)] backdrop-blur-md">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-5 flex items-center gap-2">
+                <Info className="h-3.5 w-3.5" style={{ color: projectColor }} /> Informacje
               </h3>
               
               <div className="space-y-4">
                 {/* Assignee */}
-                <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800/60 pb-3">
-                  <span className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center gap-2">
+                <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800/40 pb-3.5">
+                  <span className="text-xs font-medium text-neutral-400 dark:text-neutral-500 flex items-center gap-2">
                     <User className="h-3.5 w-3.5 text-neutral-400 shrink-0" /> Przypisane do
                   </span>
                   <div className="flex items-center gap-2">
-                    <div className="h-6 w-6 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-[10px] font-semibold text-white">
+                    <div className={`h-6 w-6 rounded-full bg-gradient-to-tr ${getAvatarBg(displayName(task.assignee))} flex items-center justify-center text-[10px] font-bold text-white shadow-sm`}>
                       {displayName(task.assignee)[0].toUpperCase()}
                     </div>
-                    <span className="text-sm font-medium text-neutral-800 dark:text-neutral-300">
+                    <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-300 font-medium">
                       {displayName(task.assignee)}
                     </span>
                   </div>
                 </div>
 
                 {/* Creator */}
-                <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800/60 pb-3">
-                  <span className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center gap-2">
+                <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800/40 pb-3.5">
+                  <span className="text-xs font-medium text-neutral-400 dark:text-neutral-500 flex items-center gap-2">
                     <UserCheck className="h-3.5 w-3.5 text-neutral-400 shrink-0" /> Utworzone przez
                   </span>
                   <div className="flex items-center gap-2">
-                    <div className="h-6 w-6 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-[10px] font-semibold text-white">
+                    <div className={`h-6 w-6 rounded-full bg-gradient-to-tr ${getAvatarBg(displayName(task.createdBy))} flex items-center justify-center text-[10px] font-bold text-white shadow-sm`}>
                       {displayName(task.createdBy)[0].toUpperCase()}
                     </div>
-                    <span className="text-sm font-medium text-neutral-800 dark:text-neutral-300">
+                    <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-300 font-medium">
                       {displayName(task.createdBy)}
                     </span>
                   </div>
                 </div>
 
                 {/* Estimated Hours */}
-                <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800/60 pb-3">
-                  <span className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center gap-2">
+                <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800/40 pb-3.5">
+                  <span className="text-xs font-medium text-neutral-400 dark:text-neutral-500 flex items-center gap-2">
                     <Clock className="h-3.5 w-3.5 text-neutral-400 shrink-0" /> Szacowany czas
                   </span>
-                  <span className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">
-                    {formatEstimatedHours(task.estimatedHours) || "Brak"}
+                  <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                    {formatEstimatedHours(task.estimatedHours)}
                   </span>
                 </div>
 
                 {/* Due Date */}
                 {task.dueDate && (
-                  <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800/60 pb-3">
-                    <span className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center gap-2">
+                  <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800/40 pb-3.5">
+                    <span className="text-xs font-medium text-neutral-400 dark:text-neutral-500 flex items-center gap-2">
                       <Calendar className="h-3.5 w-3.5 text-neutral-400 shrink-0" /> Termin
                     </span>
-                    <span className="text-sm font-semibold text-red-500 dark:text-red-400">
+                    <span className="text-xs font-bold text-red-500 dark:text-red-400 bg-red-500/5 px-2 py-0.5 rounded border border-red-500/10">
                       {formatDate(task.dueDate)}
                     </span>
                   </div>
@@ -650,19 +708,21 @@ export default async function PublicTaskPage({
 
                 {/* Dates Range */}
                 {(task.startTime || task.endTime) && (
-                  <div className="space-y-2 border-b border-neutral-100 dark:border-neutral-800/60 pb-3">
-                    <span className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center gap-2">
+                  <div className="space-y-2 border-b border-neutral-100 dark:border-neutral-800/40 pb-3.5">
+                    <span className="text-xs font-medium text-neutral-400 dark:text-neutral-500 flex items-center gap-2">
                       <CalendarRange className="h-3.5 w-3.5 text-neutral-400 shrink-0" /> Okres realizacji
                     </span>
-                    <div className="pl-5 text-xs space-y-1 text-neutral-600 dark:text-neutral-400">
+                    <div className="pl-5 text-xs space-y-1.5 text-neutral-600 dark:text-neutral-400">
                       {task.startTime && (
-                        <div>
-                          <span className="text-neutral-400 dark:text-neutral-500 mr-1">Od:</span> {formatDateTime(task.startTime)}
+                        <div className="flex justify-between items-center bg-neutral-50/50 dark:bg-neutral-900/30 p-1.5 rounded">
+                          <span className="text-neutral-405 dark:text-neutral-500 font-medium">Od:</span>
+                          <span className="font-semibold">{formatDateTime(task.startTime)}</span>
                         </div>
                       )}
                       {task.endTime && (
-                        <div>
-                          <span className="text-neutral-400 dark:text-neutral-500 mr-1">Do:</span> {formatDateTime(task.endTime)}
+                        <div className="flex justify-between items-center bg-neutral-50/50 dark:bg-neutral-900/30 p-1.5 rounded">
+                          <span className="text-neutral-405 dark:text-neutral-500 font-medium">Do:</span>
+                          <span className="font-semibold">{formatDateTime(task.endTime)}</span>
                         </div>
                       )}
                     </div>
@@ -671,10 +731,10 @@ export default async function PublicTaskPage({
 
                 {/* Created At */}
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center gap-2">
+                  <span className="text-xs font-medium text-neutral-400 dark:text-neutral-500 flex items-center gap-2">
                     <Calendar className="h-3.5 w-3.5 text-neutral-400 shrink-0" /> Utworzono
                   </span>
-                  <span className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
+                  <span className="text-xs font-bold text-neutral-600 dark:text-neutral-400 font-medium">
                     {formatDate(task.createdAt)}
                   </span>
                 </div>
@@ -683,73 +743,80 @@ export default async function PublicTaskPage({
 
             {/* Time Tracking Widget */}
             {task.timeEntries.length > 0 && (
-              <div className="rounded-2xl border border-neutral-200/80 bg-white dark:border-neutral-900/40 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.015)] backdrop-blur-sm">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-4 flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
+              <div className="rounded-2xl border border-neutral-200/50 bg-white/80 dark:bg-neutral-900/60 dark:border-neutral-800/40 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.01)] backdrop-blur-md">
+                <div className="flex items-center justify-between mb-5">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 flex items-center gap-2">
                     <Timer className="h-3.5 w-3.5 text-neutral-400 shrink-0" /> Zarejestrowany czas
-                  </span>
-                  <span className="font-bold text-neutral-800 dark:text-neutral-200 bg-neutral-100 dark:bg-neutral-900 px-2 py-0.5 rounded text-[11px] border border-neutral-200/40 dark:border-neutral-800/40">
+                  </h3>
+                  <span className="font-bold text-neutral-800 dark:text-neutral-200 bg-neutral-100 dark:bg-neutral-900 px-2.5 py-0.5 rounded-full text-xs border border-neutral-200/30 dark:border-neutral-800/30 shadow-sm">
                     {totalTime % 1 === 0 ? totalTime : totalTime.toFixed(1)}h
                   </span>
-                </h3>
+                </div>
                 
-                <ul className="space-y-3 max-h-48 overflow-y-auto pr-1">
+                <div className="relative border-l border-neutral-200 dark:border-neutral-800 pl-4 ml-1 space-y-4 max-h-56 overflow-y-auto pr-1">
                   {task.timeEntries.map((entry) => (
-                    <li key={entry.id} className="flex justify-between items-start text-xs border-b border-neutral-100/40 dark:border-neutral-800/40 pb-2.5 last:border-0 last:pb-0">
-                      <div className="space-y-0.5">
-                        <span className="font-semibold text-neutral-800 dark:text-neutral-200">
-                          {displayName(entry.user)}
-                        </span>
-                        {entry.description && (
-                          <p className="text-neutral-500 dark:text-neutral-400 text-[11px] line-clamp-1 leading-normal">
-                            {entry.description}
-                          </p>
-                        )}
-                        <span className="text-[10px] text-neutral-400 block">
-                          {formatDate(entry.date)}
+                    <div key={entry.id} className="relative text-xs group">
+                      {/* Timeline dot */}
+                      <div 
+                        className="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full border bg-white dark:bg-neutral-900 transition-transform group-hover:scale-125"
+                        style={{ borderColor: projectColor }}
+                      />
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-0.5 min-w-0 pr-2">
+                          <span className="font-bold text-neutral-800 dark:text-neutral-200 hover:text-neutral-950 dark:hover:text-white transition-colors">
+                            {displayName(entry.user)}
+                          </span>
+                          {entry.description && (
+                            <p className="text-neutral-500 dark:text-neutral-400 text-[11px] leading-normal break-words">
+                              {entry.description}
+                            </p>
+                          )}
+                          <span className="text-[10px] text-neutral-400 block font-medium">
+                            {formatDate(entry.date)}
+                          </span>
+                        </div>
+                        <span className="font-bold text-neutral-700 dark:text-neutral-300 shrink-0 bg-neutral-50 dark:bg-neutral-900 px-1.5 py-0.5 rounded border border-neutral-200 dark:border-neutral-800 shadow-sm">
+                          {entry.hours}h
                         </span>
                       </div>
-                      <span className="font-bold text-neutral-700 dark:text-neutral-300 shrink-0 ml-2">
-                        {entry.hours}h
-                      </span>
-                    </li>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </div>
             )}
 
             {/* Comments List */}
             {task.comments.length > 0 && (
-              <div className="rounded-2xl border border-neutral-200/80 bg-white dark:border-neutral-900/40 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.015)] backdrop-blur-sm">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-4 flex items-center gap-1.5">
+              <div className="rounded-2xl border border-neutral-200/50 bg-white/80 dark:bg-neutral-900/60 dark:border-neutral-800/40 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.01)] backdrop-blur-md">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-5 flex items-center gap-2">
                   <MessageSquare className="h-3.5 w-3.5 text-neutral-400" /> Komentarze ({task.comments.length})
                 </h3>
 
-                <ul className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                <div className="space-y-3.5 max-h-96 overflow-y-auto pr-1">
                   {task.comments.map((comment) => (
-                    <li 
+                    <div 
                       key={comment.id} 
-                      className="text-xs space-y-1 bg-neutral-50/40 dark:bg-neutral-900/20 p-3 rounded-xl border border-neutral-100/50 dark:border-neutral-800/40"
+                      className="text-xs p-3.5 rounded-xl border border-neutral-100/80 dark:border-neutral-800 bg-neutral-50/20 hover:bg-neutral-50/40 dark:bg-neutral-900/10 dark:hover:bg-neutral-900/30 transition-all duration-200"
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
-                          <div className="h-5 w-5 rounded-full bg-gradient-to-tr from-neutral-200 to-neutral-300 dark:from-neutral-800 dark:to-neutral-700 flex items-center justify-center text-[9px] font-bold text-neutral-700 dark:text-neutral-300">
+                      <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-neutral-100 dark:border-neutral-800/40">
+                        <div className="flex items-center gap-2">
+                          <div className={`h-5 w-5 rounded-full bg-gradient-to-tr ${getAvatarBg(displayName(comment.author))} flex items-center justify-center text-[9px] font-bold text-white shadow-sm`}>
                             {displayName(comment.author)[0].toUpperCase()}
                           </div>
-                          <span className="font-semibold text-neutral-800 dark:text-neutral-200">
+                          <span className="font-bold text-neutral-800 dark:text-neutral-200">
                             {displayName(comment.author)}
                           </span>
                         </div>
-                        <span className="text-[9px] text-neutral-400 dark:text-neutral-500">
+                        <span className="text-[9px] font-medium text-neutral-400 dark:text-neutral-500">
                           {formatDateTime(comment.createdAt)}
                         </span>
                       </div>
-                      <p className="whitespace-pre-wrap text-neutral-600 dark:text-neutral-350 pl-6 leading-relaxed">
+                      <p className="whitespace-pre-wrap text-neutral-600 dark:text-neutral-300 leading-relaxed pl-1">
                         {comment.content}
                       </p>
-                    </li>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </div>
             )}
 
@@ -758,11 +825,17 @@ export default async function PublicTaskPage({
         </div>
 
         {/* Footer */}
-        <footer className="mt-16 pt-8 border-t border-neutral-200/40 dark:border-neutral-800/40 text-center text-xs text-neutral-400 dark:text-neutral-500">
-          <p>Widok tylko do odczytu · Nexus</p>
+        <footer className="mt-16 pt-8 border-t border-neutral-205 dark:border-neutral-800/30 text-center text-xs text-neutral-400 dark:text-neutral-500 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p>© {new Date().getFullYear()} Nexus. Wszystkie prawa zastrzeżone.</p>
+          <div className="flex items-center gap-2 text-[10px] text-neutral-400 dark:text-neutral-500 bg-neutral-100/50 dark:bg-neutral-900/50 px-2.5 py-1 rounded-full border border-neutral-200/40 dark:border-neutral-800/40 shadow-sm">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Widok tylko do odczytu</span>
+          </div>
         </footer>
 
       </div>
     </div>
+  )
+} </div>
   )
 }

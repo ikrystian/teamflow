@@ -5,11 +5,11 @@
 /**
  * Formats estimated hours value for display
  * @param hours - Number of hours or null/undefined
- * @returns Formatted string like "2h", "1.5h", or "Brak szacunku"
+ * @returns Formatted string like "2h", "1.5h", or "Brak oszacowania"
  */
 export const formatEstimatedHours = (hours?: number | null): string => {
   if (!hours || hours === 0) {
-    return "Brak szacunku"
+    return "Brak oszacowania"
   }
 
   // Format to remove unnecessary decimals
@@ -92,7 +92,7 @@ export const formatProjectDisplay = (project?: { name: string;  } | null): strin
  * Standard estimated hours options for select components
  */
 export const getEstimatedHoursOptions = () => [
-  { value: "none", label: "Brak szacunku" },
+  { value: "none", label: "Brak oszacowania" },
   { value: "0.5", label: "30 minut" },
   { value: "1", label: "1 godzina" },
   { value: "1.5", label: "1.5 godziny" },

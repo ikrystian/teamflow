@@ -14,7 +14,7 @@ export default async function Image({
   params: Promise<{ token: string }>
 }) {
   const { token } = await params
-  
+
   const task = await prisma.task.findUnique({
     where: { shareToken: token },
     include: {
@@ -54,7 +54,7 @@ export default async function Image({
   const projectName = task.project?.name || 'Brak projektu'
   const statusColor = task.taskStatus?.color || '#6b7280'
   const statusName = task.taskStatus?.name || 'Brak'
-  
+
   // Normalize priority
   const priority = task.priority || ''
   const priorityLower = priority.toLowerCase()
