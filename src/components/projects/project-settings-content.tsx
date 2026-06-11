@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Key, Save, Eye, EyeOff, X, Plus, Edit, Trash2, Share2, Copy, ExternalLink, Trash, MessageSquare } from "lucide-react"
+import { ArrowLeft, Key, Save, Eye, EyeOff, X, Plus, Edit, Trash2, Share2, Copy, ExternalLink, Trash, MessageSquare, GitBranch } from "lucide-react"
 import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { usePageHeader } from "@/contexts/header-context"
 import { toast } from "sonner"
@@ -50,6 +50,10 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
   const [slackChannelId, setSlackChannelId] = useState("")
   const [savingSlack, setSavingSlack] = useState(false)
 
+  // GitHub integration state
+  const [githubRepo, setGithubRepo] = useState("")
+  const [savingGithub, setSavingGithub] = useState(false)
+
   const router = useRouter()
 
   // Set page header content
@@ -80,6 +84,7 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
         const data = await response.json()
         setProject(data.project)
         setSlackChannelId(data.project.slackChannelId || "")
+        setGithubRepo(data.project.githubRepo || "")
       } else if (response.status === 404) {
         router.push("/dashboard/projects")
       }
@@ -275,6 +280,30 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
       toast.error("Nie udało się zapisać kanału Slack")
     } finally {
       setSavingSlack(false)
+    }
+  }
+
+  const saveGithubRepo = async () => {
+    setSavingGithub(true)
+    try {
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ githubRepo: githubRepo.trim() || null }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setProject(data.project)
+        toast.success("Zapisano repozytorium GitHub")
+      } else {
+        toast.error("Nie udało się zapisać repozytorium GitHub")
+      }
+    } catch (error) {
+      console.error('Error updating GitHub repo:', error)
+      toast.error("Nie udało się zapisać repozytorium GitHub")
+    } finally {
+      setSavingGithub(false)
     }
   }
 
@@ -501,6 +530,63 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
                   {savingSlack ? "Zapisywanie..." : "Zapisz"}
                 </Button>
               </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* GitHub Integration */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <GitBranch className="h-5 w-5" />
+            <span>Integracja z GitHub</span>
+          </CardTitle>
+          <CardDescription>
+            Podaj repozytorium GitHub w formacie <code className="font-mono bg-muted px-1 rounded">właściciel/repozytorium</code>
+            &nbsp;(np. <code className="font-mono bg-muted px-1 rounded">mojafirma/backend</code>).
+            Umożliwi to tworzenie branchy bezpośrednio z zadań oraz automatyczne
+            oznaczanie zadań jako ukończone po scaleniu pull requesta.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="githubRepo" className="text-sm font-medium">
+                Repozytorium GitHub
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  id="githubRepo"
+                  placeholder="właściciel/repozytorium"
+                  value={githubRepo}
+                  onChange={(e) => setGithubRepo(e.target.value)}
+                  className="font-mono"
+                />
+                <Button onClick={saveGithubRepo} disabled={savingGithub}>
+                  <Save className="h-4 w-4 mr-2" />
+                  {savingGithub ? "Zapisywanie..." : "Zapisz"}
+                </Button>
+              </div>
+            </div>
+
+            <div className="rounded-lg border bg-muted/40 p-4 text-sm space-y-2">
+              <p className="font-medium">Jak skonfigurować webhook GitHub?</p>
+              <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+                <li>Przejdź do repozytorium → Settings → Webhooks → Add webhook</li>
+                <li>
+                  Payload URL: <code className="font-mono bg-background px-1 rounded">
+                    {typeof window !== 'undefined' ? window.location.origin : ''}/api/github-webhook
+                  </code>
+                </li>
+                <li>Content type: <code className="font-mono bg-background px-1 rounded">application/json</code></li>
+                <li>Ustaw Secret (ten sam co <code className="font-mono bg-background px-1 rounded">GITHUB_WEBHOOK_SECRET</code> w .env)</li>
+                <li>Wybierz zdarzenie: <strong>Pull requests</strong></li>
+              </ol>
+              <p className="text-muted-foreground">
+                Po scaleniu pull requesta z branchem powiązanym z zadaniem, status zadania zostanie automatycznie
+                zmieniony na <strong>Done</strong>.
+              </p>
             </div>
           </div>
         </CardContent>

@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
             name: true,
             color: true,
             archived: true,
-
+            githubRepo: true,
           }
         },
         assignee: {
@@ -313,7 +313,8 @@ export async function POST(request: NextRequest) {
             id: true,
             name: true,
             color: true,
-            archived: true
+            archived: true,
+            githubRepo: true,
           }
         },
         assignee: {

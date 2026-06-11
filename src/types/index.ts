@@ -87,6 +87,7 @@ export interface Project {
   productionUrl?: string;
   credentials?: string;
   slackChannelId?: string;
+  githubRepo?: string | null;
   archived?: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -136,6 +137,7 @@ export interface Task {
     name: string;
     color?: string;
     archived?: boolean;
+    githubRepo?: string | null;
   };
   assignee?: User;
   createdBy?: User;
@@ -162,6 +164,7 @@ export interface Task {
   attachments?: TaskAttachment[];
   todos?: Subtask[];
   tags?: Tag[];
+  githubBranchName?: string | null;
 }
 
 export interface Tag {

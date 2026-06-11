@@ -64,7 +64,7 @@ export async function GET(
             name: true,
             color: true,
             archived: true,
-
+            githubRepo: true,
           }
         },
         assignee: {
@@ -469,7 +469,7 @@ export async function PATCH(
             id: true,
             name: true,
             color: true,
-
+            githubRepo: true,
           }
         },
         assignee: {

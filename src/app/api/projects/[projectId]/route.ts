@@ -195,7 +195,8 @@ export async function PATCH(
       productionUrl,
       credentials,
       slackChannelId,
-      clientId
+      clientId,
+      githubRepo
     } = await request.json()
 
     // Verify user has access to the project
@@ -251,7 +252,8 @@ export async function PATCH(
         ...(productionUrl !== undefined && { productionUrl }),
         ...(credentials !== undefined && { credentials }),
         ...(slackChannelId !== undefined && { slackChannelId }),
-        ...(clientId !== undefined && { clientId: clientId || null })
+        ...(clientId !== undefined && { clientId: clientId || null }),
+        ...(githubRepo !== undefined && { githubRepo: githubRepo || null })
       },
       include: {
 

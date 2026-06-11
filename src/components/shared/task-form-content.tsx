@@ -13,7 +13,7 @@ import type { Task, TaskStatus, Project, Tag } from "@/types"
 import { ReminderSettings } from "@/components/tasks/reminder-settings"
 import { FileUpload } from "@/components/ui/file-upload"
 import { Badge } from "@/components/ui/badge"
-import { Send, Plus, Trash2, Clock, Check } from "lucide-react"
+import { Send, Plus, Trash2, Clock, Check, GitBranch } from "lucide-react"
 import { toast } from "sonner"
 import {
   getEstimatedHoursOptions,
@@ -106,6 +106,19 @@ export function TaskFormContent({
 
   // Slack send state (for the AI-generated "changes" field)
   const [sendingToSlack, setSendingToSlack] = useState(false)
+
+  // GitHub branch state
+  const [creatingBranch, setCreatingBranch] = useState(false)
+
+  // Build branch URL helper
+  const makeBranchUrl = (branchName: string, githubRepo?: string | null) =>
+    githubRepo ? `https://github.com/${githubRepo}/tree/${branchName}` : ''
+
+  const [branchCreated, setBranchCreated] = useState<{ name: string; url: string } | null>(
+    task?.githubBranchName
+      ? { name: task.githubBranchName, url: makeBranchUrl(task.githubBranchName, task.project?.githubRepo) }
+      : null
+  )
 
   // Collapsible sections state
   const [showNotes, setShowNotes] = useState(false)
@@ -314,6 +327,12 @@ export function TaskFormContent({
       setSelectedTagIds(task.tags?.map(t => t.id) || [])
       setSubtasks(task.subtasks || [])
       setError("")
+      // Reset branch state when switching tasks
+      setBranchCreated(
+        task.githubBranchName
+          ? { name: task.githubBranchName, url: makeBranchUrl(task.githubBranchName, task.project?.githubRepo) }
+          : null
+      )
 
       // Mark as freshly loaded so the auto-save watcher captures this as the
       // baseline instead of immediately PATCHing it back to the server.
@@ -695,6 +714,30 @@ export function TaskFormContent({
     setError("")
     setAttachments([])
     onClose?.()
+  }
+
+  // Create a GitHub branch for this task.
+  const handleCreateGithubBranch = async () => {
+    if (!task) return
+    setCreatingBranch(true)
+    try {
+      const response = await fetch(`/api/tasks/${task.id}/github-branch`, {
+        method: 'POST',
+      })
+      const data = await response.json()
+      if (response.ok) {
+        setBranchCreated({ name: data.branchName, url: data.url })
+        toast.success(`Branch "${data.branchName}" został utworzony`)
+        onTaskUpdated?.()
+      } else {
+        toast.error(data.error || 'Nie udało się utworzyć brancha')
+      }
+    } catch (error) {
+      console.error('Error creating branch:', error)
+      toast.error('Nie udało się utworzyć brancha')
+    } finally {
+      setCreatingBranch(false)
+    }
   }
 
   // Send the AI-generated "changes" to the project's Slack channel.
@@ -1496,6 +1539,35 @@ export function TaskFormContent({
               isCreateMode ? "Utwórz zadanie" : "Zaktualizuj zadanie"
             )}
           </Button>
+
+          {/* GitHub branch button — edit mode only */}
+          {isEditMode && task && (
+            <div className="flex items-center gap-2">
+              {branchCreated ? (
+                <a
+                  href={branchCreated.url || '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm font-mono px-3 py-2 rounded-md border bg-muted/50 hover:bg-muted transition-colors"
+                >
+                  <GitBranch className="h-4 w-4 text-green-600" />
+                  <span className="text-green-700 dark:text-green-400 max-w-[200px] truncate">{branchCreated.name}</span>
+                </a>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCreateGithubBranch}
+                  disabled={creatingBranch}
+                  className="gap-2"
+                >
+                  <GitBranch className="h-4 w-4" />
+                  {creatingBranch ? "Tworzenie brancha..." : "Utwórz branch GitHub"}
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </form>
     </>
