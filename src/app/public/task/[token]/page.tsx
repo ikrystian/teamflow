@@ -127,7 +127,7 @@ async function getSharedTask(token: string) {
     where: { shareToken: token },
     include: {
       taskStatus: { select: { name: true, color: true } },
-      project: { select: { name: true, color: true } },
+      project: { select: { name: true, color: true, imageUrl: true } },
       assignee: { select: { name: true, email: true } },
       createdBy: { select: { name: true, email: true } },
       todos: { orderBy: { createdAt: "asc" } },
@@ -146,6 +146,19 @@ async function getSharedTask(token: string) {
   })
 }
 
+function stripMarkdownAndHtml(text: string): string {
+  if (!text) return ""
+  return text
+    // Replace HTML tags
+    .replace(/<[^>]+>/g, " ")
+    // Replace markdown headings, lists, links, images, bold, italic
+    .replace(/[#*`~_]/g, "")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    // Replace multiple spaces/newlines with a single space
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -153,9 +166,58 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { token } = await params
   const task = await getSharedTask(token)
+
+  if (!task) {
+    return {
+      title: "Zadanie nie znalezione – Nexus",
+      robots: { index: false, follow: false },
+    }
+  }
+
+  const parts: string[] = []
+  if (task.project?.name) parts.push(`Projekt: ${task.project.name}`)
+  if (task.taskStatus?.name) parts.push(`Status: ${task.taskStatus.name}`)
+  if (task.priority) parts.push(`Priorytet: ${getPriorityDisplayName(task.priority)}`)
+  if (task.assignee?.name) parts.push(`Przypisane: ${task.assignee.name}`)
+
+  const metaInfo = parts.join(" | ")
+  const cleanDesc = task.description ? stripMarkdownAndHtml(task.description).substring(0, 160) : ""
+  const ogDescription = metaInfo + (cleanDesc ? ` — ${cleanDesc}...` : "")
+
+  const imageUrls: string[] = []
+  if (task.images && task.images.length > 0) {
+    imageUrls.push(task.images[0].url)
+  } else if (task.project?.imageUrl) {
+    imageUrls.push(task.project.imageUrl)
+  }
+
+  // Determine metadataBase dynamically if possible or fall back to local
+  const base = process.env.NEXTAUTH_URL || "http://localhost:3000"
+  let metadataBase: URL | undefined = undefined
+  try {
+    metadataBase = new URL(base)
+  } catch (e) {
+    console.error("Invalid NEXTAUTH_URL", e)
+  }
+
   return {
-    title: task ? `${task.title} – Nexus` : "Zadanie nie znalezione",
+    metadataBase,
+    title: `${task.key ? `[${task.key}] ` : ""}${task.title} – Nexus`,
+    description: ogDescription,
     robots: { index: false, follow: false },
+    openGraph: {
+      title: `${task.key ? `[${task.key}] ` : ""}${task.title}`,
+      description: ogDescription,
+      type: "website",
+      siteName: "Nexus",
+      images: imageUrls.length > 0 ? imageUrls.map(url => ({ url })) : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${task.key ? `[${task.key}] ` : ""}${task.title}`,
+      description: ogDescription,
+      images: imageUrls.length > 0 ? imageUrls : undefined,
+    },
   }
 }
 
