@@ -438,6 +438,87 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Evaluate each commit and log as a subtask (Todo) and TimeEntry
+    if (Array.isArray(payload.commits) && payload.commits.length > 0) {
+      try {
+        const commitContents: { url: string; diff: string }[] = []
+        const fetchPromises = payload.commits.map(async (commitUrl) => {
+          const diff = await fetchGithubDiff(commitUrl, 3000)
+          return { url: commitUrl, diff }
+        })
+        const results = await Promise.all(fetchPromises)
+        for (const res of results) {
+          if (res.diff && res.diff.trim()) {
+            commitContents.push({ url: res.url, diff: res.diff })
+          }
+        }
+
+        if (commitContents.length > 0) {
+          const systemPrompt =
+            "You are an assistant that analyzes git commit diffs and estimates the work hours for each commit. " +
+            "Respond ONLY with a JSON object containing a list of subtasks. " +
+            "The JSON structure MUST be exactly as follows:\n" +
+            "{\n" +
+            '  "subtasks": [\n' +
+            "    {\n" +
+            '      "commitUrl": "exact commit URL from the input",\n' +
+            '      "title": "Short, clear subtask title in Polish describing the work done in this commit (max 80 chars)",\n' +
+            '      "workHours": 1.5 (a positive number representing work hours, minimum 0.5)\n' +
+            "    }\n" +
+            "  ]\n" +
+            "}\n" +
+            "Translate all titles to Polish. Keep descriptions short."
+
+          const userPrompt =
+            `Analyze the following ${commitContents.length} commits for task "${task.key || ''} ${task.title}" and estimate work hours for each:\n\n` +
+            commitContents.map((c, idx) => `Commit #${idx + 1} URL: ${c.url}\nDiff:\n${c.diff}`).join("\n\n---\n\n")
+
+          const parsed = await callOpenRouterJson(systemPrompt, userPrompt)
+          if (parsed && Array.isArray(parsed.subtasks)) {
+            const loggedUserId = task.assigneeId || task.createdById || project.createdById
+            
+            for (const st of parsed.subtasks) {
+              const commitUrl = String(st.commitUrl || "")
+              const title = String(st.title || "Aktualizacja kodu")
+              const workHours = Number.isFinite(Number(st.workHours)) && Number(st.workHours) > 0 ? Number(st.workHours) : 0.5
+
+              // Check if this subtask (Todo) already exists to prevent duplication
+              const existingTodo = await prisma.todo.findFirst({
+                where: {
+                  taskId: task.id,
+                  title: title,
+                },
+              })
+
+              if (!existingTodo) {
+                await prisma.todo.create({
+                  data: {
+                    taskId: task.id,
+                    title: title,
+                    isCompleted: true,
+                    timeSpent: workHours,
+                  },
+                })
+
+                await prisma.timeEntry.create({
+                  data: {
+                    taskId: task.id,
+                    userId: loggedUserId,
+                    hours: workHours,
+                    description: `Automatyczne zaraportowanie: ${title}`,
+                    date: new Date(),
+                  },
+                })
+                console.log(`[Merge Request] Logged subtask "${title}" with ${workHours}h for task ${task.key || task.id}`)
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error evaluating commits for subtasks:", err)
+      }
+    }
+
     console.log(
       `[Merge Request] Task ${task.key || task.id} updated with changes and moved to "${doneStatus?.name ?? "(unchanged)"}" for branch "${branch}"`
     )
