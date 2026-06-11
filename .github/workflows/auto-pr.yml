@@ -7,26 +7,38 @@ on:
       - 'fix/**'
 
 permissions:
-  contents: write
+  contents: read
   pull-requests: write
+  issues: write
 
 jobs:
   create-pr:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false && github.event.pull_request.user.login == 'krystian1337'
+    if: github.actor == 'ikrystian'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      - name: Check for existing PR
+        id: existing
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          COUNT=$(gh pr list --head "${{ github.ref_name }}" --base main --state open --json number --jq 'length')
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+          echo "Open PRs for ${{ github.ref_name }} -> main: $COUNT"
+
       - name: Get git diff
+        if: steps.existing.outputs.count == '0'
         run: |
           git fetch origin main
           git diff origin/main...HEAD --stat --unified=3 | head -200 > /tmp/diff.txt
           cat /tmp/diff.txt
 
       - name: Generate PR title and body with DeepSeek via OpenRouter
+        if: steps.existing.outputs.count == '0'
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
@@ -56,28 +68,28 @@ jobs:
           echo "$RESPONSE"
 
           AI_JSON=$(echo "$RESPONSE" | jq -r '.choices[0].message.content')
-          echo "$AI_JSON" | jq -r '.title' > /tmp/pr_title.txt
-          echo "$AI_JSON" | jq -r '.body'  > /tmp/pr_body.txt
 
-      - name: Read AI output
-        id: pr_content
-        run: |
-          {
-            echo 'title<<EOF'
-            cat /tmp/pr_title.txt
-            echo EOF
-          } >> $GITHUB_OUTPUT
-          {
-            echo 'body<<EOF'
-            cat /tmp/pr_body.txt
-            echo EOF
-          } >> $GITHUB_OUTPUT
+          # Parse title/body, with fallbacks so the PR is still created if the AI call fails
+          echo "$AI_JSON" | jq -e -r '.title' > /tmp/pr_title.txt 2>/dev/null || echo "$BRANCH" > /tmp/pr_title.txt
+          echo "$AI_JSON" | jq -e -r '.body'  > /tmp/pr_body.txt  2>/dev/null || printf 'Automated PR for `%s`.\n' "$BRANCH" > /tmp/pr_body.txt
+
+          # Guard against empty/null output
+          [ -s /tmp/pr_title.txt ] && [ "$(cat /tmp/pr_title.txt)" != "null" ] || echo "$BRANCH" > /tmp/pr_title.txt
+          [ -s /tmp/pr_body.txt ]  && [ "$(cat /tmp/pr_body.txt)"  != "null" ] || printf 'Automated PR for `%s`.\n' "$BRANCH" > /tmp/pr_body.txt
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          base: main
-          title: ${{ steps.pr_content.outputs.title }}
-          body: ${{ steps.pr_content.outputs.body }}
-          labels: automated-pr, ai-generated
+        if: steps.existing.outputs.count == '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_URL=$(gh pr create \
+            --base main \
+            --head "${{ github.ref_name }}" \
+            --title "$(cat /tmp/pr_title.txt)" \
+            --body-file /tmp/pr_body.txt)
+          echo "Created: $PR_URL"
+
+          # Ensure labels exist, then apply them (non-fatal so labeling never blocks PR creation)
+          gh label create automated-pr --color 0e8a16 2>/dev/null || true
+          gh label create ai-generated --color 1d76db 2>/dev/null || true
+          gh pr edit "$PR_URL" --add-label automated-pr --add-label ai-generated || true
