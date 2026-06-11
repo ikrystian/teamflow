@@ -33,7 +33,20 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Check for changes
+        id: check_changes
+        run: |
+          git fetch origin main
+          if git diff --quiet origin/main...HEAD; then
+            echo "No changes found compared to origin/main. Skipping PR creation/update."
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Changes found compared to origin/main."
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Check for existing PR
+        if: steps.check_changes.outputs.has_changes == 'true'
         id: existing
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
@@ -53,6 +66,7 @@ jobs:
           printf '%s' "$PR_BODY" > /tmp/existing_pr_body.txt
 
       - name: Fetch task details from TeamFlow
+        if: steps.check_changes.outputs.has_changes == 'true'
         id: task
         env:
           APP_URL: ${{ secrets.APP_URL }}
@@ -107,12 +121,14 @@ jobs:
           printf '%s' "$TASK_DESCRIPTION" > /tmp/task_description.txt
 
       - name: Get git diff
+        if: steps.check_changes.outputs.has_changes == 'true'
         run: |
           git fetch origin main
           git diff origin/main...HEAD --stat --unified=3 | head -300 > /tmp/diff.txt
           cat /tmp/diff.txt
 
       - name: Generate PR body with DeepSeek via OpenRouter
+        if: steps.check_changes.outputs.has_changes == 'true'
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
@@ -191,7 +207,7 @@ jobs:
           head -20 /tmp/pr_body.txt
 
       - name: Create Pull Request
-        if: steps.existing.outputs.count == '0'
+        if: steps.check_changes.outputs.has_changes == 'true' && steps.existing.outputs.count == '0'
         env:
           # Prefer PAT_TOKEN (needed to create PRs when the default GITHUB_TOKEN is restricted).
           # Falls back to github.token so the step never crashes with "GH_TOKEN not set"
@@ -207,10 +223,22 @@ jobs:
           echo "Created: $PR_URL"
 
       - name: Update Pull Request
-        if: steps.existing.outputs.count != '0'
+        if: steps.check_changes.outputs.has_changes == 'true' && steps.existing.outputs.count != '0'
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN || github.token }}
         run: |
           PR_NUMBER="${{ steps.existing.outputs.number }}"
           echo "Updating PR #$PR_NUMBER with new description..."
           gh pr edit "$PR_NUMBER" --body-file /tmp/pr_body.txt
+
+      - name: Configure Repository Merge Defaults
+        if: steps.check_changes.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN || github.token }}
+        run: |
+          echo "Configuring repository merge defaults to use PR title and description..."
+          gh api --method PATCH "repos/${{ github.repository }}" \
+            -f squash_merge_commit_title=PR_TITLE \
+            -f squash_merge_commit_message=PR_BODY \
+            -f merge_commit_title=PR_TITLE \
+            -f merge_commit_message=PR_BODY || echo "Warning: Could not update repository merge settings. This may require admin permissions on the token."
