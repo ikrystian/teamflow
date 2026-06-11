@@ -161,3 +161,58 @@ jobs:
             pm2 reload 1
             echo "Deploy zakończony pomyślnie."
           EOF
+
+      - name: Report success to TeamFlow
+        if: success()
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          API_TOKEN: ${{ secrets.API_TOKEN }}
+        run: |
+          if [ -n "$APP_URL" ] && [ -n "$API_TOKEN" ]; then
+            COMMIT_MSG=$(git log -1 --pretty=%B | head -n 1 || true)
+            RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            
+            curl -sf -X POST \
+              -H "Authorization: Bearer ${API_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d "$(jq -n \
+                --arg workflow "Deploy on push to main" \
+                --arg runId "${{ github.run_id }}" \
+                --arg runUrl "$RUN_URL" \
+                --arg branch "${{ github.ref_name }}" \
+                --arg status "success" \
+                --arg repo "${{ github.repository }}" \
+                --arg actor "${{ github.actor }}" \
+                --arg commitSha "${{ github.sha }}" \
+                --arg commitMsg "$COMMIT_MSG" \
+                '{workflow: $workflow, runId: $runId, runUrl: $runUrl, branch: $branch, status: $status, repo: $repo, actor: $actor, commitSha: $commitSha, commitMsg: $commitMsg}')" \
+              "${APP_URL}/api/system/workflow-log" || echo "Failed to report deploy success to TeamFlow"
+          fi
+
+      - name: Report failure to TeamFlow
+        if: failure()
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          API_TOKEN: ${{ secrets.API_TOKEN }}
+        run: |
+          if [ -n "$APP_URL" ] && [ -n "$API_TOKEN" ]; then
+            COMMIT_MSG=$(git log -1 --pretty=%B | head -n 1 || true)
+            RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            
+            curl -sf -X POST \
+              -H "Authorization: Bearer ${API_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d "$(jq -n \
+                --arg workflow "Deploy on push to main" \
+                --arg runId "${{ github.run_id }}" \
+                --arg runUrl "$RUN_URL" \
+                --arg branch "${{ github.ref_name }}" \
+                --arg error "Deployment failed. Check GitHub Actions run $RUN_URL" \
+                --arg status "failed" \
+                --arg repo "${{ github.repository }}" \
+                --arg actor "${{ github.actor }}" \
+                --arg commitSha "${{ github.sha }}" \
+                --arg commitMsg "$COMMIT_MSG" \
+                '{workflow: $workflow, runId: $runId, runUrl: $runUrl, branch: $branch, error: $error, status: $status, repo: $repo, actor: $actor, commitSha: $commitSha, commitMsg: $commitMsg}')" \
+              "${APP_URL}/api/system/workflow-log" || echo "Failed to report deploy failure to TeamFlow"
+          fi

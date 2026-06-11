@@ -221,6 +221,7 @@ jobs:
             --title "$(cat /tmp/pr_title.txt)" \
             --body-file /tmp/pr_body.txt)
           echo "Created: $PR_URL"
+          echo "$PR_URL" > /tmp/pr_url.txt
 
       - name: Update Pull Request
         if: steps.check_changes.outputs.has_changes == 'true' && steps.existing.outputs.count != '0'
@@ -230,6 +231,7 @@ jobs:
           PR_NUMBER="${{ steps.existing.outputs.number }}"
           echo "Updating PR #$PR_NUMBER with new description..."
           gh pr edit "$PR_NUMBER" --body-file /tmp/pr_body.txt
+          echo "https://github.com/${{ github.repository }}/pull/$PR_NUMBER" > /tmp/pr_url.txt
 
       - name: Configure Repository Merge Defaults
         if: steps.check_changes.outputs.has_changes == 'true'
@@ -253,6 +255,12 @@ jobs:
             BRANCH="${{ github.event.inputs.branch || github.ref_name }}"
             RAW_KEY=$(echo "$BRANCH" | sed 's|^[^/]*/||' | grep -oP '^[a-zA-Z]+-\d+' || true)
             TASK_KEY=$(echo "$RAW_KEY" | tr '[:lower:]' '[:upper:]')
+            COMMIT_MSG=$(git log -1 --pretty=%B | head -n 1 || true)
+            RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            PR_URL=""
+            if [ -f /tmp/pr_url.txt ]; then
+              PR_URL=$(cat /tmp/pr_url.txt)
+            fi
             
             curl -sf -X POST \
               -H "Authorization: Bearer ${API_TOKEN}" \
@@ -260,12 +268,16 @@ jobs:
               -d "$(jq -n \
                 --arg workflow "Auto Create PR with AI Description" \
                 --arg runId "${{ github.run_id }}" \
+                --arg runUrl "$RUN_URL" \
                 --arg branch "$BRANCH" \
                 --arg taskKey "$TASK_KEY" \
                 --arg status "success" \
                 --arg repo "${{ github.repository }}" \
                 --arg actor "${{ github.actor }}" \
-                '{workflow: $workflow, runId: $runId, branch: $branch, taskKey: $taskKey, status: $status, repo: $repo, actor: $actor}')" \
+                --arg commitSha "${{ github.sha }}" \
+                --arg commitMsg "$COMMIT_MSG" \
+                --arg prUrl "$PR_URL" \
+                '{workflow: $workflow, runId: $runId, runUrl: $runUrl, branch: $branch, taskKey: $taskKey, status: $status, repo: $repo, actor: $actor, commitSha: $commitSha, commitMsg: $commitMsg, prUrl: $prUrl}')" \
               "${APP_URL}/api/system/workflow-log" || echo "Failed to report workflow success to TeamFlow"
           fi
 
@@ -279,6 +291,8 @@ jobs:
             BRANCH="${{ github.event.inputs.branch || github.ref_name }}"
             RAW_KEY=$(echo "$BRANCH" | sed 's|^[^/]*/||' | grep -oP '^[a-zA-Z]+-\d+' || true)
             TASK_KEY=$(echo "$RAW_KEY" | tr '[:lower:]' '[:upper:]')
+            COMMIT_MSG=$(git log -1 --pretty=%B | head -n 1 2>/dev/null || true)
+            RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
             
             curl -sf -X POST \
               -H "Authorization: Bearer ${API_TOKEN}" \
@@ -286,13 +300,16 @@ jobs:
               -d "$(jq -n \
                 --arg workflow "Auto Create PR with AI Description" \
                 --arg runId "${{ github.run_id }}" \
+                --arg runUrl "$RUN_URL" \
                 --arg branch "$BRANCH" \
                 --arg taskKey "$TASK_KEY" \
-                --arg error "Workflow failed. Check GitHub Actions run ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+                --arg error "Workflow failed. Check GitHub Actions run $RUN_URL" \
                 --arg status "failed" \
                 --arg repo "${{ github.repository }}" \
                 --arg actor "${{ github.actor }}" \
-                '{workflow: $workflow, runId: $runId, branch: $branch, taskKey: $taskKey, error: $error, status: $status, repo: $repo, actor: $actor}')" \
+                --arg commitSha "${{ github.sha }}" \
+                --arg commitMsg "$COMMIT_MSG" \
+                '{workflow: $workflow, runId: $runId, runUrl: $runUrl, branch: $branch, taskKey: $taskKey, error: $error, status: $status, repo: $repo, actor: $actor, commitSha: $commitSha, commitMsg: $commitMsg}')" \
               "${APP_URL}/api/system/workflow-log" || echo "Failed to report workflow failure to TeamFlow"
           else
             echo "Cannot report failure: APP_URL or API_TOKEN is not configured."

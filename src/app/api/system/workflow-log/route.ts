@@ -31,12 +31,16 @@ export async function POST(request: NextRequest) {
   let payload: {
     workflow: string
     runId?: string
+    runUrl?: string
     branch?: string
     taskKey?: string
     error?: string
     status: "failed" | "success" | "started"
     repo?: string
     actor?: string
+    commitSha?: string
+    commitMsg?: string
+    prUrl?: string
   }
 
   try {
@@ -45,7 +49,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
   }
 
-  const { workflow, runId, branch, taskKey, error, status, repo, actor } = payload
+  const { workflow, runId, runUrl, branch, taskKey, error, status, repo, actor, commitSha, commitMsg, prUrl } = payload
 
   if (!workflow || !status) {
     return NextResponse.json({ error: "Missing workflow or status" }, { status: 400 })
@@ -59,12 +63,16 @@ export async function POST(request: NextRequest) {
       payload: JSON.stringify({
         workflow,
         runId,
+        runUrl,
         branch,
         taskKey,
         error,
         status,
         repo,
         actor,
+        commitSha,
+        commitMsg,
+        prUrl,
       }),
       headers: JSON.stringify({
         "user-agent": userAgent,
