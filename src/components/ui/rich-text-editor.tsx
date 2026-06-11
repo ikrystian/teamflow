@@ -91,6 +91,7 @@ export function RichTextEditor({
           type="button"
           variant="ghost"
           size="sm"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().toggleBold().run()}
           className={editor.isActive('bold') ? 'bg-muted' : ''}
         >
@@ -100,6 +101,7 @@ export function RichTextEditor({
           type="button"
           variant="ghost"
           size="sm"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().toggleItalic().run()}
           className={editor.isActive('italic') ? 'bg-muted' : ''}
         >
@@ -109,6 +111,7 @@ export function RichTextEditor({
           type="button"
           variant="ghost"
           size="sm"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           className={editor.isActive('bulletList') ? 'bg-muted' : ''}
         >
@@ -118,6 +121,7 @@ export function RichTextEditor({
           type="button"
           variant="ghost"
           size="sm"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
           className={editor.isActive('orderedList') ? 'bg-muted' : ''}
         >
@@ -127,6 +131,7 @@ export function RichTextEditor({
           type="button"
           variant="ghost"
           size="sm"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
           className={editor.isActive('blockquote') ? 'bg-muted' : ''}
         >
@@ -137,6 +142,7 @@ export function RichTextEditor({
           type="button"
           variant="ghost"
           size="sm"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().undo().run()}
           disabled={!editor.can().undo()}
         >
@@ -146,6 +152,7 @@ export function RichTextEditor({
           type="button"
           variant="ghost"
           size="sm"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => editor.chain().focus().redo().run()}
           disabled={!editor.can().redo()}
         >
@@ -158,6 +165,7 @@ export function RichTextEditor({
               type="button"
               variant="ghost"
               size="sm"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={addImage}
             >
               <ImageIcon className="h-4 w-4" />
@@ -169,7 +177,16 @@ export function RichTextEditor({
         editor={editor}
         className="prose prose-sm max-w-none min-h-[120px] focus-within:outline-none"
         onFocus={() => showToolbarOnFocus && setToolbarVisible(true)}
-        onBlur={() => showToolbarOnFocus && setToolbarVisible(false)}
+        onBlur={(e) => {
+          if (showToolbarOnFocus) {
+            // Check if focus moved to something inside our own component (e.g. toolbar buttons)
+            const relatedTarget = e.relatedTarget as Node | null
+            if (relatedTarget && e.currentTarget.parentElement?.contains(relatedTarget)) {
+              return
+            }
+            setToolbarVisible(false)
+          }
+        }}
       />
     </div>
   )
