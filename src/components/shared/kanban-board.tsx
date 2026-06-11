@@ -309,17 +309,32 @@ function SortableTaskCard({
                         {isOverdue(task.dueDate) && <AlertCircle className="h-3 w-3 text-red-600" />}
                       </div>
                     )}
-                    {task.estimatedHours ? (() => {
-                      const reportedHours = task.timeEntries?.reduce((sum, entry) => sum + entry.hours, 0) ?? 0;
+                    {(() => {
+                      const mainHours = task.timeEntries?.reduce((sum, entry) => sum + entry.hours, 0) ?? 0;
+                      const subtaskHours = (task.subtasks || task.todos || []).reduce((sum, entry) => sum + (entry.timeSpent ?? 0), 0);
+                      const reportedHours = mainHours + subtaskHours;
+
+                      if (!task.estimatedHours && reportedHours === 0) return null;
+
                       const formattedReported = reportedHours % 1 === 0 ? reportedHours.toString() : reportedHours.toFixed(1);
-                      const formattedEstimated = task.estimatedHours % 1 === 0 ? task.estimatedHours.toString() : task.estimatedHours.toFixed(1);
-                      return (
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground propo-hours" title={`Zaraportowane: ${formattedReported}h / Planowane: ${formattedEstimated}h`}>
-                          <Clock className="h-3 w-3" />
-                          <span>{formattedReported} / {formattedEstimated}h</span>
-                        </div>
-                      );
-                    })() : null}
+
+                      if (task.estimatedHours) {
+                        const formattedEstimated = task.estimatedHours % 1 === 0 ? task.estimatedHours.toString() : task.estimatedHours.toFixed(1);
+                        return (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground propo-hours" title={`Zaraportowane: ${formattedReported}h / Planowane: ${formattedEstimated}h`}>
+                            <Clock className="h-3 w-3" />
+                            <span>{formattedReported} / {formattedEstimated}h</span>
+                          </div>
+                        );
+                      } else {
+                        return (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground propo-hours" title={`Zaraportowane: ${formattedReported}h`}>
+                            <Clock className="h-3 w-3" />
+                            <span>{formattedReported}h</span>
+                          </div>
+                        );
+                      }
+                    })()}
                   </div>
                   {task.assignee && (
 

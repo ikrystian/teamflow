@@ -141,6 +141,21 @@ export async function GET(
             }
           },
           todos: true,
+          timeEntries: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  avatarUrl: true
+                }
+              }
+            },
+            orderBy: {
+              date: "desc"
+            }
+          },
           comments: {
             include: {
               author: {

@@ -98,7 +98,22 @@ export async function GET(
               avatarUrl: true
             }
           },
-          todos: true
+          todos: true,
+          timeEntries: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  avatarUrl: true
+                }
+              }
+            },
+            orderBy: {
+              date: "desc"
+            }
+          }
         },
         orderBy: {
           createdAt: order

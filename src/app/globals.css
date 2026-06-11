@@ -82,24 +82,35 @@
 
 .dark {
   /* Facebook dark mode palette */
-  --background: #18191a;          /* app background */
-  --foreground: #e4e6eb;          /* primary text */
-  --card: #242526;                /* cards / surfaces */
+  --background: #18191a;
+  /* app background */
+  --foreground: #e4e6eb;
+  /* primary text */
+  --card: #242526;
+  /* cards / surfaces */
   --card-foreground: #e4e6eb;
-  --popover: #242526;             /* menus, dropdowns */
+  --popover: #242526;
+  /* menus, dropdowns */
   --popover-foreground: #e4e6eb;
-  --primary: #2374e1;             /* Facebook blue */
+  --primary: #2374e1;
+  /* Facebook blue */
   --primary-foreground: #ffffff;
-  --secondary: #3a3b3c;           /* secondary surface / button */
+  --secondary: #3a3b3c;
+  /* secondary surface / button */
   --secondary-foreground: #e4e6eb;
   --muted: #3a3b3c;
-  --muted-foreground: #b0b3b8;    /* secondary text */
-  --accent: #3a3b3c;              /* hover / elevated surface */
+  --muted-foreground: #b0b3b8;
+  /* secondary text */
+  --accent: #3a3b3c;
+  /* hover / elevated surface */
   --accent-foreground: #e4e6eb;
-  --destructive: #fa383e;         /* Facebook red */
-  --border: #3e4042;              /* dividers */
+  --destructive: #fa383e;
+  /* Facebook red */
+  --border: #3e4042;
+  /* dividers */
   --input: #3e4042;
-  --ring: #2374e1;                /* focus ring (blue) */
+  --ring: #2374e1;
+  /* focus ring (blue) */
   --chart-1: #2d88ff;
   --chart-2: #45bd62;
   --chart-3: #f7b928;
@@ -207,10 +218,12 @@ body {
     padding-top: 1rem;
     padding-bottom: 1rem;
   }
+
   40% {
     opacity: 0.4;
     transform: translateX(40px) scale(0.97);
   }
+
   100% {
     opacity: 0;
     transform: translateX(60px) scale(0.95);
@@ -343,36 +356,39 @@ body {
 
 /* Premium Hover Card Border Animation */
 @keyframes card-border-pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     border-top-color: color-mix(in srgb, var(--hover-border-color, var(--primary)) 70%, transparent);
     border-right-color: color-mix(in srgb, var(--hover-border-color, var(--primary)) 70%, transparent);
     border-bottom-color: color-mix(in srgb, var(--hover-border-color, var(--primary)) 70%, transparent);
-    box-shadow: 0 10px 20px -5px color-mix(in srgb, var(--hover-border-color, var(--primary)) 25%, transparent), 
-                0 4px 12px -2px color-mix(in srgb, var(--hover-border-color, var(--primary)) 12%, transparent);
+    box-shadow: 0 10px 20px -5px color-mix(in srgb, var(--hover-border-color, var(--primary)) 25%, transparent),
+      0 4px 12px -2px color-mix(in srgb, var(--hover-border-color, var(--primary)) 12%, transparent);
   }
+
   50% {
     border-top-color: var(--hover-border-color, var(--primary));
     border-right-color: var(--hover-border-color, var(--primary));
     border-bottom-color: var(--hover-border-color, var(--primary));
-    box-shadow: 0 12px 24px -3px color-mix(in srgb, var(--hover-border-color, var(--primary)) 40%, transparent), 
-                0 6px 16px -2px color-mix(in srgb, var(--hover-border-color, var(--primary)) 20%, transparent);
+    box-shadow: 0 12px 24px -3px color-mix(in srgb, var(--hover-border-color, var(--primary)) 40%, transparent),
+      0 6px 16px -2px color-mix(in srgb, var(--hover-border-color, var(--primary)) 20%, transparent);
   }
 }
 
 .hover-card-border-animate {
-  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
-              box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
-              border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
   will-change: transform, box-shadow, border-color;
 }
 
 .hover-card-border-animate:hover {
-  transform: translateY(-4px) scale(1.015);
+  transform: translateY(-2px) scale(1.015);
   border-top-color: var(--hover-border-color, var(--primary)) !important;
   border-right-color: var(--hover-border-color, var(--primary)) !important;
   border-bottom-color: var(--hover-border-color, var(--primary)) !important;
-  box-shadow: 0 10px 20px -5px color-mix(in srgb, var(--hover-border-color, var(--primary)) 30%, transparent), 
-              0 4px 12px -2px color-mix(in srgb, var(--hover-border-color, var(--primary)) 15%, transparent) !important;
+  box-shadow: 0 10px 20px -2px color-mix(in srgb, var(--hover-border-color, var(--primary)) 30%, transparent),
+    0 4px 12px -2px color-mix(in srgb, var(--hover-border-color, var(--primary)) 15%, transparent) !important;
   animation: card-border-pulse 2s infinite ease-in-out 0.25s;
 }
 

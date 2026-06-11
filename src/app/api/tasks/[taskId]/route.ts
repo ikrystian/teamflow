@@ -474,7 +474,16 @@ export async function PATCH(
           where: { taskId: resolvedTaskId }
         })
 
-        if (existingTimeEntries === 0) {
+        const existingSubtaskTime = await prisma.todo.count({
+          where: {
+            taskId: resolvedTaskId,
+            timeSpent: {
+              gt: 0
+            }
+          }
+        })
+
+        if (existingTimeEntries === 0 && existingSubtaskTime === 0) {
           // Prefer the task's assignee; fall back to whoever marked it done.
           const timeEntryUserId =
             (updateData.assigneeId !== undefined
