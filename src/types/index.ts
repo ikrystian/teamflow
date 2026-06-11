@@ -165,6 +165,7 @@ export interface Task {
   todos?: Subtask[];
   tags?: Tag[];
   githubBranchName?: string | null;
+  githubWorkflowError?: string | null;
 }
 
 export interface Tag {

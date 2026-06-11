@@ -81,6 +81,8 @@ const EVENT_COLORS: Record<string, string> = {
   pull_request: "bg-violet-500/15 text-violet-400 border-violet-500/30",
   push: "bg-blue-500/15 text-blue-400 border-blue-500/30",
   ping: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+  workflow_success: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+  workflow_failed: "bg-red-500/15 text-red-400 border-red-500/30",
   unknown: "bg-zinc-500/15 text-zinc-400 border-zinc-500/30",
 }
 
@@ -119,7 +121,7 @@ function LogRow({ log }: { log: WebhookLog }) {
         <EventBadge event={log.event} />
 
         {log.action && (
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-muted-foreground truncate max-w-[200px] md:max-w-md">
             action: <span className="text-foreground font-medium">{log.action}</span>
           </span>
         )}
@@ -185,7 +187,7 @@ function LogRow({ log }: { log: WebhookLog }) {
 // ---------------------------------------------------------------------------
 const ALL_EVENTS = "all"
 
-export function GithubWebhookLogs() {
+export function GithubWebhookLogs({ embedMode = false }: { embedMode?: boolean }) {
   const [data, setData] = useState<ApiResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -235,73 +237,127 @@ export function GithubWebhookLogs() {
   const totalPages = data ? Math.ceil(data.total / limit) : 1
 
   return (
-    <div className="min-h-screen flex flex-col gap-6 p-4 md:p-6">
+    <div className={embedMode ? "flex flex-col gap-6" : "min-h-screen flex flex-col gap-6 p-4 md:p-6"}>
       {/* ------------------------------------------------------------------ */}
       {/* Header                                                              */}
       {/* ------------------------------------------------------------------ */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-violet-500/15 border border-violet-500/30">
-            <Webhook className="w-6 h-6 text-violet-400" />
+      {!embedMode ? (
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-violet-500/15 border border-violet-500/30">
+              <Webhook className="w-6 h-6 text-violet-400" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+                <GitBranch className="w-5 h-5 text-muted-foreground" />
+                GitHub Webhook Logs
+              </h1>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Wszystkie przychodzące żądania do{" "}
+                <code className="text-xs bg-muted px-1 py-0.5 rounded">/api/github-webhook</code>
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-              <GitBranch className="w-5 h-5 text-muted-foreground" />
-              GitHub Webhook Logs
-            </h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Wszystkie przychodzące żądania do{" "}
-              <code className="text-xs bg-muted px-1 py-0.5 rounded">/api/github-webhook</code>
-            </p>
-          </div>
-        </div>
 
-        {/* Controls */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Event filter */}
-          <div className="flex items-center gap-1.5 bg-muted/50 border rounded-lg px-3 py-1.5">
-            <Filter className="w-3.5 h-3.5 text-muted-foreground" />
-            <select
-              value={eventFilter}
-              onChange={(e) => setEventFilter(e.target.value)}
-              className="text-sm bg-transparent outline-none cursor-pointer"
+          {/* Controls */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Event filter */}
+            <div className="flex items-center gap-1.5 bg-muted/50 border rounded-lg px-3 py-1.5">
+              <Filter className="w-3.5 h-3.5 text-muted-foreground" />
+              <select
+                value={eventFilter}
+                onChange={(e) => setEventFilter(e.target.value)}
+                className="text-sm bg-transparent outline-none cursor-pointer"
+              >
+                {uniqueEvents.map((ev) => (
+                  <option key={ev} value={ev}>
+                    {ev === ALL_EVENTS ? "Wszystkie eventy" : ev}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Auto-refresh toggle */}
+            <button
+              onClick={() => setAutoRefresh((v) => !v)}
+              className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border transition-colors ${
+                autoRefresh
+                  ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
+                  : "bg-muted/50 border-border text-muted-foreground hover:text-foreground"
+              }`}
             >
-              {uniqueEvents.map((ev) => (
-                <option key={ev} value={ev}>
-                  {ev === ALL_EVENTS ? "Wszystkie eventy" : ev}
-                </option>
-              ))}
-            </select>
+              <span
+                className={`w-2 h-2 rounded-full ${autoRefresh ? "bg-emerald-400 animate-pulse" : "bg-muted-foreground"}`}
+              />
+              Auto-refresh
+            </button>
+
+            {/* Manual refresh */}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => fetchLogs(page)}
+              disabled={loading}
+              className="gap-1.5"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+              Odśwież
+            </Button>
           </div>
-
-          {/* Auto-refresh toggle */}
-          <button
-            onClick={() => setAutoRefresh((v) => !v)}
-            className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border transition-colors ${
-              autoRefresh
-                ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
-                : "bg-muted/50 border-border text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <span
-              className={`w-2 h-2 rounded-full ${autoRefresh ? "bg-emerald-400 animate-pulse" : "bg-muted-foreground"}`}
-            />
-            Auto-refresh
-          </button>
-
-          {/* Manual refresh */}
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => fetchLogs(page)}
-            disabled={loading}
-            className="gap-1.5"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-            Odśwież
-          </Button>
         </div>
-      </div>
+      ) : (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
+          <div>
+            <h3 className="text-sm font-medium text-foreground">Logi połączenia z GitHub</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">Integracja i zdarzenia webhooków oraz workflow</p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Event filter */}
+            <div className="flex items-center gap-1.5 bg-muted/50 border rounded-lg px-3 py-1.5">
+              <Filter className="w-3.5 h-3.5 text-muted-foreground" />
+              <select
+                value={eventFilter}
+                onChange={(e) => setEventFilter(e.target.value)}
+                className="text-sm bg-transparent outline-none cursor-pointer bg-card"
+              >
+                {uniqueEvents.map((ev) => (
+                  <option key={ev} value={ev}>
+                    {ev === ALL_EVENTS ? "Wszystkie eventy" : ev}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Auto-refresh toggle */}
+            <button
+              onClick={() => setAutoRefresh((v) => !v)}
+              className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border transition-colors ${
+                autoRefresh
+                  ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
+                  : "bg-muted/50 border-border text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <span
+                className={`w-2 h-2 rounded-full ${autoRefresh ? "bg-emerald-400 animate-pulse" : "bg-muted-foreground"}`}
+              />
+              Auto-refresh
+            </button>
+
+            {/* Manual refresh */}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => fetchLogs(page)}
+              disabled={loading}
+              className="gap-1.5"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+              Odśwież
+            </Button>
+          </div>
+        </div>
+      )}
+
 
       {/* ------------------------------------------------------------------ */}
       {/* Stats bar                                                           */}

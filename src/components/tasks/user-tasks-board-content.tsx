@@ -12,6 +12,8 @@ import { KanbanBoard } from "@/components/shared/kanban-board"
 import { TaskDetailsDialog } from "@/components/tasks/task-details-dialog"
 import { TimeTrackingSheet } from "@/components/tasks/time-tracking-sheet"
 import { type Task, type Project, type TaskStatus } from "@/types"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { GithubWebhookLogs } from "@/components/dashboard/github-webhook-logs"
 
 export function UserTasksBoardContent() {
   const { data: session } = useSession() as { data: Session | null }
@@ -168,47 +170,57 @@ export function UserTasksBoardContent() {
 
   return (
     <div className="space-y-6 p-4 md:p-8 pt-6 relative" id="user-tasks-board">
-      <div>
-        <div className="flex items-center justify-between mb-6">
+      <Tabs defaultValue="board" className="w-full">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b pb-4">
           <div>
-            <h2 className="text-lg font-semibold text-foreground">Tablica zadań</h2>
-            <p className="text-sm text-muted-foreground">Przeciągnij zadania między kolumnami, aby zaktualizować ich status</p>
+            <h2 className="text-lg font-semibold text-foreground">Moje zadania</h2>
+            <p className="text-sm text-muted-foreground">Zarządzaj swoimi zadaniami oraz przeglądaj logi integracji GitHub</p>
           </div>
+          <TabsList className="grid w-full sm:w-[240px] grid-cols-2">
+            <TabsTrigger value="board">Tablica</TabsTrigger>
+            <TabsTrigger value="logs">Logi</TabsTrigger>
+          </TabsList>
         </div>
 
-        {tasks.length === 0 ? (
-          <Card>
-            <CardContent className="py-12">
-              <div className="text-center">
-                <LayoutGrid className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-foreground mb-2">
-                  Brak zadań przypisanych do Ciebie
-                </h3>
-                <p className="text-muted-foreground mb-4">
-                  Nie masz żadnych przypisanych zadań ze wszystkich projektów.
-                </p>
-                <Button onClick={handleCreateTask}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Utwórz zadanie
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <KanbanBoard
-            tasks={tasks}
-            taskStatuses={taskStatuses}
-            projects={projects}
-            onTaskUpdated={handleTaskUpdated}
-            onTaskEdit={handleTaskEdit}
-            onTimeTracking={handleTimeTracking}
-            onTaskDelete={handleDeleteTask}
-            canEditTask={canEditTask}
-            onCreateTask={handleCreateTask}
-            showProjectName={true}
-          />
-        )}
-      </div>
+        <TabsContent value="board" className="mt-0">
+          {tasks.length === 0 ? (
+            <Card>
+              <CardContent className="py-12">
+                <div className="text-center">
+                  <LayoutGrid className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">
+                    Brak zadań przypisanych do Ciebie
+                  </h3>
+                  <p className="text-muted-foreground mb-4">
+                    Nie masz żadnych przypisanych zadań ze wszystkich projektów.
+                  </p>
+                  <Button onClick={handleCreateTask}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Utwórz zadanie
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <KanbanBoard
+              tasks={tasks}
+              taskStatuses={taskStatuses}
+              projects={projects}
+              onTaskUpdated={handleTaskUpdated}
+              onTaskEdit={handleTaskEdit}
+              onTimeTracking={handleTimeTracking}
+              onTaskDelete={handleDeleteTask}
+              canEditTask={canEditTask}
+              onCreateTask={handleCreateTask}
+              showProjectName={true}
+            />
+          )}
+        </TabsContent>
+
+        <TabsContent value="logs" className="mt-0">
+          <GithubWebhookLogs embedMode />
+        </TabsContent>
+      </Tabs>
 
       <TaskDetailsDialog
         open={createTaskDialogOpen}
