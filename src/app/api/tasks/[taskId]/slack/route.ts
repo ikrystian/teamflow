@@ -39,6 +39,12 @@ export async function POST(
         project: {
           select: { id: true, name: true, slackChannelId: true },
         },
+        timeEntries: {
+          select: { hours: true },
+        },
+        todos: {
+          select: { timeSpent: true },
+        },
       },
     })
 
@@ -88,9 +94,21 @@ export async function POST(
     const shareToken = await getOrCreateTaskShareToken(task.id)
     const shareUrl = buildTaskShareUrl(shareToken)
 
+    const taskReportedHours = task.timeEntries?.reduce((sum, entry) => sum + entry.hours, 0) ?? 0
+    const subtaskReportedHours = task.todos?.reduce((sum, todo) => sum + (todo.timeSpent || 0), 0) ?? 0
+    const totalReportedHours = taskReportedHours + subtaskReportedHours
+    const formattedHours = Number.isInteger(totalReportedHours) ? totalReportedHours : totalReportedHours.toFixed(1)
+
+    const estimatedHours = task.estimatedHours
+    let timeInfo = `*Zaraportowany czas:* ${formattedHours}h`
+    if (estimatedHours) {
+      const formattedEstimated = Number.isInteger(estimatedHours) ? estimatedHours : estimatedHours.toFixed(1)
+      timeInfo += ` (z planowanych ${formattedEstimated}h)`
+    }
+
     // A short header above the changes so the Slack message has context, plus a
     // link to the full read-only task view at the bottom.
-    const text = `*${task.title}*\n\n${task.changes}\n\n<${shareUrl}|🔗 Zobacz zadanie>`
+    const text = `*${task.title}*\n\n${task.changes}\n\n${timeInfo}\n\n<${shareUrl}|🔗 Zobacz zadanie>`
 
     const res = await fetch("https://slack.com/api/chat.postMessage", {
       method: "POST",
@@ -102,6 +120,8 @@ export async function POST(
         channel: channelId,
         text,
         mrkdwn: true,
+        unfurl_links: false,
+        unfurl_media: false,
       }),
     })
 

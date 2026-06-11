@@ -25,6 +25,12 @@ export async function processPendingSlackScheduledMessages() {
         project: {
           select: { id: true, name: true, slackChannelId: true },
         },
+        timeEntries: {
+          select: { hours: true },
+        },
+        todos: {
+          select: { timeSpent: true },
+        },
       },
     })
 
@@ -57,7 +63,19 @@ export async function processPendingSlackScheduledMessages() {
         const shareToken = await getOrCreateTaskShareToken(task.id)
         const shareUrl = buildTaskShareUrl(shareToken)
 
-        let text = `*${task.title}*\n\n${task.changes}\n\n<${shareUrl}|🔗 Zobacz zadanie>`
+        const taskReportedHours = task.timeEntries?.reduce((sum, entry) => sum + entry.hours, 0) ?? 0
+        const subtaskReportedHours = task.todos?.reduce((sum, todo) => sum + (todo.timeSpent || 0), 0) ?? 0
+        const totalReportedHours = taskReportedHours + subtaskReportedHours
+        const formattedHours = Number.isInteger(totalReportedHours) ? totalReportedHours : totalReportedHours.toFixed(1)
+
+        const estimatedHours = task.estimatedHours
+        let timeInfo = `*Zaraportowany czas:* ${formattedHours}h`
+        if (estimatedHours) {
+          const formattedEstimated = Number.isInteger(estimatedHours) ? estimatedHours : estimatedHours.toFixed(1)
+          timeInfo += ` (z planowanych ${formattedEstimated}h)`
+        }
+
+        let text = `*${task.title}*\n\n${task.changes}\n\n${timeInfo}\n\n<${shareUrl}|🔗 Zobacz zadanie>`
         if (task.githubPrUrl) {
           text += ` | <${task.githubPrUrl}|🐙 Pull Request>`
         }
@@ -72,6 +90,8 @@ export async function processPendingSlackScheduledMessages() {
             channel: channelId,
             text,
             mrkdwn: true,
+            unfurl_links: false,
+            unfurl_media: false,
           }),
         })
 
