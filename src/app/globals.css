@@ -445,3 +445,26 @@ html {
   position: relative;
   pointer-events: none;
 }
+
+/* Premium card hover effect with dark gradient and scale animation */
+.premium-card-hover {
+  position: relative;
+}
+
+.premium-card-hover::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0) 100%);
+  opacity: 0;
+  transform: scale(0.96);
+  transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 10;
+}
+
+.premium-card-hover:hover::before {
+  opacity: 1;
+  transform: scale(1);
+}

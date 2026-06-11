@@ -249,7 +249,7 @@ export function ProjectsContent() {
           {getFilteredProjects().map((project) => {
             const stats = getTaskStats(project.tasks)
             return (
-              <Card key={project.id} className={`hover:shadow-md transition-shadow overflow-hidden relative pt-0 ${project.archived ? 'opacity-60 bg-muted/30' : ''
+              <Card key={project.id} className={`hover:shadow-md transition-shadow overflow-hidden relative pt-0 premium-card-hover ${project.archived ? 'opacity-60 bg-muted/30' : ''
                 }`}>
                 {/* Edit Button */}
                 <div className="absolute top-2 right-2 z-10">

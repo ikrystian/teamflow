@@ -201,7 +201,7 @@ function SortableTaskCard({
       >
         <DropdownMenu open={isContextMenuOpen} onOpenChange={setIsContextMenuOpen}>
           <Card
-            className={`relative mb-2 cursor-pointer hover:shadow-md transition-all border-l-4 ${isUpdating
+            className={`relative mb-2 cursor-pointer hover:shadow-md transition-all border-l-4 premium-card-hover ${isUpdating
               ? 'border-l-yellow-500 bg-yellow-50/50'
               : ''
               }`}

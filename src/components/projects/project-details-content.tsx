@@ -707,7 +707,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                 {getFilteredTasks(tasks).map((task) => (
                   <div
                     key={task.id}
-                    className={`border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors border-l-4${deletingTaskIds.has(task.id) ? ' task-deleting' : ''}`}
+                    className={`border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors border-l-4 premium-card-hover ${deletingTaskIds.has(task.id) ? ' task-deleting' : ''}`}
                     style={{
                       borderLeftColor: project.color || '#3B82F6'
                     }}
