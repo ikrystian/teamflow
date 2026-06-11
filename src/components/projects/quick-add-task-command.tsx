@@ -14,9 +14,13 @@ import { toast } from "sonner"
 interface QuickAddTaskCommandProps {
   projectId: string
   onTaskCreated?: () => void
+  /** Insert a temporary card immediately and return its temp id (optimistic UI). */
+  onOptimisticCreate?: (title: string) => string | undefined
+  /** Remove the temporary card if the server request fails. */
+  onOptimisticRollback?: (tempId: string) => void
 }
 
-export function QuickAddTaskCommand({ projectId, onTaskCreated }: QuickAddTaskCommandProps) {
+export function QuickAddTaskCommand({ projectId, onTaskCreated, onOptimisticCreate, onOptimisticRollback }: QuickAddTaskCommandProps) {
   const [open, setOpen] = useState(false)
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
@@ -44,9 +48,15 @@ export function QuickAddTaskCommand({ projectId, onTaskCreated }: QuickAddTaskCo
   }, [open])
 
   const handleCreateTask = async () => {
-    if (!input.trim()) return
+    const trimmed = input.trim()
+    if (!trimmed) return
     if (!session?.user?.id) return
 
+    // Optimistic update: show the card immediately and close the palette so the
+    // interaction feels instant instead of waiting for the server round-trip.
+    const tempId = onOptimisticCreate?.(trimmed)
+    setInput("")
+    setOpen(false)
     setLoading(true)
     try {
       const response = await fetch("/api/tasks", {
@@ -55,7 +65,7 @@ export function QuickAddTaskCommand({ projectId, onTaskCreated }: QuickAddTaskCo
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          title: input.trim(),
+          title: trimmed,
           projectId: projectId,
           assigneeId: session.user.id, // Przypisz zadanie do aktualnego użytkownika
         }),
@@ -68,12 +78,12 @@ export function QuickAddTaskCommand({ projectId, onTaskCreated }: QuickAddTaskCo
 
       const data = await response.json()
       toast.success(`Zadanie "${data.task.title}" zostało utworzone`)
-      setInput("")
-      setOpen(false)
       window.dispatchEvent(new CustomEvent('task-created'))
+      // Reconcile the optimistic card with server truth.
       onTaskCreated?.()
     } catch (error) {
       console.error("Error creating task:", error)
+      if (tempId) onOptimisticRollback?.(tempId)
       toast.error(error instanceof Error ? error.message : "Wystąpił błąd podczas tworzenia zadania")
     } finally {
       setLoading(false)

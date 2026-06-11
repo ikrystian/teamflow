@@ -28,6 +28,9 @@ interface ProjectDailyViewProps {
   onCreateTask?: () => void
   onTaskUpdate?: (taskId: string, updates: { startTime?: string; endTime?: string; assigneeId?: string }) => Promise<void>
   onTaskCreated?: () => void
+  /** Optimistic create hooks forwarded to the quick-add command. */
+  onOptimisticCreate?: (title: string) => string | undefined
+  onOptimisticRollback?: (tempId: string) => void
   projectId?: string
   className?: string
 }
@@ -150,6 +153,8 @@ export function ProjectDailyView({
   onCreateTask,
   onTaskUpdate,
   onTaskCreated,
+  onOptimisticCreate,
+  onOptimisticRollback,
   projectId,
   className
 }: ProjectDailyViewProps) {
@@ -503,6 +508,8 @@ export function ProjectDailyView({
                   <QuickAddTaskCommand
                     projectId={projectId}
                     onTaskCreated={onTaskCreated}
+                    onOptimisticCreate={onOptimisticCreate}
+                    onOptimisticRollback={onOptimisticRollback}
                   />
                 )}
                 <Button variant="outline" size="sm" onClick={goToToday}>

@@ -41,7 +41,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { type Task, type Project } from "@/types"
+import { type Task, type Project, type TaskStatus } from "@/types"
 import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
 
 interface ProjectDetailsContentProps {
@@ -74,6 +74,11 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     return members
   }
   const [project, setProject] = useState<Project | null>(null)
+  // Optimistic overlay of the project's tasks. Seeded from the server data and
+  // mutated immediately when a task is added, so the UI updates without waiting
+  // for the create request + refetch to complete.
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
   const [loading, setLoading] = useState(true)
   const [taskDetailsDialogOpen, setTaskDetailsDialogOpen] = useState(false)
   const [createTaskDialogOpen, setCreateTaskDialogOpen] = useState(false)
@@ -121,6 +126,32 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     checkAdminStatus()
   }, [fetchProject, checkAdminStatus])
 
+  // Keep the optimistic task overlay in sync with the server data. This replaces
+  // the whole array, so any optimistic temp task is reconciled with server truth
+  // (or dropped if the create failed) the moment fresh data arrives.
+  useEffect(() => {
+    setTasks(project?.tasks || [])
+  }, [project])
+
+  // Fetch task statuses once so optimistic cards can be placed in the default
+  // column on the board (and to avoid the board fetching them again).
+  useEffect(() => {
+    let cancelled = false
+    const fetchTaskStatuses = async () => {
+      try {
+        const response = await fetch('/api/system/task-statuses')
+        if (response.ok) {
+          const data = await response.json()
+          if (!cancelled) setTaskStatuses(data.taskStatuses || [])
+        }
+      } catch (error) {
+        console.error('Error fetching task statuses:', error)
+      }
+    }
+    fetchTaskStatuses()
+    return () => { cancelled = true }
+  }, [])
+
   const handleCreateTask = () => {
     setCreateTaskDialogOpen(true)
   }
@@ -128,6 +159,37 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   const handleTaskCreated = () => {
     fetchProject()
     setCreateTaskDialogOpen(false)
+  }
+
+  // Insert a temporary task immediately for a snappy "add task" experience.
+  // Returns the temp id so the caller can roll it back if the request fails.
+  const handleOptimisticCreate = (title: string): string | undefined => {
+    if (!project) return undefined
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    const defaultStatus = taskStatuses.find(s => s.isDefault) ?? taskStatuses[0]
+    const optimisticTask: Task = {
+      id: tempId,
+      title,
+      statusId: defaultStatus?.id,
+      createdAt: new Date().toISOString(),
+      project: { id: project.id, name: project.name, color: project.color },
+      assignee: session?.user?.id
+        ? {
+          id: session.user.id,
+          name: session.user.name ?? "",
+          email: session.user.email ?? "",
+          avatarUrl: session.user.image ?? null,
+        }
+        : undefined,
+      subtasks: [],
+      comments: [],
+    }
+    setTasks(prev => [...prev, optimisticTask])
+    return tempId
+  }
+
+  const handleOptimisticRollback = (tempId: string) => {
+    setTasks(prev => prev.filter(t => t.id !== tempId))
   }
 
   // Set page header content
@@ -418,12 +480,14 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                 <QuickAddTaskCommand
                   projectId={projectId}
                   onTaskCreated={fetchProject}
+                  onOptimisticCreate={handleOptimisticCreate}
+                  onOptimisticRollback={handleOptimisticRollback}
                 />
                 <TaskBoardFilters
                   currentUserId={session?.user?.id}
                   selectedFilter={taskFilter}
                   onFilterChange={handleFilterChange}
-                  taskCounts={getTaskCounts(project.tasks || [])}
+                  taskCounts={getTaskCounts(tasks)}
                 />
                 <Button onClick={handleCreateTask} size="sm">
                   <Plus className="mr-2 h-4 w-4" />
@@ -433,7 +497,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
             </div>
           </div>
           <div>
-            {getFilteredTasks(project.tasks || []).length === 0 ? (
+            {getFilteredTasks(tasks).length === 0 ? (
               <div className="text-center py-8">
                 <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -453,7 +517,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
               </div>
             ) : (
               <div className="space-y-4">
-                {getFilteredTasks(project.tasks || []).map((task) => (
+                {getFilteredTasks(tasks).map((task) => (
                   <div
                     key={task.id}
                     className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors border-l-4"
@@ -512,10 +576,12 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
       )
         : viewMode === "daily" ? (
           <ProjectDailyView
-            tasks={getFilteredTasks(project.tasks || [])}
+            tasks={getFilteredTasks(tasks)}
             onTaskClick={handleTaskDetails}
             onCreateTask={handleCreateTask}
             onTaskCreated={fetchProject}
+            onOptimisticCreate={handleOptimisticCreate}
+            onOptimisticRollback={handleOptimisticRollback}
             projectId={projectId}
             onTaskUpdate={async (taskId: string, updates: { startTime?: string; endTime?: string; assigneeId?: string }) => {
               try {
@@ -550,11 +616,13 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                 <QuickAddTaskCommand
                   projectId={projectId}
                   onTaskCreated={fetchProject}
+                  onOptimisticCreate={handleOptimisticCreate}
+                  onOptimisticRollback={handleOptimisticRollback}
                 />
 
               </div>
             </div>
-            {getFilteredTasks(project.tasks || []).length === 0 ? (
+            {getFilteredTasks(tasks).length === 0 ? (
               <Card >
                 <CardContent className="py-12">
                   <div className="text-center">
@@ -579,7 +647,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
             ) : (
               <KanbanBoard
                 projectId={projectId}
-                tasks={transformTasksForKanban(getFilteredTasks(project.tasks || []))}
+                tasks={transformTasksForKanban(getFilteredTasks(tasks))}
                 onTaskUpdated={handleTaskUpdated}
                 onTaskEdit={handleEditTask}
                 onTimeTracking={handleTimeTracking}

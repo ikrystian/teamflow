@@ -298,6 +298,8 @@ function QuickAddTask({
   projects,
   session,
   hideProjectSelect = false,
+  onOptimisticCreate,
+  onOptimisticRollback,
 }: {
   status: TaskStatus
   onTaskCreated: () => void
@@ -305,6 +307,10 @@ function QuickAddTask({
   projects?: Array<{ id: string; name: string }>
   session: Session | null
   hideProjectSelect?: boolean
+  /** Insert a temporary card immediately and return its temp id. */
+  onOptimisticCreate?: (title: string, status: TaskStatus, projectId?: string) => string
+  /** Remove the temporary card if the server request fails. */
+  onOptimisticRollback?: (tempId: string) => void
 }) {
   const [isAdding, setIsAdding] = useState(false)
   const [title, setTitle] = useState("")
@@ -321,7 +327,8 @@ function QuickAddTask({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!title.trim()) return
+    const trimmedTitle = title.trim()
+    if (!trimmedTitle) return
 
     setLoading(true)
     setError("")
@@ -333,6 +340,12 @@ function QuickAddTask({
         ? selectedProjectId
         : undefined
 
+    // Optimistic update: show the card immediately and reset the form so the
+    // user can keep adding without waiting for the server round-trip.
+    const tempId = onOptimisticCreate?.(trimmedTitle, status, effectiveProjectId)
+    setTitle("")
+    setIsAdding(false)
+
     try {
       const response = await fetch("/api/tasks", {
         method: "POST",
@@ -340,7 +353,7 @@ function QuickAddTask({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          title: title.trim(),
+          title: trimmedTitle,
           projectId: effectiveProjectId,
           statusId: status.id,
           assigneeId: (session?.user as { id?: string })?.id,
@@ -348,23 +361,24 @@ function QuickAddTask({
       })
 
       if (response.ok) {
-        setTitle("")
-        setIsAdding(false)
         setError("")
         toast.success("Zadanie zostało utworzone")
         window.dispatchEvent(new CustomEvent('task-created'))
+        // Reconcile the optimistic card with server truth.
         onTaskCreated()
       } else {
         const data = await response.json()
         const errorMessage = data.error || "Nie udało się utworzyć zadania"
         setError(errorMessage)
         toast.error(errorMessage)
+        if (tempId) onOptimisticRollback?.(tempId)
       }
     } catch (error) {
       console.error("Error creating task:", error)
       const errorMessage = "Wystąpił błąd podczas tworzenia zadania"
       setError(errorMessage)
       toast.error(errorMessage)
+      if (tempId) onOptimisticRollback?.(tempId)
     } finally {
       setLoading(false)
     }
@@ -381,7 +395,7 @@ function QuickAddTask({
       <Button
         variant="ghost"
         size="sm"
-        onClick={() => setIsAdding(true)}
+        onClick={() => { setError(""); setIsAdding(true) }}
         className="w-full justify-start text-muted-foreground hover:text-foreground"
       >
         <Plus className="mr-2 h-4 w-4" />
@@ -462,6 +476,8 @@ function KanbanColumn({
   showProjectName,
   showDetailsMenuItem,
   enableMarkComplete,
+  onOptimisticCreate,
+  onOptimisticRollback,
 }: {
   status: StatusColumn
   tasks: Task[]
@@ -482,6 +498,8 @@ function KanbanColumn({
   showProjectName: boolean
   showDetailsMenuItem: boolean
   enableMarkComplete: boolean
+  onOptimisticCreate?: (title: string, status: TaskStatus, projectId?: string) => string
+  onOptimisticRollback?: (tempId: string) => void
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const [isOver, setIsOver] = useState(false)
@@ -551,6 +569,8 @@ function KanbanColumn({
                 projects={projects}
                 session={session}
                 hideProjectSelect={hideProjectSelect}
+                onOptimisticCreate={onOptimisticCreate}
+                onOptimisticRollback={onOptimisticRollback}
               />
 
             </div>
@@ -740,6 +760,53 @@ export function KanbanBoard({
     }
   }
 
+  // Insert a temporary task card immediately so adding a task feels instant.
+  // The card is reconciled with server data once onTaskUpdated() refetches,
+  // or removed via the rollback handler if the request fails.
+  const handleOptimisticCreate = useCallback(
+    (title: string, status: TaskStatus, taskProjectId?: string): string => {
+      const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`
+      const now = new Date().toISOString()
+
+      let project: Task["project"] = { id: "", name: "" }
+      if (projectId) {
+        // Board scoped to a single project: reuse the project info of any existing task.
+        const existingProject = displayTasksRef.current.find(t => t.project?.id === projectId)?.project
+        project = existingProject ?? { id: projectId, name: "" }
+      } else if (taskProjectId) {
+        const picked = projects?.find(p => p.id === taskProjectId)
+        project = picked ? { id: picked.id, name: picked.name } : { id: "", name: "" }
+      }
+
+      const sessionUser = session?.user as { id?: string; name?: string | null; email?: string | null; image?: string | null } | undefined
+      const optimisticTask: Task = {
+        id: tempId,
+        title,
+        statusId: status.id,
+        createdAt: now,
+        project,
+        assignee: sessionUser?.id
+          ? {
+            id: sessionUser.id,
+            name: sessionUser.name ?? "",
+            email: sessionUser.email ?? "",
+            avatarUrl: sessionUser.image ?? null,
+          }
+          : undefined,
+        subtasks: [],
+        comments: [],
+      }
+
+      setOptimisticTasks(prev => [...prev, optimisticTask])
+      return tempId
+    },
+    [projectId, projects, session]
+  )
+
+  const handleOptimisticRollback = useCallback((tempId: string) => {
+    setOptimisticTasks(prev => prev.filter(t => t.id !== tempId))
+  }, [])
+
   const getTasksByStatus = (status: TaskStatus) => {
     return displayTasks
       .filter(task => task.statusId === status.id)
@@ -843,6 +910,8 @@ export function KanbanBoard({
             showProjectName={shouldShowProjectName}
             showDetailsMenuItem={showDetailsMenuItem}
             enableMarkComplete={enableMarkComplete}
+            onOptimisticCreate={handleOptimisticCreate}
+            onOptimisticRollback={handleOptimisticRollback}
           />
         )) : (
           <div className="flex items-center justify-center w-full h-64 text-muted-foreground">
