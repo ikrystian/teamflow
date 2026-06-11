@@ -165,5 +165,4 @@ jobs:
 
           # Ensure labels exist, then apply them (non-fatal so labeling never blocks PR creation)
           gh label create automated-pr --color 0e8a16 2>/dev/null || true
-          gh label create ai-generated --color 1d76db 2>/dev/null || true
-          gh pr edit "$PR_URL" --add-label automated-pr --add-label ai-generated || true
+          gh pr edit "$PR_URL" --add-label automated-pr || true
