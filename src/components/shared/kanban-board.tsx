@@ -354,11 +354,7 @@ function QuickAddTask({
     }
   }, [projects, selectedProjectId, projectId])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const trimmedTitle = title.trim()
-    if (!trimmedTitle) return
-
+  const submitTask = async (trimmedTitle: string) => {
     setLoading(true)
     setError("")
 
@@ -414,6 +410,44 @@ function QuickAddTask({
     }
   }
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const trimmedTitle = title.trim()
+    if (!trimmedTitle) return
+    await submitTask(trimmedTitle)
+  }
+
+  const handleBlur = (e: React.FocusEvent<HTMLFormElement>) => {
+    if (loading) return
+
+    // If focus is shifting to something inside the form, do nothing
+    if (e.relatedTarget && e.currentTarget.contains(e.relatedTarget as Node)) {
+      return
+    }
+
+    // If focus is shifting to the cancel button, do nothing (let click handler run)
+    if (e.relatedTarget && (e.relatedTarget as HTMLElement).closest('[data-action="cancel"]')) {
+      return
+    }
+
+    // If focus is shifting to a Radix dropdown item/portal, do nothing
+    const target = e.relatedTarget as HTMLElement | null
+    if (target && (
+      target.closest('[role="listbox"]') ||
+      target.closest('[role="option"]') ||
+      target.closest('[data-radix-popper-content-wrapper]')
+    )) {
+      return
+    }
+
+    const trimmedTitle = title.trim()
+    if (trimmedTitle) {
+      submitTask(trimmedTitle)
+    } else {
+      handleCancel()
+    }
+  }
+
   const handleCancel = () => {
     setTitle("")
     setIsAdding(false)
@@ -437,7 +471,7 @@ function QuickAddTask({
   return (
     <Card className="mb-2 p-2">
       <CardContent className="p-0">
-        <form onSubmit={handleSubmit} className="flex items-center gap-2">
+        <form onSubmit={handleSubmit} onBlur={handleBlur} className="flex items-center gap-2">
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -476,6 +510,7 @@ function QuickAddTask({
               size="sm"
               onClick={handleCancel}
               disabled={loading}
+              data-action="cancel"
             >
               <X className="h-4 w-4" />
             </Button>
