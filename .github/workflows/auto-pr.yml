@@ -5,6 +5,17 @@ on:
     branches:
       - 'feature/**'
       - 'fix/**'
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to create PR from (must already exist)'
+        required: true
+        default: 'feature/debug-test'
+      debug:
+        description: 'Enable verbose debug output'
+        required: false
+        default: 'true'
+        type: boolean
 
 permissions:
   contents: read
@@ -14,7 +25,7 @@ permissions:
 jobs:
   create-pr:
     runs-on: ubuntu-latest
-    if: github.actor == 'ikrystian'
+    if: github.actor == 'ikrystian' || github.event_name == 'workflow_dispatch'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,9 +37,10 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
-          COUNT=$(gh pr list --head "${{ github.ref_name }}" --base main --state open --json number --jq 'length')
+          BRANCH="${{ github.event.inputs.branch || github.ref_name }}"
+          COUNT=$(gh pr list --head "$BRANCH" --base main --state open --json number --jq 'length')
           echo "count=$COUNT" >> "$GITHUB_OUTPUT"
-          echo "Open PRs for ${{ github.ref_name }} -> main: $COUNT"
+          echo "Open PRs for $BRANCH -> main: $COUNT"
 
       - name: Fetch task details from TeamFlow
         id: task
@@ -37,7 +49,7 @@ jobs:
           APP_URL: ${{ secrets.APP_URL }}
           API_TOKEN: ${{ secrets.API_TOKEN }}
         run: |
-          BRANCH="${{ github.ref_name }}"
+          BRANCH="${{ github.event.inputs.branch || github.ref_name }}"
 
           # Extract task key from branch name.
           # Branch format: feature/<key>-<slug>  e.g. feature/ne-10-fix-login
@@ -98,10 +110,17 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
           DIFF=$(cat /tmp/diff.txt)
-          BRANCH="${{ github.ref_name }}"
+          BRANCH="${{ github.event.inputs.branch || github.ref_name }}"
           TASK_KEY="${{ steps.task.outputs.task_key }}"
           TASK_TITLE="${{ steps.task.outputs.task_title }}"
           TASK_DESC=$(cat /tmp/task_description.txt 2>/dev/null || true)
+
+          # --- Debug: API key presence ---
+          if [ -z "$OPENROUTER_API_KEY" ]; then
+            echo "ERROR: OPENROUTER_API_KEY secret is empty or not set!"
+          else
+            echo "OK: OPENROUTER_API_KEY is set (length: ${#OPENROUTER_API_KEY})"
+          fi
 
           # Build context block for the AI
           TASK_CONTEXT=""
@@ -117,7 +136,7 @@ jobs:
             --arg branch "$BRANCH" \
             --arg task_context "$TASK_CONTEXT" \
             '{
-              model: "deepseek/deepseek-v4-flash",
+              model: "deepseek/deepseek-chat",
               max_tokens: 1500,
               messages: [{
                 role: "user",
@@ -125,20 +144,35 @@ jobs:
               }]
             }')
 
-          RESPONSE=$(curl -s https://openrouter.ai/api/v1/chat/completions \
+          echo "=== Payload (model + first 300 chars of content) ==="
+          echo "$PAYLOAD" | jq '{model, max_tokens, preview: (.messages[0].content | .[0:300])}'
+
+          # Capture HTTP status alongside body
+          HTTP_STATUS=$(curl -s -o /tmp/openrouter_response.json -w "%{http_code}" \
+            https://openrouter.ai/api/v1/chat/completions \
             -H "Authorization: Bearer ${OPENROUTER_API_KEY}" \
             -H "Content-Type: application/json" \
             -H "HTTP-Referer: https://github.com/${{ github.repository }}" \
             -H "X-Title: ${{ github.repository }}" \
             -d "$PAYLOAD")
 
+          echo "=== HTTP status: $HTTP_STATUS ==="
+          RESPONSE=$(cat /tmp/openrouter_response.json)
           echo "=== Raw API response ==="
           echo "$RESPONSE"
+
+          # Surface error details if present
+          API_ERROR=$(echo "$RESPONSE" | jq -r '.error.message // empty' 2>/dev/null || true)
+          if [ -n "$API_ERROR" ]; then
+            echo "ERROR from OpenRouter: $API_ERROR"
+            echo "Error code: $(echo "$RESPONSE" | jq -r '.error.code // empty')"
+          fi
 
           AI_BODY=$(echo "$RESPONSE" | jq -r '.choices[0].message.content // empty' 2>/dev/null || true)
 
           # Fallback if AI call failed
           if [ -z "$AI_BODY" ] || [ "$AI_BODY" = "null" ]; then
+            echo "WARNING: AI body is empty — using fallback description."
             printf 'Automated PR for `%s`.\n' "$BRANCH" > /tmp/pr_body.txt
           else
             printf '%s' "$AI_BODY" > /tmp/pr_body.txt
@@ -158,7 +192,7 @@ jobs:
         run: |
           PR_URL=$(gh pr create \
             --base main \
-            --head "${{ github.ref_name }}" \
+            --head "${{ github.event.inputs.branch || github.ref_name }}" \
             --title "$(cat /tmp/pr_title.txt)" \
             --body-file /tmp/pr_body.txt)
           echo "Created: $PR_URL"

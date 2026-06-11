@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { format } from "date-fns"
+import { format, startOfToday } from "date-fns"
 import { Calendar as CalendarIcon, Clock } from "lucide-react"
 import { pl } from 'date-fns/locale'
 
@@ -27,6 +27,10 @@ interface DateTimePickerProps {
   className?: string
   placeholder?: string
   showTime?: boolean
+  // Disable past days in the calendar (today stays selectable).
+  disablePast?: boolean
+  // On picking a day, set the time to the current time + 1 hour.
+  defaultTimeOnSelect?: boolean
 }
 
 export function DateTimePicker({
@@ -34,7 +38,9 @@ export function DateTimePicker({
   onChange,
   className,
   placeholder = "Wybierz datę i czas",
-  showTime = true
+  showTime = true,
+  disablePast = false,
+  defaultTimeOnSelect = false,
 }: DateTimePickerProps) {
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(value)
   const [hours, setHours] = React.useState<string>("")
@@ -57,7 +63,16 @@ export function DateTimePicker({
     setSelectedDate(date)
     if (date) {
       const newDateTime = new Date(date)
-      if (showTime && hours && minutes) {
+      if (showTime && defaultTimeOnSelect) {
+        // Default the time to "now + 1 hour" on the picked day.
+        const target = new Date()
+        target.setHours(target.getHours() + 1)
+        const h = target.getHours()
+        const m = target.getMinutes()
+        newDateTime.setHours(h, m, 0, 0)
+        setHours(h.toString().padStart(2, '0'))
+        setMinutes(m.toString().padStart(2, '0'))
+      } else if (showTime && hours && minutes) {
         newDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0)
       } else if (!showTime) {
         newDateTime.setHours(0, 0, 0, 0)
@@ -100,8 +115,11 @@ export function DateTimePicker({
     i.toString().padStart(2, '0')
   )
 
-  // Generate minutes (00, 30)
-  const minuteOptions = ['00', '30']
+  // Generate minutes (00, 30). Include the current value too, so an exact
+  // minute set by defaultTimeOnSelect (e.g. "47") stays visible in the select.
+  const minuteOptions = minutes && !['00', '30'].includes(minutes)
+    ? ['00', '30', minutes].sort()
+    : ['00', '30']
 
   return (
     <Popover modal={false}>
@@ -125,6 +143,8 @@ export function DateTimePicker({
             mode="single"
             selected={selectedDate}
             onSelect={handleDateChange}
+            disabled={disablePast ? { before: startOfToday() } : undefined}
+            startMonth={disablePast ? startOfToday() : undefined}
           />
 
           {showTime && (
