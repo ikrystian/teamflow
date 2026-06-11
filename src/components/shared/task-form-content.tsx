@@ -1485,6 +1485,8 @@ export function TaskFormContent({
                   value={dueDate}
                   onChange={setDueDate}
                   className="rounded-lg border shadow-sm"
+                  disablePast={isCreateMode}
+                  defaultTimeOnSelect={isCreateMode}
                 />
               </div>
 
@@ -1531,6 +1533,7 @@ export function TaskFormContent({
                     onChange={setStartTime}
                     placeholder="Wybierz czas rozpoczęcia"
                     className="rounded-lg border shadow-sm"
+                    disablePast={isCreateMode}
                   />
                 </div>
 
@@ -1544,6 +1547,7 @@ export function TaskFormContent({
                     onChange={setEndTime}
                     placeholder="Wybierz czas zakończenia"
                     className="rounded-lg border shadow-sm"
+                    disablePast={isCreateMode}
                   />
                 </div>
               </div>
