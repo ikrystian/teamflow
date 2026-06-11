@@ -51,7 +51,6 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
   const navigation = [
     { name: "Panel", href: "/dashboard", icon: Home },
     { name: "Moje zadania", href: "/dashboard/tasks", icon: CheckSquare },
-    { name: "Test REST", href: "/dashboard/test-webhook", icon: Zap },
     { name: "Projekty", href: "/dashboard/projects", icon: FolderOpen },
     { name: "Klienci", href: "/dashboard/clients", icon: Contact },
     { name: "Raporty", href: "/dashboard/reports", icon: BarChart3 },
