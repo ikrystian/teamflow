@@ -1,0 +1,83 @@
+name: Auto Create PR with AI Description
+
+on:
+  push:
+    branches:
+      - 'feature/**'
+      - 'fix/**'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get git diff
+        run: |
+          git fetch origin main
+          git diff origin/main...HEAD --stat --unified=3 | head -200 > /tmp/diff.txt
+          cat /tmp/diff.txt
+
+      - name: Generate PR title and body with DeepSeek via OpenRouter
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          DIFF=$(cat /tmp/diff.txt)
+          BRANCH="${{ github.ref_name }}"
+
+          RESPONSE=$(curl -s https://openrouter.ai/api/v1/chat/completions \
+            -H "Authorization: Bearer $OPENROUTER_API_KEY" \
+            -H "Content-Type: application/json" \
+            -H "HTTP-Referer: https://github.com/${{ github.repository }}" \
+            -H "X-Title: ${{ github.repository }}" \
+            -d "$(jq -n \
+              --arg diff "$DIFF" \
+              --arg branch "$BRANCH" \
+              '{
+                model: "deepseek/deepseek-v4-flash",
+                max_tokens: 2024,
+                messages: [{
+                  role: "user",
+                  content: ("You are a helpful assistant that writes pull request descriptions.\nBranch name: " + $branch + "\n\nGit diff:\n" + $diff + "\n\nRespond ONLY with a JSON object (no markdown, no backticks, no extra text), polish language:\n{\"title\": \"<short PR title>\", \"body\": \"<markdown PR description with: summary, changes, notes>\"}")
+                }]
+              }'
+            )"
+          )
+
+          echo "=== Raw API response ==="
+          echo "$RESPONSE"
+
+          AI_JSON=$(echo "$RESPONSE" | jq -r '.choices[0].message.content')
+
+          echo "$AI_JSON" | jq -r '.title' > /tmp/pr_title.txt
+          echo "$AI_JSON" | jq -r '.body'  > /tmp/pr_body.txt
+
+      - name: Read AI output
+        id: pr_content
+        run: |
+          {
+            echo 'title<<EOF'
+            cat /tmp/pr_title.txt
+            echo EOF
+          } >> $GITHUB_OUTPUT
+          {
+            echo 'body<<EOF'
+            cat /tmp/pr_body.txt
+            echo EOF
+          } >> $GITHUB_OUTPUT
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: main
+          title: ${{ steps.pr_content.outputs.title }}
+          body: ${{ steps.pr_content.outputs.body }}
+          labels: automated-pr, ai-generated
