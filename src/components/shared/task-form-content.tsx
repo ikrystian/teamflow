@@ -1146,7 +1146,7 @@ export function TaskFormContent({
           {/* Changes field - collapsible in edit mode with Slack sending option */}
           {isEditMode && (
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
+              <div className="flex items-start gap-2">
                 <Button
                   type="button"
                   variant="outline"

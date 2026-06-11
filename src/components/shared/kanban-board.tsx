@@ -201,7 +201,7 @@ function SortableTaskCard({
       >
         <DropdownMenu open={isContextMenuOpen} onOpenChange={setIsContextMenuOpen}>
           <Card
-            className={`relative mb-2 cursor-pointer hover:shadow-md transition-all border-l-4 ${isUpdating
+            className={`relative mb-2 cursor-pointer transition-all border-l-4 hover-card-border-animate ${isUpdating
               ? 'border-l-yellow-500 bg-yellow-50/50'
               : ''
               }`}
@@ -211,9 +211,14 @@ function SortableTaskCard({
                 : completed
                   ? '#10B981'
                   : (task.project?.color || '#3B82F6'),
+              '--hover-border-color': isUpdating
+                ? '#EAB308'
+                : completed
+                  ? '#10B981'
+                  : (task.project?.color || '#3B82F6'),
               paddingTop: 5,
               paddingBottom: 0,
-            }}
+            } as React.CSSProperties}
           >
             <CardContent
               onContextMenu={handleContextMenu}
