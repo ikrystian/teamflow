@@ -1117,6 +1117,16 @@ export function TaskFormContent({
               className="flex-1 w-full resize-none p-0 px-1 font-medium text-xl border-none bg-transparent outline-none hover:text-primary focus:border-none focus:outline-none"
             />
           </div>
+
+          {isEditMode && task?.githubWorkflowError && (
+            <div className="bg-red-500/10 border border-red-500/25 text-red-600 dark:text-red-400 p-3 rounded-lg flex items-start gap-2.5 text-sm">
+              <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5 animate-pulse" />
+              <div className="space-y-1">
+                <span className="font-semibold block text-sm">Błąd GitHub Workflow</span>
+                <p className="text-xs break-all">{task.githubWorkflowError}</p>
+              </div>
+            </div>
+          )}
           <div className="space-y-2">
             <div className="rounded-md">
               <RichTextEditor

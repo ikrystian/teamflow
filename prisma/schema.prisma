@@ -115,6 +115,7 @@ model Task {
   changesScheduledSendAt DateTime?
   githubBranchName       String?
   githubPrUrl            String?
+  githubWorkflowError    String?
   comments               Comment[]
   taskStatus             TaskStatus?      @relation(fields: [statusId], references: [id])
   project                Project?         @relation(fields: [projectId], references: [id])

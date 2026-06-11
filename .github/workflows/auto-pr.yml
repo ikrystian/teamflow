@@ -242,3 +242,58 @@ jobs:
             -f squash_merge_commit_message=PR_BODY \
             -f merge_commit_title=PR_TITLE \
             -f merge_commit_message=PR_BODY || echo "Warning: Could not update repository merge settings. This may require admin permissions on the token."
+
+      - name: Report success to TeamFlow
+        if: success() && steps.check_changes.outputs.has_changes == 'true'
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          API_TOKEN: ${{ secrets.API_TOKEN }}
+        run: |
+          if [ -n "$APP_URL" ] && [ -n "$API_TOKEN" ]; then
+            BRANCH="${{ github.event.inputs.branch || github.ref_name }}"
+            RAW_KEY=$(echo "$BRANCH" | sed 's|^[^/]*/||' | grep -oP '^[a-zA-Z]+-\d+' || true)
+            TASK_KEY=$(echo "$RAW_KEY" | tr '[:lower:]' '[:upper:]')
+            
+            curl -sf -X POST \
+              -H "Authorization: Bearer ${API_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d "$(jq -n \
+                --arg workflow "Auto Create PR with AI Description" \
+                --arg runId "${{ github.run_id }}" \
+                --arg branch "$BRANCH" \
+                --arg taskKey "$TASK_KEY" \
+                --arg status "success" \
+                --arg repo "${{ github.repository }}" \
+                --arg actor "${{ github.actor }}" \
+                '{workflow: $workflow, runId: $runId, branch: $branch, taskKey: $taskKey, status: $status, repo: $repo, actor: $actor}')" \
+              "${APP_URL}/api/system/workflow-log" || echo "Failed to report workflow success to TeamFlow"
+          fi
+
+      - name: Report failure to TeamFlow
+        if: failure()
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          API_TOKEN: ${{ secrets.API_TOKEN }}
+        run: |
+          if [ -n "$APP_URL" ] && [ -n "$API_TOKEN" ]; then
+            BRANCH="${{ github.event.inputs.branch || github.ref_name }}"
+            RAW_KEY=$(echo "$BRANCH" | sed 's|^[^/]*/||' | grep -oP '^[a-zA-Z]+-\d+' || true)
+            TASK_KEY=$(echo "$RAW_KEY" | tr '[:lower:]' '[:upper:]')
+            
+            curl -sf -X POST \
+              -H "Authorization: Bearer ${API_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d "$(jq -n \
+                --arg workflow "Auto Create PR with AI Description" \
+                --arg runId "${{ github.run_id }}" \
+                --arg branch "$BRANCH" \
+                --arg taskKey "$TASK_KEY" \
+                --arg error "Workflow failed. Check GitHub Actions run ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+                --arg status "failed" \
+                --arg repo "${{ github.repository }}" \
+                --arg actor "${{ github.actor }}" \
+                '{workflow: $workflow, runId: $runId, branch: $branch, taskKey: $taskKey, error: $error, status: $status, repo: $repo, actor: $actor}')" \
+              "${APP_URL}/api/system/workflow-log" || echo "Failed to report workflow failure to TeamFlow"
+          else
+            echo "Cannot report failure: APP_URL or API_TOKEN is not configured."
+          fi

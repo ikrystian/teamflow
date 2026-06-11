@@ -238,7 +238,7 @@ function SortableTaskCard({
                     <div className="flex items-center gap-1">
                       <h4 className="kanban-card-text font-medium text-sm leading-tight cursor-pointer transition-transform duration-200 ease-in-out group-hover:translate-x-3">
                         {task.key && (
-                          <span className="text-muted-foreground font-mono mr-1">
+                          <span className="text-muted-foreground  text-xs font-mono mr-1">
                             [{task.key}]
                           </span>
                         )}
@@ -254,6 +254,11 @@ function SortableTaskCard({
                           <GitBranch className="h-3 w-3 text-purple-500 flex-shrink-0" />
                         </div>
                       )}
+                      {task.githubWorkflowError && (
+                        <div title={`Błąd GitHub Workflow: ${task.githubWorkflowError}`} className="inline-flex animate-pulse">
+                          <AlertCircle className="h-3 w-3 text-red-500 flex-shrink-0" />
+                        </div>
+                      )}
                     </div>
                   </div>
                   {isUpdating && (
@@ -267,6 +272,13 @@ function SortableTaskCard({
                 {showProjectName && task?.project?.name && (
                   <div className="text-xs text-muted-foreground">
                     {task.project.name}
+                  </div>
+                )}
+
+                {task.githubWorkflowError && (
+                  <div className="text-[10px] text-red-600 bg-red-500/10 border border-red-500/25 rounded px-1.5 py-0.5 mt-1 font-medium flex items-center gap-1 select-none">
+                    <AlertCircle className="h-2.5 w-2.5 text-red-500 flex-shrink-0" />
+                    <span className="truncate" title={task.githubWorkflowError}>Błąd GitHub: {task.githubWorkflowError}</span>
                   </div>
                 )}
 
