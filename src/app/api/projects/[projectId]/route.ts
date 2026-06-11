@@ -44,98 +44,64 @@ export async function GET(
 
     const { projectId } = await params
 
-    const project = await prisma.project.findFirst({
-      where: {
-        id: projectId,
-        OR: [
-          {
+    // The Kanban board loads its tasks separately (paginated, per status), so it
+    // requests the project without the heavy tasks relation. List / daily views
+    // still need the full task list, so tasks are included by default.
+    const includeTasks = new URL(request.url).searchParams.get("includeTasks") !== "false"
 
-          },
-          // Projects where user is a direct project member
-          {
-            members: {
-              some: {
-                userId: session.user.id
-              }
+    const accessWhere = {
+      id: projectId,
+      OR: [
+        {
+
+        },
+        // Projects where user is a direct project member
+        {
+          members: {
+            some: {
+              userId: session.user.id
             }
-          },
-          // Projects created by the user (without )
-          {
-            createdById: session.user.id
           }
-        ]
+        },
+        // Projects created by the user (without )
+        {
+          createdById: session.user.id
+        }
+      ]
+    }
+
+    const baseInclude = {
+      createdBy: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatarUrl: true
+        }
       },
-      include: {
-        createdBy: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatarUrl: true
-          }
-        },
-        client: {
-          select: {
-            id: true,
-            name: true
-          }
-        },
-        members: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                avatarUrl: true
-              }
+      client: {
+        select: {
+          id: true,
+          name: true
+        }
+      },
+      members: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              avatarUrl: true
             }
-          }
-        },
-        tasks: {
-          include: {
-            taskStatus: {
-              select: {
-                id: true,
-                name: true,
-                color: true
-              }
-            },
-            assignee: {
-              select: {
-                id: true,
-                name: true,
-                avatarUrl: true
-              }
-            },
-            createdBy: {
-              select: {
-                id: true,
-                name: true,
-                avatarUrl: true
-              }
-            },
-            todos: true,
-            comments: {
-              include: {
-                author: {
-                  select: {
-                    id: true,
-                    name: true,
-                    avatarUrl: true
-                  }
-                }
-              },
-              orderBy: {
-                createdAt: 'desc'
-              }
-            }
-          },
-          orderBy: {
-            createdAt: 'desc'
           }
         }
       }
+    }
+
+    const project = await prisma.project.findFirst({
+      where: accessWhere,
+      include: baseInclude
     })
 
     if (!project) {
@@ -145,14 +111,67 @@ export async function GET(
       )
     }
 
-    // Map todos to subtasks for all tasks in the project for simpler frontend consumption
-    const projectWithMappedTasks = {
-      ...project,
-      tasks: project.tasks?.map(task => ({
+    // The heavy task list (with comments, todos, etc.) is only loaded when the
+    // caller needs it (list / daily views). The board fetches its tasks paginated
+    // from /api/projects/[projectId]/tasks instead, so its initial load stays light.
+    let mappedTasks: unknown = undefined
+    if (includeTasks) {
+      const projectTasks = await prisma.task.findMany({
+        where: { projectId },
+        include: {
+          taskStatus: {
+            select: {
+              id: true,
+              name: true,
+              color: true
+            }
+          },
+          assignee: {
+            select: {
+              id: true,
+              name: true,
+              avatarUrl: true
+            }
+          },
+          createdBy: {
+            select: {
+              id: true,
+              name: true,
+              avatarUrl: true
+            }
+          },
+          todos: true,
+          comments: {
+            include: {
+              author: {
+                select: {
+                  id: true,
+                  name: true,
+                  avatarUrl: true
+                }
+              }
+            },
+            orderBy: {
+              createdAt: 'desc'
+            }
+          }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        }
+      })
+
+      // Map todos to subtasks for simpler frontend consumption.
+      mappedTasks = projectTasks.map(task => ({
         ...task,
         subtasks: task.todos,
         todos: undefined
       }))
+    }
+
+    const projectWithMappedTasks = {
+      ...project,
+      tasks: mappedTasks
     }
 
     return NextResponse.json({ project: projectWithMappedTasks })

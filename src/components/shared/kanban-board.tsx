@@ -58,6 +58,16 @@ export interface KanbanBoardProps {
   enableMarkComplete?: boolean
   /** Show the "Szczegóły" (Details) dropdown item. */
   showDetailsMenuItem?: boolean
+  /**
+   * Server-side pagination (per status column). When `onLoadMore` is provided the
+   * board switches from client-side reveal to fetching pages from the server:
+   * - `columnTotals` — total number of tasks in each column (for the badge),
+   * - `columnHasMore` — whether a column still has unloaded tasks,
+   * - `onLoadMore` — called with a statusId when its scroll sentinel appears.
+   */
+  columnTotals?: Record<string, number>
+  columnHasMore?: Record<string, boolean>
+  onLoadMore?: (statusId: string) => void
 }
 
 interface StatusColumn extends TaskStatus {
@@ -489,6 +499,9 @@ function KanbanColumn({
   enableMarkComplete,
   onOptimisticCreate,
   onOptimisticRollback,
+  columnTotal,
+  serverHasMore,
+  onLoadMore,
 }: {
   status: StatusColumn
   tasks: Task[]
@@ -511,17 +524,29 @@ function KanbanColumn({
   enableMarkComplete: boolean
   onOptimisticCreate?: (title: string, status: TaskStatus, projectId?: string) => string
   onOptimisticRollback?: (tempId: string) => void
+  /** Total task count for this column (server-pagination mode). */
+  columnTotal?: number
+  /** Whether the column still has unloaded tasks on the server. */
+  serverHasMore?: boolean
+  /** Called when the scroll sentinel appears, to fetch the next server page. */
+  onLoadMore?: (statusId: string) => void
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const sentinelRef = useRef<HTMLDivElement>(null)
   const [isOver, setIsOver] = useState(false)
 
-  // Lazy rendering: only mount the first TASKS_PER_PAGE cards, revealing more as
-  // the user scrolls the column. The badge still reflects the full task count.
+  // Two pagination modes:
+  // - server mode (onLoadMore provided): the parent already passes only the
+  //   loaded tasks for this column, and supplies the full total + hasMore flag;
+  //   scrolling asks the parent to fetch the next page.
+  // - client mode (fallback): all tasks are in memory and we only mount the
+  //   first TASKS_PER_PAGE cards, revealing more as the user scrolls.
+  const serverMode = !!onLoadMore
   const [visibleCount, setVisibleCount] = useState(TASKS_PER_PAGE)
-  const visibleTasks = tasks.slice(0, visibleCount)
-  const hasMore = visibleCount < tasks.length
+  const visibleTasks = serverMode ? tasks : tasks.slice(0, visibleCount)
+  const hasMore = serverMode ? !!serverHasMore : visibleCount < tasks.length
+  const badgeCount = serverMode ? (columnTotal ?? tasks.length) : tasks.length
 
   useEffect(() => {
     const element = ref.current
@@ -537,7 +562,7 @@ function KanbanColumn({
     })
   }, [status.id])
 
-  // Reveal the next page of cards when the bottom sentinel scrolls into view.
+  // Load / reveal the next page of cards when the bottom sentinel scrolls into view.
   useEffect(() => {
     if (!hasMore) return
     const sentinel = sentinelRef.current
@@ -547,14 +572,18 @@ function KanbanColumn({
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) {
-          setVisibleCount((count) => Math.min(count + TASKS_PER_PAGE, tasks.length))
+          if (serverMode) {
+            onLoadMore?.(status.id)
+          } else {
+            setVisibleCount((count) => Math.min(count + TASKS_PER_PAGE, tasks.length))
+          }
         }
       },
       { root, rootMargin: "200px" }
     )
     observer.observe(sentinel)
     return () => observer.disconnect()
-  }, [hasMore, tasks.length])
+  }, [hasMore, tasks.length, serverMode, onLoadMore, status.id])
 
   return (
     <div ref={scrollContainerRef} className="flex-shrink-0 w-80 overflow-y-scroll h-[calc(100vh-237px)] max-h-[calc(100vh-237px)]">
@@ -566,7 +595,7 @@ function KanbanColumn({
           <div className="flex items-center gap-2">
             <h3 className="font-semibold text-sm">{status.name}</h3>
             <Badge variant="secondary" className="text-xs">
-              {tasks.length}
+              {badgeCount}
             </Badge>
           </div>
         </div>
@@ -643,6 +672,9 @@ export function KanbanBoard({
   showProjectName,
   enableMarkComplete = false,
   showDetailsMenuItem = false,
+  columnTotals,
+  columnHasMore,
+  onLoadMore,
 }: KanbanBoardProps) {
   const { data: sessionFromHook } = useSession()
   const session: Session | null = (sessionProp ?? (sessionFromHook as Session | null)) ?? null
@@ -662,6 +694,11 @@ export function KanbanBoard({
   displayTasksRef.current = displayTasks
   const taskStatusesRef = useRef<TaskStatus[]>(taskStatuses)
   taskStatusesRef.current = taskStatuses
+  // The drag monitor below is registered once and captures the first-render
+  // handleTaskDrop, so reach the latest onTaskUpdated through a ref to avoid
+  // refreshing against stale board state after a drop.
+  const onTaskUpdatedRef = useRef(onTaskUpdated)
+  onTaskUpdatedRef.current = onTaskUpdated
 
   // Update optimistic tasks when props tasks change
   useEffect(() => {
@@ -778,7 +815,7 @@ export function KanbanBoard({
         toast.success(`Zadanie przeniesione do "${newStatus.name}"`, {
           id: `move-task-${taskId}`,
         })
-        onTaskUpdated()
+        onTaskUpdatedRef.current()
       } else {
         // Rollback on error
         setOptimisticTasks(prevTasks =>
@@ -958,6 +995,9 @@ export function KanbanBoard({
             enableMarkComplete={enableMarkComplete}
             onOptimisticCreate={handleOptimisticCreate}
             onOptimisticRollback={handleOptimisticRollback}
+            columnTotal={columnTotals?.[status.id]}
+            serverHasMore={columnHasMore?.[status.id]}
+            onLoadMore={onLoadMore}
           />
         )) : (
           <div className="flex items-center justify-center w-full h-64 text-muted-foreground">

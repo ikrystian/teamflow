@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import type { Session } from "next-auth"
@@ -48,6 +48,17 @@ interface ProjectDetailsContentProps {
   projectId: string
 }
 
+// Tasks loaded so far for one Kanban column, plus the total number of tasks in
+// that column on the server (used for the column badge and to know when there
+// are more pages to fetch on scroll).
+interface BoardColumn {
+  tasks: Task[]
+  total: number
+}
+
+// Max tasks shown per column on first load and fetched per "load more" page.
+const TASKS_PER_PAGE = 30
+
 export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps) {
   const { data: session } = useSession() as { data: Session | null }
 
@@ -79,6 +90,15 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   // for the create request + refetch to complete.
   const [tasks, setTasks] = useState<Task[]>([])
   const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
+  // Server-side pagination state for the Kanban board: each status column holds
+  // the tasks loaded so far plus the total number of tasks in that column, so the
+  // board can show up to TASKS_PER_PAGE tasks at first and load more on scroll
+  // while the badge still reflects the full count.
+  const [boardColumns, setBoardColumns] = useState<Record<string, BoardColumn>>({})
+  const [boardLoaded, setBoardLoaded] = useState(false)
+  const boardColumnsRef = useRef<Record<string, BoardColumn>>({})
+  boardColumnsRef.current = boardColumns
+  const loadingColumnsRef = useRef<Set<string>>(new Set())
   // IDs of tasks currently playing the delete animation (optimistic removal)
   const [deletingTaskIds, setDeletingTaskIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
@@ -93,9 +113,20 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   const router = useRouter()
   // const { projects } = useProjects()
 
+  // The board fetches its tasks separately (paginated per status), so when it is
+  // the active view we skip the project's heavy embedded task list. The current
+  // assignee filter is forwarded to the board so its pages and counts match it.
+  const assigneeFilter =
+    taskFilter === "all"
+      ? undefined
+      : taskFilter === "mine"
+        ? session?.user?.id
+        : taskFilter
+
   const fetchProject = useCallback(async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}`)
+      const includeTasks = viewMode !== "board"
+      const response = await fetch(`/api/projects/${projectId}?includeTasks=${includeTasks}`)
       if (response.ok) {
         const data = await response.json()
         setProject(data.project)
@@ -107,7 +138,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     } finally {
       setLoading(false)
     }
-  }, [projectId, router])
+  }, [projectId, router, viewMode])
 
   const checkAdminStatus = useCallback(async () => {
     if (session?.user) {
@@ -154,12 +185,122 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     return () => { cancelled = true }
   }, [])
 
+  // Fetch a single page of tasks for one status column (server-side pagination).
+  const fetchColumnPage = useCallback(
+    async (statusId: string, skip: number, take: number): Promise<BoardColumn> => {
+      const params = new URLSearchParams({
+        statusId,
+        skip: String(skip),
+        take: String(take),
+        order: "asc",
+      })
+      if (assigneeFilter) params.set("assigneeId", assigneeFilter)
+      try {
+        const response = await fetch(`/api/projects/${projectId}/tasks?${params.toString()}`)
+        if (!response.ok) return { tasks: [], total: 0 }
+        const data = await response.json()
+        return { tasks: (data.tasks as Task[]) ?? [], total: (data.total as number) ?? 0 }
+      } catch (error) {
+        console.error("Error fetching board tasks:", error)
+        return { tasks: [], total: 0 }
+      }
+    },
+    [projectId, assigneeFilter]
+  )
+
+  // Load the first page (and total count) of every column. Used on initial board
+  // render and whenever the status list or assignee filter changes.
+  const loadBoard = useCallback(async () => {
+    if (taskStatuses.length === 0) return
+    const results = await Promise.all(
+      taskStatuses.map(async (status) => [status.id, await fetchColumnPage(status.id, 0, TASKS_PER_PAGE)] as const)
+    )
+    setBoardColumns(Object.fromEntries(results))
+    setBoardLoaded(true)
+  }, [taskStatuses, fetchColumnPage])
+
+  // Append the next page of tasks to a column when the user scrolls near its end.
+  const loadMoreColumn = useCallback(
+    async (statusId: string) => {
+      if (loadingColumnsRef.current.has(statusId)) return
+      const column = boardColumnsRef.current[statusId]
+      if (!column || column.tasks.length >= column.total) return
+
+      loadingColumnsRef.current.add(statusId)
+      try {
+        const page = await fetchColumnPage(statusId, column.tasks.length, TASKS_PER_PAGE)
+        setBoardColumns((prev) => {
+          const existing = prev[statusId] ?? { tasks: [], total: 0 }
+          const seen = new Set(existing.tasks.map((task) => task.id))
+          const merged = [...existing.tasks, ...page.tasks.filter((task) => !seen.has(task.id))]
+          return { ...prev, [statusId]: { tasks: merged, total: page.total } }
+        })
+      } finally {
+        loadingColumnsRef.current.delete(statusId)
+      }
+    },
+    [fetchColumnPage]
+  )
+
+  // Re-fetch the tasks currently loaded in every column (keeping the same number
+  // of loaded cards) after a create / move / delete so the board reflects the
+  // server without resetting the user's scroll position back to the first page.
+  const refreshBoard = useCallback(async () => {
+    if (taskStatuses.length === 0) return
+    const current = boardColumnsRef.current
+    const results = await Promise.all(
+      taskStatuses.map(async (status) => {
+        const loaded = current[status.id]?.tasks.length ?? 0
+        const take = Math.max(loaded, TASKS_PER_PAGE)
+        return [status.id, await fetchColumnPage(status.id, 0, take)] as const
+      })
+    )
+    setBoardColumns(Object.fromEntries(results))
+    setBoardLoaded(true)
+  }, [taskStatuses, fetchColumnPage])
+
+  // Load board pages once the statuses are known (and reload when the filter changes).
+  useEffect(() => {
+    if (viewMode === "board" && taskStatuses.length > 0) {
+      loadBoard()
+    }
+  }, [viewMode, taskStatuses, loadBoard])
+
+  // Refresh whichever view is active: the board reloads its pages, the
+  // list / daily views re-fetch the project with its embedded task list.
+  const refreshActiveView = useCallback(() => {
+    if (viewMode === "board") {
+      refreshBoard()
+    } else {
+      fetchProject()
+    }
+  }, [viewMode, refreshBoard, fetchProject])
+
+  // Remove a task from its board column and decrement that column's total.
+  const removeTaskFromBoard = (task: Task) => {
+    const statusId = task.statusId
+    if (!statusId) return
+    setBoardColumns(prev => {
+      const column = prev[statusId]
+      if (!column) return prev
+      const existed = column.tasks.some(t => t.id === task.id)
+      if (!existed) return prev
+      return {
+        ...prev,
+        [statusId]: {
+          tasks: column.tasks.filter(t => t.id !== task.id),
+          total: Math.max(0, column.total - 1),
+        },
+      }
+    })
+  }
+
   const handleCreateTask = () => {
     setCreateTaskDialogOpen(true)
   }
 
   const handleTaskCreated = () => {
-    fetchProject()
+    refreshActiveView()
     setCreateTaskDialogOpen(false)
   }
 
@@ -270,7 +411,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   )
 
   const handleTaskUpdated = (updatedTask?: Task) => {
-    fetchProject()
+    refreshActiveView()
     // If we have the updated task, show task details
     if (updatedTask) {
       setTimeout(() => {
@@ -302,9 +443,12 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     // 1. Mark as deleting → triggers CSS exit animation
     setDeletingTaskIds(prev => new Set(prev).add(task.id))
 
-    // 2. Wait for animation to finish, then remove from local state
+    // 2. Wait for animation to finish, then remove from local state. Both the
+    // list/daily task array and the board column (with its total) are updated so
+    // the card disappears immediately in whichever view is active.
     await new Promise(resolve => setTimeout(resolve, 350))
     setTasks(prev => prev.filter(t => t.id !== task.id))
+    removeTaskFromBoard(task)
     setDeletingTaskIds(prev => { const next = new Set(prev); next.delete(task.id); return next })
 
     // 3. Close any open task details dialog
@@ -322,12 +466,14 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         // Roll back: restore the deleted task
         const data = await response.json()
         setTasks(prev => [...prev, task])
+        refreshActiveView()
         alert(data.error || "Nie udało się usunąć zadania")
       }
     } catch (error) {
       console.error("Error deleting task:", error)
       // Roll back
       setTasks(prev => [...prev, task])
+      refreshActiveView()
       alert("Wystąpił błąd podczas usuwania zadania")
     }
   }
@@ -419,6 +565,29 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     }))
   }
 
+  // Flatten the loaded board tasks (across all columns) for the KanbanBoard, plus
+  // per-column totals / "has more" flags derived from the server pagination state.
+  const boardTasks = useMemo(
+    () => taskStatuses.flatMap(status => boardColumns[status.id]?.tasks ?? []),
+    [taskStatuses, boardColumns]
+  )
+  const columnTotals = useMemo(() => {
+    const totals: Record<string, number> = {}
+    taskStatuses.forEach(status => {
+      totals[status.id] = boardColumns[status.id]?.total ?? 0
+    })
+    return totals
+  }, [taskStatuses, boardColumns])
+  const columnHasMore = useMemo(() => {
+    const hasMore: Record<string, boolean> = {}
+    taskStatuses.forEach(status => {
+      const column = boardColumns[status.id]
+      hasMore[status.id] = column ? column.tasks.length < column.total : false
+    })
+    return hasMore
+  }, [taskStatuses, boardColumns])
+  const boardTotal = taskStatuses.reduce((sum, status) => sum + (boardColumns[status.id]?.total ?? 0), 0)
+
   // Transform single task for TaskDetailsDialog
   const transformTaskForDialog = (task: Task | null) => {
     if (!task || !project) return null
@@ -497,7 +666,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
               <div className="flex items-center space-x-2">
                 <QuickAddTaskCommand
                   projectId={projectId}
-                  onTaskCreated={fetchProject}
+                  onTaskCreated={refreshActiveView}
                   onOptimisticCreate={handleOptimisticCreate}
                   onOptimisticRollback={handleOptimisticRollback}
                 />
@@ -597,7 +766,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
             tasks={getFilteredTasks(tasks)}
             onTaskClick={handleTaskDetails}
             onCreateTask={handleCreateTask}
-            onTaskCreated={fetchProject}
+            onTaskCreated={refreshActiveView}
             onOptimisticCreate={handleOptimisticCreate}
             onOptimisticRollback={handleOptimisticRollback}
             projectId={projectId}
@@ -633,14 +802,14 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
               <div className="flex items-center space-x-2">
                 <QuickAddTaskCommand
                   projectId={projectId}
-                  onTaskCreated={fetchProject}
+                  onTaskCreated={refreshActiveView}
                   onOptimisticCreate={handleOptimisticCreate}
                   onOptimisticRollback={handleOptimisticRollback}
                 />
 
               </div>
             </div>
-            {getFilteredTasks(tasks).length === 0 ? (
+            {boardLoaded && boardTotal === 0 ? (
               <Card >
                 <CardContent className="py-12">
                   <div className="text-center">
@@ -665,7 +834,11 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
             ) : (
               <KanbanBoard
                 projectId={projectId}
-                tasks={transformTasksForKanban(getFilteredTasks(tasks))}
+                tasks={transformTasksForKanban(boardTasks)}
+                taskStatuses={taskStatuses}
+                columnTotals={columnTotals}
+                columnHasMore={columnHasMore}
+                onLoadMore={loadMoreColumn}
                 onTaskUpdated={handleTaskUpdated}
                 onTaskEdit={handleEditTask}
                 onTimeTracking={handleTimeTracking}
