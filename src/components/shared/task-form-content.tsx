@@ -522,12 +522,28 @@ export function TaskFormContent({
     }
   }, [autoSaveSnapshot, isEditMode, autoSave])
 
-  // Cleanup timeout on unmount
+  // Latest snapshot reachable from the stable flush callback below.
+  const autoSaveSnapshotRef = useRef(autoSaveSnapshot)
+  autoSaveSnapshotRef.current = autoSaveSnapshot
+
+  // Persist pending changes immediately. Wired to the form's blur (focusout),
+  // so a field is saved the moment the user moves to another one instead of
+  // waiting for the debounce.
+  const flushAutoSave = useCallback(() => {
+    if (!isEditMode) return
+    if (justLoadedRef.current) return
+    if (autoSaveSnapshotRef.current === lastSavedSnapshotRef.current) return
+    if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current)
+    autoSave(autoSaveSnapshotRef.current)
+  }, [isEditMode, autoSave])
+  const flushAutoSaveRef = useRef(flushAutoSave)
+  flushAutoSaveRef.current = flushAutoSave
+
+  // On unmount (e.g. the dialog closes mid-debounce) flush instead of dropping
+  // the pending change.
   useEffect(() => {
     return () => {
-      if (autoSaveTimeoutRef.current) {
-        clearTimeout(autoSaveTimeoutRef.current)
-      }
+      flushAutoSaveRef.current()
     }
   }, [])
 
@@ -943,7 +959,7 @@ export function TaskFormContent({
   return (
     <>
       {/* Form Content */}
-      <form onSubmit={handleSubmit} className="space-y-6 modal-form">
+      <form onSubmit={handleSubmit} onBlur={flushAutoSave} className="space-y-6 modal-form">
         <div className="space-y-4">
           {/* Header Row with Status, Assignee, Priority, Project */}
           {isEditMode && (

@@ -60,7 +60,10 @@ export function TaskDetailsDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="xl:max-w-3xl max-h-[90vh] md:max-h-[85vh] flex flex-col overflow-hidden"
+        // Pinned a fixed distance from the top of the viewport (instead of
+        // vertically centered) so the dialog doesn't jump when its content
+        // grows or shrinks, e.g. after expanding a section.
+        className="xl:max-w-3xl top-[6vh] translate-y-0 max-h-[88vh] flex flex-col overflow-hidden"
         showCloseButton={false}
         disableAnimation
       >

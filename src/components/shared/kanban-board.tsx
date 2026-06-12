@@ -21,6 +21,15 @@ import {
   dropTargetForElements,
   monitorForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter"
+import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview"
+import { preserveOffsetOnSource } from "@atlaskit/pragmatic-drag-and-drop/element/preserve-offset-on-source"
+import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element"
+import {
+  attachClosestEdge,
+  extractClosestEdge,
+  type Edge,
+} from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge"
+import { DropIndicator } from "@/components/ui/drop-indicator"
 import type { Task, TaskStatus } from "@/types"
 import type { Session } from "next-auth"
 import { toast } from "sonner"
@@ -122,7 +131,7 @@ function SortableTaskCard({
   const ref = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false)
-  const [isDragOverAbove, setIsDragOverAbove] = useState(false)
+  const [closestEdge, setClosestEdge] = useState<Edge | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
@@ -132,12 +141,27 @@ function SortableTaskCard({
     return draggable({
       element,
       getInitialData: () => ({ type: "task", taskId: task.id, statusId: task.statusId }),
+      onGenerateDragPreview: ({ location, nativeSetDragImage }) => {
+        // Trello-style preview: a tilted copy of the card following the pointer,
+        // grabbed at the same point where the user picked it up.
+        setCustomNativeDragPreview({
+          nativeSetDragImage,
+          getOffset: preserveOffsetOnSource({ element, input: location.current.input }),
+          render: ({ container }) => {
+            const preview = element.cloneNode(true) as HTMLElement
+            preview.style.width = `${element.getBoundingClientRect().width}px`
+            preview.classList.add("kanban-drag-preview")
+            container.appendChild(preview)
+          },
+        })
+      },
       onDragStart: () => setIsDragging(true),
       onDrop: () => setIsDragging(false),
     })
   }, [task.id, task.statusId])
 
-  // Drop target to show indicator above this task
+  // Drop target reporting whether the pointer is closer to the top or bottom
+  // edge of this card, so the indicator (and the drop) can land on either side.
   useEffect(() => {
     const element = ref.current
     if (!element) return
@@ -145,16 +169,19 @@ function SortableTaskCard({
     return dropTargetForElements({
       element,
       canDrop: ({ source }) => source.data.type === "task",
-      onDragEnter: () => setIsDragOverAbove(true),
-      onDragLeave: () => setIsDragOverAbove(false),
-      onDrop: () => setIsDragOverAbove(false),
-      getData: () => ({ type: "task-position", insertBeforeTaskId: task.id, statusId: task.statusId }),
+      getData: ({ input, element: el }) =>
+        attachClosestEdge(
+          { type: "task-position", taskId: task.id, statusId: task.statusId },
+          { input, element: el, allowedEdges: ["top", "bottom"] }
+        ),
+      // Keep the indicator on this card while the pointer crosses the gap
+      // between cards instead of flickering off.
+      getIsSticky: () => true,
+      onDrag: ({ self }) => setClosestEdge(extractClosestEdge(self.data)),
+      onDragLeave: () => setClosestEdge(null),
+      onDrop: () => setClosestEdge(null),
     })
   }, [task.id, task.statusId])
-
-  const style = {
-    opacity: isDragging ? 0.5 : isUpdating ? 0.8 : 1,
-  }
 
   const isOverdue = (dueDate?: string) => {
     if (!dueDate) return false
@@ -189,33 +216,22 @@ function SortableTaskCard({
   }
 
   return (
-    <>
-      {isDragOverAbove && (
-        <div className="h-0.5 bg-primary mb-1 rounded-full" />
-      )}
+    <div className="relative">
       <div
         ref={ref}
-        style={style}
         className={`touch-none cursor-grab active:cursor-grabbing transition-all duration-200 ${isDeleting ? 'opacity-0 scale-95' : 'opacity-100 scale-100 animate-in fade-in'
-          }`}
+          } ${isDragging ? 'opacity-40' : ''}`}
       >
         <DropdownMenu open={isContextMenuOpen} onOpenChange={setIsContextMenuOpen}>
           <Card
-            className={`relative mb-2 cursor-pointer transition-all border-l-4 hover-card-border-animate ${isUpdating
-              ? 'border-l-yellow-500 bg-yellow-50/50'
-              : ''
-              }`}
+            className={`relative mb-2 cursor-pointer transition-all border-l-4 ${isDragging ? '' : 'hover-card-border-animate'}`}
             style={{
-              borderLeftColor: isUpdating
-                ? undefined
-                : completed
-                  ? '#10B981'
-                  : (task.project?.color || '#3B82F6'),
-              '--hover-border-color': isUpdating
-                ? '#EAB308'
-                : completed
-                  ? '#10B981'
-                  : (task.project?.color || '#3B82F6'),
+              borderLeftColor: completed
+                ? '#10B981'
+                : (task.project?.color || '#3B82F6'),
+              '--hover-border-color': completed
+                ? '#10B981'
+                : (task.project?.color || '#3B82F6'),
               paddingTop: 5,
               paddingBottom: 0,
             } as React.CSSProperties}
@@ -223,7 +239,7 @@ function SortableTaskCard({
             <CardContent
               onContextMenu={handleContextMenu}
 
-              className="py-2 px-3 pr-6  select-none pb-3 kanban-card cursor-pointer group relative"
+              className="py-2 px-3 pr-6 select-none pb-3 kanban-card cursor-pointer group relative"
               onClick={(event) => { onViewDetails(task); event.stopPropagation() }}
             >
               {/* Menu button - visible on card hover */}
@@ -232,7 +248,7 @@ function SortableTaskCard({
                   variant="ghost"
                   onClick={(e) => e.stopPropagation()}
                   size="sm"
-                  className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 focus:outline-none bg:white transition-opacity duration-200"
+                  className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 focus:outline-none bg-card/90 transition-opacity duration-200"
                 >
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
@@ -241,7 +257,7 @@ function SortableTaskCard({
                 <div className="flex items-start gap-2 flex-1 min-w-0">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1">
-                      <h4 className="kanban-card-text font-medium text-sm leading-tight cursor-pointer transition-transform duration-200 ease-in-out group-hover:translate-x-3">
+                      <h4 className="kanban-card-text font-medium text-sm leading-tight cursor-pointer">
                         {task.key && (
                           <span className="text-muted-foreground  text-xs font-mono mr-1">
                             [{task.key}]
@@ -267,7 +283,7 @@ function SortableTaskCard({
                     </div>
                   </div>
                   {isUpdating && (
-                    <Loader2 className="h-3 w-3 animate-spin text-yellow-600 flex-shrink-0" />
+                    <Loader2 className="h-3 w-3 animate-spin text-muted-foreground flex-shrink-0" />
                   )}
                 </div>
 
@@ -358,7 +374,11 @@ function SortableTaskCard({
           </Card>
         </DropdownMenu>
       </div>
-    </>
+      {/* Drop indicator on the closest edge; hidden on the dragged card itself
+          (dropping there is a no-op). Absolutely positioned so it never shifts
+          the layout while dragging. */}
+      {closestEdge && !isDragging && <DropIndicator edge={closestEdge} />}
+    </div>
   )
 }
 
@@ -648,6 +668,18 @@ function KanbanColumn({
     })
   }, [status.id])
 
+  // Trello-like auto-scroll: the column scrolls by itself while a card is
+  // dragged near its top or bottom edge.
+  useEffect(() => {
+    const element = scrollContainerRef.current
+    if (!element) return
+
+    return autoScrollForElements({
+      element,
+      canScroll: ({ source }) => source.data.type === "task",
+    })
+  }, [])
+
   // Load / reveal the next page of cards when the bottom sentinel scrolls into view.
   useEffect(() => {
     if (!hasMore) return
@@ -672,9 +704,10 @@ function KanbanColumn({
   }, [hasMore, tasks.length, serverMode, onLoadMore, status.id])
 
   return (
-    <div ref={scrollContainerRef} className="flex-shrink-0 w-80">
+    <div className="flex-shrink-0 w-80">
       <div
-        className={`bg-muted/70 rounded-lg p-4 h-full overflow-y-scroll h-[calc(100vh-237px)] max-h-[calc(100vh-237px)]" transition-colors ${isOver ? 'bg-primary/10 ring-2 ring-primary/20' : ''
+        ref={scrollContainerRef}
+        className={`kanban-scroll rounded-lg p-4 overflow-y-auto h-[calc(100vh-237px)] backdrop-blur-sm transition-colors ${isOver ? 'bg-primary/10 ring-2 ring-primary/20' : 'bg-muted/80'
           }`}
       >
         <div className="flex items-center justify-between mb-4">
@@ -765,6 +798,7 @@ export function KanbanBoard({
   const { data: sessionFromHook } = useSession()
   const session: Session | null = (sessionProp ?? (sessionFromHook as Session | null)) ?? null
 
+  const boardRef = useRef<HTMLDivElement>(null)
   const [fetchedTaskStatuses, setFetchedTaskStatuses] = useState<TaskStatus[]>([])
   const [optimisticTasks, setOptimisticTasks] = useState<Task[]>(tasks)
   const [updatingTasks, setUpdatingTasks] = useState<Set<string>>(new Set())
@@ -808,6 +842,18 @@ export function KanbanBoard({
     fetchTaskStatuses()
   }, [fetchTaskStatuses])
 
+  // Horizontal auto-scroll of the whole board while dragging a card towards
+  // a column that is off-screen.
+  useEffect(() => {
+    const element = boardRef.current
+    if (!element) return
+
+    return autoScrollForElements({
+      element,
+      canScroll: ({ source }) => source.data.type === "task",
+    })
+  }, [])
+
   useEffect(() => {
     return monitorForElements({
       canMonitor: ({ source }) => source.data.type === "task",
@@ -817,73 +863,85 @@ export function KanbanBoard({
         handleTaskDrop(
           source.data.taskId as string,
           target.data.statusId as string,
-          target.data.insertBeforeTaskId as string | undefined
+          target.data.type === "task-position"
+            ? { taskId: target.data.taskId as string, edge: extractClosestEdge(target.data) }
+            : undefined
         )
       },
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const handleTaskDrop = async (taskId: string, newStatusId: string, insertBeforeTaskId?: string) => {
+  const handleTaskDrop = async (
+    taskId: string,
+    newStatusId: string,
+    /** Card the drop landed on (with the closest edge); none = column background. */
+    target?: { taskId: string; edge: Edge | null }
+  ) => {
     const currentTasks = displayTasksRef.current
 
     // Ignore drops that don't resolve to a real status column
-    if (!taskStatusesRef.current.some(status => status.id === newStatusId)) return
+    const newStatus = taskStatusesRef.current.find(status => status.id === newStatusId)
+    if (!newStatus) return
 
     const task = currentTasks.find(t => t.id === taskId)
     if (!task) return
 
-    const newStatus = taskStatusesRef.current.find(status => status.id === newStatusId)
-    if (!newStatus) return
+    // Dropping a card onto itself never moves anything.
+    if (target?.taskId === taskId) return
+
+    const getTime = (t: Task) => (t.createdAt ? new Date(t.createdAt).getTime() : 0)
+    const columnTasks = currentTasks
+      .filter(t => t.statusId === newStatusId && t.id !== taskId)
+      .sort((a, b) => getTime(a) - getTime(b))
+
+    // Where the card should land in the target column: above/below the hovered
+    // card depending on the closest edge, or at the end when dropped on the
+    // column background.
+    let insertIndex = columnTasks.length
+    if (target) {
+      const targetIndex = columnTasks.findIndex(t => t.id === target.taskId)
+      if (targetIndex !== -1) {
+        insertIndex = target.edge === "bottom" ? targetIndex + 1 : targetIndex
+      }
+    }
+
+    const before = columnTasks[insertIndex - 1]
+    const after = columnTasks[insertIndex]
+    const sameColumn = task.statusId === newStatusId
+
+    // Skip drops that wouldn't change anything (the card already sits between
+    // its would-be neighbours) so the board doesn't flash a pointless refresh.
+    if (sameColumn) {
+      const taskTime = getTime(task)
+      const beforeTime = before ? getTime(before) : -Infinity
+      const afterTime = after ? getTime(after) : Infinity
+      if (taskTime > beforeTime && taskTime < afterTime) return
+    }
+
+    // Encode the position as a createdAt between the new neighbours (columns
+    // are sorted by createdAt ASC).
+    let newCreatedAt: string | undefined
+    if (before?.createdAt && after?.createdAt) {
+      newCreatedAt = new Date((getTime(before) + getTime(after)) / 2).toISOString()
+    } else if (after?.createdAt) {
+      newCreatedAt = new Date(getTime(after) - 60000).toISOString()
+    } else if (before?.createdAt) {
+      newCreatedAt = new Date(getTime(before) + 60000).toISOString()
+    }
+
+    if (sameColumn && !newCreatedAt) return
 
     // Mark task as updating
     setUpdatingTasks(prev => new Set(prev).add(taskId))
 
-    // Calculate new createdAt based on insertion position to maintain order
-    let newCreatedAt: string | undefined = undefined
-    if (insertBeforeTaskId && insertBeforeTaskId !== taskId) {
-      const tasksInNewStatus = currentTasks
-        .filter(t => t.statusId === newStatusId && t.id !== taskId)
-        .sort((a, b) => {
-          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0
-          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0
-          return aTime - bTime
-        })
-
-      const insertBeforeIndex = tasksInNewStatus.findIndex(t => t.id === insertBeforeTaskId)
-
-      if (insertBeforeIndex === 0) {
-        // Insert at the beginning - set createdAt to just before the first task
-        const firstTask = tasksInNewStatus[0]
-        if (firstTask?.createdAt) {
-          const firstTime = new Date(firstTask.createdAt).getTime()
-          newCreatedAt = new Date(firstTime - 60000).toISOString() // 1 minute before
-        }
-      } else if (insertBeforeIndex > 0) {
-        // Insert in the middle - set createdAt to between two tasks
-        const beforeTask = tasksInNewStatus[insertBeforeIndex - 1]
-        const afterTask = tasksInNewStatus[insertBeforeIndex]
-        if (beforeTask?.createdAt && afterTask?.createdAt) {
-          const beforeTime = new Date(beforeTask.createdAt).getTime()
-          const afterTime = new Date(afterTask.createdAt).getTime()
-          const middleTime = (beforeTime + afterTime) / 2
-          newCreatedAt = new Date(middleTime).toISOString()
-        }
-      }
-    }
-
-    // Optimistic update
+    // Optimistic update — the card lands in place instantly, Trello-style;
+    // no loading/success toasts, only errors are surfaced.
     const previousStatusId = task.statusId
     const previousCreatedAt = task.createdAt
     setOptimisticTasks(prevTasks =>
       prevTasks.map(t => t.id === taskId ? { ...t, statusId: newStatusId, ...(newCreatedAt && { createdAt: newCreatedAt }) } : t)
     )
-
-    // Show immediate feedback
-    toast.loading(`Przenoszenie zadania do "${newStatus.name}"...`, {
-      id: `move-task-${taskId}`,
-      duration: 2000,
-    })
 
     try {
       const response = await fetch(`/api/tasks/${taskId}`, {
@@ -898,9 +956,26 @@ export function KanbanBoard({
       })
 
       if (response.ok) {
-        toast.success(`Zadanie przeniesione do "${newStatus.name}"`, {
-          id: `move-task-${taskId}`,
-        })
+        // Card dropped into "Done": queue its Slack send right after the
+        // project's latest pending scheduled send, offset by the time reported
+        // on the task. No pending send in the project = nothing happens.
+        if (newStatus.name === "Done") {
+          try {
+            const scheduleResponse = await fetch(`/api/tasks/${taskId}/slack/auto-schedule`, {
+              method: "POST",
+            })
+            if (scheduleResponse.ok) {
+              const data = await scheduleResponse.json()
+              if (data.scheduled && data.changesScheduledSendAt) {
+                toast.success(
+                  `Wysyłka na Slack zaplanowana na ${new Date(data.changesScheduledSendAt).toLocaleString("pl-PL")}`
+                )
+              }
+            }
+          } catch (error) {
+            console.error("Error auto-scheduling Slack send:", error)
+          }
+        }
         onTaskUpdatedRef.current()
       } else {
         // Rollback on error
@@ -1057,7 +1132,7 @@ export function KanbanBoard({
 
   return (
     <>
-      <div className="flex space-x-4 overflow-x-auto pb-0">
+      <div ref={boardRef} className="kanban-scroll flex space-x-4 overflow-x-auto pb-1">
         {taskStatuses.length > 0 ? taskStatuses.map((status) => (
           <KanbanColumn
             key={status.id}
