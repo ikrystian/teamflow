@@ -61,6 +61,7 @@ model Project {
   color          String            @default("#3B82F6")
   icon           String?
   archived       Boolean           @default(false)
+  sortOrder      Int               @default(0)
   slackChannelId String?
   clientId       String?
   githubRepo     String?

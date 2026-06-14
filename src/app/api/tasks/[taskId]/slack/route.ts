@@ -39,18 +39,15 @@ export async function POST(
         project: {
           select: { id: true, name: true, slackChannelId: true },
         },
+        todos: {
+          select: { title: true, isCompleted: true },
+          orderBy: { createdAt: "asc" },
+        },
       },
     })
 
     if (!task) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 })
-    }
-
-    if (!task.changes) {
-      return NextResponse.json(
-        { error: "Task has no changes to send" },
-        { status: 400 }
-      )
     }
 
     const channelId = task.project?.slackChannelId
@@ -88,9 +85,11 @@ export async function POST(
     const shareToken = await getOrCreateTaskShareToken(task.id)
     const shareUrl = buildTaskShareUrl(shareToken)
 
-    // A short header above the changes so the Slack message has context, plus a
-    // link to the full read-only task view at the bottom.
-    const text = `*${task.title}*\n\n${task.changes}\n\n<${shareUrl}|🔗 Zobacz zadanie>`
+    const todoLines = task.todos.length
+      ? task.todos.map((t) => `${t.isCompleted ? "✅" : "⬜"} ${t.title}`).join("\n")
+      : "_Brak podzadań_"
+
+    const text = `*${task.title}*\n\n${todoLines}\n\n<${shareUrl}|🔗 Zobacz zadanie>`
 
     const res = await fetch("https://slack.com/api/chat.postMessage", {
       method: "POST",

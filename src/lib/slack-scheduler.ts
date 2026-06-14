@@ -12,9 +12,6 @@ export async function processPendingSlackScheduledMessages() {
         changesScheduledSendAt: {
           lte: now,
         },
-        changes: {
-          not: null,
-        },
         project: {
           slackChannelId: {
             not: null,
@@ -24,6 +21,10 @@ export async function processPendingSlackScheduledMessages() {
       include: {
         project: {
           select: { id: true, name: true, slackChannelId: true },
+        },
+        todos: {
+          select: { title: true, isCompleted: true },
+          orderBy: { createdAt: "asc" },
         },
       },
     })
@@ -57,7 +58,11 @@ export async function processPendingSlackScheduledMessages() {
         const shareToken = await getOrCreateTaskShareToken(task.id)
         const shareUrl = buildTaskShareUrl(shareToken)
 
-        let text = `*${task.title}*\n\n${task.changes}\n\n<${shareUrl}|🔗 Zobacz zadanie>`
+        const todoLines = task.todos.length
+          ? task.todos.map((t) => `${t.isCompleted ? "✅" : "⬜"} ${t.title}`).join("\n")
+          : "_Brak podzadań_"
+
+        let text = `*${task.title}*\n\n${todoLines}\n\n<${shareUrl}|🔗 Zobacz zadanie>`
         if (task.githubPrUrl) {
           text += ` | <${task.githubPrUrl}|🐙 Pull Request>`
         }

@@ -12,6 +12,7 @@ interface ProjectsContextType {
   addProject: (project: Project) => void
   updateProject: (projectId: string, updates: Partial<Project>) => void
   removeProject: (projectId: string) => void
+  reorderProjects: (orderedIds: string[]) => Promise<void>
 }
 
 const ProjectsContext = createContext<ProjectsContextType | undefined>(undefined)
@@ -65,6 +66,29 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     setProjects(prev => prev.filter(project => project.id !== projectId))
   }, [])
 
+  const reorderProjects = useCallback(async (orderedIds: string[]) => {
+    // Optimistic update
+    setProjects(prev => {
+      const map = new Map(prev.map(p => [p.id, p]))
+      const reordered = orderedIds.reduce<Project[]>((acc, id, index) => {
+        const p = map.get(id)
+        if (p) acc.push({ ...p, sortOrder: index })
+        return acc
+      }, [])
+      const rest = prev.filter(p => !orderedIds.includes(p.id))
+      return [...reordered, ...rest]
+    })
+    try {
+      await fetch('/api/projects/reorder', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderedIds }),
+      })
+    } catch (error) {
+      console.error('Error reordering projects:', error)
+    }
+  }, [])
+
   // Wczytaj projekty tylko gdy użytkownik jest zalogowany
   useEffect(() => {
     if (status === 'authenticated' && session?.user) {
@@ -82,7 +106,8 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     refreshProjects,
     addProject,
     updateProject,
-    removeProject
+    removeProject,
+    reorderProjects,
   }
 
   return (

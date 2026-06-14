@@ -44,7 +44,7 @@ interface DashboardLayoutProps {
 function DashboardLayoutInner({ children }: DashboardLayoutProps) {
   const { headerContent } = useHeader()
   const pathname = usePathname()
-  const { projects, refreshProjects } = useProjects()
+  const { projects, refreshProjects, reorderProjects } = useProjects()
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
 
@@ -107,7 +107,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          <NavProjects projects={projects} onEditProject={handleEditProject} />
+          <NavProjects projects={projects} onEditProject={handleEditProject} onReorderProjects={reorderProjects} />
         </SidebarContent>
         <SidebarFooter>
           <NavUser />

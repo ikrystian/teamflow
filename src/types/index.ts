@@ -89,6 +89,7 @@ export interface Project {
   slackChannelId?: string;
   githubRepo?: string | null;
   archived?: boolean;
+  sortOrder?: number;
   createdAt?: string;
   updatedAt?: string;
   createdById?: string;

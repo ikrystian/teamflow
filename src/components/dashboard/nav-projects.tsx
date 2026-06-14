@@ -11,10 +11,11 @@ import {
   ChevronDown,
   ChevronRight,
   Edit,
+  GripVertical,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,6 +49,19 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 
+import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine"
+import {
+  draggable,
+  dropTargetForElements,
+  monitorForElements,
+} from "@atlaskit/pragmatic-drag-and-drop/element/adapter"
+import {
+  attachClosestEdge,
+  extractClosestEdge,
+} from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge"
+import { DropIndicator } from "@/components/ui/drop-indicator"
+import { reorderWithEdge, type Edge } from "@/lib/dnd-utils"
+
 // Import all possible project icons
 import * as LucideIcons from "lucide-react"
 import { type Project } from "@/types"
@@ -56,6 +70,7 @@ interface NavProjectsProps {
   projects: Project[]
   onEditProject?: (project: Project) => void
   onDeleteProject?: (project: Project) => void
+  onReorderProjects?: (orderedIds: string[]) => Promise<void>
 }
 
 // Helper function to render project icon
@@ -65,7 +80,6 @@ function ProjectIcon({ iconName, color, className = "w-4 h-4" }: {
   className?: string
 }) {
   if (!iconName) {
-    // Fallback to colored square if no icon
     return (
       <div
         className={`${className} rounded-sm flex-shrink-0`}
@@ -74,11 +88,9 @@ function ProjectIcon({ iconName, color, className = "w-4 h-4" }: {
     )
   }
 
-  // Get the icon component from lucide-react
   const IconComponent = (LucideIcons as unknown as Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>>)[iconName]
 
   if (!IconComponent) {
-    // Fallback to colored square if icon not found
     return (
       <div
         className={`${className} rounded-sm flex-shrink-0`}
@@ -95,7 +107,157 @@ function ProjectIcon({ iconName, color, className = "w-4 h-4" }: {
   )
 }
 
-export function NavProjects({ projects, onEditProject, onDeleteProject }: NavProjectsProps) {
+interface SortableProjectItemProps {
+  project: Project
+  onEditProject?: (project: Project) => void
+  onDeleteProject?: (project: Project) => void
+  isMobile: boolean
+  isActive: boolean
+}
+
+function SortableProjectItem({ project, onEditProject, onDeleteProject, isMobile, isActive }: SortableProjectItemProps) {
+  const ref = useRef<HTMLLIElement>(null)
+  const handleRef = useRef<HTMLButtonElement>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const [closestEdge, setClosestEdge] = useState<Edge | null>(null)
+
+  const todoCount = project.tasks?.filter(task => {
+    const statusName = task.taskStatus?.name?.toLowerCase()
+    return statusName !== 'done'
+  }).length || 0
+
+  const badgeStyle = project.color
+    ? { backgroundColor: `${project.color}15`, color: project.color }
+    : {}
+
+  useEffect(() => {
+    const element = ref.current
+    const handle = handleRef.current
+    if (!element || !handle) return
+
+    return combine(
+      draggable({
+        element,
+        dragHandle: handle,
+        getInitialData: () => ({ type: "project", projectId: project.id }),
+        onDragStart: () => setIsDragging(true),
+        onDrop: () => setIsDragging(false),
+      }),
+      dropTargetForElements({
+        element,
+        canDrop: ({ source }) => source.data.type === "project",
+        getData: ({ input, element }) =>
+          attachClosestEdge(
+            { projectId: project.id },
+            { input, element, allowedEdges: ["top", "bottom"] }
+          ),
+        onDrag: ({ self, source }) => {
+          if (source.data.projectId === project.id) {
+            setClosestEdge(null)
+            return
+          }
+          setClosestEdge(extractClosestEdge(self.data))
+        },
+        onDragLeave: () => setClosestEdge(null),
+        onDrop: () => setClosestEdge(null),
+      })
+    )
+  }, [project.id])
+
+  return (
+    <SidebarMenuItem ref={ref} style={{ opacity: isDragging ? 0.4 : 1, position: "relative" }}>
+      {closestEdge && <DropIndicator edge={closestEdge} />}
+      {/* Drag handle — visible on hover, absolute so it doesn't break link layout */}
+      <button
+        ref={handleRef}
+        className="absolute left-1.5 top-1/2 -translate-y-1/2 z-10 opacity-0 group-hover/menu-item:opacity-100 flex items-center justify-center cursor-grab active:cursor-grabbing p-0.5 rounded hover:bg-sidebar-accent/50"
+        tabIndex={-1}
+        aria-label="Przeciągnij, aby zmienić kolejność"
+      >
+        <GripVertical className="w-3 h-3 text-muted-foreground" />
+      </button>
+      <SidebarMenuButton
+        asChild
+        tooltip={project.name}
+        isActive={isActive}
+      >
+        <Link href={`/dashboard/projects/${project.id}`}>
+          <ProjectIcon
+            iconName={project.icon}
+            color={project.color}
+            className="w-4 h-4 flex-shrink-0"
+          />
+          <span className="truncate">{project.name}</span>
+        </Link>
+      </SidebarMenuButton>
+      {todoCount > 0 && (
+        <SidebarMenuBadge
+          className="right-2.5 group-hover/menu-item:right-8 transition-all duration-200 font-semibold"
+          style={badgeStyle}
+        >
+          {todoCount}
+        </SidebarMenuBadge>
+      )}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <SidebarMenuAction showOnHover>
+            <MoreHorizontal />
+            <span className="sr-only">Więcej</span>
+          </SidebarMenuAction>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          className="w-48 rounded-lg"
+          side={isMobile ? "bottom" : "right"}
+          align="end"
+        >
+          <DropdownMenuItem asChild>
+            <Link href={`/dashboard/projects/${project.id}`}>
+              <Eye className="mr-2 h-4 w-4" />
+              Zobacz projekt
+            </Link>
+          </DropdownMenuItem>
+
+          <DropdownMenuItem asChild>
+            <Link href={`/dashboard/projects/${project.id}/info`}>
+              <Info className="h-5 w-5" />
+              Informacje o projekcie
+            </Link>
+          </DropdownMenuItem>
+
+          {onEditProject && (
+            <DropdownMenuItem onClick={() => onEditProject(project)}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edytuj projekt
+            </DropdownMenuItem>
+          )}
+
+          <DropdownMenuItem asChild>
+            <Link href={`/dashboard/projects/${project.id}/settings`}>
+              <Settings className="mr-2 h-4 w-4" />
+              Ustawienia
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem disabled>
+            <Share className="mr-2 h-4 w-4" />
+            Udostępnij projekt
+          </DropdownMenuItem>
+          <DropdownMenuItem disabled>
+            <Archive className="mr-2 h-4 w-4" />
+            Archiwizuj projekt
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem disabled className="text-destructive">
+            <Trash2 className="mr-2 h-4 w-4" />
+            Usuń projekt
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </SidebarMenuItem>
+  )
+}
+
+export function NavProjects({ projects, onEditProject, onDeleteProject, onReorderProjects }: NavProjectsProps) {
   const { isMobile } = useSidebar()
   const pathname = usePathname()
   const [showArchived, setShowArchived] = useState(false)
@@ -105,16 +267,13 @@ export function NavProjects({ projects, onEditProject, onDeleteProject }: NavPro
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  // Filtruj projekty na aktywne i archiwizowane
   const activeProjects = projects.filter(project => !project.archived)
   const archivedProjectsFromProps = projects.filter(project => project.archived)
 
-  // Funkcja sprawdzająca czy projekt jest aktywny
   const isProjectActive = (projectId: string) => {
     return pathname.startsWith(`/dashboard/projects/${projectId}`)
   }
 
-  // Pobierz archiwizowane projekty gdy użytkownik chce je zobaczyć
   useEffect(() => {
     if (showArchived && !archivedProjectsLoaded) {
       const fetchArchivedProjects = async () => {
@@ -133,12 +292,34 @@ export function NavProjects({ projects, onEditProject, onDeleteProject }: NavPro
     }
   }, [showArchived, archivedProjectsLoaded])
 
-  // Użyj archiwizowanych projektów z props jeśli są dostępne, w przeciwnym razie użyj pobranych
+  // Monitor drag-and-drop events for active projects
+  useEffect(() => {
+    if (!onReorderProjects) return
+
+    return monitorForElements({
+      canMonitor: ({ source }) => source.data.type === "project",
+      onDrop: ({ source, location }) => {
+        const destination = location.current.dropTargets[0]
+        if (!destination) return
+
+        const sourceId = source.data.projectId as string
+        const targetId = destination.data.projectId as string
+        const edge = extractClosestEdge(destination.data)
+
+        const currentIds = activeProjects.map(p => p.id)
+        const newIds = reorderWithEdge(currentIds, sourceId, targetId, edge)
+
+        if (JSON.stringify(newIds) !== JSON.stringify(currentIds)) {
+          onReorderProjects(newIds)
+        }
+      },
+    })
+  }, [activeProjects, onReorderProjects])
+
   const displayedArchivedProjects = showArchived
     ? (archivedProjectsFromProps.length > 0 ? archivedProjectsFromProps : archivedProjects)
     : []
 
-  // Liczba archiwizowanych projektów do wyświetlenia w tooltip
   const archivedCount = archivedProjectsFromProps.length > 0
     ? archivedProjectsFromProps.length
     : archivedProjects.length
@@ -158,14 +339,11 @@ export function NavProjects({ projects, onEditProject, onDeleteProject }: NavPro
       })
 
       if (response.ok) {
-        // Wywołaj callback jeśli jest dostępny
         if (onDeleteProject) {
           onDeleteProject(projectToDelete)
         }
 
-        // Usuń projekt z lokalnego stanu
         setArchivedProjects(prev => prev.filter(p => p.id !== projectToDelete.id))
-
         setDeleteDialogOpen(false)
         setProjectToDelete(null)
       } else {
@@ -185,101 +363,19 @@ export function NavProjects({ projects, onEditProject, onDeleteProject }: NavPro
     <SidebarGroup>
       {projects.length > 0 && <SidebarGroupLabel>Lista projektów</SidebarGroupLabel>}
       <SidebarMenu>
-        {/* Aktywne projekty */}
-        {activeProjects.map((project) => {
-          const todoCount = project.tasks?.filter(task => {
-            const statusName = task.taskStatus?.name?.toLowerCase();
-            return statusName !== 'done';
-          }).length || 0;
+        {/* Aktywne projekty — sortowalne */}
+        {activeProjects.map((project) => (
+          <SortableProjectItem
+            key={project.id}
+            project={project}
+            onEditProject={onEditProject}
+            onDeleteProject={handleDeleteProject}
+            isMobile={isMobile}
+            isActive={isProjectActive(project.id)}
+          />
+        ))}
 
-          const badgeStyle = project.color
-            ? { backgroundColor: `${project.color}15`, color: project.color }
-            : {};
-
-          return (
-            <SidebarMenuItem key={project.id}>
-              <SidebarMenuButton
-                asChild
-                tooltip={project.name}
-                isActive={isProjectActive(project.id)}
-              >
-                <Link href={`/dashboard/projects/${project.id}`}>
-                  <ProjectIcon
-                    iconName={project.icon}
-                    color={project.color}
-                    className="w-4 h-4 flex-shrink-0"
-                  />
-                  <span className="truncate">{project.name}</span>
-                </Link>
-              </SidebarMenuButton>
-              {todoCount > 0 && (
-                <SidebarMenuBadge
-                  className="right-2.5 group-hover/menu-item:right-8 transition-all duration-200 font-semibold"
-                  style={badgeStyle}
-                >
-                  {todoCount}
-                </SidebarMenuBadge>
-              )}
-              <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuAction showOnHover>
-                  <MoreHorizontal />
-                  <span className="sr-only">Więcej</span>
-                </SidebarMenuAction>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="w-48 rounded-lg"
-                side={isMobile ? "bottom" : "right"}
-                align="end"
-              >
-                <DropdownMenuItem asChild>
-                  <Link href={`/dashboard/projects/${project.id}`}>
-                    <Eye className="mr-2 h-4 w-4" />
-                    Zobacz projekt
-                  </Link>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem asChild>
-                  <Link href={`/dashboard/projects/${project.id}/info`}>
-                    <Info className="h-5 w-5" />
-                    Informacje o projekcie
-                  </Link>
-                </DropdownMenuItem>
-
-                {onEditProject && (
-                  <DropdownMenuItem onClick={() => onEditProject(project)}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edytuj projekt
-                  </DropdownMenuItem>
-                )}
-
-                <DropdownMenuItem asChild>
-                  <Link href={`/dashboard/projects/${project.id}/settings`}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    Ustawienia
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem disabled>
-                  <Share className="mr-2 h-4 w-4" />
-                  Udostępnij projekt
-                </DropdownMenuItem>
-                <DropdownMenuItem disabled>
-                  <Archive className="mr-2 h-4 w-4" />
-                  Archiwizuj projekt
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem disabled className="text-destructive">
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Usuń projekt
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarMenuItem>
-          );
-        })}
-
-        {/* Przycisk "Więcej" z tooltipem pokazującym liczbę archiwizowanych projektów */}
+        {/* Przycisk "Zarchiwizowane" */}
         <SidebarMenuItem>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -300,16 +396,16 @@ export function NavProjects({ projects, onEditProject, onDeleteProject }: NavPro
           </Tooltip>
         </SidebarMenuItem>
 
-        {/* Archiwizowane projekty (pokazywane po kliknięciu "Więcej") */}
+        {/* Archiwizowane projekty */}
         {displayedArchivedProjects.map((project) => {
           const todoCount = project.tasks?.filter(task => {
-            const statusName = task.taskStatus?.name?.toLowerCase();
-            return statusName !== 'done';
-          }).length || 0;
+            const statusName = task.taskStatus?.name?.toLowerCase()
+            return statusName !== 'done'
+          }).length || 0
 
           const badgeStyle = project.color
             ? { backgroundColor: `${project.color}10`, color: project.color, opacity: 0.6 }
-            : { opacity: 0.6 };
+            : { opacity: 0.6 }
 
           return (
             <SidebarMenuItem key={`archived-${project.id}`}>
@@ -339,65 +435,65 @@ export function NavProjects({ projects, onEditProject, onDeleteProject }: NavPro
                 </SidebarMenuBadge>
               )}
               <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuAction showOnHover>
-                  <MoreHorizontal />
-                  <span className="sr-only">Więcej</span>
-                </SidebarMenuAction>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="w-48 rounded-lg"
-                side={isMobile ? "bottom" : "right"}
-                align="end"
-              >
-                <DropdownMenuItem asChild>
-                  <Link href={`/dashboard/projects/${project.id}`}>
-                    <Eye className="mr-2 h-4 w-4" />
-                    Zobacz projekt
-                  </Link>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem asChild>
-                  <Link href={`/dashboard/projects/${project.id}/info`}>
-                    <Info className="h-5 w-5" />
-                    Informacje o projekcie
-                  </Link>
-                </DropdownMenuItem>
-
-                {onEditProject && (
-                  <DropdownMenuItem onClick={() => onEditProject(project)}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edytuj projekt
-                  </DropdownMenuItem>
-                )}
-
-                <DropdownMenuItem asChild>
-                  <Link href={`/dashboard/projects/${project.id}/settings`}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    Ustawienia
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem disabled>
-                  <Share className="mr-2 h-4 w-4" />
-                  Udostępnij projekt
-                </DropdownMenuItem>
-                <DropdownMenuItem disabled>
-                  <Archive className="mr-2 h-4 w-4" />
-                  Przywróć projekt
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => handleDeleteProject(project)}
-                  className="text-destructive focus:text-destructive"
+                <DropdownMenuTrigger asChild>
+                  <SidebarMenuAction showOnHover>
+                    <MoreHorizontal />
+                    <span className="sr-only">Więcej</span>
+                  </SidebarMenuAction>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  className="w-48 rounded-lg"
+                  side={isMobile ? "bottom" : "right"}
+                  align="end"
                 >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Usuń projekt
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarMenuItem>
-          );
+                  <DropdownMenuItem asChild>
+                    <Link href={`/dashboard/projects/${project.id}`}>
+                      <Eye className="mr-2 h-4 w-4" />
+                      Zobacz projekt
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem asChild>
+                    <Link href={`/dashboard/projects/${project.id}/info`}>
+                      <Info className="h-5 w-5" />
+                      Informacje o projekcie
+                    </Link>
+                  </DropdownMenuItem>
+
+                  {onEditProject && (
+                    <DropdownMenuItem onClick={() => onEditProject(project)}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edytuj projekt
+                    </DropdownMenuItem>
+                  )}
+
+                  <DropdownMenuItem asChild>
+                    <Link href={`/dashboard/projects/${project.id}/settings`}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      Ustawienia
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem disabled>
+                    <Share className="mr-2 h-4 w-4" />
+                    Udostępnij projekt
+                  </DropdownMenuItem>
+                  <DropdownMenuItem disabled>
+                    <Archive className="mr-2 h-4 w-4" />
+                    Przywróć projekt
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => handleDeleteProject(project)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Usuń projekt
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </SidebarMenuItem>
+          )
         })}
       </SidebarMenu>
 
