@@ -42,6 +42,7 @@ import {
   formatProjectDisplay,
 } from "@/lib/task-format-utils"
 import { TaskDetailsDialog } from "../tasks/task-details-dialog"
+import { autoScheduleSlackForDoneTask } from "@/lib/auto-schedule-slack"
 
 // Domyślny termin wykonania dla nowych zadań: teraz + 1 dzień + 1 godzina.
 function getDefaultDueDate(): Date {
@@ -960,21 +961,7 @@ export function KanbanBoard({
         // project's latest pending scheduled send, offset by the time reported
         // on the task. No pending send in the project = nothing happens.
         if (newStatus.name === "Done") {
-          try {
-            const scheduleResponse = await fetch(`/api/tasks/${taskId}/slack/auto-schedule`, {
-              method: "POST",
-            })
-            if (scheduleResponse.ok) {
-              const data = await scheduleResponse.json()
-              if (data.scheduled && data.changesScheduledSendAt) {
-                toast.success(
-                  `Wysyłka na Slack zaplanowana na ${new Date(data.changesScheduledSendAt).toLocaleString("pl-PL")}`
-                )
-              }
-            }
-          } catch (error) {
-            console.error("Error auto-scheduling Slack send:", error)
-          }
+          await autoScheduleSlackForDoneTask(taskId)
         }
         onTaskUpdatedRef.current()
       } else {

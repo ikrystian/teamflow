@@ -9,19 +9,23 @@ import { usePageHeader } from "@/contexts/header-context"
 import { formatTaskDueDateWithRelative, formatCreatedDate } from "@/lib/date-utils"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Clock, Calendar, User as UserIcon, ArrowRight } from "lucide-react"
+import { Clock, Calendar, User as UserIcon, ArrowRight, Check } from "lucide-react"
+import { toast } from "sonner"
 import { PrintTodosDialog } from "./print-todos-dialog"
 import { UserReportSummary } from "./user-report-summary"
 import { TagsSummary } from "./tags-summary"
+import { autoScheduleSlackForDoneTask } from "@/lib/auto-schedule-slack"
 
 export function DashboardContent() {
   const { data: session } = useSession() as { data: Session | null }
   const [tasks, setTasks] = useState<Task[]>([])
   const [, setUsers] = useState<User[]>([])
-  const [, setTaskStatuses] = useState<TaskStatus[]>([])
+  const [taskStatuses, setTaskStatuses] = useState<TaskStatus[]>([])
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [completingTaskIds, setCompletingTaskIds] = useState<Set<string>>(new Set())
 
   // Dialog states
   const [, setSelectedTask] = useState<Task | null>(null)
@@ -134,6 +138,57 @@ export function DashboardContent() {
     setDetailsDialogOpen(true)
   }
 
+  const handleMarkDone = async (task: Task, event: React.MouseEvent) => {
+    event.stopPropagation()
+
+    const doneStatus = taskStatuses.find(status => status.name === "Done")
+    if (!doneStatus) {
+      toast.error("Nie znaleziono statusu 'Done'")
+      return
+    }
+
+    if (task.statusId === doneStatus.id) return
+    if (completingTaskIds.has(task.id)) return
+
+    setCompletingTaskIds(prev => new Set(prev).add(task.id))
+
+    const previousStatusId = task.statusId
+    setTasks(prev =>
+      prev.map(t => t.id === task.id ? { ...t, statusId: doneStatus.id } : t)
+    )
+
+    try {
+      const response = await fetch(`/api/tasks/${task.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ statusId: doneStatus.id }),
+      })
+
+      if (!response.ok) {
+        setTasks(prev =>
+          prev.map(t => t.id === task.id ? { ...t, statusId: previousStatusId } : t)
+        )
+        toast.error("Nie udało się oznaczyć zadania jako zakończone")
+      } else {
+        toast.success("Zadanie oznaczone jako zakończone")
+        await autoScheduleSlackForDoneTask(task.id)
+        await fetchTasks()
+      }
+    } catch (error) {
+      setTasks(prev =>
+        prev.map(t => t.id === task.id ? { ...t, statusId: previousStatusId } : t)
+      )
+      console.error("Error marking task as done:", error)
+      toast.error("Wystąpił błąd podczas oznaczania zadania")
+    } finally {
+      setCompletingTaskIds(prev => {
+        const next = new Set(prev)
+        next.delete(task.id)
+        return next
+      })
+    }
+  }
+
 
   if (loading) {
     return <PageLoadingLayout variant="list" showTopBar={false} />
@@ -214,7 +269,11 @@ export function DashboardContent() {
               </div>
             ) : (
               <div className="space-y-3 max-h-80 overflow-y-auto">
-                {upcomingTasks.map(task => (
+                {upcomingTasks.map(task => {
+                  const isDone = task.statusId && taskStatuses.some(
+                    s => s.id === task.statusId && s.name === "Done"
+                  )
+                  return (
                   <div
                     key={task.id}
                     className="group flex items-center justify-between p-3 hover:bg-muted/50 rounded-lg cursor-pointer transition-all duration-200 border border-transparent hover:border-border"
@@ -248,10 +307,24 @@ export function DashboardContent() {
                       <Badge variant="outline" className="text-xs">
                         {formatTaskDueDateWithRelative(task.dueDate!)}
                       </Badge>
+                      {!isDone && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-green-600 hover:text-green-700 hover:bg-green-50"
+                          onClick={(e) => handleMarkDone(task, e)}
+                          disabled={completingTaskIds.has(task.id)}
+                          title="Oznacz jako zakończone"
+                          aria-label="Oznacz jako zakończone"
+                        >
+                          <Check className="h-4 w-4" />
+                        </Button>
+                      )}
                       <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                     </div>
                   </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </CardContent>
@@ -281,7 +354,11 @@ export function DashboardContent() {
               </div>
             ) : (
               <div className="space-y-3 max-h-80 overflow-y-auto">
-                {recentlyUpdatedTasks.map(task => (
+                {recentlyUpdatedTasks.map(task => {
+                  const isDone = task.statusId && taskStatuses.some(
+                    s => s.id === task.statusId && s.name === "Done"
+                  )
+                  return (
                   <div
                     key={task.id}
                     className="group flex items-center justify-between p-3 hover:bg-muted/50 rounded-lg cursor-pointer transition-all duration-200 border border-transparent hover:border-border"
@@ -315,10 +392,24 @@ export function DashboardContent() {
                       <Badge variant="secondary" className="text-xs">
                         {formatCreatedDate(task.createdAt!)}
                       </Badge>
+                      {!isDone && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-green-600 hover:text-green-700 hover:bg-green-50"
+                          onClick={(e) => handleMarkDone(task, e)}
+                          disabled={completingTaskIds.has(task.id)}
+                          title="Oznacz jako zakończone"
+                          aria-label="Oznacz jako zakończone"
+                        >
+                          <Check className="h-4 w-4" />
+                        </Button>
+                      )}
                       <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                     </div>
                   </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </CardContent>
