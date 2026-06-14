@@ -1325,7 +1325,7 @@ export function TaskFormContent({
                     {subtasks.length > 0 && (
                       <div className="space-y-2">
                         {subtasks.map((subtask) => (
-                          <div key={subtask.id} className="flex items-center gap-2 p-2 bg-background border rounded-md">
+                          <form key={subtask.id} className="flex items-center gap-2 p-2 bg-background border rounded-md">
                             <input
                               type="checkbox"
                               checked={subtask.isCompleted}
@@ -1369,7 +1369,7 @@ export function TaskFormContent({
                             >
                               Usuń
                             </button>
-                          </div>
+                          </form>
                         ))}
                       </div>
                     )}
