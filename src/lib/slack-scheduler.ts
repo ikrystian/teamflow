@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { buildTaskShareUrl, getOrCreateTaskShareToken } from "@/lib/task-share"
+import { sendTaskMessageToSlack } from "@/lib/slack-task-message"
 
 export async function processPendingSlackScheduledMessages() {
   try {
@@ -67,24 +68,16 @@ export async function processPendingSlackScheduledMessages() {
           text += ` | <${task.githubPrUrl}|🐙 Pull Request>`
         }
 
-        const res = await fetch("https://slack.com/api/chat.postMessage", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json; charset=utf-8",
-          },
-          body: JSON.stringify({
-            channel: channelId,
-            text,
-            mrkdwn: true,
-          }),
+        const result = await sendTaskMessageToSlack({
+          taskId: task.id,
+          channelId,
+          token,
+          text,
         })
 
-        const data = await res.json()
-
-        if (!data.ok) {
-          console.error(`[Slack Scheduler] Failed to send task ${task.id}: ${data.error}`)
-          errors.push(`Task ${task.id}: ${data.error}`)
+        if (!result.ok) {
+          console.error(`[Slack Scheduler] Failed to send task ${task.id}: ${result.error}`)
+          errors.push(`Task ${task.id}: ${result.error}`)
           failedCount++
           continue
         }

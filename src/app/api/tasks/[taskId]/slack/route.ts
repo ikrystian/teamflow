@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { buildTaskShareUrl, getOrCreateTaskShareToken } from "@/lib/task-share"
+import { sendTaskMessageToSlack } from "@/lib/slack-task-message"
 import type { Session } from "next-auth"
 
 interface SlackSendRequest {
@@ -91,25 +92,17 @@ export async function POST(
 
     const text = `*${task.title}*\n\n${todoLines}\n\n<${shareUrl}|🔗 Zobacz zadanie>`
 
-    const res = await fetch("https://slack.com/api/chat.postMessage", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json; charset=utf-8",
-      },
-      body: JSON.stringify({
-        channel: channelId,
-        text,
-        mrkdwn: true,
-      }),
+    const result = await sendTaskMessageToSlack({
+      taskId: task.id,
+      channelId,
+      token,
+      text,
     })
 
-    const data = await res.json()
-
-    if (!data.ok) {
-      console.error("Slack API error:", data.error)
+    if (!result.ok) {
+      console.error("Slack API error:", result.error)
       return NextResponse.json(
-        { error: `Slack error: ${data.error}` },
+        { error: `Slack error: ${result.error}` },
         { status: 502 }
       )
     }

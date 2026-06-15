@@ -10,6 +10,9 @@ The Slack Scheduler allows you to schedule sending task change notes to Slack ch
 - 🔄 **Automatic Processing**: Cron job automatically checks and sends scheduled messages every 5 minutes
 - 📝 **Full Markdown Support**: Task notes are sent with proper Slack markdown formatting
 - 🔗 **Share Links**: Recipients receive a link to view the full task details (read-only)
+- 🖼️ **Image Attachments**: Any images attached to the task are uploaded and posted together with the note as attachments on the same message
+
+> **Slack scope:** Posting image attachments uses Slack's file upload API, so the bot token needs the `files:write` scope in addition to `chat:write`. Add it under **OAuth & Permissions** in your Slack app, then reinstall the app to the workspace. Non-image attachments are ignored; messages without images keep using `chat.postMessage` as before.
 
 ## UI Usage
 
