@@ -67,6 +67,7 @@ export async function GET(request: NextRequest) {
     const tasks = await prisma.task.findMany({
       where: {
         assigneeId: session.user.id,
+        deletedAt: null,
         ...(Object.keys(dateFilter).length > 0 && { createdAt: dateFilter }),
         ...(projectId && projectId !== "all" && { projectId })
       },

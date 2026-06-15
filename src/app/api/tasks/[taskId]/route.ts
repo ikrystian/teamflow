@@ -35,6 +35,7 @@ export async function GET(
     // Fetch task with all related data
     const task = await prisma.task.findFirst({
       where: {
+        deletedAt: null, // soft-deleted tasks aren't viewable
         AND: [
           // Match by human-friendly key (e.g. "PS-12") or the internal id.
           { OR: [{ key: taskId }, { id: taskId }] },
@@ -660,7 +661,22 @@ export async function DELETE(
       )
     }
 
-    // Delete GitHub branch if assigned to the task
+    // Two-stage deletion: by default we soft-delete (set deletedAt) so the user
+    // can undo within a short window. The client calls back with ?permanent=true
+    // once that window elapses to permanently remove the task.
+    const permanent =
+      new URL(request.url).searchParams.get("permanent") === "true"
+
+    if (!permanent) {
+      await prisma.task.update({
+        where: { id: existingTask.id },
+        data: { deletedAt: new Date() },
+      })
+      return NextResponse.json({ success: true, softDeleted: true }, { status: 200 })
+    }
+
+    // Permanent delete: clean up the GitHub branch, then remove the row
+    // (cascade delete handles related records).
     if (existingTask.githubBranchName && existingTask.project?.githubRepo) {
       try {
         await deleteGithubBranch(existingTask.project.githubRepo, existingTask.githubBranchName)
@@ -669,7 +685,6 @@ export async function DELETE(
       }
     }
 
-    // Delete the task (cascade delete will handle related records)
     await prisma.task.delete({
       where: { id: existingTask.id }
     })

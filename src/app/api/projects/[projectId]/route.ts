@@ -117,7 +117,7 @@ export async function GET(
     let mappedTasks: unknown = undefined
     if (includeTasks) {
       const projectTasks = await prisma.task.findMany({
-        where: { projectId },
+        where: { projectId, deletedAt: null },
         include: {
           taskStatus: {
             select: {
@@ -298,6 +298,7 @@ export async function PATCH(
           }
         },
         tasks: {
+          where: { deletedAt: null }, // hide soft-deleted tasks
           select: {
             id: true,
             title: true,

@@ -31,8 +31,11 @@ export async function GET(
       dateFilter = { gte: monthAgo }
     }
 
-    // Base filter to ensure user has access to the data
+    // Base filter to ensure user has access to the data. Also excludes
+    // soft-deleted tasks from every stat (and time/comment aggregates that
+    // join through the task relation).
     const accessFilter = {
+      deletedAt: null,
       project: {
 
       }

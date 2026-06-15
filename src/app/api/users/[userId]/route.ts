@@ -139,6 +139,7 @@ export async function GET(
     const totalAssignedTasks = await prisma.task.count({
       where: {
         assigneeId: userId,
+        deletedAt: null,
         project: {
 
         }
@@ -148,6 +149,7 @@ export async function GET(
     const completedTasks = await prisma.task.count({
       where: {
         assigneeId: userId,
+        deletedAt: null,
         taskStatus: {
           name: "Done"
         },

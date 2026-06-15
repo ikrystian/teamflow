@@ -102,6 +102,7 @@ model Task {
   estimatedHours         Float?
   createdAt              DateTime         @default(now())
   updatedAt              DateTime         @updatedAt
+  deletedAt              DateTime?
   projectId              String?
   assigneeId             String?
   createdById            String?

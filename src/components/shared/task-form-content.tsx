@@ -22,6 +22,7 @@ import {
   selectValueToHours,
   getPriorityOptions,
 } from "@/lib/task-format-utils"
+import { softDeleteTaskWithUndo } from "@/lib/task-delete"
 
 
 // Domyślny termin wykonania dla nowych zadań: teraz + 1 dzień + 1 godzina.
@@ -778,17 +779,17 @@ export function TaskFormContent({
     if (!task) return
     setDeleting(true)
     try {
-      const response = await fetch(`/api/tasks/${task.id}`, { method: "DELETE" })
-      if (response.ok) {
-        toast.success("Zadanie zostało usunięte")
+      // Soft-delete with a 5s undo window. The helper shows the "Cofnij" toast;
+      // restoring refreshes the parent view via onTaskUpdated.
+      const result = await softDeleteTaskWithUndo(task.id, {
+        onRestored: () => onTaskUpdated?.(),
+      })
+      if (result.ok) {
         onTaskDeleted?.()
         handleClose()
       } else {
-        const data = await response.json()
-        toast.error(data.error || "Nie udało się usunąć zadania")
+        toast.error(result.error || "Nie udało się usunąć zadania")
       }
-    } catch {
-      toast.error("Wystąpił błąd podczas usuwania zadania")
     } finally {
       setDeleting(false)
       setShowDeleteConfirm(false)

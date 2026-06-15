@@ -68,6 +68,7 @@ export async function GET() {
             where: {
                 assigneeId: userId,
                 statusId: doneStatus.id,
+                deletedAt: null,
                 updatedAt: {
                     gte: startOfMonth
                 }

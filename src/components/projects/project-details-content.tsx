@@ -43,6 +43,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { type Task, type Project, type TaskStatus } from "@/types"
 import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
+import { softDeleteTaskWithUndo } from "@/lib/task-delete"
+import { toast } from "sonner"
 
 interface ProjectDetailsContentProps {
   projectId: string
@@ -456,25 +458,15 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
       setTaskDetailsDialogOpen(false)
     }
 
-    // 4. Fire the DELETE request in the background
-    try {
-      const response = await fetch(`/api/tasks/${task.id}`, {
-        method: "DELETE",
-      })
-
-      if (!response.ok) {
-        // Roll back: restore the deleted task
-        const data = await response.json()
-        setTasks(prev => [...prev, task])
-        refreshActiveView()
-        alert(data.error || "Nie udało się usunąć zadania")
-      }
-    } catch (error) {
-      console.error("Error deleting task:", error)
-      // Roll back
+    // 4. Soft-delete with a 5s undo window (then permanent delete server-side).
+    const result = await softDeleteTaskWithUndo(task.id, {
+      onRestored: refreshActiveView,
+    })
+    if (!result.ok) {
+      // Roll back the optimistic removal.
       setTasks(prev => [...prev, task])
       refreshActiveView()
-      alert("Wystąpił błąd podczas usuwania zadania")
+      toast.error(result.error || "Nie udało się usunąć zadania")
     }
   }
 

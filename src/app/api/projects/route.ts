@@ -74,6 +74,7 @@ export async function GET(request: NextRequest) {
           }
         },
         tasks: {
+          where: { deletedAt: null }, // hide soft-deleted tasks
           select: {
             id: true,
             title: true,

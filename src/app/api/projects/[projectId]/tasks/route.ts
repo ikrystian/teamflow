@@ -66,6 +66,7 @@ export async function GET(
 
     const where: Prisma.TaskWhereInput = {
       projectId,
+      deletedAt: null, // hide soft-deleted tasks
       ...(statusId && { statusId }),
       ...(assigneeId && { assigneeId }),
     }

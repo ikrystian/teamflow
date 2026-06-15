@@ -14,6 +14,8 @@ import { TimeTrackingSheet } from "@/components/tasks/time-tracking-sheet"
 import { type Task, type Project, type TaskStatus } from "@/types"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { GithubWebhookLogs } from "@/components/dashboard/github-webhook-logs"
+import { softDeleteTaskWithUndo } from "@/lib/task-delete"
+import { toast } from "sonner"
 
 export function UserTasksBoardContent() {
   const { data: session } = useSession() as { data: Session | null }
@@ -122,24 +124,16 @@ export function UserTasksBoardContent() {
   }, [])
 
   const handleDeleteTask = useCallback(async (task: Task) => {
-    // Optimistic delete
+    // Optimistic delete from the UI
     setTasks(prev => prev.filter(t => t.id !== task.id))
 
-    try {
-      const response = await fetch(`/api/tasks/${task.id}`, {
-        method: "DELETE",
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        // Rollback
-        fetchUserTasks()
-        alert(data.error || "Nie udało się usunąć zadania")
-      }
-    } catch (error) {
-      console.error("Error deleting task:", error)
-      fetchUserTasks()
-      alert("Wystąpił błąd podczas usuwania zadania")
+    // Soft-delete with a 5s undo window (then permanent delete server-side).
+    const result = await softDeleteTaskWithUndo(task.id, {
+      onRestored: fetchUserTasks,
+    })
+    if (!result.ok) {
+      fetchUserTasks() // rollback
+      toast.error(result.error || "Nie udało się usunąć zadania")
     }
   }, [fetchUserTasks])
 

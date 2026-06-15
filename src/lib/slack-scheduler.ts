@@ -13,6 +13,7 @@ export async function processPendingSlackScheduledMessages() {
         changesScheduledSendAt: {
           lte: now,
         },
+        deletedAt: null, // don't send scheduled messages for soft-deleted tasks
         project: {
           slackChannelId: {
             not: null,
