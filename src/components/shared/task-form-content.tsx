@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { DateTimePicker } from "@/components/ui/datetime-picker"
-import type { Task, TaskStatus, Project, Tag } from "@/types"
+import type { Task, TaskStatus, Project, Tag, TaskAttachment } from "@/types"
 import { ReminderSettings } from "@/components/tasks/reminder-settings"
 import { FileUpload } from "@/components/ui/file-upload"
 import { Badge } from "@/components/ui/badge"
@@ -101,6 +101,10 @@ export function TaskFormContent({
   // File upload state
   const [attachments, setAttachments] = useState<File[]>([])
   const [uploadingFiles, setUploadingFiles] = useState(false)
+  // Existing attachments shown in edit mode. Seeded from the task prop but kept
+  // in local state so a freshly uploaded / deleted file shows up immediately —
+  // the parent passes a stale task snapshot that isn't refreshed after upload.
+  const [taskAttachments, setTaskAttachments] = useState<TaskAttachment[]>(task?.attachments || [])
 
   // Tags state
   const [availableTags, setAvailableTags] = useState<Tag[]>([])
@@ -270,6 +274,21 @@ export function TaskFormContent({
     }
   }, [])
 
+  // Fetch attachments for the task (edit mode). The board list endpoints don't
+  // all include attachments (e.g. the project board omits them), so the task
+  // object passed in can be missing them — load them authoritatively here.
+  const fetchTaskAttachments = useCallback(async (tid: string) => {
+    try {
+      const response = await fetch(`/api/tasks/${tid}/attachments`)
+      if (response.ok) {
+        const data = await response.json()
+        setTaskAttachments(data.attachments || [])
+      }
+    } catch (error) {
+      console.error("Error fetching attachments:", error)
+    }
+  }, [])
+
   // Keep projectsList in sync with the prop, and fetch once when it's empty.
   // Depend on the length (a primitive) so a fresh `[]` default each render
   // doesn't retrigger this effect into a fetch loop.
@@ -290,6 +309,13 @@ export function TaskFormContent({
       fetchTimeEntries(task.id)
     }
   }, [isEditMode, task?.id, fetchTimeEntries])
+
+  // Load attachments when editing a task (the prop may not carry them).
+  useEffect(() => {
+    if (isEditMode && task?.id) {
+      fetchTaskAttachments(task.id)
+    }
+  }, [isEditMode, task?.id, fetchTaskAttachments])
 
   // Initialize form
   useEffect(() => {
@@ -337,6 +363,7 @@ export function TaskFormContent({
       setReminderValue(task.reminderValue || 1)
       setSelectedTagIds(task.tags?.map(t => t.id) || [])
       setSubtasks(task.subtasks || [])
+      setTaskAttachments(task.attachments || [])
       setError("")
       // Reset branch state when switching tasks
       setBranchCreated(
@@ -855,7 +882,13 @@ export function TaskFormContent({
 
         if (!response.ok) throw new Error('Upload failed')
 
-        // Refresh task data
+        // Surface the new attachment immediately. The parent's task snapshot
+        // isn't refreshed after upload, so we update our own list from the
+        // response instead of waiting on onTaskUpdated().
+        const { attachment } = await response.json()
+        if (attachment) setTaskAttachments(prev => [attachment, ...prev])
+
+        // Keep the board / surrounding views in sync as well.
         onTaskUpdated?.()
       } catch (error) {
         console.error('File upload error:', error)
@@ -875,7 +908,8 @@ export function TaskFormContent({
 
         if (!response.ok) throw new Error('Delete failed')
 
-        // Refresh task data
+        // Drop it from the local list right away, then refresh task data.
+        setTaskAttachments(prev => prev.filter(a => a.id !== fileId))
         onTaskUpdated?.()
       } catch (error) {
         console.error('File delete error:', error)
@@ -1455,7 +1489,7 @@ export function TaskFormContent({
                     </div>
                   ) : (
                     <FileUpload
-                      files={task?.attachments || []}
+                      files={taskAttachments}
                       onFileUpload={handleFileUpload}
                       onFileDelete={handleFileDelete}
                       editable={true}

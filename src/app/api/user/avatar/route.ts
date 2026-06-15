@@ -41,14 +41,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Create uploads directory if it doesn't exist
-    const uploadsDir = join(process.cwd(), "public", "uploads", "avatars")
+    const uploadsDir = join(process.cwd(), "uploads", "avatars")
     if (!existsSync(uploadsDir)) {
       await mkdir(uploadsDir, { recursive: true })
     }
 
     // Delete old avatar file if exists
     if (currentUser.avatarUrl && currentUser.avatarUrl.startsWith("/uploads/avatars/")) {
-      const oldFilePath = join(process.cwd(), "public", currentUser.avatarUrl)
+      const oldFilePath = join(process.cwd(), "uploads", "avatars", currentUser.avatarUrl.split("/uploads/avatars/").pop() || "")
       try {
         if (existsSync(oldFilePath)) {
           await unlink(oldFilePath)
@@ -123,7 +123,7 @@ export async function DELETE() {
 
     // Delete avatar file if exists
     if (currentUser.avatarUrl && currentUser.avatarUrl.startsWith("/uploads/avatars/")) {
-      const filePath = join(process.cwd(), "public", currentUser.avatarUrl)
+      const filePath = join(process.cwd(), "uploads", "avatars", currentUser.avatarUrl.split("/uploads/avatars/").pop() || "")
       try {
         if (existsSync(filePath)) {
           await unlink(filePath)

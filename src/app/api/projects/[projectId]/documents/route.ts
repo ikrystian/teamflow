@@ -99,7 +99,7 @@ export async function POST(
     }
 
     // Create uploads directory if it doesn't exist
-    const uploadsDir = join(process.cwd(), "public", "uploads", "projects", projectId, "documents")
+    const uploadsDir = join(process.cwd(), "uploads", "projects", projectId, "documents")
     if (!existsSync(uploadsDir)) {
       await mkdir(uploadsDir, { recursive: true })
     }
@@ -192,7 +192,7 @@ export async function DELETE(
     }
 
     // Delete file from filesystem
-    const filepath = join(process.cwd(), "public", document.url)
+    const filepath = join(process.cwd(), /*turbopackIgnore: true*/ document.url)
     if (existsSync(filepath)) {
       await unlink(filepath)
     }

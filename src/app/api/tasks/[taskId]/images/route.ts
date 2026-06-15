@@ -50,7 +50,7 @@ export async function POST(
     }
 
     // Create uploads directory if it doesn't exist
-    const uploadsDir = join(process.cwd(), "public", "uploads", "tasks", taskId)
+    const uploadsDir = join(process.cwd(), "uploads", "tasks", taskId)
     if (!existsSync(uploadsDir)) {
       await mkdir(uploadsDir, { recursive: true })
     }
@@ -138,7 +138,7 @@ export async function DELETE(
 
     // Try to delete file from filesystem (don't fail if it doesn't exist)
     try {
-      const filepath = join(process.cwd(), "public", image.url)
+      const filepath = join(process.cwd(), "uploads", "tasks", taskId, image.url.split("/").pop() || "")
       if (existsSync(filepath)) {
         await unlink(filepath)
       }

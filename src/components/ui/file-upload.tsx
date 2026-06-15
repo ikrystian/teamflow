@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils'
 interface UploadedFile {
   id: string
   filename: string
+  originalName?: string
   url: string
   mimeType: string
   size: number
@@ -234,13 +235,44 @@ export function FileUpload({
         <div className="space-y-2">
           {files.map((file) => {
             const FileIcon = getFileIcon(file.mimeType)
+            const isImage = file.mimeType.startsWith('image/')
+            const displayName = file.originalName || file.filename
             return (
               <Card key={file.id} className="p-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3 flex-1 min-w-0">
-                    <FileIcon className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                    {isImage && file.url ? (
+                      <a
+                        href={file.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-shrink-0"
+                        title="Otwórz w nowej karcie"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={file.url}
+                          alt={displayName}
+                          className="h-10 w-10 rounded object-cover border"
+                        />
+                      </a>
+                    ) : (
+                      <FileIcon className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                    )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{file.filename}</p>
+                      {file.url ? (
+                        <a
+                          href={file.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm font-medium truncate block hover:underline"
+                          title="Otwórz w nowej karcie"
+                        >
+                          {displayName}
+                        </a>
+                      ) : (
+                        <p className="text-sm font-medium truncate">{displayName}</p>
+                      )}
                       <div className="flex items-center space-x-2 mt-1">
                         <span className="text-xs text-muted-foreground">
                           {formatFileSize(file.size)}

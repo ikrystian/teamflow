@@ -388,14 +388,14 @@ export async function DELETE(
 
     // 1. Delete project image if exists
     if (existingProject.imageUrl && existingProject.imageUrl.startsWith("/uploads/projects/")) {
-      const projectImagePath = join(process.cwd(), "public", existingProject.imageUrl)
+      const projectImagePath = join(process.cwd(), /*turbopackIgnore: true*/ existingProject.imageUrl)
       filesToDelete.push(projectImagePath)
     }
 
     // 2. Delete project documents
     for (const document of existingProject.documents) {
       if (document.url.startsWith("/uploads/projects/")) {
-        const documentPath = join(process.cwd(), "public", document.url)
+        const documentPath = join(process.cwd(), /*turbopackIgnore: true*/ document.url)
         filesToDelete.push(documentPath)
       }
     }
@@ -405,7 +405,7 @@ export async function DELETE(
       // Delete task images
       for (const image of task.images) {
         if (image.url.startsWith("/uploads/tasks/")) {
-          const imagePath = join(process.cwd(), "public", image.url)
+          const imagePath = join(process.cwd(), /*turbopackIgnore: true*/ image.url)
           filesToDelete.push(imagePath)
         }
       }
@@ -413,20 +413,20 @@ export async function DELETE(
       // Delete task attachments
       for (const attachment of task.attachments) {
         if (attachment.url.startsWith("/uploads/tasks/")) {
-          const attachmentPath = join(process.cwd(), "public", attachment.url)
+          const attachmentPath = join(process.cwd(), /*turbopackIgnore: true*/ attachment.url)
           filesToDelete.push(attachmentPath)
         }
       }
 
       // Add task directories to delete list
-      const taskImagesDir = join(process.cwd(), "public", "uploads", "tasks", task.id)
-      const taskAttachmentsDir = join(process.cwd(), "public", "uploads", "tasks", task.id, "attachments")
+      const taskImagesDir = join(process.cwd(), "uploads", "tasks", task.id)
+      const taskAttachmentsDir = join(process.cwd(), "uploads", "tasks", task.id, "attachments")
       directoriesToDelete.push(taskAttachmentsDir, taskImagesDir)
     }
 
     // 4. Add project directories to delete list
-    const projectDocumentsDir = join(process.cwd(), "public", "uploads", "projects", projectId, "documents")
-    const projectDir = join(process.cwd(), "public", "uploads", "projects", projectId)
+    const projectDocumentsDir = join(process.cwd(), "uploads", "projects", projectId, "documents")
+    const projectDir = join(process.cwd(), "uploads", "projects", projectId)
     directoriesToDelete.push(projectDocumentsDir, projectDir)
 
     // Delete all files first
