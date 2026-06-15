@@ -121,6 +121,7 @@ export function TaskFormContent({
 
   // Slack send state (for the AI-generated "changes" field)
   const [sendingToSlack, setSendingToSlack] = useState(false)
+  const [deletingFromSlack, setDeletingFromSlack] = useState(false)
 
   // GitHub branch state
   const [creatingBranch, setCreatingBranch] = useState(false)
@@ -858,6 +859,30 @@ export function TaskFormContent({
     }
   }
 
+  // Delete the previously sent message from the project's Slack channel.
+  // Handy for cleaning up test messages.
+  const handleDeleteFromSlack = async () => {
+    if (!task) return
+    setDeletingFromSlack(true)
+    try {
+      const response = await fetch(`/api/tasks/${task.id}/slack`, {
+        method: "DELETE",
+      })
+      const data = await response.json()
+      if (response.ok) {
+        setSlackSentAt(null)
+        toast.success("Usunięto wiadomość ze Slacka")
+      } else {
+        toast.error(data.error || "Nie udało się usunąć wiadomości ze Slacka")
+      }
+    } catch (error) {
+      console.error("Error deleting from Slack:", error)
+      toast.error("Nie udało się usunąć wiadomości ze Slacka")
+    } finally {
+      setDeletingFromSlack(false)
+    }
+  }
+
   // File upload handlers
   const handleFileUpload = async (file: File, description?: string, category?: string) => {
     // For create mode, just store files to upload after task creation
@@ -1245,10 +1270,23 @@ export function TaskFormContent({
                     </Button>
                   </div>
                   {slackSentAt && (
-                    <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
-                      <Check className="h-3 w-3" />
-                      Wysłano {new Date(slackSentAt).toLocaleDateString("pl-PL")}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                        <Check className="h-3 w-3" />
+                        Wysłano {new Date(slackSentAt).toLocaleDateString("pl-PL")}
+                      </p>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-xs text-red-600 hover:text-red-700 dark:text-red-400"
+                        onClick={handleDeleteFromSlack}
+                        disabled={deletingFromSlack}
+                      >
+                        <Trash2 className="h-3 w-3 mr-1" />
+                        {deletingFromSlack ? "Usuwanie..." : "Usuń ze Slacka"}
+                      </Button>
+                    </div>
                   )}
                   {slackScheduledSendAt && !slackSentAt && (
                     <div className="text-xs text-blue-600 dark:text-blue-400 space-y-1">

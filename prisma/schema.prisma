@@ -112,6 +112,8 @@ model Task {
   changes                String?
   key                    String?          @unique
   changesSentAt          DateTime?
+  changesSlackTs         String?
+  changesSlackChannelId  String?
   shareToken             String?          @unique
   changesScheduledSendAt DateTime?
   githubBranchName       String?

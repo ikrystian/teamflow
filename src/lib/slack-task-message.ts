@@ -7,6 +7,37 @@ const SLACK_API = "https://slack.com/api"
 export interface SlackSendResult {
   ok: boolean
   error?: string
+  // Identify the posted message so it can later be deleted via chat.delete.
+  ts?: string
+  channel?: string
+}
+
+export interface SlackDeleteResult {
+  ok: boolean
+  error?: string
+}
+
+// Pull the message timestamp/channel out of a files.completeUploadExternal
+// response. When files are posted with an initial_comment they appear as a
+// single channel message whose ts lives under each file's `shares` map.
+function extractShareRef(
+  data: { files?: unknown }
+): { ts?: string; channel?: string } {
+  const files = Array.isArray(data.files) ? data.files : []
+  for (const file of files) {
+    const shares = (file as { shares?: Record<string, unknown> })?.shares
+    if (!shares) continue
+    // Shares are grouped by visibility ("public"/"private"), then channel id.
+    for (const group of Object.values(shares)) {
+      if (!group || typeof group !== "object") continue
+      for (const [channel, entries] of Object.entries(group)) {
+        const first = Array.isArray(entries) ? entries[0] : undefined
+        const ts = (first as { ts?: string })?.ts
+        if (ts) return { ts, channel }
+      }
+    }
+  }
+  return {}
 }
 
 function isImageAttachment(mimeType: string): boolean {
@@ -122,7 +153,8 @@ export async function sendTaskMessageToSlack({
     if (!data.ok) {
       return { ok: false, error: data.error }
     }
-    return { ok: true }
+    const ref = extractShareRef(data)
+    return { ok: true, ts: ref.ts, channel: ref.channel ?? channelId }
   }
 
   // No images: keep the original plain-text behaviour.
@@ -137,6 +169,32 @@ export async function sendTaskMessageToSlack({
       text,
       mrkdwn: true,
     }),
+  })
+  const data = await res.json()
+  if (!data.ok) {
+    return { ok: false, error: data.error }
+  }
+  return { ok: true, ts: data.ts, channel: data.channel ?? channelId }
+}
+
+// Delete a previously posted message from a Slack channel via chat.delete.
+// Requires the channel id and message ts recorded when the message was sent.
+export async function deleteTaskMessageFromSlack({
+  token,
+  channelId,
+  ts,
+}: {
+  token: string
+  channelId: string
+  ts: string
+}): Promise<SlackDeleteResult> {
+  const res = await fetch(`${SLACK_API}/chat.delete`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json; charset=utf-8",
+    },
+    body: JSON.stringify({ channel: channelId, ts }),
   })
   const data = await res.json()
   if (!data.ok) {

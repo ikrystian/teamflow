@@ -82,12 +82,15 @@ export async function processPendingSlackScheduledMessages() {
           continue
         }
 
-        // Update task to mark as sent and clear scheduled time
+        // Update task to mark as sent and clear scheduled time, recording the
+        // Slack message reference so it can be deleted later if needed.
         await prisma.task.update({
           where: { id: task.id },
           data: {
             changesSentAt: new Date(),
             changesScheduledSendAt: null,
+            changesSlackTs: result.ts ?? null,
+            changesSlackChannelId: result.channel ?? channelId,
           },
         })
 
