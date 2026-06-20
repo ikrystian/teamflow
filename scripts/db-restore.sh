@@ -11,6 +11,9 @@ PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 DB_PATH="${DATABASE_URL:-file:./prisma/dev.db}"
 DB_PATH="${DB_PATH#file:}"
 if [[ "$DB_PATH" != /* ]]; then
+  if [[ "$DB_PATH" != *prisma* ]]; then
+    DB_PATH="prisma/$DB_PATH"
+  fi
   DB_PATH="$PROJECT_DIR/$DB_PATH"
 fi
 

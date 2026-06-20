@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client"
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3"
+import path from "path"
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
@@ -7,8 +8,15 @@ const globalForPrisma = globalThis as unknown as {
 
 const getDatabaseUrl = () => {
   const url = process.env.DATABASE_URL || "file:./dev.db"
-  if (url.startsWith("file:./") && !url.startsWith("file:./prisma/")) {
-    return url.replace("file:./", "file:./prisma/")
+  if (url.startsWith("file:")) {
+    const dbPath = url.replace(/^file:/, "")
+    if (!path.isAbsolute(dbPath)) {
+      const targetPath = dbPath.startsWith("./prisma/") || dbPath.startsWith("prisma/")
+        ? dbPath
+        : path.join("prisma", dbPath)
+      const absoluteDbPath = path.resolve(process.cwd(), targetPath)
+      return `file:${absoluteDbPath}`
+    }
   }
   return url
 }

@@ -12,6 +12,9 @@ DB_PATH="${DATABASE_URL:-file:./prisma/dev.db}"
 DB_PATH="${DB_PATH#file:}"
 # Resolve relative path from project root
 if [[ "$DB_PATH" != /* ]]; then
+  if [[ "$DB_PATH" != *prisma* ]]; then
+    DB_PATH="prisma/$DB_PATH"
+  fi
   DB_PATH="$PROJECT_DIR/$DB_PATH"
 fi
 

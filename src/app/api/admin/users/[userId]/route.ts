@@ -66,8 +66,6 @@ export async function GET(
         id: true,
         name: true,
         email: true,
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore - role field exists in database but Prisma types are not updated
         role: true,
         avatarUrl: true,
         phone: true,
@@ -176,8 +174,6 @@ export async function PATCH(
         id: true,
         name: true,
         email: true,
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore - role field exists in database but Prisma types are not updated
         role: true,
         avatarUrl: true,
         phone: true,
@@ -219,8 +215,6 @@ export async function DELETE(
     // Check if user exists
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore - role field exists in database but Prisma types are not updated
       select: { id: true, email: true, role: true }
     }) as unknown as BasicUserWithRole | null
 
