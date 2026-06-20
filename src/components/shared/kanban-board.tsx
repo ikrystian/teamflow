@@ -8,7 +8,7 @@ import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar, Clock, MoreHorizontal, Plus, AlertCircle, Trash2, X, Check, Loader2, Send, GitBranch } from "lucide-react"
+import { Calendar, Clock, MoreHorizontal, Plus, AlertCircle, Trash2, X, Check, Loader2, Send, GitBranch, Archive, BarChart3 } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +16,23 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import {
   draggable,
   dropTargetForElements,
@@ -642,6 +659,89 @@ function KanbanColumn({
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const sentinelRef = useRef<HTMLDivElement>(null)
   const [isOver, setIsOver] = useState(false)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
+  const [confirmArchiveOpen, setConfirmArchiveOpen] = useState(false)
+  interface ColumnStats {
+    totalTasks: number
+    totalEstimatedHours: number
+    totalWorkedHours: number
+    overdueTasks: number
+    priorityBreakdown: {
+      High: number
+      Medium: number
+      Low: number
+      [key: string]: number
+    }
+    assigneeBreakdown: Record<string, number>
+  }
+
+  const [statsOpen, setStatsOpen] = useState(false)
+  const [stats, setStats] = useState<ColumnStats | null>(null)
+  const [loadingStats, setLoadingStats] = useState(false)
+  const [bulkLoading, setBulkLoading] = useState(false)
+
+  const fetchStats = async () => {
+    setLoadingStats(true)
+    try {
+      const queryParams = new URLSearchParams({
+        statusId: status.id,
+      })
+      if (projectId) {
+        queryParams.append("projectId", projectId)
+      } else if (session?.user?.id) {
+        queryParams.append("assigneeId", (session.user as { id?: string }).id || "")
+      }
+
+      const res = await fetch(`/api/tasks/stats?${queryParams.toString()}`)
+      if (res.ok) {
+        const data = await res.json()
+        setStats(data)
+      } else {
+        toast.error("Nie udało się pobrać statystyk")
+      }
+    } catch (err) {
+      console.error(err)
+      toast.error("Błąd podczas pobierania statystyk")
+    } finally {
+      setLoadingStats(false)
+    }
+  }
+
+  const handleBulkAction = async (action: "delete" | "archive") => {
+    setBulkLoading(true)
+    try {
+      const response = await fetch("/api/tasks/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          statusId: status.id,
+          projectId: projectId || undefined,
+          assigneeId: !projectId ? (session?.user as { id?: string })?.id : undefined,
+          action
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        toast.success(
+          action === "delete"
+            ? `Usunięto ${data.count} zadań z kolumny`
+            : `Zarchiwizowano ${data.count} zadań z kolumny`
+        )
+        onTaskCreated() // Refresh the board
+      } else {
+        const data = await response.json()
+        toast.error(data.error || "Wystąpił błąd podczas wykonywania operacji")
+      }
+    } catch (error) {
+      console.error("Bulk action error:", error)
+      toast.error("Wystąpił błąd podczas wykonywania operacji")
+    } finally {
+      setBulkLoading(false)
+      setConfirmDeleteOpen(false)
+      setConfirmArchiveOpen(false)
+    }
+  }
 
   // Two pagination modes:
   // - server mode (onLoadMore provided): the parent already passes only the
@@ -718,6 +818,45 @@ function KanbanColumn({
               {badgeCount}
             </Badge>
           </div>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0 focus:outline-none hover:bg-muted-foreground/10 text-muted-foreground hover:text-foreground"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem 
+                onClick={() => setConfirmDeleteOpen(true)}
+                className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Usuń wszystkie zadania z tablicy
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => setConfirmArchiveOpen(true)}
+                className="cursor-pointer"
+              >
+                <Archive className="mr-2 h-4 w-4" />
+                Archiwizuj wszystkie zadania
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={() => {
+                  setStatsOpen(true);
+                  fetchStats();
+                }}
+                className="cursor-pointer"
+              >
+                <BarChart3 className="mr-2 h-4 w-4" />
+                Sprawdź statystyki
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <div ref={ref} className="space-y-2 min-h-[400px]">
@@ -772,6 +911,173 @@ function KanbanColumn({
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation AlertDialog */}
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Czy na pewno chcesz usunąć wszystkie zadania?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ta operacja spowoduje usunięcie wszystkich zadań z kolumny "{status.name}". Zadania zostaną przeniesione do kosza.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkLoading}>Anuluj</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={(e) => {
+                e.preventDefault();
+                handleBulkAction("delete");
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={bulkLoading}
+            >
+              {bulkLoading ? "Usuwanie..." : "Usuń wszystkie"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Archive Confirmation AlertDialog */}
+      <AlertDialog open={confirmArchiveOpen} onOpenChange={setConfirmArchiveOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Czy na pewno chcesz zarchiwizować wszystkie zadania?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ta operacja spowoduje zarchiwizowanie wszystkich zadań z kolumny "{status.name}". Zadania znikną z tablicy, ale będą przechowywane w bazie danych.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkLoading}>Anuluj</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={(e) => {
+                e.preventDefault();
+                handleBulkAction("archive");
+              }}
+              className="bg-primary hover:bg-primary/95 text-white"
+              disabled={bulkLoading}
+            >
+              {bulkLoading ? "Archiwizowanie..." : "Zarchiwizuj"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Statistics Dialog */}
+      <Dialog open={statsOpen} onOpenChange={setStatsOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-primary" />
+              Statystyki kolumny: {status.name}
+            </DialogTitle>
+            <DialogDescription>
+              Aktualne podsumowanie i wskaźniki dla zadań w tym statusie.
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingStats ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-2">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="text-sm text-muted-foreground">Ładowanie statystyk...</span>
+            </div>
+          ) : stats ? (
+            <div className="space-y-6 py-2">
+              {/* Sekcja głównych godzin */}
+              <div className="grid grid-cols-2 gap-4">
+                <Card className="bg-primary/5 border-primary/10 animate-in fade-in zoom-in duration-200">
+                  <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+                    <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">Przepracowano</span>
+                    <span className="text-2xl font-bold text-primary flex items-baseline gap-1">
+                      {stats.totalWorkedHours % 1 === 0 ? stats.totalWorkedHours : stats.totalWorkedHours.toFixed(1)}
+                      <span className="text-sm font-normal text-muted-foreground">h</span>
+                    </span>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-muted/50 border-muted animate-in fade-in zoom-in duration-200">
+                  <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+                    <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">Planowane</span>
+                    <span className="text-2xl font-bold text-foreground flex items-baseline gap-1">
+                      {stats.totalEstimatedHours % 1 === 0 ? stats.totalEstimatedHours : stats.totalEstimatedHours.toFixed(1)}
+                      <span className="text-sm font-normal text-muted-foreground">h</span>
+                    </span>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Prosty pasek postępu / stosunku godzin przepracowanych do planowanych */}
+              {stats.totalEstimatedHours > 0 && (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Postęp planu czasowego</span>
+                    <span className="font-semibold text-foreground">
+                      {Math.round((stats.totalWorkedHours / stats.totalEstimatedHours) * 100)}%
+                    </span>
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                    <div 
+                      className="bg-primary h-2 rounded-full transition-all duration-500 animate-in slide-in-from-left duration-500"
+                      style={{ width: `${Math.min((stats.totalWorkedHours / stats.totalEstimatedHours) * 100, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Informacje ogólne */}
+              <div className="grid grid-cols-2 gap-3 text-sm border-t pt-4">
+                <div className="flex flex-col gap-1">
+                  <span className="text-muted-foreground text-xs">Liczba zadań:</span>
+                  <span className="font-semibold text-foreground">{stats.totalTasks}</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-muted-foreground text-xs">Zadania po terminie:</span>
+                  <span className={`font-semibold ${stats.overdueTasks > 0 ? 'text-red-500 font-bold' : 'text-foreground'}`}>
+                    {stats.overdueTasks}
+                  </span>
+                </div>
+              </div>
+
+              {/* Priorytety */}
+              <div className="space-y-2 border-t pt-4">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Rozkład priorytetów</h4>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="flex flex-col items-center p-2 rounded-lg bg-red-500/5 border border-red-500/10">
+                    <span className="text-[10px] text-red-600 font-medium uppercase">Wysoki</span>
+                    <span className="text-lg font-bold text-red-700">{stats.priorityBreakdown.High || 0}</span>
+                  </div>
+                  <div className="flex flex-col items-center p-2 rounded-lg bg-amber-500/5 border border-amber-500/10">
+                    <span className="text-[10px] text-amber-600 font-medium uppercase">Średni</span>
+                    <span className="text-lg font-bold text-amber-700">{stats.priorityBreakdown.Medium || 0}</span>
+                  </div>
+                  <div className="flex flex-col items-center p-2 rounded-lg bg-slate-500/5 border border-slate-500/10">
+                    <span className="text-[10px] text-slate-600 font-medium uppercase">Niski</span>
+                    <span className="text-lg font-bold text-slate-700">{stats.priorityBreakdown.Low || 0}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Przypisanie zadań */}
+              {Object.keys(stats.assigneeBreakdown).length > 0 && (
+                <div className="space-y-2 border-t pt-4">
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Rozkład zadań na osoby</h4>
+                  <div className="space-y-2 max-h-32 overflow-y-auto pr-1">
+                    {Object.entries(stats.assigneeBreakdown).map(([name, count]) => (
+                      <div key={name} className="flex justify-between items-center text-xs py-1 border-b last:border-0 border-muted">
+                        <span className="text-foreground truncate max-w-[200px]" title={name}>{name}</span>
+                        <Badge variant="secondary" className="h-5 px-1.5 min-w-5 justify-center">{count}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-6 text-sm text-muted-foreground">
+              Brak dostępnych danych statystycznych.
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

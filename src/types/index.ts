@@ -168,6 +168,7 @@ export interface Task {
   tags?: Tag[];
   githubBranchName?: string | null;
   githubWorkflowError?: string | null;
+  archived?: boolean;
 }
 
 export interface Tag {
