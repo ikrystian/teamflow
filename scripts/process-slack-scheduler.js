@@ -9,8 +9,22 @@
 require('dotenv').config()
 
 const { PrismaClient } = require('@prisma/client')
+const { PrismaBetterSqlite3 } = require('@prisma/adapter-better-sqlite3')
 
-const prisma = new PrismaClient()
+const getDatabaseUrl = () => {
+  const url = process.env.DATABASE_URL || 'file:./dev.db'
+  if (url.startsWith('file:./') && !url.startsWith('file:./prisma/')) {
+    return url.replace('file:./', 'file:./prisma/')
+  }
+  return url
+}
+
+const adapter = new PrismaBetterSqlite3({
+  url: getDatabaseUrl(),
+})
+
+const prisma = new PrismaClient({ adapter })
+
 
 async function buildTaskShareUrl(token) {
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'

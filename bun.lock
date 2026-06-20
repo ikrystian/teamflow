@@ -6,6 +6,7 @@
       "name": "Nexus",
       "dependencies": {
         "@atlaskit/pragmatic-drag-and-drop": "^1.8.1",
+        "@atlaskit/pragmatic-drag-and-drop-auto-scroll": "^2.1.5",
         "@atlaskit/pragmatic-drag-and-drop-hitbox": "^1.2.0",
         "@auth/prisma-adapter": "^2.11.2",
         "@prisma/client": "5.22.0",
@@ -73,6 +74,8 @@
     "@alloc/quick-lru": ["@alloc/quick-lru@5.2.0", "", {}, "sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw=="],
 
     "@atlaskit/pragmatic-drag-and-drop": ["@atlaskit/pragmatic-drag-and-drop@1.8.1", "", { "dependencies": { "@babel/runtime": "^7.0.0", "bind-event-listener": "^3.0.0", "raf-schd": "^4.0.3" } }, "sha512-uXWNPpL8n4OmTVbduH7nq8pk8htqGo/prR5cYEE8sVCPJGAUMWn6lzvWTfI+4VCeQvHiDRODVz4YzH06OVAxhw=="],
+
+    "@atlaskit/pragmatic-drag-and-drop-auto-scroll": ["@atlaskit/pragmatic-drag-and-drop-auto-scroll@2.1.5", "", { "dependencies": { "@atlaskit/pragmatic-drag-and-drop": "^1.7.0", "@babel/runtime": "^7.0.0" } }, "sha512-InLvVhZAHPBfv3CxuG4AfOQuhNJjaFy69YBfodPMWtRFQNQAKa9Yb3vL9Ho6qsD9qKUBuJa4A5k7QddaXQ4Eyw=="],
 
     "@atlaskit/pragmatic-drag-and-drop-hitbox": ["@atlaskit/pragmatic-drag-and-drop-hitbox@1.2.0", "", { "dependencies": { "@atlaskit/pragmatic-drag-and-drop": "^1.8.0", "@babel/runtime": "^7.0.0" } }, "sha512-eWJvvuHZOC4Yk+Li7QpS+JM2F/I50/3PhMvEcyvcHbXI0FP0kCDD1MiF8Hv7uSOxpk5JNqKoOmK8e1ncOzTgqA=="],
 
