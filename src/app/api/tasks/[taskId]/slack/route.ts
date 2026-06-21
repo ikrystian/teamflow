@@ -89,11 +89,9 @@ export async function POST(
     const shareToken = await getOrCreateTaskShareToken(task.id)
     const shareUrl = buildTaskShareUrl(shareToken)
 
-    const todoLines = task.todos.length
-      ? task.todos.map((t) => `${t.isCompleted ? "✅" : "⬜"} ${t.title}`).join("\n")
-      : "_Brak podzadań_"
+    const changesText = task.changes || "_Brak opisu zmian_"
 
-    const text = `*${task.title}*\n\n${todoLines}\n\n<${shareUrl}|🔗 Zobacz zadanie>`
+    const text = `*${task.title}*\n\n${changesText}\n\n<${shareUrl}|🔗 Zobacz zadanie>`
 
     const result = await sendTaskMessageToSlack({
       taskId: task.id,
