@@ -8,7 +8,7 @@ import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar, Clock, MoreHorizontal, Plus, AlertCircle, Trash2, X, Check, Loader2, Send, CalendarClock, GitBranch, Archive, BarChart3 } from "lucide-react"
+import { Calendar, Clock, MoreHorizontal, Plus, AlertCircle, Trash2, X, Check, Loader2, Send, CalendarClock, GitBranch, Archive, BarChart3, Timer } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -298,6 +298,19 @@ function SortableTaskCard({
                           className="inline-flex"
                         >
                           <CalendarClock className="h-3 w-3 text-blue-500 flex-shrink-0" />
+                        </div>
+                      )}
+                      {task.autoMoveToDoneAt && (
+                        <div
+                          title={`Auto-przeniesienie do Done: ${new Date(task.autoMoveToDoneAt).toLocaleString("pl-PL", {
+                            day: "numeric",
+                            month: "long",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}`}
+                          className="inline-flex"
+                        >
+                          <Timer className="h-3 w-3 text-amber-500 flex-shrink-0" />
                         </div>
                       )}
                       {task.githubBranchName && (
@@ -1171,6 +1184,40 @@ export function KanbanBoard({
       element,
       canScroll: ({ source }) => source.data.type === "task",
     })
+  }, [])
+
+  // Every 5 minutes, process any tasks whose scheduled auto-move time has
+  // elapsed (In Progress -> Done) and refresh the board so card positions and
+  // newly arrived cards stay current. Also runs once shortly after mount, but
+  // only refreshes then if something was actually moved (to avoid a needless
+  // refetch right after load).
+  useEffect(() => {
+    let cancelled = false
+
+    const tick = async (forceRefresh: boolean) => {
+      let moved = false
+      try {
+        const res = await fetch("/api/cron/auto-move-done")
+        if (res.ok) {
+          const data = await res.json().catch(() => null)
+          moved = !!data && typeof data.processed === "number" && data.processed > 0
+        }
+      } catch (error) {
+        console.error("Error processing auto-move tasks:", error)
+      }
+      if (!cancelled && (forceRefresh || moved)) {
+        onTaskUpdatedRef.current()
+      }
+    }
+
+    const initial = setTimeout(() => tick(false), 3000)
+    const interval = setInterval(() => tick(true), 5 * 60 * 1000)
+
+    return () => {
+      cancelled = true
+      clearTimeout(initial)
+      clearInterval(interval)
+    }
   }, [])
 
   useEffect(() => {

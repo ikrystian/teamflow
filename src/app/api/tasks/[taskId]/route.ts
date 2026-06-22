@@ -5,20 +5,9 @@ import { prisma } from "@/lib/prisma"
 import { isAdmin } from "@/lib/admin"
 import { deleteGithubBranch } from "@/lib/github"
 import { sendDoneTaskChangesToSlack } from "@/lib/slack-task-message"
+import { computeAutoMoveAt } from "@/lib/auto-move-tasks"
+import { isDoneStatusName, isInProgressStatusName, isTodoStatusName } from "@/lib/task-status-helpers"
 import type { Session } from "next-auth"
-
-// Done-equivalent status names, lowercased. SQLite equality is case-sensitive,
-// so we match in JS rather than relying on Prisma's `mode: "insensitive"`.
-const DONE_STATUS_NAMES = [
-  "done",
-  "zrobione",
-  "completed",
-  "gotowe",
-  "ukończone",
-  "ukonczone",
-  "zakończone",
-  "zakonczone",
-]
 
 export async function GET(
   request: NextRequest,
@@ -341,6 +330,7 @@ export async function PATCH(
       reminderValue?: number | null;
       reminderTime?: Date | null;
       createdAt?: Date;
+      autoMoveToDoneAt?: Date | null;
     } = {}
     if (createdAt !== undefined) updateData.createdAt = new Date(createdAt)
     if (title !== undefined) updateData.title = title
@@ -447,12 +437,41 @@ export async function PATCH(
       })
       const targetStatus = statusesToCheck.find(s => s.id === statusId)
       const currentStatus = statusesToCheck.find(s => s.id === existingTask.statusId)
-      
-      const targetIsDone = targetStatus ? DONE_STATUS_NAMES.includes(targetStatus.name.trim().toLowerCase()) : false
-      const currentIsDone = currentStatus ? DONE_STATUS_NAMES.includes(currentStatus.name.trim().toLowerCase()) : false
-      
+
+      const targetIsDone = isDoneStatusName(targetStatus?.name)
+      const currentIsDone = isDoneStatusName(currentStatus?.name)
+      const targetIsInProgress = isInProgressStatusName(targetStatus?.name)
+      // The "To Do" column is the default one; also accept renamed variants.
+      const currentIsTodo = !!currentStatus && (currentStatus.isDefault || isTodoStatusName(currentStatus.name))
+
       if (targetIsDone && !currentIsDone) {
         isMovingToDone = true
+      }
+
+      if (targetIsInProgress && currentIsTodo) {
+        // Entering In Progress from To Do: schedule the auto-move to Done.
+        // Duration = reported time (time entries + subtasks), falling back to
+        // the estimated time; the move time queues behind any card already
+        // scheduled in this column (same project).
+        const [timeAgg, subtaskAgg] = await Promise.all([
+          prisma.timeEntry.aggregate({ where: { taskId: resolvedTaskId }, _sum: { hours: true } }),
+          prisma.todo.aggregate({ where: { taskId: resolvedTaskId }, _sum: { timeSpent: true } }),
+        ])
+        const reportedHours = (timeAgg._sum.hours ?? 0) + (subtaskAgg._sum.timeSpent ?? 0)
+        const estimatedHours =
+          updateData.estimatedHours !== undefined ? updateData.estimatedHours : existingTask.estimatedHours
+
+        updateData.autoMoveToDoneAt = await computeAutoMoveAt({
+          excludeTaskId: resolvedTaskId,
+          projectId: (updateData.projectId !== undefined ? updateData.projectId : existingTask.projectId) ?? null,
+          inProgressStatusId: statusId,
+          reportedHours,
+          estimatedHours: estimatedHours ?? null,
+        })
+      } else if (!targetIsInProgress) {
+        // Leaving In Progress (e.g. back to To Do, or to Done) clears any
+        // pending auto-move so it doesn't fire after a manual move.
+        updateData.autoMoveToDoneAt = null
       }
     }
 

@@ -118,6 +118,7 @@ model Task {
   changesSlackChannelId  String?
   shareToken             String?          @unique
   changesScheduledSendAt DateTime?
+  autoMoveToDoneAt       DateTime?
   githubBranchName       String?
   githubPrUrl            String?
   githubWorkflowError    String?

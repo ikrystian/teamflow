@@ -122,6 +122,7 @@ export interface Task {
   changesSentAt?: string | null;
   changesSlackTs?: string | null;
   changesScheduledSendAt?: string | null;
+  autoMoveToDoneAt?: string | null;
   statusId?: string;
   priority?: string;
   dueDate?: string;
