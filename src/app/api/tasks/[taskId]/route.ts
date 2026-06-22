@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { isAdmin } from "@/lib/admin"
 import { deleteGithubBranch } from "@/lib/github"
-import { autoScheduleDoneTaskSlackSend } from "@/lib/slack-auto-schedule"
+import { sendDoneTaskChangesToSlack } from "@/lib/slack-task-message"
 import type { Session } from "next-auth"
 
 // Done-equivalent status names, lowercased. SQLite equality is case-sensitive,
@@ -502,15 +502,6 @@ export async function PATCH(
           })
         }
       }
-
-      // Queue this finished task's Slack change-note send (anchored to the
-      // project's latest scheduled/sent message). Best-effort: a scheduling
-      // failure must not block the status update itself.
-      try {
-        await autoScheduleDoneTaskSlackSend(resolvedTaskId)
-      } catch (error) {
-        console.error("Error auto-scheduling Slack send on move to Done:", error)
-      }
     }
 
     const task = await prisma.task.update({
@@ -592,6 +583,16 @@ export async function PATCH(
         }
       }
     })
+
+    // Once the task is in "Done", post its change note to Slack right away.
+    // Best-effort: a Slack failure must not block the status update itself.
+    if (isMovingToDone) {
+      try {
+        await sendDoneTaskChangesToSlack(resolvedTaskId)
+      } catch (error) {
+        console.error("Error sending Slack message on move to Done:", error)
+      }
+    }
 
     // Map tags and todos to subtasks for simpler consumption
     const taskWithTags = {

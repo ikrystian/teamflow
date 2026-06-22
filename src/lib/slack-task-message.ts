@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma"
+import { buildTaskShareUrl, getOrCreateTaskShareToken } from "@/lib/task-share"
 import { join } from "path"
 import { readFile } from "fs/promises"
 
@@ -175,6 +176,75 @@ export async function sendTaskMessageToSlack({
     return { ok: false, error: data.error }
   }
   return { ok: true, ts: data.ts, channel: data.channel ?? channelId }
+}
+
+// Send a finished task's change note to its project's Slack channel right away
+// and record the delivery on the task. Called when a task lands in "Done"
+// (board/list status change or the GitHub merge-request webhook). Best-effort:
+// it no-ops when the task isn't in a Slack-enabled project or the note was
+// already sent, and reports failures through the returned result rather than
+// throwing, so the surrounding status update is never blocked.
+export async function sendDoneTaskChangesToSlack(
+  taskId: string
+): Promise<SlackSendResult & { skipped?: boolean }> {
+  const task = await prisma.task.findUnique({
+    where: { id: taskId },
+    include: { project: { select: { slackChannelId: true } } },
+  })
+
+  if (
+    !task ||
+    !task.projectId ||
+    !task.project?.slackChannelId ||
+    task.changesSentAt
+  ) {
+    return { ok: false, skipped: true }
+  }
+
+  const token = process.env.SLACK_BOT_TOKEN
+  if (!token) {
+    console.error("[Slack] SLACK_BOT_TOKEN is not configured")
+    return { ok: false, error: "SLACK_BOT_TOKEN is not configured" }
+  }
+
+  const channelId = task.project.slackChannelId
+
+  // Public, read-only link so recipients who aren't logged in can open the task.
+  const shareToken = await getOrCreateTaskShareToken(task.id)
+  const shareUrl = buildTaskShareUrl(shareToken)
+
+  const changesText = task.changes || "_Brak opisu zmian_"
+
+  let text = `*${task.title}*\n\n${changesText}\n\n<${shareUrl}|🔗 Zobacz zadanie>`
+  if (task.githubPrUrl) {
+    text += ` | <${task.githubPrUrl}|🐙 Pull Request>`
+  }
+
+  const result = await sendTaskMessageToSlack({
+    taskId: task.id,
+    channelId,
+    token,
+    text,
+  })
+
+  if (!result.ok) {
+    console.error(`[Slack] Failed to send task ${task.id}: ${result.error}`)
+    return result
+  }
+
+  // Mark as sent (clearing any pending scheduled time) and record the Slack
+  // message reference so it can be deleted later if needed.
+  await prisma.task.update({
+    where: { id: task.id },
+    data: {
+      changesSentAt: new Date(),
+      changesScheduledSendAt: null,
+      changesSlackTs: result.ts ?? null,
+      changesSlackChannelId: result.channel ?? channelId,
+    },
+  })
+
+  return result
 }
 
 // Delete a previously posted message from a Slack channel via chat.delete.

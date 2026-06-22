@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { deleteGithubBranch } from "@/lib/github"
+import { sendDoneTaskChangesToSlack } from "@/lib/slack-task-message"
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 const OPENROUTER_MODEL = "deepseek/deepseek-v4-flash"
@@ -545,10 +546,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 5. Save the changes and move the task to Done. Set scheduled send time to 1 hour from now.
-    const scheduledSendAt = new Date()
-    scheduledSendAt.setHours(scheduledSendAt.getHours() + 1)
-
+    // 5. Save the changes and move the task to Done.
     let githubPrUrl = payload.pullRequestUrl
     if (!githubPrUrl) {
       const prNumber = extractPrNumber(payload)
@@ -562,7 +560,6 @@ export async function POST(request: NextRequest) {
       data: {
         changes,
         ...(doneStatus ? { statusId: doneStatus.id } : {}),
-        changesScheduledSendAt: scheduledSendAt,
         ...(githubPrUrl ? { githubPrUrl } : {}),
         ...(newCreatedAt ? { createdAt: newCreatedAt } : {}),
       },
@@ -604,6 +601,14 @@ export async function POST(request: NextRequest) {
     // Invariant: every card must end up with at least one subtask that has
     // reported time. Add a fallback subtask when the commits produced none.
     await ensureReportedSubtask(task, loggedUserId)
+
+    // Post the change note to Slack right away now that the task is in Done.
+    // Best-effort: a Slack failure must not fail the webhook.
+    try {
+      await sendDoneTaskChangesToSlack(updated.id)
+    } catch (error) {
+      console.error("[Merge Request] Error sending Slack message on move to Done:", error)
+    }
 
     console.log(
       `[Merge Request] Task ${task.key || task.id} updated with changes and moved to "${doneStatus?.name ?? "(unchanged)"}" for branch "${branch}"`
