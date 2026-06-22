@@ -59,7 +59,6 @@ import {
   formatProjectDisplay,
 } from "@/lib/task-format-utils"
 import { TaskDetailsDialog } from "../tasks/task-details-dialog"
-import { autoScheduleSlackForDoneTask } from "@/lib/auto-schedule-slack"
 
 // Domyślny termin wykonania dla nowych zadań: teraz + 1 dzień + 1 godzina.
 function getDefaultDueDate(): Date {
@@ -1263,12 +1262,9 @@ export function KanbanBoard({
       })
 
       if (response.ok) {
-        // Card dropped into "Done": queue its Slack send right after the
-        // project's latest pending scheduled send, offset by the time reported
-        // on the task. No pending send in the project = nothing happens.
-        if (newStatus.name === "Done") {
-          await autoScheduleSlackForDoneTask(taskId)
-        }
+        // Dropping a card into "Done" queues its Slack change-note send; that is
+        // handled server-side by the task PATCH endpoint (it detects the move to
+        // Done), so no extra client call is needed here.
         onTaskUpdatedRef.current()
       } else {
         // Rollback on error

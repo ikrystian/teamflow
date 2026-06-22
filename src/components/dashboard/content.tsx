@@ -16,7 +16,6 @@ import { toast } from "sonner"
 import { PrintTodosDialog } from "./print-todos-dialog"
 import { UserReportSummary } from "./user-report-summary"
 import { TagsSummary } from "./tags-summary"
-import { autoScheduleSlackForDoneTask } from "@/lib/auto-schedule-slack"
 
 export function DashboardContent() {
   const { data: session } = useSession() as { data: Session | null }
@@ -171,7 +170,8 @@ export function DashboardContent() {
         toast.error("Nie udało się oznaczyć zadania jako zakończone")
       } else {
         toast.success("Zadanie oznaczone jako zakończone")
-        await autoScheduleSlackForDoneTask(task.id)
+        // The Slack change-note send is queued server-side by the task PATCH
+        // endpoint when it detects the move to Done.
         await fetchTasks()
       }
     } catch (error) {

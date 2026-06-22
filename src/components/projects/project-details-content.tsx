@@ -23,6 +23,7 @@ import {
   LayoutGrid,
   Settings,
   Info,
+  Send,
 } from "lucide-react"
 import Link from "next/link"
 import { KanbanBoard } from "@/components/shared/kanban-board"
@@ -98,6 +99,9 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   // while the badge still reflects the full count.
   const [boardColumns, setBoardColumns] = useState<Record<string, BoardColumn>>({})
   const [boardLoaded, setBoardLoaded] = useState(false)
+  // Date of the project's latest scheduled / already-sent Slack change-note
+  // message, shown at the top of the board.
+  const [lastSlackSendAt, setLastSlackSendAt] = useState<string | null>(null)
   const boardColumnsRef = useRef<Record<string, BoardColumn>>({})
   boardColumnsRef.current = boardColumns
   const loadingColumnsRef = useRef<Set<string>>(new Set())
@@ -141,6 +145,18 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
       setLoading(false)
     }
   }, [projectId, router, viewMode])
+
+  const fetchLastSlackSend = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}/slack-last-send`)
+      if (response.ok) {
+        const data = await response.json()
+        setLastSlackSendAt(data.lastSlackSendAt ?? null)
+      }
+    } catch (error) {
+      console.error("Error fetching last Slack send:", error)
+    }
+  }, [projectId])
 
   const checkAdminStatus = useCallback(async () => {
     if (session?.user) {
@@ -219,7 +235,8 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     )
     setBoardColumns(Object.fromEntries(results))
     setBoardLoaded(true)
-  }, [taskStatuses, fetchColumnPage])
+    fetchLastSlackSend()
+  }, [taskStatuses, fetchColumnPage, fetchLastSlackSend])
 
   // Append the next page of tasks to a column when the user scrolls near its end.
   const loadMoreColumn = useCallback(
@@ -259,7 +276,8 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     )
     setBoardColumns(Object.fromEntries(results))
     setBoardLoaded(true)
-  }, [taskStatuses, fetchColumnPage])
+    fetchLastSlackSend()
+  }, [taskStatuses, fetchColumnPage, fetchLastSlackSend])
 
   // Load board pages once the statuses are known (and reload when the filter changes).
   useEffect(() => {
@@ -791,6 +809,15 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
               <div>
                 <h2 className={`text-lg font-semibold ${project.imageUrl ? "text-white drop-shadow-md" : "text-foreground"}`}>Tablica zadań</h2>
                 <p className={`text-sm ${project.imageUrl ? "text-white/90 drop-shadow-md" : "text-muted-foreground"}`}>Przeciągnij zadania między kolumnami, aby zaktualizować ich status</p>
+                <p className={`mt-1 flex items-center gap-1.5 text-xs ${project.imageUrl ? "text-white/90 drop-shadow-md" : "text-muted-foreground"}`}>
+                  <Send className="h-3.5 w-3.5" />
+                  Ostatnia zaplanowana wysyłka na Slack:{" "}
+                  <span className="font-medium">
+                    {lastSlackSendAt
+                      ? new Date(lastSlackSendAt).toLocaleString("pl-PL")
+                      : "brak"}
+                  </span>
+                </p>
               </div>
               <div className="flex items-center space-x-2">
                 <QuickAddTaskCommand

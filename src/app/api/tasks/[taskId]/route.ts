@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { isAdmin } from "@/lib/admin"
 import { deleteGithubBranch } from "@/lib/github"
+import { autoScheduleDoneTaskSlackSend } from "@/lib/slack-auto-schedule"
 import type { Session } from "next-auth"
 
 // Done-equivalent status names, lowercased. SQLite equality is case-sensitive,
@@ -500,6 +501,15 @@ export async function PATCH(
             }
           })
         }
+      }
+
+      // Queue this finished task's Slack change-note send (anchored to the
+      // project's latest scheduled/sent message). Best-effort: a scheduling
+      // failure must not block the status update itself.
+      try {
+        await autoScheduleDoneTaskSlackSend(resolvedTaskId)
+      } catch (error) {
+        console.error("Error auto-scheduling Slack send on move to Done:", error)
       }
     }
 
