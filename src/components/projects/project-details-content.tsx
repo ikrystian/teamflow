@@ -32,6 +32,7 @@ import { TaskDetailsDialog } from "../tasks/task-details-dialog"
 import { TimeTrackingSheet } from "../tasks/time-tracking-sheet"
 import { TaskBoardFilters } from "./task-board-filters"
 import { QuickAddTaskCommand } from "./quick-add-task-command"
+import { CreateTaskFromCommitDialog } from "./create-task-from-commit-dialog"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -686,6 +687,10 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                   onFilterChange={handleFilterChange}
                   taskCounts={getTaskCounts(tasks)}
                 />
+                <CreateTaskFromCommitDialog
+                  projectId={projectId}
+                  onTaskCreated={refreshActiveView}
+                />
                 <Button onClick={handleCreateTask} size="sm">
                   <Plus className="mr-2 h-4 w-4" />
                   Dodaj zadanie
@@ -826,7 +831,10 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                   onOptimisticCreate={handleOptimisticCreate}
                   onOptimisticRollback={handleOptimisticRollback}
                 />
-
+                <CreateTaskFromCommitDialog
+                  projectId={projectId}
+                  onTaskCreated={refreshActiveView}
+                />
               </div>
             </div>
             {boardLoaded && boardTotal === 0 ? (
