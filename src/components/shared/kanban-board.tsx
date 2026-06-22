@@ -8,7 +8,7 @@ import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar, Clock, MoreHorizontal, Plus, AlertCircle, Trash2, X, Check, Loader2, Send, GitBranch, Archive, BarChart3 } from "lucide-react"
+import { Calendar, Clock, MoreHorizontal, Plus, AlertCircle, Trash2, X, Check, Loader2, Send, CalendarClock, GitBranch, Archive, BarChart3 } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -285,6 +285,19 @@ function SortableTaskCard({
                       {task.changesSentAt && (
                         <div title="Wiadomość wysłana na Slack" className="inline-flex">
                           <Send className="h-3 w-3 text-green-600 flex-shrink-0" />
+                        </div>
+                      )}
+                      {!task.changesSentAt && task.changesScheduledSendAt && (
+                        <div
+                          title={`Zaplanowana wysyłka na Slack: ${new Date(task.changesScheduledSendAt).toLocaleString("pl-PL", {
+                            day: "numeric",
+                            month: "long",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}`}
+                          className="inline-flex"
+                        >
+                          <CalendarClock className="h-3 w-3 text-blue-500 flex-shrink-0" />
                         </div>
                       )}
                       {task.githubBranchName && (
