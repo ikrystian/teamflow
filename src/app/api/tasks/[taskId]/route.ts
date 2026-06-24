@@ -6,7 +6,8 @@ import { isAdmin } from "@/lib/admin"
 import { deleteGithubBranch } from "@/lib/github"
 import { sendDoneTaskChangesToSlack } from "@/lib/slack-task-message"
 import { computeAutoMoveAt } from "@/lib/auto-move-tasks"
-import { isDoneStatusName, isInProgressStatusName, isTodoStatusName } from "@/lib/task-status-helpers"
+import { isDoneStatusName, isInProgressStatusName, isTodoStatusName, managerCanEditStatus, managerCanMoveTask } from "@/lib/task-status-helpers"
+import { isManagerRole } from "@/lib/roles"
 import type { Session } from "next-auth"
 
 export async function GET(
@@ -185,7 +186,8 @@ export async function PATCH(
       include: {
         createdBy: true,
         assignee: true,
-        project: true
+        project: true,
+        taskStatus: { select: { name: true } }
       }
     })
 
@@ -249,6 +251,44 @@ export async function PATCH(
         { error: "You can only edit tasks you created or are assigned to" },
         { status: 403 }
       )
+    }
+
+    // Managers have the same base permissions as a regular user, but on the
+    // board they are restricted to: editing tasks in To Do / To Test, and
+    // moving tasks only out of To Test (into To Do or Archive) — never into or
+    // out of In Progress / Done. Enforce that here (the source of truth).
+    if (isManagerRole(session.user.role)) {
+      const currentStatusName = existingTask.taskStatus?.name
+      const isStatusChange = statusId !== undefined && statusId !== existingTask.statusId
+
+      if (isStatusChange) {
+        const targetStatus = await prisma.taskStatus.findUnique({
+          where: { id: statusId },
+          select: { name: true },
+        })
+        if (!managerCanMoveTask(currentStatusName, targetStatus?.name)) {
+          return NextResponse.json(
+            { error: "Jako Manager możesz przenosić zadania tylko z kolumny 'To Test' do 'To Do' lub 'Archive'." },
+            { status: 403 }
+          )
+        }
+      }
+
+      // Any content edit (or a reorder within a column) requires the task to be
+      // in a column the manager may edit (To Do / To Test).
+      const isReorder = createdAt !== undefined && !isStatusChange
+      const isContentEdit = [
+        title, description, changes, priority, dueDate, startTime, endTime,
+        assigneeId, estimatedHours, projectId, reminderEnabled, reminderType,
+        reminderValue, tagIds, subtasksToCreate, subtasksToUpdate, deletedSubtaskIds,
+      ].some(v => v !== undefined)
+
+      if ((isContentEdit || isReorder) && !managerCanEditStatus(currentStatusName)) {
+        return NextResponse.json(
+          { error: "Jako Manager możesz edytować tylko zadania w kolumnach 'To Do' i 'To Test'." },
+          { status: 403 }
+        )
+      }
     }
 
     // If statusId is provided, verify it exists globally
@@ -655,7 +695,8 @@ export async function DELETE(
       include: {
         createdBy: true,
         assignee: true,
-        project: true
+        project: true,
+        taskStatus: { select: { name: true } }
       }
     })
 
@@ -687,6 +728,14 @@ export async function DELETE(
     if (!canDelete) {
       return NextResponse.json(
         { error: "You don't have permission to delete this task" },
+        { status: 403 }
+      )
+    }
+
+    // Managers may only delete tasks in columns they can edit (To Do / To Test).
+    if (isManagerRole(session.user.role) && !managerCanEditStatus(existingTask.taskStatus?.name)) {
+      return NextResponse.json(
+        { error: "Jako Manager możesz usuwać tylko zadania w kolumnach 'To Do' i 'To Test'." },
         { status: 403 }
       )
     }

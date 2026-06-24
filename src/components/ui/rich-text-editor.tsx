@@ -23,6 +23,8 @@ interface RichTextEditorProps {
   placeholder?: string
   onImageUpload?: (file: File) => Promise<string>
   showToolbarOnFocus?: boolean
+  /** When false the editor is read-only (no toolbar, content not editable). */
+  editable?: boolean
 }
 
 export function RichTextEditor({
@@ -30,7 +32,8 @@ export function RichTextEditor({
   onChange,
   placeholder = "Enter description...",
   onImageUpload,
-  showToolbarOnFocus = false
+  showToolbarOnFocus = false,
+  editable = true
 }: RichTextEditorProps) {
   const [toolbarVisible, setToolbarVisible] = useState(false)
 
@@ -47,6 +50,7 @@ export function RichTextEditor({
       }),
     ],
     content,
+    editable,
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML())
@@ -59,6 +63,11 @@ export function RichTextEditor({
       editor.commands.setContent(content)
     }
   }, [content, editor])
+
+  // Keep the editor's editable state in sync with the prop.
+  useEffect(() => {
+    editor?.setEditable(editable)
+  }, [editor, editable])
 
   const addImage = useCallback(async () => {
     if (!onImageUpload) return
@@ -86,7 +95,7 @@ export function RichTextEditor({
 
   return (
     <div className="border rounded-md">
-      <div className={`border-b p-2 flex flex-wrap gap-1 toolbar ${showToolbarOnFocus && !toolbarVisible ? 'hidden' : ''}`}>
+      <div className={`border-b p-2 flex flex-wrap gap-1 toolbar ${!editable || (showToolbarOnFocus && !toolbarVisible) ? 'hidden' : ''}`}>
         <Button
           type="button"
           variant="ghost"

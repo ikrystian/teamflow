@@ -14,7 +14,7 @@ import { ReminderSettings } from "@/components/tasks/reminder-settings"
 import { FileUpload } from "@/components/ui/file-upload"
 import { Badge } from "@/components/ui/badge"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
-import { Send, Plus, Trash2, Clock, Check, GitBranch, AlertTriangle } from "lucide-react"
+import { Send, Plus, Trash2, Clock, Check, GitBranch, AlertTriangle, Eye } from "lucide-react"
 import { toast } from "sonner"
 import {
   getEstimatedHoursOptions,
@@ -54,6 +54,9 @@ interface TaskFormContentProps {
   // Mode determination
   mode: "create" | "edit"
 
+  // When true the form is shown read-only (view only — no edits/saves).
+  readOnly?: boolean
+
 }
 
 export function TaskFormContent({
@@ -70,6 +73,7 @@ export function TaskFormContent({
   defaultEndTime,
   task,
   mode,
+  readOnly = false,
 }: TaskFormContentProps) {
   const { data: session } = useSession() as { data: Session | null }
 
@@ -151,6 +155,10 @@ export function TaskFormContent({
   // even when the parent passes a new (non-memoized) callback each render.
   const onTaskUpdatedRef = useRef(onTaskUpdated)
   onTaskUpdatedRef.current = onTaskUpdated
+  // Read-only state read from a ref so the stable autoSave callback can bail out
+  // without changing identity (which would retrigger the auto-save watcher).
+  const readOnlyRef = useRef(readOnly)
+  readOnlyRef.current = readOnly
   // Snapshot of the last loaded/saved field values, used to avoid spurious saves.
   const lastSavedSnapshotRef = useRef<string | null>(null)
   // True right after the form is (re)populated from a task, so the first
@@ -478,7 +486,7 @@ export function TaskFormContent({
   // Stable auto-save: reads current values from a ref so its identity never
   // changes, which prevents the watcher effect from re-firing in a loop.
   const autoSave = useCallback(async (snapshotAtCall: string) => {
-    if (!isEditMode || !task) return
+    if (!isEditMode || !task || readOnlyRef.current) return
     const v = formStateRef.current as {
       title: string; description: string; changes: string; statusId: string;
       assigneeId: string; priority: string; dueDate?: Date; startTime?: Date;
@@ -559,7 +567,7 @@ export function TaskFormContent({
   // so a field is saved the moment the user moves to another one instead of
   // waiting for the debounce.
   const flushAutoSave = useCallback(() => {
-    if (!isEditMode) return
+    if (!isEditMode || readOnlyRef.current) return
     if (justLoadedRef.current) return
     if (autoSaveSnapshotRef.current === lastSavedSnapshotRef.current) return
     if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current)
@@ -646,6 +654,7 @@ export function TaskFormContent({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (readOnly) return
     setLoading(true)
     setError("")
 
@@ -1020,7 +1029,13 @@ export function TaskFormContent({
     <>
       {/* Form Content */}
       <form onSubmit={handleSubmit} onBlur={flushAutoSave} className="space-y-6 modal-form">
-        <div className="space-y-4">
+        {readOnly && (
+          <div className="flex items-center gap-2 p-3 text-sm rounded-md border border-amber-300/60 bg-amber-50 text-amber-800 dark:bg-amber-950/30 dark:text-amber-200 dark:border-amber-800/60">
+            <Eye className="h-4 w-4 flex-shrink-0" />
+            Tryb podglądu — nie masz uprawnień do edycji tego zadania.
+          </div>
+        )}
+        <fieldset disabled={readOnly} className="space-y-4 min-w-0 border-0 m-0 p-0 disabled:opacity-100">
           {/* Header Row with Status, Assignee, Priority, Project */}
           {isEditMode && (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 p-0 bg-muted/30 rounded-lg">
@@ -1215,6 +1230,7 @@ export function TaskFormContent({
                 onChange={setDescription}
                 placeholder="Wprowadź szczegółowy opis zadania..."
                 showToolbarOnFocus={true}
+                editable={!readOnly}
               />
             </div>
           </div>
@@ -1666,9 +1682,10 @@ export function TaskFormContent({
               {error}
             </div>
           )}
-        </div>
+        </fieldset>
 
-        {/* Action Buttons */}
+        {/* Action Buttons — hidden in read-only mode (view only) */}
+        {!readOnly && (
         <div className="flex flex-col-reverse sm:flex-row gap-2 pt-6">
           {/* Delete task — edit mode only */}
           {isEditMode && task && (
@@ -1762,6 +1779,7 @@ export function TaskFormContent({
             </div>
           )}
         </div>
+        )}
       </form>
     </>
   )

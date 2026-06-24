@@ -46,6 +46,8 @@ import {
 import { type Task, type Project, type TaskStatus } from "@/types"
 import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
 import { softDeleteTaskWithUndo } from "@/lib/task-delete"
+import { isManagerRole } from "@/lib/roles"
+import { managerCanEditStatus } from "@/lib/task-status-helpers"
 import { toast } from "sonner"
 
 interface ProjectDetailsContentProps {
@@ -502,10 +504,20 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
       return projectMembers.some(member => member.id === session.user.id) || false
     }
 
-    // User can edit if they are the assignee, creator, or project member
-    return task.createdBy?.id === session.user.id ||
+    // Base permission: user can edit if they are the assignee, creator, or member
+    const baseCanEdit = task.createdBy?.id === session.user.id ||
       task.assignee?.id === session.user.id ||
       projectMembers.some(member => member.id === session.user.id) || false
+
+    if (!baseCanEdit) return false
+
+    // Managers are further restricted to tasks in To Do / To Test.
+    if (isManagerRole(session.user.role)) {
+      const statusName = taskStatuses.find(s => s.id === task.statusId)?.name ?? task.taskStatus?.name
+      if (!managerCanEditStatus(statusName)) return false
+    }
+
+    return true
   }
 
 

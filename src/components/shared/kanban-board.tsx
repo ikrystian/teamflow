@@ -51,6 +51,8 @@ import type { Task, TaskStatus } from "@/types"
 import type { Session } from "next-auth"
 import { toast } from "sonner"
 import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
+import { isManagerRole } from "@/lib/roles"
+import { managerCanCreateInStatus, managerCanDragFrom, managerCanMoveTask } from "@/lib/task-status-helpers"
 import {
   getPriorityColor,
   getPriorityShortName,
@@ -125,6 +127,7 @@ function SortableTaskCard({
   onViewDetails,
   onDelete,
   canEdit,
+  canDrag = true,
   isUpdating = false,
   onMarkComplete,
   taskStatuses,
@@ -138,6 +141,8 @@ function SortableTaskCard({
   onViewDetails: (task: Task) => void
   onDelete: (task: Task) => void
   canEdit: boolean
+  /** Whether this card can be picked up and dragged (false = locked in place). */
+  canDrag?: boolean
   isUpdating?: boolean
   onMarkComplete?: (task: Task) => void
   taskStatuses: TaskStatus[]
@@ -154,6 +159,9 @@ function SortableTaskCard({
   useEffect(() => {
     const element = ref.current
     if (!element) return
+    // Cards the current user may not move (e.g. a manager viewing In Progress /
+    // Done) are not registered as draggable, so they stay locked in place.
+    if (!canDrag) return
 
     return draggable({
       element,
@@ -175,7 +183,7 @@ function SortableTaskCard({
       onDragStart: () => setIsDragging(true),
       onDrop: () => setIsDragging(false),
     })
-  }, [task.id, task.statusId])
+  }, [task.id, task.statusId, canDrag])
 
   // Drop target reporting whether the pointer is closer to the top or bottom
   // edge of this card, so the indicator (and the drop) can land on either side.
@@ -236,7 +244,7 @@ function SortableTaskCard({
     <div className="relative">
       <div
         ref={ref}
-        className={`touch-none cursor-grab active:cursor-grabbing transition-all duration-200 ${isDeleting ? 'opacity-0 scale-95' : 'opacity-100 scale-100 animate-in fade-in'
+        className={`touch-none ${canDrag ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'} transition-all duration-200 ${isDeleting ? 'opacity-0 scale-95' : 'opacity-100 scale-100 animate-in fade-in'
           } ${isDragging ? 'opacity-40' : ''}`}
       >
         <DropdownMenu open={isContextMenuOpen} onOpenChange={setIsContextMenuOpen}>
@@ -634,6 +642,8 @@ function KanbanColumn({
   onViewDetails,
   onDelete,
   canEdit,
+  canDrag,
+  canQuickAdd = true,
   onTaskCreated,
   projectId,
   projects,
@@ -659,6 +669,10 @@ function KanbanColumn({
   onViewDetails: (task: Task) => void
   onDelete: (task: Task) => void
   canEdit: (task: Task) => boolean
+  /** Whether a given card in this column can be dragged by the current user. */
+  canDrag: (task: Task) => boolean
+  /** Whether the quick-add box should be shown in this column. */
+  canQuickAdd?: boolean
   onTaskCreated: () => void
   projectId?: string
   projects?: Array<{ id: string; name: string }>
@@ -901,6 +915,7 @@ function KanbanColumn({
               onViewDetails={onViewDetails}
               onDelete={onDelete}
               canEdit={canEdit(task)}
+              canDrag={canDrag(task)}
               isUpdating={updatingTasks.has(task.id)}
               onMarkComplete={onMarkComplete}
               taskStatuses={taskStatuses}
@@ -918,8 +933,9 @@ function KanbanColumn({
             </div>
           )}
 
-          {/* Show add task button only in the default column */}
-          {status.isDefault && (
+          {/* Show add task button only in the default column (and only where
+              the current user is allowed to create — managers: "To Do" only) */}
+          {status.isDefault && canQuickAdd && (
             <div className="space-y-2">
               <QuickAddTask
                 status={status}
@@ -1129,6 +1145,7 @@ export function KanbanBoard({
 }: KanbanBoardProps) {
   const { data: sessionFromHook } = useSession()
   const session: Session | null = (sessionProp ?? (sessionFromHook as Session | null)) ?? null
+  const isManager = isManagerRole(session?.user?.role)
 
   const boardRef = useRef<HTMLDivElement>(null)
   const [fetchedTaskStatuses, setFetchedTaskStatuses] = useState<TaskStatus[]>([])
@@ -1139,6 +1156,16 @@ export function KanbanBoard({
 
   const taskStatuses = taskStatusesProp ?? fetchedTaskStatuses
   const shouldShowProjectName = showProjectName ?? !projectId
+
+  const statusNameById = (statusId?: string | null): string | undefined =>
+    taskStatuses.find(s => s.id === statusId)?.name
+
+  // Managers can only pick up cards in columns they may edit/move (To Do / To
+  // Test); every other user can drag anything they have access to.
+  const canDragTask = (task: Task): boolean => {
+    if (!isManager) return true
+    return managerCanDragFrom(statusNameById(task.statusId) ?? task.taskStatus?.name)
+  }
 
   // Keep latest data accessible inside the drag monitor without re-registering it.
   const displayTasks = optimisticTasks
@@ -1255,6 +1282,20 @@ export function KanbanBoard({
 
     // Dropping a card onto itself never moves anything.
     if (target?.taskId === taskId) return
+
+    // Managers may only move tasks out of "To Test" (into "To Do"/"Archive") or
+    // reorder within "To Do"/"To Test". Block disallowed drops before the
+    // optimistic update so the card doesn't jump and then snap back.
+    if (isManager) {
+      const fromName = statusNameById(task.statusId) ?? task.taskStatus?.name
+      const toName = newStatus.name
+      if (!managerCanMoveTask(fromName, toName)) {
+        toast.error("Jako Manager nie możesz przenieść zadania do tej kolumny.", {
+          id: `move-task-${taskId}`,
+        })
+        return
+      }
+    }
 
     const getTime = (t: Task) => (t.createdAt ? new Date(t.createdAt).getTime() : 0)
     const columnTasks = currentTasks
@@ -1492,6 +1533,8 @@ export function KanbanBoard({
             onViewDetails={handleViewDetails}
             onDelete={onTaskDelete}
             canEdit={canEditTask}
+            canDrag={canDragTask}
+            canQuickAdd={!isManager || managerCanCreateInStatus(status.name)}
             onTaskCreated={onTaskUpdated}
             projectId={projectId}
             projects={projects}

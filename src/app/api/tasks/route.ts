@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { isAdmin } from "@/lib/admin"
 import { createTaskWithKey } from "@/lib/task-key"
+import { isManagerRole } from "@/lib/roles"
+import { managerCanCreateInStatus } from "@/lib/task-status-helpers"
 
 export async function GET(request: NextRequest) {
   try {
@@ -242,6 +244,7 @@ export async function POST(request: NextRequest) {
     }
 
     let finalStatusId = statusId
+    let finalStatusName: string | undefined
 
     // If statusId is provided, verify it exists globally
     if (statusId) {
@@ -257,6 +260,7 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         )
       }
+      finalStatusName = taskStatus.name
     } else {
       // If no statusId provided, find the default status globally
       const defaultStatus = await prisma.taskStatus.findFirst({
@@ -267,7 +271,16 @@ export async function POST(request: NextRequest) {
 
       if (defaultStatus) {
         finalStatusId = defaultStatus.id
+        finalStatusName = defaultStatus.name
       }
+    }
+
+    // Managers may only create tasks in the "To Do" column.
+    if (isManagerRole((session.user as { role?: string }).role) && !managerCanCreateInStatus(finalStatusName)) {
+      return NextResponse.json(
+        { error: "Jako Manager możesz dodawać zadania tylko w kolumnie 'To Do'." },
+        { status: 403 }
+      )
     }
 
     // Oblicz reminderTime jeśli przypomnienie jest włączone

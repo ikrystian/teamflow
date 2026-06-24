@@ -15,6 +15,8 @@ import { type Task, type Project, type TaskStatus } from "@/types"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { GithubWebhookLogs } from "@/components/dashboard/github-webhook-logs"
 import { softDeleteTaskWithUndo } from "@/lib/task-delete"
+import { isManagerRole } from "@/lib/roles"
+import { managerCanEditStatus } from "@/lib/task-status-helpers"
 import { toast } from "sonner"
 
 export function UserTasksBoardContent() {
@@ -139,8 +141,15 @@ export function UserTasksBoardContent() {
 
   const canEditTask = useCallback((task: Task) => {
     if (!session?.user?.id) return false
-    return task.assignee?.id === session.user.id || task.createdBy?.id === session.user.id || isAdmin
-  }, [session?.user?.id, isAdmin])
+    const baseCanEdit = task.assignee?.id === session.user.id || task.createdBy?.id === session.user.id || isAdmin
+    if (!baseCanEdit) return false
+    // Managers are further restricted to tasks in To Do / To Test.
+    if (isManagerRole(session.user.role)) {
+      const statusName = taskStatuses.find(s => s.id === task.statusId)?.name ?? task.taskStatus?.name
+      if (!managerCanEditStatus(statusName)) return false
+    }
+    return true
+  }, [session?.user?.id, session?.user?.role, isAdmin, taskStatuses])
 
   // Page Header content
   usePageHeader(

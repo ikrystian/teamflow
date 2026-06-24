@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { isAdmin } from "@/lib/admin"
+import { isManagerRole } from "@/lib/roles"
 import type { Session } from "next-auth"
 
 export async function POST(request: NextRequest) {
@@ -11,6 +12,14 @@ export async function POST(request: NextRequest) {
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    // Managers cannot perform bulk column operations (delete/archive all).
+    if (isManagerRole(session.user.role)) {
+      return NextResponse.json(
+        { error: "Jako Manager nie możesz wykonywać operacji zbiorczych na kolumnach." },
+        { status: 403 }
+      )
     }
 
     const { taskIds, statusId, projectId, assigneeId, action } = await request.json()

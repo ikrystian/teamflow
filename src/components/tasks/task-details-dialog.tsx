@@ -30,11 +30,15 @@ export function TaskDetailsDialog({
   onTaskUpdated,
   onTaskCreated,
   onTaskDeleted,
+  canEdit,
   mode = "edit",
   projectId,
   projects = [],
 }: TaskDetailsDialogProps) {
   const isCreateMode = mode === "create"
+  // In edit mode, an explicit canEdit={false} renders the task read-only
+  // (e.g. a manager viewing an In Progress / Done task).
+  const readOnly = !isCreateMode && canEdit === false
 
   // Reflect the opened task in the URL (e.g. ?task=PS-12) and restore the
   // previous URL when the dialog closes. Edit mode only — create has no key.
@@ -76,6 +80,7 @@ export function TaskDetailsDialog({
           <TaskFormContent
             task={task}
             mode={mode}
+            readOnly={readOnly}
             projectId={projectId}
             projects={projects}
             onClose={() => onOpenChange(false)}

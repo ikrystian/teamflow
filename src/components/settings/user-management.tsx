@@ -220,12 +220,23 @@ export function UserManagement() {
   }
 
   const getRoleBadge = (role: string) => {
-    return role === "admin" ? (
-      <Badge variant="destructive" className="flex items-center gap-1">
-        <Shield className="h-3 w-3" />
-        Administrator
-      </Badge>
-    ) : (
+    if (role === "admin") {
+      return (
+        <Badge variant="destructive" className="flex items-center gap-1">
+          <Shield className="h-3 w-3" />
+          Administrator
+        </Badge>
+      )
+    }
+    if (role === "manager") {
+      return (
+        <Badge variant="default" className="flex items-center gap-1">
+          <Briefcase className="h-3 w-3" />
+          Manager
+        </Badge>
+      )
+    }
+    return (
       <Badge variant="secondary" className="flex items-center gap-1">
         <User className="h-3 w-3" />
         Użytkownik
@@ -425,6 +436,7 @@ export function UserManagement() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="user">Użytkownik</SelectItem>
+                      <SelectItem value="manager">Manager</SelectItem>
                       <SelectItem value="admin">Administrator</SelectItem>
                     </SelectContent>
                   </Select>

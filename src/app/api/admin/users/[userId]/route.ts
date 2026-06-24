@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getAdminSession } from "@/lib/admin"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
+import { ASSIGNABLE_ROLES } from "@/lib/roles"
 
 // Type for user update data
 interface UserUpdateData {
@@ -126,7 +127,7 @@ export async function PATCH(
     } = body
 
     // Validate role if provided
-    if (role && !["user", "admin"].includes(role)) {
+    if (role && !(ASSIGNABLE_ROLES as readonly string[]).includes(role)) {
       return NextResponse.json({ error: "Invalid role" }, { status: 400 })
     }
 
