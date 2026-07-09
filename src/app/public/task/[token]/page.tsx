@@ -202,7 +202,7 @@ function getMarkdownComponents(projectColor: string): Record<string, React.Compo
 async function getSharedTask(token: string) {
   if (!token) return null
 
-  return prisma.task.findUnique({
+  return prisma.task.findFirst({
     where: { shareToken: token },
     include: {
       taskStatus: { select: { name: true, color: true } },

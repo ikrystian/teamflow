@@ -15,7 +15,7 @@ export default async function Image({
 }) {
   const { token } = await params
 
-  const task = await prisma.task.findUnique({
+  const task = await prisma.task.findFirst({
     where: { shareToken: token },
     include: {
       taskStatus: { select: { name: true, color: true } },

@@ -9,30 +9,8 @@
 require('dotenv').config()
 
 const { PrismaClient } = require('@prisma/client')
-const { PrismaBetterSqlite3 } = require('@prisma/adapter-better-sqlite3')
-const path = require('path')
 
-const getDatabaseUrl = () => {
-  const url = process.env.DATABASE_URL || 'file:./dev.db'
-  if (url.startsWith('file:')) {
-    const dbPath = url.replace(/^file:/, '')
-    if (!path.isAbsolute(dbPath)) {
-      const projectRoot = path.resolve(__dirname, '..')
-      const targetPath = dbPath.startsWith('./prisma/') || dbPath.startsWith('prisma/')
-        ? dbPath
-        : path.join('prisma', dbPath)
-      const absoluteDbPath = path.resolve(projectRoot, targetPath)
-      return `file:${absoluteDbPath}`
-    }
-  }
-  return url
-}
-
-const adapter = new PrismaBetterSqlite3({
-  url: getDatabaseUrl(),
-})
-
-const prisma = new PrismaClient({ adapter })
+const prisma = new PrismaClient()
 
 
 async function buildTaskShareUrl(token) {

@@ -3,12 +3,13 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
 }
 
 
 model User {
-  id                  String               @id @default(cuid())
+  id                  String               @id @default(cuid()) @map("_id")
   name                String?
   email               String               @unique
   password            String
@@ -40,7 +41,7 @@ model User {
 }
 
 model Project {
-  id             String            @id @default(cuid())
+  id             String            @id @default(cuid()) @map("_id")
   name           String
   description    String?
   readme         String?
@@ -54,7 +55,9 @@ model Project {
   stagingUrl     String?
   productionUrl  String?
   credentials    String?
-  shareToken     String?           @unique
+  // Unique via a partial index created by scripts/fix-mongo-indexes.js
+  // (Prisma @unique cannot express nullable uniques on MongoDB).
+  shareToken     String?
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
   createdById    String
@@ -74,7 +77,7 @@ model Project {
 }
 
 model Client {
-  id            String    @id @default(cuid())
+  id            String    @id @default(cuid()) @map("_id")
   name          String
   contactPerson String?
   email         String?
@@ -91,7 +94,7 @@ model Client {
 }
 
 model Task {
-  id                     String           @id @default(cuid())
+  id                     String           @id @default(cuid()) @map("_id")
   title                  String
   description            String?
   statusId               String?
@@ -112,11 +115,14 @@ model Task {
   reminderType           String?
   reminderValue          Int?
   changes                String?
-  key                    String?          @unique
+  // key and shareToken are unique via partial indexes created by
+  // scripts/fix-mongo-indexes.js (Prisma @unique cannot express nullable
+  // uniques on MongoDB).
+  key                    String?
   changesSentAt          DateTime?
   changesSlackTs         String?
   changesSlackChannelId  String?
-  shareToken             String?          @unique
+  shareToken             String?
   changesScheduledSendAt DateTime?
   autoMoveToDoneAt       DateTime?
   githubBranchName       String?
@@ -135,7 +141,7 @@ model Task {
 }
 
 model Tag {
-  id        String    @id @default(cuid())
+  id        String    @id @default(cuid()) @map("_id")
   name      String    @unique
   color     String    @default("#6B7280")
   createdAt DateTime  @default(now())
@@ -144,7 +150,7 @@ model Tag {
 }
 
 model TaskTag {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid()) @map("_id")
   taskId    String
   tagId     String
   createdAt DateTime @default(now())
@@ -155,7 +161,7 @@ model TaskTag {
 }
 
 model Todo {
-  id          String   @id @default(cuid())
+  id          String   @id @default(cuid()) @map("_id")
   title       String
   isCompleted Boolean  @default(false)
   timeSpent   Float?
@@ -166,7 +172,7 @@ model Todo {
 }
 
 model TaskStatus {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid()) @map("_id")
   name      String   @unique
   color     String   @default("#6B7280")
   order     Int      @unique
@@ -177,7 +183,7 @@ model TaskStatus {
 }
 
 model TaskImage {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid()) @map("_id")
   filename  String
   url       String
   mimeType  String
@@ -188,7 +194,7 @@ model TaskImage {
 }
 
 model TaskAttachment {
-  id           String   @id @default(cuid())
+  id           String   @id @default(cuid()) @map("_id")
   filename     String
   originalName String
   url          String
@@ -204,7 +210,7 @@ model TaskAttachment {
 }
 
 model Comment {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid()) @map("_id")
   content   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -215,7 +221,7 @@ model Comment {
 }
 
 model TimeEntry {
-  id          String   @id @default(cuid())
+  id          String   @id @default(cuid()) @map("_id")
   hours       Float
   description String?
   date        DateTime @default(now())
@@ -228,7 +234,7 @@ model TimeEntry {
 }
 
 model ProjectDocument {
-  id           String   @id @default(cuid())
+  id           String   @id @default(cuid()) @map("_id")
   filename     String
   url          String
   mimeType     String
@@ -244,7 +250,7 @@ model ProjectDocument {
 }
 
 model Session {
-  id           String   @id @default(cuid())
+  id           String   @id @default(cuid()) @map("_id")
   sessionToken String   @unique
   userId       String
   expires      DateTime
@@ -255,7 +261,7 @@ model Session {
 }
 
 model PushSubscription {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid()) @map("_id")
   userId    String
   endpoint  String
   p256dh    String
@@ -269,7 +275,7 @@ model PushSubscription {
 }
 
 model ChatRoom {
-  id          String         @id @default(cuid())
+  id          String         @id @default(cuid()) @map("_id")
   name        String?
   type        String         @default("group")
   projectId   String?
@@ -283,7 +289,7 @@ model ChatRoom {
 }
 
 model Message {
-  id         String   @id @default(cuid())
+  id         String   @id @default(cuid()) @map("_id")
   content    String
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -294,7 +300,7 @@ model Message {
 }
 
 model UserChatRoom {
-  id         String    @id @default(cuid())
+  id         String    @id @default(cuid()) @map("_id")
   userId     String
   chatRoomId String
   joinedAt   DateTime  @default(now())
@@ -306,7 +312,7 @@ model UserChatRoom {
 }
 
 model GithubWebhookLog {
-  id           String   @id @default(cuid())
+  id           String   @id @default(cuid()) @map("_id")
   event        String?
   action       String?
   payload      String
@@ -319,7 +325,7 @@ model GithubWebhookLog {
 }
 
 model PasswordResetToken {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid()) @map("_id")
   token     String   @unique
   userId    String
   expires   DateTime
@@ -329,7 +335,7 @@ model PasswordResetToken {
 }
 
 model ProjectMember {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid()) @map("_id")
   projectId String
   userId    String
   role      String   @default("member")
