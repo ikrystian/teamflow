@@ -361,19 +361,19 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   // Set page header content
   usePageHeader(
     project ? (
-      <div className="flex items-center justify-between w-full">
-        <div className="flex items-center space-x-4">
+      <div className="flex items-center justify-between gap-2 w-full min-w-0">
+        <div className="flex items-center space-x-4 min-w-0">
           <Link href="/dashboard/projects">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">{project.name}</h1>
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold text-foreground truncate">{project.name}</h1>
           </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <Badge>
+        <div className="flex items-center space-x-2 shrink-0">
+          <Badge className="hidden lg:inline-flex">
             {project.status}
           </Badge>
 
@@ -405,23 +405,25 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
             </Button>
           </div>
 
+          {/* Below lg the outline buttons collapse to icons so the fixed-height
+              header doesn't overflow horizontally on medium screens. */}
           <Link href={`/dashboard/projects/${projectId}/settings`}>
-            <Button variant="outline" size="sm">
-              <Settings className="mr-2 h-4 w-4" />
-              Ustawienia
+            <Button variant="outline" size="sm" title="Ustawienia">
+              <Settings className="h-4 w-4 lg:mr-2" />
+              <span className="hidden lg:inline">Ustawienia</span>
             </Button>
           </Link>
 
           <Link href={`/dashboard/projects/${projectId}/info`}>
-            <Button variant="outline" size="sm">
-              <Info className="mr-2 h-4 w-4" />
-              Informacje o projekcie
+            <Button variant="outline" size="sm" title="Informacje o projekcie">
+              <Info className="h-4 w-4 lg:mr-2" />
+              <span className="hidden lg:inline">Informacje o projekcie</span>
             </Button>
           </Link>
 
-          <Button onClick={handleCreateTask}>
-            <Plus className="mr-2 h-4 w-4" />
-            Dodaj zadanie
+          <Button onClick={handleCreateTask} title="Dodaj zadanie">
+            <Plus className="h-4 w-4 lg:mr-2" />
+            <span className="hidden lg:inline">Dodaj zadanie</span>
           </Button>
         </div>
       </div>

@@ -369,6 +369,7 @@ export async function PATCH(
       reminderType?: string | null;
       reminderValue?: number | null;
       reminderTime?: Date | null;
+      reminderSentAt?: Date | null;
       createdAt?: Date;
       autoMoveToDoneAt?: Date | null;
     } = {}
@@ -392,6 +393,8 @@ export async function PATCH(
       updateData.reminderEnabled = reminderEnabled
       updateData.reminderType = reminderEnabled ? reminderType : null
       updateData.reminderValue = reminderEnabled ? reminderValue : null
+      // (Re)scheduling resets the delivery marker so the reminder fires again.
+      updateData.reminderSentAt = null
 
       // Oblicz reminderTime jeśli przypomnienie jest włączone
       if (reminderEnabled && (dueDate !== undefined || existingTask.dueDate) && reminderType && reminderValue) {
@@ -433,7 +436,7 @@ export async function PATCH(
       // Create new subtasks
       if (Array.isArray(subtasksToCreate) && subtasksToCreate.length > 0) {
         await prisma.todo.createMany({
-          data: subtasksToCreate.map((subtask: any) => ({
+          data: subtasksToCreate.map((subtask: { title: string; timeSpent?: number | null }) => ({
             taskId: resolvedTaskId,
             title: subtask.title,
             timeSpent: subtask.timeSpent,

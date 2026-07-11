@@ -104,13 +104,13 @@ export function ReminderSettings({
 
   if (!isSupported) {
     return (
-      <Card className="border-orange-200 bg-orange-50">
+      <Card className="border-orange-200 bg-orange-50 dark:border-orange-900 dark:bg-orange-950/30">
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2 text-orange-700">
+          <CardTitle className="text-sm flex items-center gap-2 text-orange-700 dark:text-orange-400">
             <AlertCircle className="h-4 w-4" />
             Powiadomienia niedostępne
           </CardTitle>
-          <CardDescription className="text-orange-600">
+          <CardDescription className="text-orange-600 dark:text-orange-400/80">
             Twoja przeglądarka nie obsługuje powiadomień push
           </CardDescription>
         </CardHeader>
@@ -181,7 +181,7 @@ export function ReminderSettings({
             )}
 
             {permission !== 'granted' && (
-              <div className="flex items-center gap-2 text-xs text-orange-600 bg-orange-50 p-2 rounded">
+              <div className="flex items-center gap-2 text-xs text-orange-600 bg-orange-50 dark:text-orange-400 dark:bg-orange-950/30 p-2 rounded">
                 <AlertCircle className="h-3 w-3" />
                 <span>Wymagane zezwolenie na powiadomienia</span>
                 <Button

@@ -114,6 +114,9 @@ model Task {
   reminderTime           DateTime?
   reminderType           String?
   reminderValue          Int?
+  // When the reminder push was delivered; null = still pending. Reset whenever
+  // the reminder is (re)scheduled so an edited reminder fires again.
+  reminderSentAt         DateTime?
   changes                String?
   // key and shareToken are unique via partial indexes created by
   // scripts/fix-mongo-indexes.js (Prisma @unique cannot express nullable

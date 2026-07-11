@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import {
   Home,
@@ -78,6 +78,22 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
     refreshProjects()
   }
 
+  // Every 5 minutes (and once shortly after mount) deliver any due task
+  // reminders as push notifications. Mirrors the board's auto-move tick so the
+  // automation also runs in dev without a system cron; the endpoint is
+  // idempotent, so overlapping calls from several open tabs are harmless.
+  useEffect(() => {
+    const tick = () => {
+      fetch("/api/cron/reminders").catch(() => {})
+    }
+    const initial = setTimeout(tick, 5000)
+    const interval = setInterval(tick, 5 * 60 * 1000)
+    return () => {
+      clearTimeout(initial)
+      clearInterval(interval)
+    }
+  }, [])
+
 
 
   return (
@@ -115,10 +131,10 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
       </Sidebar>
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 border-b">
-          <div className="flex items-center gap-2 px-4 flex-1">
+          <div className="flex items-center gap-2 px-4 flex-1 min-w-0">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               {headerContent}
             </div>
             <ThemeToggle />

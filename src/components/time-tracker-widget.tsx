@@ -48,7 +48,9 @@ const STORAGE_KEY = "time-tracker-widget-state"
 
 export function TimeTrackerWidget() {
   const { data: session } = useSession() as { data: Session | null }
-  const [isMinimized, setIsMinimized] = useState(false)
+  // Start minimized on first visit so the widget doesn't cover page content;
+  // the saved localStorage state (restored below) wins on subsequent visits.
+  const [isMinimized, setIsMinimized] = useState(true)
   const [isRunning, setIsRunning] = useState(false)
   const [seconds, setSeconds] = useState(0)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)

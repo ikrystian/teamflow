@@ -1742,7 +1742,7 @@ export function TaskFormContent({
             ) : isSaving ? (
               <>
                 <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
-                "Zapisywanie..."
+                Zapisywanie...
               </>
             ) : (
               isCreateMode ? "Utwórz zadanie" : "Zaktualizuj zadanie"

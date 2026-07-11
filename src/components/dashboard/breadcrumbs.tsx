@@ -116,9 +116,16 @@ export function DashboardBreadcrumbs() {
         case 'info':
           label = 'Informacje'
           break
+        case 'reports':
+          label = 'Raporty'
+          break
+        case 'clients':
+          label = 'Klienci'
+          break
+        case 'github-webhook':
+          label = 'GitHub Webhooks'
+          break
         default:
-
-        console.log(segment)
           // Check if it's a dynamic segment (UUID-like)
           if (segment.length > 10) {
             // Try to find the name for this ID

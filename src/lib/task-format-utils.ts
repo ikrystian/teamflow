@@ -12,9 +12,8 @@ export const formatEstimatedHours = (hours?: number | null): string => {
     return "Brak oszacowania"
   }
 
-  // Format to remove unnecessary decimals
-  const formatted = hours % 1 === 0 ? hours.toString() : hours.toString()
-  return `${formatted}h`
+  // Format to remove unnecessary decimals (e.g. 2.00 -> "2h", 1.50 -> "1.5h")
+  return `${parseFloat(hours.toFixed(2))}h`
 }
 
 /**

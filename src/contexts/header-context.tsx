@@ -36,9 +36,11 @@ export function useHeader() {
 export function usePageHeader(content: ReactNode, deps: React.DependencyList = []) {
   const { setHeaderContent } = useHeader()
 
+  // Deps are intentionally forwarded from the caller (usePageHeader mirrors the
+  // useMemo contract), which the static rules cannot verify.
   const memoizedContent = useMemo(
     () => content,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/use-memo
     deps
   )
 

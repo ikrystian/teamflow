@@ -1,27 +1,48 @@
 #!/usr/bin/env node
 /**
- * This script processes pending Slack scheduled messages
- * Run it with: node scripts/process-slack-scheduler.js
+ * Processes pending Slack scheduled messages without going through the HTTP
+ * endpoint — a plain-JS mirror of src/lib/slack-scheduler.ts for crontab use
+ * when calling the app over HTTP is not an option.
  *
- * Add to crontab with: 5 * * * * cd /path/to/teamflow && node scripts/process-slack-scheduler.js
+ * Run it with: node scripts/process-slack-scheduler.js
+ * Add to crontab with: *\/5 * * * * cd /path/to/teamflow && node scripts/process-slack-scheduler.js
+ *
+ * Kept in behavioural sync with src/lib/slack-scheduler.ts +
+ * src/lib/task-share.ts: same task filter (incl. skipping soft-deleted tasks),
+ * same share-token generation, same share URL shape, and the sent message's
+ * ts/channel are recorded so it can be deleted from Slack later.
  */
 
 require('dotenv').config()
 
+const crypto = require('crypto')
 const { PrismaClient } = require('@prisma/client')
 
 const prisma = new PrismaClient()
 
-
-async function buildTaskShareUrl(token) {
+function buildTaskShareUrl(shareToken) {
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
-  return `${baseUrl}/tasks/${token}`
+  return `${baseUrl}/public/task/${shareToken}`
 }
 
+// Same lazy token generation as src/lib/task-share.ts.
 async function getOrCreateTaskShareToken(taskId) {
-  // For now, just return the task ID as token
-  // In production, you'd want to implement proper share token generation
-  return taskId
+  const task = await prisma.task.findUnique({
+    where: { id: taskId },
+    select: { shareToken: true },
+  })
+
+  if (task?.shareToken) {
+    return task.shareToken
+  }
+
+  const shareToken = crypto.randomBytes(24).toString('hex')
+  await prisma.task.update({
+    where: { id: taskId },
+    data: { shareToken },
+  })
+
+  return shareToken
 }
 
 async function processPendingSlackScheduledMessages() {
@@ -34,9 +55,7 @@ async function processPendingSlackScheduledMessages() {
         changesScheduledSendAt: {
           lte: now,
         },
-        changes: {
-          not: null,
-        },
+        deletedAt: null, // don't send scheduled messages for soft-deleted tasks
         project: {
           slackChannelId: {
             not: null,
@@ -76,9 +95,11 @@ async function processPendingSlackScheduledMessages() {
         }
 
         const shareToken = await getOrCreateTaskShareToken(task.id)
-        const shareUrl = await buildTaskShareUrl(shareToken)
+        const shareUrl = buildTaskShareUrl(shareToken)
 
-        let text = `*${task.title}*\n\n${task.changes}\n\n<${shareUrl}|🔗 Zobacz zadanie>`
+        const changesText = task.changes || '_Brak opisu zmian_'
+
+        let text = `*${task.title}*\n\n${changesText}\n\n<${shareUrl}|🔗 Zobacz zadanie>`
         if (task.githubPrUrl) {
           text += ` | <${task.githubPrUrl}|🐙 Pull Request>`
         }
@@ -110,6 +131,8 @@ async function processPendingSlackScheduledMessages() {
           data: {
             changesSentAt: new Date(),
             changesScheduledSendAt: null,
+            changesSlackTs: data.ts ?? null,
+            changesSlackChannelId: data.channel ?? channelId,
           },
         })
 

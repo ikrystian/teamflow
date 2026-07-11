@@ -75,12 +75,12 @@ export async function GET(request: NextRequest) {
         },
         // Tasks without projects created by the user
         {
-          projectId: undefined,
+          projectId: null,
           createdById: session.user.id
         },
         // Tasks without projects assigned to the user
         {
-          projectId: undefined,
+          projectId: null,
           assigneeId: session.user.id
         }
       ]
@@ -296,24 +296,31 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Nullable fields are written as explicit nulls (never undefined): on
+    // MongoDB, Prisma leaves undefined fields unset in the document, and
+    // `where: { field: null }` does NOT match missing fields — soft-delete
+    // filters (deletedAt: null) and no-project filters (projectId: null)
+    // would silently skip such tasks.
     const task = await createTaskWithKey(prisma, projectId, (key) => prisma.task.create({
       data: {
         key,
         title,
-        description,
-        projectId,
-        assigneeId,
-        priority,
+        description: description ?? null,
+        projectId: projectId ?? null,
+        assigneeId: assigneeId ?? null,
+        priority: priority ?? null,
         dueDate: dueDate ? new Date(dueDate) : null,
         startTime: startTime ? new Date(startTime) : null,
         endTime: endTime ? new Date(endTime) : null,
-        estimatedHours,
-        statusId: finalStatusId,
+        estimatedHours: estimatedHours ?? null,
+        statusId: finalStatusId ?? null,
         createdById: session.user.id || null,
+        deletedAt: null,
         reminderEnabled: reminderEnabled || false,
-        reminderType: reminderEnabled ? reminderType : null,
-        reminderValue: reminderEnabled ? reminderValue : null,
+        reminderType: (reminderEnabled ? reminderType : null) ?? null,
+        reminderValue: (reminderEnabled ? reminderValue : null) ?? null,
         reminderTime,
+        reminderSentAt: null,
         ...(tagIds && tagIds.length > 0 && {
           taskTags: {
             create: tagIds.map((tagId: string) => ({

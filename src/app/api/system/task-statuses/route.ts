@@ -23,9 +23,9 @@ export async function GET() {
     // If no statuses exist, create default ones
     if (taskStatuses.length === 0) {
       const defaultStatuses = [
-        { name: "To Do", order: 0, isDefault: true },
-        { name: "In Progress", order: 1, isDefault: false },
-        { name: "Done", order: 2, isDefault: false }
+        { name: "To Do", order: 0, isDefault: true, color: "#3B82F6" },
+        { name: "In Progress", order: 1, isDefault: false, color: "#F59E0B" },
+        { name: "Done", order: 2, isDefault: false, color: "#10B981" }
       ]
 
       await prisma.taskStatus.createMany({

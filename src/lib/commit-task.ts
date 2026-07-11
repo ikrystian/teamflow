@@ -319,13 +319,16 @@ export async function createTasksFromCommits(
       data: {
         key,
         title: single.title,
-        description: single.description,
+        description: single.description ?? null,
         changes: single.changes || null,
         estimatedHours: single.workHours > 0 ? single.workHours : null,
-        projectId,
+        projectId: projectId ?? null,
         statusId: defaultStatus?.id ?? null,
         assigneeId: ownerId,
         createdById: ownerId,
+        // Explicit null so the field exists in the MongoDB document —
+        // `where: { deletedAt: null }` does not match missing fields.
+        deletedAt: null,
       },
     }))
 
@@ -346,13 +349,16 @@ export async function createTasksFromCommits(
     data: {
       key,
       title: main.title,
-      description: main.description,
+      description: main.description ?? null,
       changes: main.changes || null,
       estimatedHours: totalHours > 0 ? totalHours : null,
-      projectId,
+      projectId: projectId ?? null,
       statusId: defaultStatus?.id ?? null,
       assigneeId: ownerId,
       createdById: ownerId,
+      // Explicit null so the field exists in the MongoDB document —
+      // `where: { deletedAt: null }` does not match missing fields.
+      deletedAt: null,
       todos: {
         create: commitTasks.map((t) => ({
           title: t.title,

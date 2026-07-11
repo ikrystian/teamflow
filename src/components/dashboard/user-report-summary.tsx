@@ -42,7 +42,7 @@ export function UserReportSummary() {
 
     if (loading) {
         return (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {[...Array(3)].map((_, i) => (
                     <Card key={i}>
                         <CardHeader className="pb-2">
@@ -103,7 +103,7 @@ export function UserReportSummary() {
                 <Clock className="h-5 w-5 text-muted-foreground" />
                 <h2 className="text-lg font-semibold">Moje raporty</h2>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {periods.map((period) => (
                     <Card key={period.key} className="overflow-hidden">
                         <CardHeader className="pb-2">
@@ -116,19 +116,19 @@ export function UserReportSummary() {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2 text-muted-foreground">
-                                        <Clock className="h-4 w-4" />
+                                <div className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-2 text-muted-foreground min-w-0">
+                                        <Clock className="h-4 w-4 shrink-0" />
                                         <span className="text-sm">Zaraportowano</span>
                                     </div>
-                                    <span className="text-xl font-bold">{formatHours(period.data.hoursReported)}</span>
+                                    <span className="text-xl font-bold shrink-0">{formatHours(period.data.hoursReported)}</span>
                                 </div>
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2 text-muted-foreground">
-                                        <CheckCircle className="h-4 w-4" />
+                                <div className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-2 text-muted-foreground min-w-0">
+                                        <CheckCircle className="h-4 w-4 shrink-0" />
                                         <span className="text-sm">Ukończono zadań</span>
                                     </div>
-                                    <span className="text-xl font-bold">{period.data.tasksCompleted}</span>
+                                    <span className="text-xl font-bold shrink-0">{period.data.tasksCompleted}</span>
                                 </div>
                             </div>
                         </CardContent>

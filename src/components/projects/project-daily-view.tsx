@@ -139,7 +139,7 @@ function DroppableTimeSlot({ assigneeId, hour, children }: {
   return (
     <div
       ref={ref}
-      className={`min-h-[50px] p-1 transition-colors ${isOver ? 'bg-blue-50 border-blue-200 border-dashed border-2' : ''
+      className={`min-h-[50px] p-1 transition-colors ${isOver ? 'bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800 border-dashed border-2' : ''
         }`}
     >
       {children}

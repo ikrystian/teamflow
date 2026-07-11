@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "db:push": "prisma db push && node scripts/fix-mongo-indexes.js"
+    "db:push": "prisma db push && node scripts/fix-mongo-indexes.js && node scripts/fix-mongo-nulls.js"
   },
   "dependencies": {
     "@atlaskit/pragmatic-drag-and-drop": "^1.8.1",
@@ -55,6 +55,7 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.6.0",
     "tailwindcss-animate": "^1.0.7",
+    "web-push": "^3.6.7",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -64,7 +65,8 @@
     "@types/nodemailer": "^8.0.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint": "^10",
+    "@types/web-push": "^3.6.4",
+    "eslint": "^9.39.4",
     "eslint-config-next": "16.2.7",
     "prisma": "^6.19.0",
     "tailwindcss": "^4",

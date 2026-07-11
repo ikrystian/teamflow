@@ -959,7 +959,7 @@ function KanbanColumn({
           <AlertDialogHeader>
             <AlertDialogTitle>Czy na pewno chcesz usunąć wszystkie zadania?</AlertDialogTitle>
             <AlertDialogDescription>
-              Ta operacja spowoduje usunięcie wszystkich zadań z kolumny "{status.name}". Zadania zostaną przeniesione do kosza.
+              Ta operacja spowoduje usunięcie wszystkich zadań z kolumny &bdquo;{status.name}&rdquo;. Zadania zostaną przeniesione do kosza.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -984,7 +984,7 @@ function KanbanColumn({
           <AlertDialogHeader>
             <AlertDialogTitle>Czy na pewno chcesz zarchiwizować wszystkie zadania?</AlertDialogTitle>
             <AlertDialogDescription>
-              Ta operacja spowoduje zarchiwizowanie wszystkich zadań z kolumny "{status.name}". Zadania znikną z tablicy, ale będą przechowywane w bazie danych.
+              Ta operacja spowoduje zarchiwizowanie wszystkich zadań z kolumny &bdquo;{status.name}&rdquo;. Zadania znikną z tablicy, ale będą przechowywane w bazie danych.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

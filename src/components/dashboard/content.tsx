@@ -311,7 +311,7 @@ export function DashboardContent() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-green-600 hover:text-green-700 hover:bg-green-50"
+                          className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-950/40"
                           onClick={(e) => handleMarkDone(task, e)}
                           disabled={completingTaskIds.has(task.id)}
                           title="Oznacz jako zakończone"
@@ -396,7 +396,7 @@ export function DashboardContent() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-green-600 hover:text-green-700 hover:bg-green-50"
+                          className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-950/40"
                           onClick={(e) => handleMarkDone(task, e)}
                           disabled={completingTaskIds.has(task.id)}
                           title="Oznacz jako zakończone"

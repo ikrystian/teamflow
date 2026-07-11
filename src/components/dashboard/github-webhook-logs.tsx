@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { usePageHeader } from "@/contexts/header-context"
 import {
   AlertCircle,
   CheckCircle2,
@@ -107,6 +108,8 @@ function EventBadge({ event }: { event: string | null }) {
 }
 
 function renderPreview(log: WebhookLog) {
+  // Webhook payloads are free-form JSON from GitHub — no stable schema to type.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let parsed: any = null
   try {
     parsed = JSON.parse(log.payload)
@@ -375,7 +378,7 @@ function renderPreview(log: WebhookLog) {
           <div className="border-t border-border/40 pt-3">
             <p className="text-xs font-semibold text-muted-foreground mb-2">Lista commitów</p>
             <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-              {commits.map((commit: any, idx: number) => (
+              {commits.map((commit: { id?: string; message?: string; author?: { name?: string }; url?: string }, idx: number) => (
                 <div key={idx} className="bg-background/40 border border-border/30 rounded-lg p-2.5 flex items-start justify-between gap-3 text-xs">
                   <div className="min-w-0">
                     <p className="font-medium text-foreground truncate">{commit.message}</p>
@@ -548,6 +551,16 @@ function LogRow({ log }: { log: WebhookLog }) {
 // ---------------------------------------------------------------------------
 const ALL_EVENTS = "all"
 
+// Sets the layout header title; rendered only when the logs act as a full page
+// (embedMode embeds them under another page's header, e.g. "Moje zadania").
+function GithubWebhookPageHeader() {
+  usePageHeader(
+    <h1 className="text-2xl font-bold text-foreground">GitHub Webhooks</h1>,
+    []
+  )
+  return null
+}
+
 export function GithubWebhookLogs({ embedMode = false }: { embedMode?: boolean }) {
   const [data, setData] = useState<ApiResponse | null>(null)
   const [loading, setLoading] = useState(true)
@@ -599,6 +612,7 @@ export function GithubWebhookLogs({ embedMode = false }: { embedMode?: boolean }
 
   return (
     <div className={embedMode ? "flex flex-col gap-6" : "min-h-screen flex flex-col gap-6 p-4 md:p-6"}>
+      {!embedMode && <GithubWebhookPageHeader />}
       {/* ------------------------------------------------------------------ */}
       {/* Header                                                              */}
       {/* ------------------------------------------------------------------ */}

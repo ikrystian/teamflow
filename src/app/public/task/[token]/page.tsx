@@ -116,6 +116,9 @@ function ProjectIcon({ iconName, color, className = "w-5 h-5" }: {
   )
 }
 
+// react-markdown's per-tag component props vary by element — `any` is the
+// pragmatic common denominator for this heterogenous map.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getMarkdownComponents(projectColor: string): Record<string, React.ComponentType<any>> {
   return {
     h1: ({ node, ...props }) => (
