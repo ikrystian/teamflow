@@ -322,15 +322,24 @@ export async function createTasksFromCommits(
         description: single.description ?? null,
         changes: single.changes || null,
         estimatedHours: single.workHours > 0 ? single.workHours : null,
-        projectId: projectId ?? null,
-        statusId: defaultStatus?.id ?? null,
-        assigneeId: ownerId,
-        createdById: ownerId,
-        // Explicit null so the field exists in the MongoDB document —
-        // `where: { deletedAt: null }` does not match missing fields.
         deletedAt: null,
+        ...(projectId ? { project: { connect: { id: projectId } } } : {}),
+        ...(defaultStatus?.id ? { taskStatus: { connect: { id: defaultStatus.id } } } : {}),
+        ...(ownerId ? { assignee: { connect: { id: ownerId } }, createdBy: { connect: { id: ownerId } } } : {}),
       },
     }))
+
+    // Backfill explicit nulls for unset relation scalar fields.
+    const nullFields: Record<string, null> = {}
+    if (!projectId) nullFields.projectId = null
+    if (!defaultStatus?.id) nullFields.statusId = null
+    if (!ownerId) { nullFields.assigneeId = null; nullFields.createdById = null }
+    if (Object.keys(nullFields).length > 0) {
+      await prisma.$runCommandRaw({
+        update: "Task",
+        updates: [{ q: { _id: task.id }, u: { $set: nullFields } }]
+      })
+    }
 
     return { ok: true, task }
   }
@@ -352,13 +361,10 @@ export async function createTasksFromCommits(
       description: main.description ?? null,
       changes: main.changes || null,
       estimatedHours: totalHours > 0 ? totalHours : null,
-      projectId: projectId ?? null,
-      statusId: defaultStatus?.id ?? null,
-      assigneeId: ownerId,
-      createdById: ownerId,
-      // Explicit null so the field exists in the MongoDB document —
-      // `where: { deletedAt: null }` does not match missing fields.
       deletedAt: null,
+      ...(projectId ? { project: { connect: { id: projectId } } } : {}),
+      ...(defaultStatus?.id ? { taskStatus: { connect: { id: defaultStatus.id } } } : {}),
+      ...(ownerId ? { assignee: { connect: { id: ownerId } }, createdBy: { connect: { id: ownerId } } } : {}),
       todos: {
         create: commitTasks.map((t) => ({
           title: t.title,
@@ -370,6 +376,18 @@ export async function createTasksFromCommits(
       todos: true,
     },
   }))
+
+  // Backfill explicit nulls for unset relation scalar fields.
+  const nullFields2: Record<string, null> = {}
+  if (!projectId) nullFields2.projectId = null
+  if (!defaultStatus?.id) nullFields2.statusId = null
+  if (!ownerId) { nullFields2.assigneeId = null; nullFields2.createdById = null }
+  if (Object.keys(nullFields2).length > 0) {
+    await prisma.$runCommandRaw({
+      update: "Task",
+      updates: [{ q: { _id: task.id }, u: { $set: nullFields2 } }]
+    })
+  }
 
   return { ok: true, task }
 }

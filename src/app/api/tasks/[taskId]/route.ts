@@ -352,19 +352,18 @@ export async function PATCH(
       }
     }
 
-    // Prepare update data
+    // Prepare update data — relation scalar fields (statusId, assigneeId,
+    // projectId) cannot be set directly on MongoDB with Prisma; they are
+    // tracked here as plain values and converted to connect/disconnect below.
     const updateData: {
       title?: string;
       description?: string;
       changes?: string | null;
-      statusId?: string;
       priority?: string;
       dueDate?: Date | null;
       startTime?: Date | null;
       endTime?: Date | null;
-      assigneeId?: string;
       estimatedHours?: number;
-      projectId?: string | null;
       reminderEnabled?: boolean;
       reminderType?: string | null;
       reminderValue?: number | null;
@@ -373,19 +372,24 @@ export async function PATCH(
       createdAt?: Date;
       autoMoveToDoneAt?: Date | null;
     } = {}
+    // Track relation scalar changes separately for connect/disconnect building.
+    let updatedStatusId: string | undefined = undefined
+    let updatedAssigneeId: string | null | undefined = undefined
+    let updatedProjectId: string | null | undefined = undefined
+
     if (createdAt !== undefined) updateData.createdAt = new Date(createdAt)
     if (title !== undefined) updateData.title = title
     if (description !== undefined) updateData.description = description
     if (changes !== undefined) updateData.changes = changes || null
-    if (statusId !== undefined) updateData.statusId = statusId
+    if (statusId !== undefined) updatedStatusId = statusId
     if (priority !== undefined) updateData.priority = priority
     if (dueDate !== undefined) updateData.dueDate = dueDate ? new Date(dueDate) : null
     if (startTime !== undefined) updateData.startTime = startTime ? new Date(startTime) : null
     if (endTime !== undefined) updateData.endTime = endTime ? new Date(endTime) : null
-    if (assigneeId !== undefined) updateData.assigneeId = assigneeId
+    if (assigneeId !== undefined) updatedAssigneeId = assigneeId
     if (estimatedHours !== undefined) updateData.estimatedHours = estimatedHours
     if (projectId !== undefined) {
-      updateData.projectId = (projectId === "no-project" || projectId === "") ? null : projectId
+      updatedProjectId = (projectId === "no-project" || projectId === "") ? null : projectId
     }
 
     // Handle reminder fields
@@ -506,7 +510,7 @@ export async function PATCH(
 
         updateData.autoMoveToDoneAt = await computeAutoMoveAt({
           excludeTaskId: resolvedTaskId,
-          projectId: (updateData.projectId !== undefined ? updateData.projectId : existingTask.projectId) ?? null,
+          projectId: (updatedProjectId !== undefined ? updatedProjectId : existingTask.projectId) ?? null,
           inProgressStatusId: statusId,
           reportedHours,
           estimatedHours: estimatedHours ?? null,
@@ -550,8 +554,8 @@ export async function PATCH(
         if (existingTimeEntries === 0 && existingSubtaskTime === 0) {
           // Prefer the task's assignee; fall back to whoever marked it done.
           const timeEntryUserId =
-            (updateData.assigneeId !== undefined
-              ? updateData.assigneeId
+            (updatedAssigneeId !== undefined
+              ? updatedAssigneeId
               : existingTask.assigneeId) || session.user.id
 
           await prisma.timeEntry.create({
@@ -568,7 +572,18 @@ export async function PATCH(
 
     const task = await prisma.task.update({
       where: { id: resolvedTaskId },
-      data: updateData,
+      data: {
+        ...updateData,
+        ...(updatedStatusId !== undefined ? {
+          taskStatus: updatedStatusId ? { connect: { id: updatedStatusId } } : { disconnect: true }
+        } : {}),
+        ...(updatedAssigneeId !== undefined ? {
+          assignee: updatedAssigneeId ? { connect: { id: updatedAssigneeId } } : { disconnect: true }
+        } : {}),
+        ...(updatedProjectId !== undefined ? {
+          project: updatedProjectId ? { connect: { id: updatedProjectId } } : { disconnect: true }
+        } : {}),
+      },
       include: {
         project: {
           select: {

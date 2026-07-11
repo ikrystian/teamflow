@@ -96,7 +96,7 @@ export async function processDueAutoMoves() {
     try {
       await prisma.task.update({
         where: { id: task.id },
-        data: { statusId: doneStatus.id, autoMoveToDoneAt: null },
+        data: { taskStatus: { connect: { id: doneStatus.id } }, autoMoveToDoneAt: null },
       })
 
       // Clean up the GitHub branch if one was assigned (best-effort).

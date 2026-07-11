@@ -296,38 +296,40 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Nullable fields are written as explicit nulls (never undefined): on
-    // MongoDB, Prisma leaves undefined fields unset in the document, and
-    // `where: { field: null }` does NOT match missing fields — soft-delete
-    // filters (deletedAt: null) and no-project filters (projectId: null)
-    // would silently skip such tasks.
+    // MongoDB Prisma doesn't accept relation scalar IDs (projectId, assigneeId,
+    // statusId, createdById) directly in create/update — only the nested
+    // connect/disconnect syntax works at runtime. Explicit nulls for unset
+    // relations are backfilled via $runCommandRaw below (Prisma leaves missing
+    // fields unset in the document, and `where: { field: null }` won't match
+    // missing fields — soft-delete and no-project filters would silently skip
+    // such tasks otherwise).
     const task = await createTaskWithKey(prisma, projectId, (key) => prisma.task.create({
       data: {
         key,
         title,
         description: description ?? null,
-        projectId: projectId ?? null,
-        assigneeId: assigneeId ?? null,
         priority: priority ?? null,
         dueDate: dueDate ? new Date(dueDate) : null,
         startTime: startTime ? new Date(startTime) : null,
         endTime: endTime ? new Date(endTime) : null,
         estimatedHours: estimatedHours ?? null,
-        statusId: finalStatusId ?? null,
-        createdById: session.user.id || null,
         deletedAt: null,
         reminderEnabled: reminderEnabled || false,
         reminderType: (reminderEnabled ? reminderType : null) ?? null,
         reminderValue: (reminderEnabled ? reminderValue : null) ?? null,
         reminderTime,
         reminderSentAt: null,
-        ...(tagIds && tagIds.length > 0 && {
+        ...(projectId ? { project: { connect: { id: projectId } } } : {}),
+        ...(assigneeId ? { assignee: { connect: { id: assigneeId } } } : {}),
+        ...(finalStatusId ? { taskStatus: { connect: { id: finalStatusId } } } : {}),
+        ...(session.user.id ? { createdBy: { connect: { id: session.user.id } } } : {}),
+        ...(tagIds && tagIds.length > 0 ? {
           taskTags: {
             create: tagIds.map((tagId: string) => ({
               tagId
             }))
           }
-        })
+        } : {})
       },
       include: {
         project: {
@@ -375,6 +377,21 @@ export async function POST(request: NextRequest) {
         }
       }
     }))
+
+    // Backfill explicit nulls for relation scalar fields that weren't set via
+    // connect (Prisma leaves them missing in the document otherwise, and
+    // where: { field: null } won't match missing fields in MongoDB).
+    const nullFields: Record<string, null> = {}
+    if (!projectId) nullFields.projectId = null
+    if (!assigneeId) nullFields.assigneeId = null
+    if (!finalStatusId) nullFields.statusId = null
+    if (!session.user.id) nullFields.createdById = null
+    if (Object.keys(nullFields).length > 0) {
+      await prisma.$runCommandRaw({
+        update: "Task",
+        updates: [{ q: { _id: task.id }, u: { $set: nullFields } }]
+      })
+    }
 
     // Map tags and todos to subtasks for simpler consumption
     const taskWithTags = {

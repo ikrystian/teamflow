@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
 
     await prisma.task.update({
       where: { id: task.id },
-      data: { statusId: targetStatus.id },
+      data: { taskStatus: { connect: { id: targetStatus.id } } },
     })
 
     console.log(

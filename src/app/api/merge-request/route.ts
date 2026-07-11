@@ -559,7 +559,7 @@ export async function POST(request: NextRequest) {
       where: { id: task.id },
       data: {
         changes,
-        ...(doneStatus ? { statusId: doneStatus.id } : {}),
+        ...(doneStatus ? { taskStatus: { connect: { id: doneStatus.id } } } : {}),
         ...(githubPrUrl ? { githubPrUrl } : {}),
         ...(newCreatedAt ? { createdAt: newCreatedAt } : {}),
       },
