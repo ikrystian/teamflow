@@ -1,0 +1,204 @@
+================================================================================
+AUTOMATYZACJE ZWIĄZANE Z GITHUBEM W APLIKACJI NEXUS (teamflow)
+================================================================================
+Stan na: 2026-07-11
+
+Dokument opisuje wszystkie automatyzacje integrujące aplikację z GitHubem:
+które endpointy przyjmują dane, dokąd aplikacja wysyła dane na zewnątrz
+i jakie dokładnie dane są przesyłane.
+
+Wymagane zmienne środowiskowe:
+  GITHUB_TOKEN          - Personal Access Token do GitHub REST API
+  GITHUB_WEBHOOK_SECRET - sekret do weryfikacji podpisu webhooka GitHub
+  OPENROUTER_API_KEY    - klucz do OpenRouter (analiza diffów przez AI)
+  SLACK_BOT_TOKEN       - token bota Slack (powiadomienia po merge)
+
+
+--------------------------------------------------------------------------------
+1. TWORZENIE BRANCHA GITHUB Z ZADANIA
+--------------------------------------------------------------------------------
+Wyzwalacz : przycisk "Utwórz branch GitHub" w widoku edycji zadania
+Endpoint  : POST /api/tasks/[taskId]/github-branch (wymaga zalogowania)
+Kod       : src/app/api/tasks/[taskId]/github-branch/route.ts, src/lib/github.ts
+
+Przebieg:
+  1. Buduje nazwę brancha: feature/<klucz-zadania>-<slug-tytułu>
+     (np. feature/ne-12-fix-user-authentication).
+  2. Wysyła żądania do GitHub REST API (autoryzacja: Bearer GITHUB_TOKEN,
+     nagłówki Accept: application/vnd.github+json,
+     X-GitHub-Api-Version: 2022-11-28):
+       GET  https://api.github.com/repos/{owner}/{repo}
+            - pobranie nazwy domyślnego brancha (wysyłane: tylko URL z nazwą repo)
+       GET  https://api.github.com/repos/{owner}/{repo}/git/ref/heads/{branch}
+            - pobranie SHA domyślnego brancha
+       POST https://api.github.com/repos/{owner}/{repo}/git/refs
+            - utworzenie brancha; wysyłane dane (JSON):
+              { "ref": "refs/heads/<nazwa-brancha>", "sha": "<sha-bazowy>" }
+     Przy konflikcie nazwy (HTTP 422) dokleja znacznik czasu (max 3 próby).
+  3. Zapisuje nazwę brancha w polu zadania githubBranchName.
+
+
+--------------------------------------------------------------------------------
+2. WEBHOOK GITHUB: MERGE PULL REQUESTA -> ZADANIE DO "DONE"
+--------------------------------------------------------------------------------
+Wyzwalacz : GitHub wysyła webhook przy zdarzeniach pull_request
+Endpoint  : POST /api/github-webhook (przyjmuje dane OD GitHuba)
+Kod       : src/app/api/github-webhook/route.ts
+
+Konfiguracja po stronie GitHuba (Settings -> Webhooks):
+  Payload URL : https://<adres-aplikacji>/api/github-webhook
+  Content type: application/json
+  Secret      : wartość GITHUB_WEBHOOK_SECRET
+  Events      : Pull requests
+
+Przebieg:
+  1. KAŻDE przychodzące żądanie jest logowane do kolekcji GithubWebhookLog
+     (pełny payload, nagłówki x-github-event / x-github-delivery /
+     x-hub-signature-256 / user-agent, podpis, adres IP nadawcy).
+  2. Weryfikuje podpis HMAC SHA-256 (nagłówek x-hub-signature-256)
+     sekretem GITHUB_WEBHOOK_SECRET; przy błędnym podpisie zwraca 401.
+  3. Obsługuje tylko event "pull_request" z action = "closed" i merged = true.
+  4. Szuka zadania, którego githubBranchName = branch źródłowy PR-a (head.ref).
+  5. Jeśli znaleziono:
+     - usuwa branch na GitHubie:
+       DELETE https://api.github.com/repos/{owner}/{repo}/git/refs/heads/{branch}
+       (autoryzacja: Bearer GITHUB_TOKEN; brak body)
+     - przenosi zadanie do statusu "Done" (lub odpowiednika:
+       done/Zrobione/Completed; fallback: ostatni status wg kolejności).
+  6. Wynik (JSON odpowiedzi + kod HTTP) dopisywany jest do wpisu w logu.
+
+Odczyt logów:
+  GET /api/github-webhook?page=&limit=  - paginowana lista logów webhooków,
+  wyświetlana w dashboardzie (zakładka "Logi" w /dashboard/tasks
+  oraz /dashboard/github-webhook).
+
+
+--------------------------------------------------------------------------------
+3. WEBHOOK MERGE-REQUEST (WORKFLOW DEPLOY) - AI OPIS ZMIAN + RAPORT CZASU
+--------------------------------------------------------------------------------
+Wyzwalacz : workflow deploy (GitHub Actions) po zmergowaniu PR-a do main
+Endpoint  : POST /api/merge-request (przyjmuje dane od workflow)
+Kod       : src/app/api/merge-request/route.ts
+
+Oczekiwany payload (JSON):
+  {
+    "repository": "owner/repo",
+    "projectId": "<id projektu w aplikacji>",
+    "headCommitMessage": "Merge pull request #22 from owner/feature/ne-12-...",
+    "branch": "feature/ne-12-...",          // opcjonalnie
+    "before": "<sha>", "after": "<sha merge>",
+    "commits": ["https://github.com/owner/repo/commit/<sha>", ...],
+    "pullRequestUrl": "https://github.com/owner/repo/pull/22"  // opcjonalnie
+  }
+
+UWAGA: endpoint nie weryfikuje podpisu (loguje jednak każde żądanie do
+GithubWebhookLog jako event "merge-request", z nagłówkami i adresem IP).
+
+Przebieg i dane wysyłane na zewnątrz:
+  1. Ustala zmergowany branch (z pola branch lub parsując headCommitMessage),
+     znajduje zadanie po githubBranchName lub kluczu zadania (np. NE-12)
+     zaszytym w nazwie brancha.
+  2. Pobiera diff merge'a z publicznego GitHuba (bez autoryzacji):
+       GET https://github.com/{owner}/{repo}/commit/{sha-after}.diff
+       (nagłówki: Accept: application/vnd.github.v3.diff, User-Agent:
+       Nexus-Webhook; limit 14 000 znaków; fallback: diffy pojedynczych
+       commitów z listy commits)
+  3. Wysyła diff do OpenRouter w celu wygenerowania listy zmian:
+       POST https://openrouter.ai/api/v1/chat/completions
+       (autoryzacja: Bearer OPENROUTER_API_KEY,
+        model: deepseek/deepseek-v4-flash)
+       Wysyłane dane: nazwa repozytorium, nazwa brancha, klucz i tytuł
+       zadania oraz PEŁNA TREŚĆ DIFF-a (fragmenty kodu źródłowego!).
+       Odpowiedź: {"changes": "..."} - lista zmian po polsku w formacie
+       Slack mrkdwn.
+  4. Zapisuje wygenerowany opis w polu `changes` zadania, ustawia link PR
+     (githubPrUrl), przenosi zadanie do "Done" (na górę kolumny).
+  5. Usuwa branch na GitHubie:
+       DELETE https://api.github.com/repos/{owner}/{repo}/git/refs/heads/{branch}
+  6. Raportowanie czasu:
+     - jeśli zadanie ma estimatedHours > 0, dodaje TimeEntry
+       "Automatyczne zalogowanie czasu zaplanowanego (merge-request)",
+     - dla każdego commita pobiera diff (GET https://github.com/.../commit/
+       <sha>.diff, limit 3 000 znaków/commit) i wysyła je zbiorczo do
+       OpenRouter (POST https://openrouter.ai/api/v1/chat/completions),
+       który zwraca podzadania: {commitUrl, tytuł po polsku, workHours};
+       każde zapisywane jest jako ukończone Todo + TimeEntry,
+     - gwarancja: jeśli nie powstało żadne podzadanie z czasem, tworzy
+       podzadanie zapasowe "Realizacja zadania: <tytuł>" (estimatedHours
+       lub 1h).
+  7. Wysyła notatkę o zmianach na Slacka:
+       POST https://slack.com/api/chat.postMessage
+       (autoryzacja: Bearer SLACK_BOT_TOKEN)
+       Wysyłane dane: id kanału Slack projektu (slackChannelId), treść
+       listy zmian, tytuł/klucz zadania.
+
+
+--------------------------------------------------------------------------------
+4. WEBHOOK COMMIT -> AUTOMATYCZNE TWORZENIE ZADAŃ Z COMMITÓW (AI)
+--------------------------------------------------------------------------------
+Wyzwalacz : zewnętrzny webhook/workflow po pushu commitów
+Endpoint  : POST /api/webhook-commit (przyjmuje dane od workflow)
+Kod       : src/app/api/webhook-commit/route.ts, src/lib/commit-task.ts
+
+Oczekiwany payload (JSON):
+  {
+    "repository": "owner/repo",
+    "branch": "main",
+    "pusher": "ikrystian",
+    "projectId": "<id projektu>",
+    "before": "<sha>", "after": "<sha>",
+    "commits": ["https://github.com/owner/repo/commit/<sha>", ...]
+  }
+
+UWAGA: endpoint nie weryfikuje podpisu ani sesji.
+
+Przebieg i dane wysyłane na zewnątrz:
+  1. Dla każdego commita pobiera publiczny diff:
+       GET https://github.com/{owner}/{repo}/commit/{sha}.diff
+       (User-Agent: Nexus-Webhook, limit 12 000 znaków)
+  2. Wysyła diffy do OpenRouter:
+       POST https://openrouter.ai/api/v1/chat/completions
+       (Bearer OPENROUTER_API_KEY, model deepseek/deepseek-v4-flash)
+       Wysyłane dane: treść diffów (kod źródłowy), nazwa repo, branch.
+       AI generuje: tytuł, opis, listę zmian i szacowany czas pracy.
+  3. Tworzy zadanie (lub zadanie główne + podzadania per commit) w projekcie
+     projectId, w statusie domyślnym, z kluczem zadania (createTaskWithKey).
+  4. Autor: pusher mapowany na e-mail użytkownika w aplikacji
+     (mapa PUSHER_EMAIL_MAP w src/lib/commit-task.ts,
+      np. ikrystian -> krystian@bpcoders.pl).
+
+Wariant ręczny (z UI):
+  POST /api/projects/[projectId]/tasks/from-commit (wymaga zalogowania)
+  - użytkownik wkleja URL commita GitHub; dalej ten sam przebieg AI
+    co wyżej (diff z github.com -> OpenRouter -> zadanie).
+
+
+--------------------------------------------------------------------------------
+5. PODSUMOWANIE: DOKĄD I JAKIE DANE WYCHODZĄ Z APLIKACJI
+--------------------------------------------------------------------------------
+  https://api.github.com (Bearer GITHUB_TOKEN)
+    - GET  /repos/{owner}/{repo}                     (odczyt info o repo)
+    - GET  /repos/{owner}/{repo}/git/ref/heads/{b}   (odczyt SHA brancha)
+    - POST /repos/{owner}/{repo}/git/refs            (ref + sha nowego brancha)
+    - DELETE /repos/{owner}/{repo}/git/refs/heads/{b} (usunięcie brancha)
+
+  https://github.com (bez autoryzacji, publiczne)
+    - GET /{owner}/{repo}/commit/{sha}.diff          (pobranie diffów commitów)
+
+  https://openrouter.ai/api/v1/chat/completions (Bearer OPENROUTER_API_KEY)
+    - diffy kodu źródłowego, nazwy repo/branchy, klucze i tytuły zadań;
+      model: deepseek/deepseek-v4-flash. UWAGA: do zewnętrznego dostawcy AI
+      trafiają fragmenty kodu źródłowego repozytorium.
+
+  https://slack.com/api/chat.postMessage i /chat.delete (Bearer SLACK_BOT_TOKEN)
+    - wygenerowane notatki o zmianach, tytuł/klucz zadania, id kanału.
+
+Dane przychodzące (endpointy wystawione na świat):
+  POST /api/github-webhook  - payloady webhooków GitHub (weryfikacja podpisem)
+  POST /api/merge-request   - payload workflow deploy (BEZ weryfikacji podpisu)
+  POST /api/webhook-commit  - payload push/commits (BEZ weryfikacji podpisu)
+
+Wszystkie żądania do /api/github-webhook i /api/merge-request są w całości
+logowane w bazie (kolekcja GithubWebhookLog) razem z adresem IP nadawcy;
+logi są dostępne w UI: /dashboard/tasks (zakładka "Logi").
+================================================================================

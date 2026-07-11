@@ -67,7 +67,8 @@ export function TaskDetailsDialog({
         // Pinned a fixed distance from the top of the viewport (instead of
         // vertically centered) so the dialog doesn't jump when its content
         // grows or shrinks, e.g. after expanding a section.
-        className="xl:max-w-3xl top-[6vh] translate-y-0 max-h-[88vh] flex flex-col overflow-hidden"
+        // Edit mode is wider to fit the two-column layout (content | task params).
+        className={`${isCreateMode ? "xl:max-w-3xl" : "xl:max-w-5xl"} top-[6vh] translate-y-0 max-h-[88vh] flex flex-col overflow-hidden`}
         showCloseButton={false}
         disableAnimation
       >

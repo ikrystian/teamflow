@@ -101,6 +101,32 @@ export async function GET(
             }
           },
           todos: true,
+          images: {
+            orderBy: {
+              createdAt: "asc"
+            }
+          },
+          // Board cards only render image thumbnails, so non-image attachments
+          // are filtered out server-side to keep the per-page payload light.
+          attachments: {
+            where: {
+              mimeType: {
+                startsWith: "image/"
+              }
+            },
+            select: {
+              id: true,
+              filename: true,
+              originalName: true,
+              url: true,
+              mimeType: true,
+              size: true,
+              createdAt: true
+            },
+            orderBy: {
+              createdAt: "asc"
+            }
+          },
           timeEntries: {
             include: {
               user: {
@@ -115,6 +141,11 @@ export async function GET(
             orderBy: {
               date: "desc"
             }
+          },
+          // Board cards only show a comment counter, so send the count instead
+          // of the full comment list.
+          _count: {
+            select: { comments: true }
           }
         },
         orderBy: {
@@ -132,7 +163,9 @@ export async function GET(
       ...task,
       subtasks: task.todos,
       comments: [],
-      todos: undefined
+      commentCount: task._count.comments,
+      todos: undefined,
+      _count: undefined
     }))
 
     return NextResponse.json({ tasks: tasksWithSubtasks, total })

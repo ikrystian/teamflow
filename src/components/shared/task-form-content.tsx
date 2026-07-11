@@ -11,6 +11,7 @@ import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { DateTimePicker } from "@/components/ui/datetime-picker"
 import type { Task, TaskStatus, Project, Tag, TaskAttachment } from "@/types"
 import { ReminderSettings } from "@/components/tasks/reminder-settings"
+import { TaskComments } from "@/components/tasks/task-comments"
 import { FileUpload } from "@/components/ui/file-upload"
 import { Badge } from "@/components/ui/badge"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
@@ -1223,6 +1224,11 @@ export function TaskFormContent({
               </div>
             </div>
           )}
+          {/* Edit mode: dwie kolumny — treść (opis, notatki, dokumenty, komentarze)
+              po lewej, parametry zadania (terminy, tagi, zaawansowane) po prawej.
+              Create mode: jedna kolumna. */}
+          <div className={isEditMode ? "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-6 items-start" : "space-y-4"}>
+          <div className="space-y-4 min-w-0">
           <div className="space-y-2">
             <div className="rounded-md">
               <RichTextEditor
@@ -1337,6 +1343,65 @@ export function TaskFormContent({
             </div>
           )}
 
+          {/* Dokumenty zadania — upload i lista z rozróżnieniem typów plików */}
+          <div className="space-y-2">
+            {isCreateMode ? (
+              <div className="space-y-2">
+                <FileUpload
+                  files={attachments.map((file, index) => ({
+                    id: `temp-${index}`,
+                    filename: file.name,
+                    originalName: file.name,
+                    url: '',
+                    mimeType: file.type,
+                    size: file.size,
+                    createdAt: new Date().toISOString(),
+                    uploadedBy: { id: '', name: '', email: '', avatarUrl: '' }
+                  }))}
+                  onFileUpload={handleFileUpload}
+                  onFileDelete={async (fileId) => {
+                    const index = parseInt(fileId.replace('temp-', ''))
+                    setAttachments(prev => prev.filter((_, i) => i !== index))
+                  }}
+                  editable={true}
+                  accept="*/*"
+                  maxSize={10 * 1024 * 1024}
+                  maxFiles={10}
+                  title="Dokumenty"
+                  description="Dodaj dokumenty do zadania (max 10MB każdy)"
+                  categories={["specification", "design", "manual", "other"]}
+                  showCategories={false}
+                  showDescriptions={false}
+                  className="border rounded-lg p-4"
+                />
+                {uploadingFiles && (
+                  <div className="text-sm text-muted-foreground">
+                    Przesyłanie plików...
+                  </div>
+                )}
+              </div>
+            ) : (
+              <FileUpload
+                files={taskAttachments}
+                onFileUpload={handleFileUpload}
+                onFileDelete={handleFileDelete}
+                editable={!readOnly}
+                accept="*/*"
+                maxSize={10 * 1024 * 1024}
+                maxFiles={10}
+                title="Dokumenty"
+                description="Dokumenty załączone do zadania"
+                categories={["specification", "design", "manual", "other"]}
+                showCategories={true}
+                showDescriptions={true}
+                className="border rounded-lg p-4"
+              />
+            )}
+          </div>
+
+          </div>
+
+          {/* Kolumna boczna: planowanie czasu, tagi, zaawansowane */}
           <div className="space-y-4">
 
             {/* Tags Selection */}
@@ -1504,63 +1569,6 @@ export function TaskFormContent({
                   </div>
                 )}
 
-                {/* File Attachments */}
-                <div className="space-y-3 border-t pt-4">
-                  <Label className="text-sm font-medium">Załączniki</Label>
-                  {isCreateMode ? (
-                    <div className="space-y-2">
-                      <FileUpload
-                        files={attachments.map((file, index) => ({
-                          id: `temp-${index}`,
-                          filename: file.name,
-                          originalName: file.name,
-                          url: '',
-                          mimeType: file.type,
-                          size: file.size,
-                          createdAt: new Date().toISOString(),
-                          uploadedBy: { id: '', name: '', email: '', avatarUrl: '' }
-                        }))}
-                        onFileUpload={handleFileUpload}
-                        onFileDelete={async (fileId) => {
-                          const index = parseInt(fileId.replace('temp-', ''))
-                          setAttachments(prev => prev.filter((_, i) => i !== index))
-                        }}
-                        editable={true}
-                        accept="*/*"
-                        maxSize={10 * 1024 * 1024}
-                        maxFiles={10}
-                        title="Załączniki"
-                        description="Dodaj pliki do zadania (max 10MB każdy)"
-                        categories={["specification", "design", "manual", "other"]}
-                        showCategories={false}
-                        showDescriptions={false}
-                        className="border rounded-lg p-4"
-                      />
-                      {uploadingFiles && (
-                        <div className="text-sm text-muted-foreground">
-                          Przesyłanie plików...
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <FileUpload
-                      files={taskAttachments}
-                      onFileUpload={handleFileUpload}
-                      onFileDelete={handleFileDelete}
-                      editable={true}
-                      accept="*/*"
-                      maxSize={10 * 1024 * 1024}
-                      maxFiles={10}
-                      title="Załączniki"
-                      description="Zarządzaj plikami zadania"
-                      categories={["specification", "design", "manual", "other"]}
-                      showCategories={true}
-                      showDescriptions={true}
-                      className="border rounded-lg p-4"
-                    />
-                  )}
-                </div>
-
                 {/* Reminder Settings */}
                 <ReminderSettings
                   reminderEnabled={reminderEnabled}
@@ -1596,7 +1604,7 @@ export function TaskFormContent({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className={`grid grid-cols-1 ${isCreateMode ? "md:grid-cols-2" : ""} gap-4`}>
               <div className="space-y-2">
                 <Label htmlFor="dueDate" className="text-sm font-medium">
                   {timePlanningMode === "reporting" ? "Termin wykonania" : "Termin wykonania (opcjonalnie)"}
@@ -1642,7 +1650,7 @@ export function TaskFormContent({
             {/* Time Fields */}
             {timePlanningMode === "scheduled" && (
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className={`grid grid-cols-1 ${isCreateMode ? "md:grid-cols-2" : ""} gap-4`}>
                 <div className="space-y-2">
                   <Label htmlFor="startTime" className="text-sm font-medium">
                     Czas rozpoczęcia
@@ -1672,10 +1680,20 @@ export function TaskFormContent({
                 </div>
               </div>
             )}
+
+            {/* Komentarze zadania — pod szacowanym czasem (tylko w trybie
+                edycji; nowe zadanie nie ma jeszcze id) */}
+            {isEditMode && task && (
+              <div className="border rounded-lg p-4">
+                <TaskComments
+                  taskId={task.id}
+                  readOnly={readOnly}
+                  onCommentsChanged={() => onTaskUpdatedRef.current?.()}
+                />
+              </div>
+            )}
           </div>
-
-
-
+          </div>
 
           {error && (
             <div className="p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md">

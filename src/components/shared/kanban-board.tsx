@@ -8,7 +8,8 @@ import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar, Clock, MoreHorizontal, Plus, AlertCircle, Trash2, X, Check, Loader2, Send, CalendarClock, GitBranch, Archive, BarChart3, Timer } from "lucide-react"
+import { Calendar, Clock, MoreHorizontal, Plus, AlertCircle, Trash2, X, Check, Loader2, Send, CalendarClock, GitBranch, Archive, BarChart3, Timer, Images, MessageSquare } from "lucide-react"
+import { ImageLightbox } from "@/components/ui/image-lightbox"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -155,6 +156,9 @@ function SortableTaskCard({
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false)
   const [closestEdge, setClosestEdge] = useState<Edge | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  // Lightbox for the cover thumbnail — navigates through all task images.
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
 
   useEffect(() => {
     const element = ref.current
@@ -225,6 +229,14 @@ function SortableTaskCard({
   }
 
   const completed = isTaskDone(task, taskStatuses)
+
+  // Images attached to the task, from both sources: dedicated task images and
+  // image-type attachments. The card shows the first one as a cover thumbnail
+  // with a "+N" badge when there are more.
+  const taskImages = [
+    ...(task.images ?? []),
+    ...(task.attachments ?? []).filter(attachment => attachment.mimeType?.startsWith("image/")),
+  ]
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -347,6 +359,34 @@ function SortableTaskCard({
                   </div>
                 )}
 
+                {taskImages.length > 0 && (
+                  <div className="relative mt-1">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={taskImages[0].url}
+                      alt={taskImages[0].filename}
+                      loading="lazy"
+                      draggable={false}
+                      className="w-full h-24 object-cover rounded border cursor-zoom-in"
+                      title="Powiększ"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setLightboxIndex(0)
+                        setLightboxOpen(true)
+                      }}
+                    />
+                    {taskImages.length > 1 && (
+                      <div
+                        className="absolute bottom-1 right-1 flex items-center gap-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white"
+                        title={`Załączone obrazki: ${taskImages.length}`}
+                      >
+                        <Images className="h-3 w-3" />
+                        +{taskImages.length - 1}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {task.githubWorkflowError && (
                   <div className="text-[10px] text-red-600 bg-red-500/10 border border-red-500/25 rounded px-1.5 py-0.5 mt-1 font-medium flex items-center gap-1 select-none">
                     <AlertCircle className="h-2.5 w-2.5 text-red-500 flex-shrink-0" />
@@ -402,6 +442,19 @@ function SortableTaskCard({
                         );
                       }
                     })()}
+                    {(() => {
+                      const commentCount = task.commentCount ?? task.comments?.length ?? 0
+                      if (commentCount === 0) return null
+                      return (
+                        <div
+                          className="flex items-center gap-1 text-xs text-muted-foreground"
+                          title={`Komentarze: ${commentCount}`}
+                        >
+                          <MessageSquare className="h-3 w-3" />
+                          <span>{commentCount}</span>
+                        </div>
+                      )
+                    })()}
                   </div>
                   {task.assignee && (
 
@@ -429,6 +482,14 @@ function SortableTaskCard({
           (dropping there is a no-op). Absolutely positioned so it never shifts
           the layout while dragging. */}
       {closestEdge && !isDragging && <DropIndicator edge={closestEdge} />}
+
+      <ImageLightbox
+        images={taskImages.map(img => ({ url: img.url, name: 'originalName' in img ? (img as { originalName?: string }).originalName || img.filename : img.filename }))}
+        index={lightboxIndex}
+        open={lightboxOpen}
+        onOpenChange={setLightboxOpen}
+        onIndexChange={setLightboxIndex}
+      />
     </div>
   )
 }

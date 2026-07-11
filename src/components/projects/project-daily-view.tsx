@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect, useRef } from "react"
+import { useState, useMemo, useEffect, useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -12,7 +12,7 @@ import {
   Plus
 } from "lucide-react"
 import { type Task } from "@/types"
-import { format, addDays, subDays, isSameDay } from "date-fns"
+import { format, addDays, subDays, isSameDay, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks } from "date-fns"
 import { pl } from "date-fns/locale"
 import {
   draggable,
@@ -113,10 +113,13 @@ function DraggableTask({ task, layout, top, height, isUpdating, onTaskClick }: {
   )
 }
 
-// Droppable Time Slot Component
-function DroppableTimeSlot({ assigneeId, hour, children }: {
+// Droppable Time Slot Component. In day view slots are keyed by assignee; in
+// week view by date (empty assigneeId = keep the task's current assignee).
+function DroppableTimeSlot({ assigneeId, hour, date, children }: {
   assigneeId: string
   hour: number
+  /** ISO date of the slot's day (week view); day view uses the selected date. */
+  date?: string
   children: React.ReactNode
 }) {
   const ref = useRef<HTMLDivElement>(null)
@@ -129,12 +132,12 @@ function DroppableTimeSlot({ assigneeId, hour, children }: {
     return dropTargetForElements({
       element,
       canDrop: ({ source }) => source.data.type === "daily-task",
-      getData: () => ({ assigneeId, hour }),
+      getData: () => ({ assigneeId, hour, ...(date && { date }) }),
       onDragEnter: () => setIsOver(true),
       onDragLeave: () => setIsOver(false),
       onDrop: () => setIsOver(false),
     })
-  }, [assigneeId, hour])
+  }, [assigneeId, hour, date])
 
   return (
     <div
@@ -159,8 +162,17 @@ export function ProjectDailyView({
   className
 }: ProjectDailyViewProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const [viewMode, setViewMode] = useState<"day" | "week">("day")
   const [optimisticTasks, setOptimisticTasks] = useState<Task[]>(tasks)
   const [updatingTasks, setUpdatingTasks] = useState<Set<string>>(new Set())
+
+  // Days of the week containing the selected date (Monday first).
+  const weekDays = useMemo(() => {
+    return eachDayOfInterval({
+      start: startOfWeek(selectedDate, { weekStartsOn: 1 }),
+      end: endOfWeek(selectedDate, { weekStartsOn: 1 }),
+    })
+  }, [selectedDate])
 
   // Update optimistic tasks when props tasks change
   useEffect(() => {
@@ -180,18 +192,19 @@ export function ProjectDailyView({
     return slots
   }, [])
 
-  // Filter tasks for selected date (use optimistic tasks for immediate UI updates)
-  const tasksForDate = useMemo(() => {
+  // Tasks scheduled/due on the given date, decorated with display times.
+  // Used by both the day view (selected date) and the week view (each day).
+  const tasksMatchingDate = useCallback((date: Date): TaskWithTime[] => {
     return optimisticTasks.filter(task => {
-      // Check if task has startTime or endTime on selected date
-      if (task.startTime && isSameDay(new Date(task.startTime), selectedDate)) {
+      // Check if task has startTime or endTime on the date
+      if (task.startTime && isSameDay(new Date(task.startTime), date)) {
         return true
       }
-      if (task.endTime && isSameDay(new Date(task.endTime), selectedDate)) {
+      if (task.endTime && isSameDay(new Date(task.endTime), date)) {
         return true
       }
-      // Also include tasks with dueDate on selected date
-      if (task.dueDate && isSameDay(new Date(task.dueDate), selectedDate)) {
+      // Also include tasks with dueDate on the date
+      if (task.dueDate && isSameDay(new Date(task.dueDate), date)) {
         return true
       }
       return false
@@ -216,7 +229,19 @@ export function ProjectDailyView({
 
       return taskWithTime
     })
-  }, [optimisticTasks, selectedDate])
+  }, [optimisticTasks])
+
+  // Filter tasks for selected date (use optimistic tasks for immediate UI updates)
+  const tasksForDate = useMemo(
+    () => tasksMatchingDate(selectedDate),
+    [tasksMatchingDate, selectedDate]
+  )
+
+  // Week view: tasks bucketed per day of the selected week.
+  const tasksByWeekDay = useMemo(
+    () => weekDays.map(day => ({ day, tasks: tasksMatchingDate(day) })),
+    [weekDays, tasksMatchingDate]
+  )
 
   // Group tasks by assignee
   const tasksByAssignee = useMemo(() => {
@@ -237,7 +262,9 @@ export function ProjectDailyView({
   }, [tasksForDate])
 
   const navigateDate = (direction: 'prev' | 'next') => {
-    if (direction === 'prev') {
+    if (viewMode === 'week') {
+      setSelectedDate(direction === 'prev' ? subWeeks(selectedDate, 1) : addWeeks(selectedDate, 1))
+    } else if (direction === 'prev') {
       setSelectedDate(subDays(selectedDate, 1))
     } else {
       setSelectedDate(addDays(selectedDate, 1))
@@ -366,7 +393,11 @@ export function ProjectDailyView({
 
   // Keep latest data accessible inside the drag monitor without re-registering it.
   const tasksForDateRef = useRef<TaskWithTime[]>(tasksForDate)
-  tasksForDateRef.current = tasksForDate
+  // In week view a dragged task can come from any day of the week, so the drop
+  // handler needs the whole week's tasks to find it.
+  tasksForDateRef.current = viewMode === "week"
+    ? tasksByWeekDay.flatMap(({ tasks }) => tasks)
+    : tasksForDate
   const selectedDateRef = useRef<Date>(selectedDate)
   selectedDateRef.current = selectedDate
   const onTaskUpdateRef = useRef(onTaskUpdate)
@@ -381,14 +412,16 @@ export function ProjectDailyView({
         handleTaskDrop(
           source.data.taskId as string,
           target.data.assigneeId as string,
-          target.data.hour as number
+          target.data.hour as number,
+          target.data.date as string | undefined
         )
       },
     })
   }, [])
 
-  // Handle drag end
-  const handleTaskDrop = async (taskId: string, assigneeId: string, hour: number) => {
+  // Handle drag end. `dateIso` is set when dropping on a week-view slot (the
+  // slot's day); day-view slots fall back to the selected date.
+  const handleTaskDrop = async (taskId: string, assigneeId: string, hour: number, dateIso?: string) => {
     const onTaskUpdate = onTaskUpdateRef.current
     const selectedDate = selectedDateRef.current
     if (!onTaskUpdate) return
@@ -399,7 +432,7 @@ export function ProjectDailyView({
     const minute = 0
 
     // Calculate new start time
-    const newStartTime = new Date(selectedDate)
+    const newStartTime = new Date(dateIso ? new Date(dateIso) : selectedDate)
     newStartTime.setHours(hour, minute, 0, 0)
 
     // Calculate new end time (preserve duration if exists)
@@ -423,8 +456,9 @@ export function ProjectDailyView({
       updates.endTime = newEndTime.toISOString()
     }
 
-    // Check if assignee is changing
-    const isAssigneeChanging = assigneeId !== 'unassigned' && assigneeId !== task.assignee?.id
+    // Check if assignee is changing. Week-view slots pass an empty assigneeId
+    // (columns are days, not people) — the task keeps its current assignee.
+    const isAssigneeChanging = !!assigneeId && assigneeId !== 'unassigned' && assigneeId !== task.assignee?.id
     const isUnassigning = assigneeId === 'unassigned' && task.assignee?.id
 
     if (isAssigneeChanging) {
@@ -496,14 +530,35 @@ export function ProjectDailyView({
             <div>
               <div className="flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
-                Widok dzienny
+                {viewMode === "day" ? "Widok dzienny" : "Widok tygodniowy"}
               </div>
               <div>
-                Zadania z podziałem na osoby i godziny dla {formatDate(selectedDate)}
+                {viewMode === "day"
+                  ? `Zadania z podziałem na osoby i godziny dla ${formatDate(selectedDate)}`
+                  : `Zadania w tygodniu ${format(weekDays[0], "d MMM", { locale: pl })} – ${format(weekDays[6], "d MMM yyyy", { locale: pl })}`}
               </div>
             </div>
             <div>
               <div className="flex items-center space-x-2">
+                {/* Przełącznik widoku dzień / tydzień */}
+                <div className="flex items-center rounded-md border p-0.5">
+                  <Button
+                    variant={viewMode === "day" ? "default" : "ghost"}
+                    size="sm"
+                    className="h-7 px-2"
+                    onClick={() => setViewMode("day")}
+                  >
+                    Dzień
+                  </Button>
+                  <Button
+                    variant={viewMode === "week" ? "default" : "ghost"}
+                    size="sm"
+                    className="h-7 px-2"
+                    onClick={() => setViewMode("week")}
+                  >
+                    Tydzień
+                  </Button>
+                </div>
                 {projectId && (
                   <QuickAddTaskCommand
                     projectId={projectId}
@@ -541,6 +596,7 @@ export function ProjectDailyView({
           </div>
         </div>
         <div>
+          {viewMode === "day" ? (
           <div className="overflow-x-auto">
             <div className="min-w-[800px]">
 
@@ -605,8 +661,99 @@ export function ProjectDailyView({
               </div>
             </div>
           </div>
+          ) : (
+          /* Widok tygodniowy: kolumny = dni tygodnia, wiersze = godziny. */
+          <div className="overflow-x-auto">
+            <div className="min-w-[900px]">
+              {/* Nagłówki dni */}
+              <div className="grid grid-cols-[100px_1fr] gap-4 border-b pb-2 mb-1">
+                <div></div>
+                <div className="grid grid-cols-7 gap-2">
+                  {weekDays.map(day => (
+                    <button
+                      key={day.toISOString()}
+                      type="button"
+                      onClick={() => { setSelectedDate(day); setViewMode("day") }}
+                      title="Przejdź do widoku dnia"
+                      className={`text-center text-sm rounded py-1 transition-colors hover:bg-muted ${
+                        isSameDay(day, new Date())
+                          ? "font-semibold text-primary bg-primary/10"
+                          : "font-medium text-muted-foreground"
+                      }`}
+                    >
+                      {format(day, "EEE d.MM", { locale: pl })}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-          {tasksForDate.length === 0 && (
+              <div className="relative">
+                {/* Siatka godzin */}
+                <div className="space-y-1">
+                  {timeSlots.map(({ hour, displayTime }) => (
+                    <div key={hour} className="grid grid-cols-[100px_1fr] gap-4 min-h-[60px] border-b border-gray-100">
+                      <div className="flex items-start pt-2">
+                        <span className="text-sm text-muted-foreground font-mono">{displayTime}</span>
+                      </div>
+                      <div className="grid grid-cols-7 gap-2">
+                        {weekDays.map(day => (
+                          <DroppableTimeSlot
+                            key={`${day.toISOString()}-${hour}`}
+                            assigneeId=""
+                            hour={hour}
+                            date={day.toISOString()}
+                          >
+                            <div></div>
+                          </DroppableTimeSlot>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Nakładka z zadaniami */}
+                <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+                  <div className="grid grid-cols-[100px_1fr] gap-4 h-full">
+                    <div></div> {/* Time column spacer */}
+                    <div className="grid grid-cols-7 gap-2">
+                      {tasksByWeekDay.map(({ day, tasks: dayTasks }) => {
+                        const taskLayouts = calculateTaskLayout(dayTasks)
+
+                        return (
+                          <div key={day.toISOString()} className="relative">
+                            {dayTasks.map(task => {
+                              const height = getTaskHeight(task)
+                              const topOffset = getTaskTopOffset(task)
+                              const startHour = task.startTime ? new Date(task.startTime).getHours() : 8
+                              const slotIndex = startHour - 8 // 8 is the first hour
+                              const top = slotIndex * 61 + topOffset + 8 // 61px per slot (60px + 1px border) + 8px padding
+
+                              const layout = taskLayouts[task.id] || { width: 100, left: 0, column: 0 }
+
+                              return (
+                                <DraggableTask
+                                  key={task.id}
+                                  task={task}
+                                  layout={layout}
+                                  top={top}
+                                  height={height}
+                                  isUpdating={updatingTasks.has(task.id)}
+                                  onTaskClick={onTaskClick}
+                                />
+                              )
+                            })}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          )}
+
+          {viewMode === "day" && tasksForDate.length === 0 && (
             <div className="text-center py-8">
               <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">Brak zadań na ten dzień</h3>
@@ -619,6 +766,15 @@ export function ProjectDailyView({
                   Dodaj zadanie
                 </Button>
               )}
+            </div>
+          )}
+          {viewMode === "week" && tasksByWeekDay.every(({ tasks: dayTasks }) => dayTasks.length === 0) && (
+            <div className="text-center py-8">
+              <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Brak zadań w tym tygodniu</h3>
+              <p className="text-gray-500 mb-4">
+                Nie ma żadnych zadań zaplanowanych w tym tygodniu
+              </p>
             </div>
           )}
         </div>

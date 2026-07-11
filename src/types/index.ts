@@ -156,6 +156,10 @@ export interface Task {
       avatarUrl?: string;
     };
   }[];
+  // Liczba komentarzy z endpointów, które nie zwracają pełnej listy komentarzy
+  // (np. paginowana lista zadań projektu) — karta na tablicy czyta ją zamiast
+  // comments.length.
+  commentCount?: number;
   timeEntries?: {
     id: string;
     hours: number;
