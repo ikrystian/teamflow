@@ -1227,472 +1227,472 @@ export function TaskFormContent({
           {/* Edit mode: dwie kolumny — treść (opis, notatki, dokumenty, komentarze)
               po lewej, parametry zadania (terminy, tagi, zaawansowane) po prawej.
               Create mode: jedna kolumna. */}
-          <div className={isEditMode ? "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-6 items-start" : "space-y-4"}>
-          <div className="space-y-4 min-w-0">
-          <div className="space-y-2">
-            <div className="rounded-md">
-              <RichTextEditor
-                content={description}
-                onChange={setDescription}
-                placeholder="Wprowadź szczegółowy opis zadania..."
-                showToolbarOnFocus={true}
-                editable={!readOnly}
-              />
-            </div>
-          </div>
+          <div className={isEditMode ? "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_540px] gap-6 items-start" : "space-y-4"}>
+            <div className="space-y-4 min-w-0">
+              <div className="space-y-2">
+                <div className="rounded-md">
+                  <RichTextEditor
+                    content={description}
+                    onChange={setDescription}
+                    placeholder="Wprowadź szczegółowy opis zadania..."
+                    showToolbarOnFocus={true}
+                    editable={!readOnly}
+                  />
+                </div>
+              </div>
 
-          {/* Changes field - collapsible in edit mode with Slack sending option */}
-          {isEditMode && (
-            <div className="space-y-2">
-              <div className="flex items-start gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowNotes(!showNotes)}
-                  className="flex-1 justify-start"
-                >
-                  {showNotes ? "▼" : "▶"} Notatki ze zmian
-                </Button>
+              {/* Changes field - collapsible in edit mode with Slack sending option */}
+              {isEditMode && (
                 <div className="space-y-2">
-                  <div className="flex gap-2 items-center">
-                    <div className="flex-1">
-                      <DateTimePicker
-                        value={slackScheduledSendAt}
-                        onChange={setSlackScheduledSendAt}
-                      />
-                      {slackScheduledSendAt && !slackSentAt && (
-                        <div className="text-xs text-blue-600 dark:text-blue-400 space-y-1">
-                          <p className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            Zaplanowano na {slackScheduledSendAt.toLocaleString("pl-PL")}
-                          </p>
-
-                        </div>
-                      )}
-                    </div>
+                  <div className="flex items-start gap-2">
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => {
-                        setSlackScheduledSendAt(undefined)
-                      }}
-                      disabled={!slackScheduledSendAt}
+                      onClick={() => setShowNotes(!showNotes)}
+                      className="flex-1 justify-start"
                     >
-                      Wyczyść
+                      {showNotes ? "▼" : "▶"} Notatki ze zmian
                     </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={() => handleSendToSlack(slackScheduledSendAt)}
-                      disabled={sendingToSlack || !changes.trim()}
-                    >
-                      <Send className="h-4 w-4 mr-1" />
-                      {sendingToSlack ? "Wysyłanie..." : "Wyślij na Slack"}
-                    </Button>
-                  </div>
-                  {slackSentAt && (
-                    <div className="flex items-center gap-2">
-                      <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
-                        <Check className="h-3 w-3" />
-                        Wysłano {new Date(slackSentAt).toLocaleDateString("pl-PL")}
-                      </p>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 px-2 text-xs text-red-600 hover:text-red-700 dark:text-red-400"
-                        onClick={handleDeleteFromSlack}
-                        disabled={deletingFromSlack}
-                      >
-                        <Trash2 className="h-3 w-3 mr-1" />
-                        {deletingFromSlack ? "Usuwanie..." : "Usuń ze Slacka"}
-                      </Button>
-                    </div>
-                  )}
-                  {slackScheduledSendAt && !slackSentAt && (
-                    <div className="text-xs text-blue-600 dark:text-blue-400 space-y-1">
+                    <div className="space-y-2">
+                      <div className="flex gap-2 items-center">
+                        <div className="flex-1">
+                          <DateTimePicker
+                            value={slackScheduledSendAt}
+                            onChange={setSlackScheduledSendAt}
+                          />
+                          {slackScheduledSendAt && !slackSentAt && (
+                            <div className="text-xs text-blue-600 dark:text-blue-400 space-y-1">
+                              <p className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                Zaplanowano na {slackScheduledSendAt.toLocaleString("pl-PL")}
+                              </p>
 
-                      <p className="text-blue-500 dark:text-blue-300 flex items-center gap-1">
-                        Obecny czas: {serverTime.toLocaleString("pl-PL")}
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-              </div>
-              {showNotes && (
-                <div className="space-y-3 p-3 border rounded-md bg-muted/20">
-                  <TextareaAutosize
-                    id="changes"
-                    value={changes}
-                    onChange={(e) => {
-                      setChanges(e.target.value)
-                      if (slackSentAt) setSlackSentAt(null)
-                      if (slackScheduledSendAt) setSlackScheduledSendAt(undefined)
-                    }}
-                    placeholder="Notatki dotyczące zmian (będą wysłane na Slack w formacie markdown)"
-                    minRows={4}
-                    className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 font-mono resize-none"
-                  />
-
-
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Dokumenty zadania — upload i lista z rozróżnieniem typów plików */}
-          <div className="space-y-2">
-            {isCreateMode ? (
-              <div className="space-y-2">
-                <FileUpload
-                  files={attachments.map((file, index) => ({
-                    id: `temp-${index}`,
-                    filename: file.name,
-                    originalName: file.name,
-                    url: '',
-                    mimeType: file.type,
-                    size: file.size,
-                    createdAt: new Date().toISOString(),
-                    uploadedBy: { id: '', name: '', email: '', avatarUrl: '' }
-                  }))}
-                  onFileUpload={handleFileUpload}
-                  onFileDelete={async (fileId) => {
-                    const index = parseInt(fileId.replace('temp-', ''))
-                    setAttachments(prev => prev.filter((_, i) => i !== index))
-                  }}
-                  editable={true}
-                  accept="*/*"
-                  maxSize={10 * 1024 * 1024}
-                  maxFiles={10}
-                  title="Dokumenty"
-                  description="Dodaj dokumenty do zadania (max 10MB każdy)"
-                  categories={["specification", "design", "manual", "other"]}
-                  showCategories={false}
-                  showDescriptions={false}
-                  className="border rounded-lg p-4"
-                />
-                {uploadingFiles && (
-                  <div className="text-sm text-muted-foreground">
-                    Przesyłanie plików...
-                  </div>
-                )}
-              </div>
-            ) : (
-              <FileUpload
-                files={taskAttachments}
-                onFileUpload={handleFileUpload}
-                onFileDelete={handleFileDelete}
-                editable={!readOnly}
-                accept="*/*"
-                maxSize={10 * 1024 * 1024}
-                maxFiles={10}
-                title="Dokumenty"
-                description="Dokumenty załączone do zadania"
-                categories={["specification", "design", "manual", "other"]}
-                showCategories={true}
-                showDescriptions={true}
-                className="border rounded-lg p-4"
-              />
-            )}
-          </div>
-
-          </div>
-
-          {/* Kolumna boczna: planowanie czasu, tagi, zaawansowane */}
-          <div className="space-y-4">
-
-            {/* Tags Selection */}
-            {availableTags.length > 0 && (
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Tagi</Label>
-                <div className="flex flex-wrap gap-2 p-3 border rounded-md min-h-[42px]">
-                  {availableTags.map((tag) => {
-                    const isSelected = selectedTagIds.includes(tag.id)
-                    return (
-                      <Badge
-                        key={tag.id}
-                        variant={isSelected ? "default" : "outline"}
-                        className="cursor-pointer transition-all hover:scale-105"
-                        style={isSelected ? {
-                          backgroundColor: tag.color,
-                          borderColor: tag.color,
-                          color: '#fff'
-                        } : {
-                          borderColor: tag.color,
-                          color: tag.color
-                        }}
-                        onClick={() => {
-                          if (isSelected) {
-                            setSelectedTagIds(prev => prev.filter(id => id !== tag.id))
-                          } else {
-                            setSelectedTagIds(prev => [...prev, tag.id])
-                          }
-                        }}
-                      >
-                        {tag.name}
-                      </Badge>
-                    )
-                  })}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Kliknij na tag, aby go zaznaczyć lub odznaczyć
-                </p>
-              </div>
-            )}
-
-            {/* Advanced Button */}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className="w-full justify-start mt-2"
-            >
-              {showAdvanced ? "▼" : "▶"} Zaawansowane
-            </Button>
-
-            {/* Advanced Section */}
-            {showAdvanced && (
-              <div className="space-y-4 p-3 border rounded-md bg-muted/20">
-                {/* Subtasks Management */}
-                {isEditMode && (
-                  <div className="space-y-3 border rounded-lg p-4 bg-background">
-
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-sm font-medium">Podzadania</Label>
-                        <span className="text-xs text-muted-foreground">
-                          {subtasks.filter(s => s.isCompleted).length}/{subtasks.length} ukończone
-                        </span>
+                            </div>
+                          )}
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSlackScheduledSendAt(undefined)
+                          }}
+                          disabled={!slackScheduledSendAt}
+                        >
+                          Wyczyść
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => handleSendToSlack(slackScheduledSendAt)}
+                          disabled={sendingToSlack || !changes.trim()}
+                        >
+                          <Send className="h-4 w-4 mr-1" />
+                          {sendingToSlack ? "Wysyłanie..." : "Wyślij na Slack"}
+                        </Button>
                       </div>
-                      {subtasks.length > 0 && subtasks.some(s => s.timeSpent) && (
-                        <div className="text-xs text-muted-foreground">
-                          Zaraportowany czas: {subtasks.reduce((sum, s) => sum + (s.timeSpent || 0), 0)}h
+                      {slackSentAt && (
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                            <Check className="h-3 w-3" />
+                            Wysłano {new Date(slackSentAt).toLocaleDateString("pl-PL")}
+                          </p>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-xs text-red-600 hover:text-red-700 dark:text-red-400"
+                            onClick={handleDeleteFromSlack}
+                            disabled={deletingFromSlack}
+                          >
+                            <Trash2 className="h-3 w-3 mr-1" />
+                            {deletingFromSlack ? "Usuwanie..." : "Usuń ze Slacka"}
+                          </Button>
+                        </div>
+                      )}
+                      {slackScheduledSendAt && !slackSentAt && (
+                        <div className="text-xs text-blue-600 dark:text-blue-400 space-y-1">
+
+                          <p className="text-blue-500 dark:text-blue-300 flex items-center gap-1">
+                            Obecny czas: {serverTime.toLocaleString("pl-PL")}
+                          </p>
                         </div>
                       )}
                     </div>
 
-                    {/* Existing subtasks */}
-                    {subtasks.length > 0 && (
-                      <div className="space-y-2">
-                        {subtasks.map((subtask) => (
-                          <form key={subtask.id} className="flex items-center gap-2 p-2 bg-background border rounded-md">
-                            <input
-                              type="checkbox"
-                              checked={subtask.isCompleted}
-                              onChange={(e) => {
-                                setSubtasks(prev => prev.map(s =>
-                                  s.id === subtask.id ? { ...s, isCompleted: e.target.checked } : s
-                                ))
-                              }}
-                              className="w-4 h-4 cursor-pointer"
-                            />
-                            <input
-                              type="text"
-                              value={subtask.title}
-                              onChange={(e) => {
-                                setSubtasks(prev => prev.map(s =>
-                                  s.id === subtask.id ? { ...s, title: e.target.value } : s
-                                ))
-                              }}
-                              className="flex-1 px-2 py-1 text-sm border-0 bg-transparent focus:outline-none"
-                            />
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.5"
-                              value={subtask.timeSpent || ""}
-                              onChange={(e) => {
-                                setSubtasks(prev => prev.map(s =>
-                                  s.id === subtask.id ? { ...s, timeSpent: e.target.value ? parseFloat(e.target.value) : 0 } : s
-                                ))
-                              }}
-                              className="w-16 px-2 py-1 text-sm border-0 bg-transparent focus:outline-none text-right"
-                              placeholder="h"
-                              title="Zaraportowany czas w godzinach"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSubtasks(prev => prev.filter(s => s.id !== subtask.id))
-                              }}
-                              className="text-xs text-destructive hover:text-destructive/80 px-2"
-                            >
-                              Usuń
-                            </button>
-                          </form>
-                        ))}
+                  </div>
+                  {showNotes && (
+                    <div className="space-y-3 p-3 border rounded-md bg-muted/20">
+                      <TextareaAutosize
+                        id="changes"
+                        value={changes}
+                        onChange={(e) => {
+                          setChanges(e.target.value)
+                          if (slackSentAt) setSlackSentAt(null)
+                          if (slackScheduledSendAt) setSlackScheduledSendAt(undefined)
+                        }}
+                        placeholder="Notatki dotyczące zmian (będą wysłane na Slack w formacie markdown)"
+                        minRows={4}
+                        className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 font-mono resize-none"
+                      />
+
+
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Dokumenty zadania — upload i lista z rozróżnieniem typów plików */}
+              <div className="space-y-2">
+                {isCreateMode ? (
+                  <div className="space-y-2">
+                    <FileUpload
+                      files={attachments.map((file, index) => ({
+                        id: `temp-${index}`,
+                        filename: file.name,
+                        originalName: file.name,
+                        url: '',
+                        mimeType: file.type,
+                        size: file.size,
+                        createdAt: new Date().toISOString(),
+                        uploadedBy: { id: '', name: '', email: '', avatarUrl: '' }
+                      }))}
+                      onFileUpload={handleFileUpload}
+                      onFileDelete={async (fileId) => {
+                        const index = parseInt(fileId.replace('temp-', ''))
+                        setAttachments(prev => prev.filter((_, i) => i !== index))
+                      }}
+                      editable={true}
+                      accept="*/*"
+                      maxSize={10 * 1024 * 1024}
+                      maxFiles={10}
+                      title="Dokumenty"
+                      description="Dodaj dokumenty do zadania (max 10MB każdy)"
+                      categories={["specification", "design", "manual", "other"]}
+                      showCategories={false}
+                      showDescriptions={false}
+                      className="border rounded-lg p-4"
+                    />
+                    {uploadingFiles && (
+                      <div className="text-sm text-muted-foreground">
+                        Przesyłanie plików...
                       </div>
                     )}
-
-                    {/* Add new subtask */}
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Dodaj nowe podzadanie..."
-                        value={newSubtaskTitle}
-                        onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && newSubtaskTitle.trim()) {
-                            setSubtasks(prev => [...prev, {
-                              id: `temp-${Date.now()}`,
-                              title: newSubtaskTitle.trim(),
-                              isCompleted: false,
-                              isNew: true
-                            }])
-                            setNewSubtaskTitle("")
-                          }
-                        }}
-                        className="h-9 text-sm"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          if (newSubtaskTitle.trim()) {
-                            setSubtasks(prev => [...prev, {
-                              id: `temp-${Date.now()}`,
-                              title: newSubtaskTitle.trim(),
-                              isCompleted: false,
-                              isNew: true
-                            }])
-                            setNewSubtaskTitle("")
-                          }
-                        }}
-                      >
-                        Dodaj
-                      </Button>
-                    </div>
                   </div>
-                )}
-
-                {/* Reminder Settings */}
-                <ReminderSettings
-                  reminderEnabled={reminderEnabled}
-                  reminderType={reminderType}
-                  reminderValue={reminderValue}
-                  dueDate={dueDate}
-                  onReminderChange={handleReminderChange}
-                />
-              </div>
-            )}
-
-            {/* Time Planning Mode Selection */}
-            <div className="space-y-3">
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant={timePlanningMode === "reporting" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleTimePlanningModeChange("reporting")}
-                  className="flex-1"
-                >
-                  Raportowanie czasu
-                </Button>
-                <Button
-                  type="button"
-                  variant={timePlanningMode === "scheduled" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleTimePlanningModeChange("scheduled")}
-                  className="flex-1"
-                >
-                  Zaplanowana praca
-                </Button>
-              </div>
-            </div>
-
-            <div className={`grid grid-cols-1 ${isCreateMode ? "md:grid-cols-2" : ""} gap-4`}>
-              <div className="space-y-2">
-                <Label htmlFor="dueDate" className="text-sm font-medium">
-                  {timePlanningMode === "reporting" ? "Termin wykonania" : "Termin wykonania (opcjonalnie)"}
-                </Label>
-                <DateTimePicker
-                  value={dueDate}
-                  onChange={setDueDate}
-                  className="rounded-lg border shadow-sm"
-                  disablePast={isCreateMode}
-                  defaultTimeOnSelect={isCreateMode}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="estimatedHours" className="text-sm font-medium">
-                  Szacowany czas
-                  {timePlanningMode === "scheduled" && " (wyliczane)"}
-                </Label>
-                {timePlanningMode === "reporting" ? (
-                  <select
-                    id="estimatedHours"
-                    value={estimatedHours}
-                    onChange={(e) => setEstimatedHours(e.target.value)}
-                    className="h-10 w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                  >
-                    {getEstimatedHoursOptions().map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
                 ) : (
-                  <div className="h-10 px-3 py-2 border border-input bg-muted/50 rounded-md flex items-center text-sm text-muted-foreground">
-                    {estimatedHours && estimatedHours !== "none"
-                      ? `${selectValueToHours(estimatedHours)}h`
-                      : "Wybierz czas rozpoczęcia i zakończenia"
-                    }
-                  </div>
+                  <FileUpload
+                    files={taskAttachments}
+                    onFileUpload={handleFileUpload}
+                    onFileDelete={handleFileDelete}
+                    editable={!readOnly}
+                    accept="*/*"
+                    maxSize={10 * 1024 * 1024}
+                    maxFiles={10}
+                    title="Dokumenty"
+                    description="Dokumenty załączone do zadania"
+                    categories={["specification", "design", "manual", "other"]}
+                    showCategories={true}
+                    showDescriptions={true}
+                    className="border rounded-lg p-4"
+                  />
                 )}
               </div>
+
             </div>
 
-            {/* Time Fields */}
-            {timePlanningMode === "scheduled" && (
+            {/* Kolumna boczna: planowanie czasu, tagi, zaawansowane */}
+            <div className="space-y-4">
+
+              {/* Tags Selection */}
+              {availableTags.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Tagi</Label>
+                  <div className="flex flex-wrap gap-2 p-3 border rounded-md min-h-[42px]">
+                    {availableTags.map((tag) => {
+                      const isSelected = selectedTagIds.includes(tag.id)
+                      return (
+                        <Badge
+                          key={tag.id}
+                          variant={isSelected ? "default" : "outline"}
+                          className="cursor-pointer transition-all hover:scale-105"
+                          style={isSelected ? {
+                            backgroundColor: tag.color,
+                            borderColor: tag.color,
+                            color: '#fff'
+                          } : {
+                            borderColor: tag.color,
+                            color: tag.color
+                          }}
+                          onClick={() => {
+                            if (isSelected) {
+                              setSelectedTagIds(prev => prev.filter(id => id !== tag.id))
+                            } else {
+                              setSelectedTagIds(prev => [...prev, tag.id])
+                            }
+                          }}
+                        >
+                          {tag.name}
+                        </Badge>
+                      )
+                    })}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Kliknij na tag, aby go zaznaczyć lub odznaczyć
+                  </p>
+                </div>
+              )}
+
+              {/* Advanced Button */}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="w-full justify-start mt-2"
+              >
+                {showAdvanced ? "▼" : "▶"} Zaawansowane
+              </Button>
+
+              {/* Advanced Section */}
+              {showAdvanced && (
+                <div className="space-y-4 p-3 border rounded-md bg-muted/20">
+                  {/* Subtasks Management */}
+                  {isEditMode && (
+                    <div className="space-y-3 border rounded-lg p-4 bg-background">
+
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm font-medium">Podzadania</Label>
+                          <span className="text-xs text-muted-foreground">
+                            {subtasks.filter(s => s.isCompleted).length}/{subtasks.length} ukończone
+                          </span>
+                        </div>
+                        {subtasks.length > 0 && subtasks.some(s => s.timeSpent) && (
+                          <div className="text-xs text-muted-foreground">
+                            Zaraportowany czas: {subtasks.reduce((sum, s) => sum + (s.timeSpent || 0), 0)}h
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Existing subtasks */}
+                      {subtasks.length > 0 && (
+                        <div className="space-y-2">
+                          {subtasks.map((subtask) => (
+                            <form key={subtask.id} className="flex items-center gap-2 p-2 bg-background border rounded-md">
+                              <input
+                                type="checkbox"
+                                checked={subtask.isCompleted}
+                                onChange={(e) => {
+                                  setSubtasks(prev => prev.map(s =>
+                                    s.id === subtask.id ? { ...s, isCompleted: e.target.checked } : s
+                                  ))
+                                }}
+                                className="w-4 h-4 cursor-pointer"
+                              />
+                              <input
+                                type="text"
+                                value={subtask.title}
+                                onChange={(e) => {
+                                  setSubtasks(prev => prev.map(s =>
+                                    s.id === subtask.id ? { ...s, title: e.target.value } : s
+                                  ))
+                                }}
+                                className="flex-1 px-2 py-1 text-sm border-0 bg-transparent focus:outline-none"
+                              />
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.5"
+                                value={subtask.timeSpent || ""}
+                                onChange={(e) => {
+                                  setSubtasks(prev => prev.map(s =>
+                                    s.id === subtask.id ? { ...s, timeSpent: e.target.value ? parseFloat(e.target.value) : 0 } : s
+                                  ))
+                                }}
+                                className="w-16 px-2 py-1 text-sm border-0 bg-transparent focus:outline-none text-right"
+                                placeholder="h"
+                                title="Zaraportowany czas w godzinach"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSubtasks(prev => prev.filter(s => s.id !== subtask.id))
+                                }}
+                                className="text-xs text-destructive hover:text-destructive/80 px-2"
+                              >
+                                Usuń
+                              </button>
+                            </form>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Add new subtask */}
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Dodaj nowe podzadanie..."
+                          value={newSubtaskTitle}
+                          onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && newSubtaskTitle.trim()) {
+                              setSubtasks(prev => [...prev, {
+                                id: `temp-${Date.now()}`,
+                                title: newSubtaskTitle.trim(),
+                                isCompleted: false,
+                                isNew: true
+                              }])
+                              setNewSubtaskTitle("")
+                            }
+                          }}
+                          className="h-9 text-sm"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            if (newSubtaskTitle.trim()) {
+                              setSubtasks(prev => [...prev, {
+                                id: `temp-${Date.now()}`,
+                                title: newSubtaskTitle.trim(),
+                                isCompleted: false,
+                                isNew: true
+                              }])
+                              setNewSubtaskTitle("")
+                            }
+                          }}
+                        >
+                          Dodaj
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Reminder Settings */}
+                  <ReminderSettings
+                    reminderEnabled={reminderEnabled}
+                    reminderType={reminderType}
+                    reminderValue={reminderValue}
+                    dueDate={dueDate}
+                    onReminderChange={handleReminderChange}
+                  />
+                </div>
+              )}
+
+              {/* Time Planning Mode Selection */}
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={timePlanningMode === "reporting" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleTimePlanningModeChange("reporting")}
+                    className="flex-1"
+                  >
+                    Raportowanie czasu
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={timePlanningMode === "scheduled" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleTimePlanningModeChange("scheduled")}
+                    className="flex-1"
+                  >
+                    Zaplanowana praca
+                  </Button>
+                </div>
+              </div>
 
               <div className={`grid grid-cols-1 ${isCreateMode ? "md:grid-cols-2" : ""} gap-4`}>
                 <div className="space-y-2">
-                  <Label htmlFor="startTime" className="text-sm font-medium">
-                    Czas rozpoczęcia
-                    <span className="text-destructive"> *</span>
+                  <Label htmlFor="dueDate" className="text-sm font-medium">
+                    {timePlanningMode === "reporting" ? "Termin wykonania" : "Termin wykonania (opcjonalnie)"}
                   </Label>
                   <DateTimePicker
-                    value={startTime}
-                    onChange={setStartTime}
-                    placeholder="Wybierz czas rozpoczęcia"
+                    value={dueDate}
+                    onChange={setDueDate}
                     className="rounded-lg border shadow-sm"
                     disablePast={isCreateMode}
+                    defaultTimeOnSelect={isCreateMode}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="endTime" className="text-sm font-medium">
-                    Czas zakończenia
-                    <span className="text-destructive"> *</span>
+                  <Label htmlFor="estimatedHours" className="text-sm font-medium">
+                    Szacowany czas
+                    {timePlanningMode === "scheduled" && " (wyliczane)"}
                   </Label>
-                  <DateTimePicker
-                    value={endTime}
-                    onChange={setEndTime}
-                    placeholder="Wybierz czas zakończenia"
-                    className="rounded-lg border shadow-sm"
-                    disablePast={isCreateMode}
-                  />
+                  {timePlanningMode === "reporting" ? (
+                    <select
+                      id="estimatedHours"
+                      value={estimatedHours}
+                      onChange={(e) => setEstimatedHours(e.target.value)}
+                      className="h-10 w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    >
+                      {getEstimatedHoursOptions().map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="h-10 px-3 py-2 border border-input bg-muted/50 rounded-md flex items-center text-sm text-muted-foreground">
+                      {estimatedHours && estimatedHours !== "none"
+                        ? `${selectValueToHours(estimatedHours)}h`
+                        : "Wybierz czas rozpoczęcia i zakończenia"
+                      }
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
 
-            {/* Komentarze zadania — pod szacowanym czasem (tylko w trybie
+              {/* Time Fields */}
+              {timePlanningMode === "scheduled" && (
+
+                <div className={`grid grid-cols-1 ${isCreateMode ? "md:grid-cols-2" : ""} gap-4`}>
+                  <div className="space-y-2">
+                    <Label htmlFor="startTime" className="text-sm font-medium">
+                      Czas rozpoczęcia
+                      <span className="text-destructive"> *</span>
+                    </Label>
+                    <DateTimePicker
+                      value={startTime}
+                      onChange={setStartTime}
+                      placeholder="Wybierz czas rozpoczęcia"
+                      className="rounded-lg border shadow-sm"
+                      disablePast={isCreateMode}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="endTime" className="text-sm font-medium">
+                      Czas zakończenia
+                      <span className="text-destructive"> *</span>
+                    </Label>
+                    <DateTimePicker
+                      value={endTime}
+                      onChange={setEndTime}
+                      placeholder="Wybierz czas zakończenia"
+                      className="rounded-lg border shadow-sm"
+                      disablePast={isCreateMode}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Komentarze zadania — pod szacowanym czasem (tylko w trybie
                 edycji; nowe zadanie nie ma jeszcze id) */}
-            {isEditMode && task && (
-              <div className="border rounded-lg p-4">
-                <TaskComments
-                  taskId={task.id}
-                  readOnly={readOnly}
-                  onCommentsChanged={() => onTaskUpdatedRef.current?.()}
-                />
-              </div>
-            )}
-          </div>
+              {isEditMode && task && (
+                <div className="border rounded-lg p-4">
+                  <TaskComments
+                    taskId={task.id}
+                    readOnly={readOnly}
+                    onCommentsChanged={() => onTaskUpdatedRef.current?.()}
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           {error && (
@@ -1704,99 +1704,99 @@ export function TaskFormContent({
 
         {/* Action Buttons — hidden in read-only mode (view only) */}
         {!readOnly && (
-        <div className="flex flex-col-reverse sm:flex-row gap-2 pt-6">
-          {/* Delete task — edit mode only */}
-          {isEditMode && task && (
-            <div className="sm:mr-auto">
-              {showDeleteConfirm ? (
-                <div className="flex items-center gap-2 p-2 bg-destructive/10 border border-destructive/20 rounded-md">
-                  <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
-                  <span className="text-sm text-destructive">Na pewno usunąć?</span>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleDeleteTask}
-                    disabled={deleting}
-                    className="h-7"
-                  >
-                    {deleting ? "Usuwanie..." : "Tak"}
-                  </Button>
+          <div className="flex flex-col-reverse sm:flex-row gap-2 pt-6">
+            {/* Delete task — edit mode only */}
+            {isEditMode && task && (
+              <div className="sm:mr-auto">
+                {showDeleteConfirm ? (
+                  <div className="flex items-center gap-2 p-2 bg-destructive/10 border border-destructive/20 rounded-md">
+                    <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
+                    <span className="text-sm text-destructive">Na pewno usunąć?</span>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleDeleteTask}
+                      disabled={deleting}
+                      className="h-7"
+                    >
+                      {deleting ? "Usuwanie..." : "Tak"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowDeleteConfirm(false)}
+                      disabled={deleting}
+                      className="h-7"
+                    >
+                      Anuluj
+                    </Button>
+                  </div>
+                ) : (
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => setShowDeleteConfirm(false)}
-                    disabled={deleting}
-                    className="h-7"
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-2"
                   >
-                    Anuluj
+                    <Trash2 className="h-4 w-4" />
+                    Usuń zadanie
                   </Button>
-                </div>
-              ) : (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-2"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Usuń zadanie
-                </Button>
-              )}
-            </div>
-          )}
-          <Button
-            type="submit"
-            disabled={loading || !isFormValid() || isSaving}
-            className="h-10"
-          >
-            {loading ? (
-              <>
-                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
-                {isCreateMode ? "Tworzenie..." : "Aktualizowanie..."}
-              </>
-            ) : isSaving ? (
-              <>
-                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
-                Zapisywanie...
-              </>
-            ) : (
-              isCreateMode ? "Utwórz zadanie" : "Zaktualizuj zadanie"
+                )}
+              </div>
             )}
-          </Button>
-
-          {/* GitHub branch button — edit mode only */}
-          {isEditMode && task && (
-            <div className="flex items-center gap-2">
-              {branchCreated ? (
-                <a
-                  href={branchCreated.url || makeBranchUrl(branchCreated.name, task?.project?.githubRepo) || '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title={`Otwórz branch ${branchCreated.name} na GitHub`}
-                  className="inline-flex items-center gap-1.5 text-sm font-mono px-3 py-2 rounded-md border bg-muted/50 hover:bg-muted transition-colors"
-                >
-                  <GitBranch className="h-4 w-4 text-green-600" />
-                  <span className="text-green-700 dark:text-green-400 max-w-[200px] truncate">{branchCreated.name}</span>
-                </a>
+            <Button
+              type="submit"
+              disabled={loading || !isFormValid() || isSaving}
+              className="h-10"
+            >
+              {loading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                  {isCreateMode ? "Tworzenie..." : "Aktualizowanie..."}
+                </>
+              ) : isSaving ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                  Zapisywanie...
+                </>
               ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCreateGithubBranch}
-                  disabled={creatingBranch}
-                  className="gap-2"
-                >
-                  <GitBranch className="h-4 w-4" />
-                  {creatingBranch ? "Tworzenie brancha..." : "Utwórz branch GitHub"}
-                </Button>
+                isCreateMode ? "Utwórz zadanie" : "Zaktualizuj zadanie"
               )}
-            </div>
-          )}
-        </div>
+            </Button>
+
+            {/* GitHub branch button — edit mode only */}
+            {isEditMode && task && (
+              <div className="flex items-center gap-2">
+                {branchCreated ? (
+                  <a
+                    href={branchCreated.url || makeBranchUrl(branchCreated.name, task?.project?.githubRepo) || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={`Otwórz branch ${branchCreated.name} na GitHub`}
+                    className="inline-flex items-center gap-1.5 text-sm font-mono px-3 py-2 rounded-md border bg-muted/50 hover:bg-muted transition-colors"
+                  >
+                    <GitBranch className="h-4 w-4 text-green-600" />
+                    <span className="text-green-700 dark:text-green-400 max-w-[200px] truncate">{branchCreated.name}</span>
+                  </a>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCreateGithubBranch}
+                    disabled={creatingBranch}
+                    className="gap-2"
+                  >
+                    <GitBranch className="h-4 w-4" />
+                    {creatingBranch ? "Tworzenie brancha..." : "Utwórz branch GitHub"}
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
         )}
       </form>
     </>
