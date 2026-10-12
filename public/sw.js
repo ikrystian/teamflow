@@ -20,8 +20,8 @@ self.addEventListener('push', event => {
   const title = payload.title || 'Nexus'
   const options = {
     body: payload.body || '',
-    icon: '/favicon.ico',
-    badge: '/favicon.ico',
+    icon: '/icon-192.png',
+    badge: '/badge-96.png',
     tag: payload.tag || undefined,
     data: { url: payload.url || '/dashboard' },
   }
