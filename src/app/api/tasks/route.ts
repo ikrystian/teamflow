@@ -48,6 +48,16 @@ export async function GET(request: NextRequest) {
       ...dueDateFilter,
     }
 
+    // Resolve active projects up front instead of filtering on the `project`
+    // relation: on MongoDB a relation filter becomes a $lookup that joins the
+    // whole Project document (incl. base64 imageUrl) onto every task before
+    // the sort, which blows past the 32MB in-memory sort limit.
+    const activeProjects = await prisma.project.findMany({
+      where: { archived: false },
+      select: { id: true },
+    })
+    const activeProjectIds = activeProjects.map(p => p.id)
+
     // If user is admin, show all tasks (except from archived projects)
     // If user is not admin, show only tasks they have access to
     const whereClause = userIsAdmin ? {
@@ -59,19 +69,14 @@ export async function GET(request: NextRequest) {
         },
         // Tasks with non-archived projects
         {
-          project: {
-            archived: false
-          }
+          projectId: { in: activeProjectIds }
         }
       ]
     } : {
       ...baseFilters,
       OR: [
         {
-          project: {
-            archived: false,
-
-          }
+          projectId: { in: activeProjectIds }
         },
         // Tasks without projects created by the user
         {

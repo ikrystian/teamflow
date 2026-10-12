@@ -5,6 +5,13 @@ import { isDoneStatusName, isInProgressStatusName } from "@/lib/task-status-help
 
 const HOUR_MS = 60 * 60 * 1000
 
+// Auto-move to "Done" is enabled only for these projects.
+export const AUTO_MOVE_PROJECT_IDS = ["cmrcp4y0s0005m6sq891qby5r"]
+
+export function isAutoMoveEnabledForProject(projectId: string | null | undefined): boolean {
+  return !!projectId && AUTO_MOVE_PROJECT_IDS.includes(projectId)
+}
+
 /**
  * Compute the moment a task moved into "In Progress" should auto-advance to
  * "Done". The delay equals the task's reported time (sum of time entries +
@@ -15,8 +22,9 @@ const HOUR_MS = 60 * 60 * 1000
  *   12:00, only card, 30 min reported  -> 12:30
  *   another card already scheduled 13:00 -> this card 13:30
  *
- * Returns `null` when neither reported nor estimated time is available
- * (the card then simply stays in In Progress with no auto-move).
+ * Returns `null` when neither reported nor estimated time is available, or
+ * when the project is not in AUTO_MOVE_PROJECT_IDS (the card then simply stays
+ * in In Progress with no auto-move).
  */
 export async function computeAutoMoveAt({
   excludeTaskId,
@@ -31,6 +39,8 @@ export async function computeAutoMoveAt({
   reportedHours: number
   estimatedHours: number | null
 }): Promise<Date | null> {
+  if (!isAutoMoveEnabledForProject(projectId)) return null
+
   const durationH = reportedHours > 0 ? reportedHours : (estimatedHours ?? 0)
   if (!durationH || durationH <= 0) return null
 
@@ -77,10 +87,21 @@ export async function processDueAutoMoves() {
     }
   }
 
+  // Drop auto-moves scheduled for projects outside the allow-list (e.g. ones
+  // scheduled before the restriction was introduced).
+  await prisma.task.updateMany({
+    where: {
+      autoMoveToDoneAt: { not: null },
+      OR: [{ projectId: null }, { projectId: { notIn: AUTO_MOVE_PROJECT_IDS } }],
+    },
+    data: { autoMoveToDoneAt: null },
+  })
+
   const dueTasks = await prisma.task.findMany({
     where: {
       autoMoveToDoneAt: { lte: now },
       statusId: { in: inProgressIds },
+      projectId: { in: AUTO_MOVE_PROJECT_IDS },
       deletedAt: null,
     },
     include: {
