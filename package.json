@@ -7,6 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "setup": "bash scripts/setup.sh",
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down",
     "db:push": "prisma db push && node scripts/fix-mongo-indexes.js && node scripts/fix-mongo-nulls.js"
   },
   "dependencies": {

@@ -1,0 +1,33 @@
+# Lokalna baza MongoDB dla developmentu.
+# Prisma wymaga replica setu (transakcje), więc Mongo startuje jako
+# jednowęzłowy replica set "rs0" — healthcheck inicjalizuje go przy pierwszym starcie.
+#
+#   npm run db:up    # start bazy
+#   npm run db:down  # stop (dane zostają w wolumenie)
+#   npm run setup    # pełny setup po sklonowaniu repo
+
+services:
+  mongo:
+    image: mongo:8.0
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - mongo-data:/data/db
+      - mongo-config:/data/configdb
+    healthcheck:
+      test:
+        - CMD
+        - mongosh
+        - --quiet
+        - --eval
+        - "try { rs.status().ok } catch (e) { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'localhost:27017' }] }).ok }"
+      interval: 5s
+      timeout: 10s
+      start_period: 10s
+      retries: 20
+    restart: unless-stopped
+
+volumes:
+  mongo-data:
+  mongo-config:
