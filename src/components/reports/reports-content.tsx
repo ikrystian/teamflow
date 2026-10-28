@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useProjects } from "@/contexts/projects-context"
 import { usePageHeader } from "@/contexts/header-context"
+import { PageHeader } from "@/components/dashboard/page-header"
 import {
   ClipboardList,
   Clock,
@@ -89,7 +90,24 @@ interface ReportData {
   generatedAt: string
 }
 
-const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4', '#6366f1']
+const COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)']
+
+// Shared recharts styling so every chart picks up the theme tokens.
+const GRID_PROPS = { strokeDasharray: "3 3", stroke: "var(--border)", vertical: false } as const
+const AXIS_PROPS = { tick: { fill: "var(--muted-foreground)", fontSize: 12 }, axisLine: false, tickLine: false } as const
+const TOOLTIP_PROPS = {
+  cursor: { fill: "var(--muted)", opacity: 0.6 },
+  contentStyle: {
+    background: "var(--popover)",
+    border: "1px solid var(--border)",
+    borderRadius: 8,
+    color: "var(--popover-foreground)",
+    fontSize: 12,
+    boxShadow: "0 8px 24px -12px rgb(0 0 0 / 0.3)",
+  },
+  labelStyle: { color: "var(--muted-foreground)" },
+  itemStyle: { color: "var(--popover-foreground)" },
+} as const
 
 const PRIORITY_COLORS: Record<string, string> = {
   'Urgent': '#ef4444',
@@ -106,9 +124,57 @@ export function ReportsContent() {
   const [timeRange, setTimeRange] = useState("month")
   const [projectId, setProjectId] = useState("all")
 
+  const selectedProject = projects.find((project) => project.id === projectId)
+  const selectedProjectName = projectId === "all" ? "Wszystkie projekty" : (selectedProject?.name ?? "Wybrany projekt")
+  const timeRangeLabel =
+    timeRange === 'week' ? 'Ostatni tydzień' :
+      timeRange === 'month' ? 'Bieżący miesiąc' :
+        timeRange === 'quarter' ? 'Ostatni kwartał' :
+          timeRange === 'year' ? 'Ostatni rok' : timeRange
+
   usePageHeader(
-    <h1 className="text-2xl font-bold text-foreground">Raporty</h1>,
-    []
+    <PageHeader
+      title="Raporty"
+      description={`${selectedProjectName} · ${timeRangeLabel}`}
+      actions={
+        <>
+          <Select value={projectId} onValueChange={setProjectId}>
+            <SelectTrigger size="sm" className="w-[180px] max-md:hidden">
+              <SelectValue placeholder="Wybierz projekt" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Wszystkie projekty</SelectItem>
+              {projects.map((project) => (
+                <SelectItem key={project.id} value={project.id}>
+                  <span className="flex items-center gap-2">
+                    <span
+                      className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: project.color || '#3b82f6' }}
+                    />
+                    {project.name}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={timeRange} onValueChange={setTimeRange}>
+            <SelectTrigger size="sm" className="w-[160px]">
+              <SelectValue placeholder="Wybierz okres" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="week">Ostatni tydzień</SelectItem>
+              <SelectItem value="month">Bieżący miesiąc</SelectItem>
+              <SelectItem value="quarter">Ostatni kwartał</SelectItem>
+              <SelectItem value="year">Ostatni rok</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="icon" className="size-8" aria-label="Pobierz raport">
+            <Download className="h-4 w-4" />
+          </Button>
+        </>
+      }
+    />,
+    [projects, projectId, timeRange, selectedProjectName, timeRangeLabel]
   )
 
   useEffect(() => {
@@ -138,8 +204,8 @@ export function ReportsContent() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground"></div>
+      <div className="flex items-center justify-center py-24">
+        <div className="animate-spin rounded-full h-6 w-6 border-2 border-muted border-t-primary"></div>
       </div>
     )
   }
@@ -154,70 +220,17 @@ export function ReportsContent() {
     )
   }
 
-  const selectedProject = projects.find((project) => project.id === projectId)
-  const selectedProjectName = projectId === "all" ? "Wszystkie projekty" : (selectedProject?.name ?? "Wybrany projekt")
-  const timeRangeLabel =
-    timeRange === 'week' ? 'Ostatni tydzień' :
-      timeRange === 'month' ? 'Bieżący miesiąc' :
-        timeRange === 'quarter' ? 'Ostatni kwartał' :
-          timeRange === 'year' ? 'Ostatni rok' : timeRange
-
   return (
-    <div className="p-6 space-y-6" id="reports">
-      {/* Header */}
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Raporty</h1>
-          <p className="text-muted-foreground mt-2">
-            {selectedProjectName} · {timeRangeLabel}
-          </p>
-        </div>
-        <div className="flex gap-2 items-center">
-          <Select value={projectId} onValueChange={setProjectId}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Wybierz projekt" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Wszystkie projekty</SelectItem>
-              {projects.map((project) => (
-                <SelectItem key={project.id} value={project.id}>
-                  <span className="flex items-center gap-2">
-                    <span
-                      className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: project.color || '#3b82f6' }}
-                    />
-                    {project.name}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Wybierz okres" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="week">Ostatni tydzień</SelectItem>
-              <SelectItem value="month">Bieżący miesiąc</SelectItem>
-              <SelectItem value="quarter">Ostatni kwartał</SelectItem>
-              <SelectItem value="year">Ostatni rok</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="icon">
-            <Download className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
+    <div className="mx-auto w-full max-w-[1600px] p-4 md:p-6 space-y-6" id="reports">
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Łącznie zadań</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="font-medium text-muted-foreground">Łącznie zadań</CardTitle>
             <ClipboardList className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{reportData.summary.totalTasks}</div>
+            <div className="text-2xl font-semibold tracking-tight tabular-nums">{reportData.summary.totalTasks}</div>
             <p className="text-xs text-muted-foreground">
               {reportData.summary.completedTasks} ukończonych ({reportData.summary.completionRate}%)
             </p>
@@ -225,12 +238,12 @@ export function ReportsContent() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Przepracowane godziny</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="font-medium text-muted-foreground">Przepracowane godziny</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{reportData.summary.totalHours}h</div>
+            <div className="text-2xl font-semibold tracking-tight tabular-nums">{reportData.summary.totalHours}h</div>
             <p className="text-xs text-muted-foreground">
               z {reportData.summary.totalEstimatedHours}h szacowanych
             </p>
@@ -238,12 +251,12 @@ export function ReportsContent() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Średni czas/zadanie</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="font-medium text-muted-foreground">Średni czas/zadanie</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{reportData.summary.averageTimePerTask}h</div>
+            <div className="text-2xl font-semibold tracking-tight tabular-nums">{reportData.summary.averageTimePerTask}h</div>
             <p className="text-xs text-muted-foreground">
               na zadanie z logowanym czasem
             </p>
@@ -251,12 +264,12 @@ export function ReportsContent() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Odchylenie czasowe</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="font-medium text-muted-foreground">Odchylenie czasowe</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${reportData.summary.timeVariance > 0 ? 'text-red-600' : 'text-green-600'}`}>
+            <div className={`text-2xl font-semibold tracking-tight tabular-nums ${reportData.summary.timeVariance > 0 ? 'text-destructive' : 'text-success'}`}>
               {reportData.summary.timeVariance > 0 ? '+' : ''}{reportData.summary.timeVariance}h
             </div>
             <p className="text-xs text-muted-foreground">
@@ -271,7 +284,7 @@ export function ReportsContent() {
         {/* Daily Hours Chart */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle>
               <BarChart3 className="h-5 w-5" />
               Godziny w czasie
             </CardTitle>
@@ -280,17 +293,19 @@ export function ReportsContent() {
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={reportData.charts.dailyHours}>
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid {...GRID_PROPS} />
                 <XAxis
+                  {...AXIS_PROPS}
                   dataKey="date"
                   tickFormatter={(value) => new Date(value).toLocaleDateString('pl-PL', { month: 'short', day: 'numeric' })}
                 />
-                <YAxis />
+                <YAxis {...AXIS_PROPS} width={32} />
                 <Tooltip
+                  {...TOOLTIP_PROPS}
                   labelFormatter={(value) => new Date(value).toLocaleDateString('pl-PL')}
                   formatter={(value: unknown) => `${value}h`}
                 />
-                <Bar dataKey="hours" name="Godziny" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="hours" name="Godziny" fill="var(--chart-1)" radius={[4, 4, 0, 0]} maxBarSize={48} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -299,7 +314,7 @@ export function ReportsContent() {
         {/* Tasks by Status Pie Chart */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle>
               <PieChartIcon className="h-5 w-5" />
               Zadania według statusu
             </CardTitle>
@@ -315,14 +330,16 @@ export function ReportsContent() {
                   labelLine={false}
                   label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
                   outerRadius={80}
-                  fill="#8884d8"
+                  fill="var(--chart-1)"
+                  stroke="var(--card)"
+                  innerRadius={52}
                   dataKey="count"
                 >
                   {reportData.charts.tasksByStatus.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip {...TOOLTIP_PROPS} />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
@@ -340,11 +357,11 @@ export function ReportsContent() {
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={reportData.charts.tasksByPriority}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="priority" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                <CartesianGrid {...GRID_PROPS} />
+                <XAxis dataKey="priority" {...AXIS_PROPS} />
+                <YAxis {...AXIS_PROPS} width={32} />
+                <Tooltip {...TOOLTIP_PROPS} />
+                <Bar dataKey="count" radius={[4, 4, 0, 0]} maxBarSize={56}>
                   {reportData.charts.tasksByPriority.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={PRIORITY_COLORS[entry.priority] || COLORS[index % COLORS.length]} />
                   ))}
@@ -363,13 +380,13 @@ export function ReportsContent() {
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={reportData.charts.estimatedVsActual}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="project" />
-                <YAxis />
-                <Tooltip formatter={(value: unknown) => `${value}h`} />
-                <Legend />
-                <Bar dataKey="estimated" name="Szacowany" fill="#94a3b8" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="actual" name="Rzeczywisty" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                <CartesianGrid {...GRID_PROPS} />
+                <XAxis dataKey="project" {...AXIS_PROPS} />
+                <YAxis {...AXIS_PROPS} width={32} />
+                <Tooltip {...TOOLTIP_PROPS} formatter={(value: unknown) => `${value}h`} />
+                <Legend wrapperStyle={{ fontSize: 12, color: "var(--muted-foreground)" }} />
+                <Bar dataKey="estimated" name="Szacowany" fill="var(--muted-foreground)" fillOpacity={0.35} radius={[4, 4, 0, 0]} maxBarSize={40} />
+                <Bar dataKey="actual" name="Rzeczywisty" fill="var(--chart-1)" radius={[4, 4, 0, 0]} maxBarSize={40} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -386,22 +403,24 @@ export function ReportsContent() {
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={reportData.charts.weeklyHours}>
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid {...GRID_PROPS} />
                 <XAxis
+                  {...AXIS_PROPS}
                   dataKey="week"
                   tickFormatter={(value) => new Date(value).toLocaleDateString('pl-PL', { month: 'short', day: 'numeric' })}
                 />
-                <YAxis />
+                <YAxis {...AXIS_PROPS} width={32} />
                 <Tooltip
+                  {...TOOLTIP_PROPS}
                   labelFormatter={(value) => `Tydzień ${new Date(value).toLocaleDateString('pl-PL')}`}
                   formatter={(value: unknown) => [`${value}h`, 'Godziny']}
                 />
                 <Line
                   type="monotone"
                   dataKey="hours"
-                  stroke="#3b82f6"
+                  stroke="var(--chart-1)"
                   strokeWidth={2}
-                  dot={{ fill: '#3b82f6', r: 4 }}
+                  dot={{ fill: 'var(--chart-1)', r: 3, strokeWidth: 0 }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -546,7 +565,7 @@ export function ReportsContent() {
         reportData.tables.tagStats && reportData.tables.tagStats.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle>
                 <Tag className="h-5 w-5" />
                 Statystyki wg tagów
               </CardTitle>

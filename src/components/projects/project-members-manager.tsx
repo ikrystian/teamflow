@@ -55,9 +55,9 @@ interface ProjectMembersManagerProps {
 }
 
 const roleLabels = {
-  admin: { label: "Administrator", icon: Crown, color: "bg-red-100 text-red-800" },
-  member: { label: "Członek", icon: User, color: "bg-blue-100 text-blue-800" },
-  viewer: { label: "Obserwator", icon: Eye, color: "bg-gray-100 text-gray-800" }
+  admin: { label: "Administrator", icon: Crown, color: "bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/20" },
+  member: { label: "Członek", icon: User, color: "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20" },
+  viewer: { label: "Obserwator", icon: Eye, color: "bg-muted text-muted-foreground" }
 }
 
 export function ProjectMembersManager({
@@ -221,7 +221,7 @@ export function ProjectMembersManager({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
+        <CardTitle>
           <Users className="h-5 w-5" />
           <span>Członkowie projektu</span>
         </CardTitle>

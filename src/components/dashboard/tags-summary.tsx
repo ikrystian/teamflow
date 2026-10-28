@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Loader2, Tag, Clock, CheckCircle } from "lucide-react"
 
 interface TagStat {
@@ -41,7 +40,7 @@ export function TagsSummary() {
         return (
             <Card>
                 <CardContent className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin" />
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                 </CardContent>
             </Card>
         )
@@ -54,35 +53,27 @@ export function TagsSummary() {
     return (
         <Card>
             <CardHeader>
-                <div className="flex items-center gap-2">
-                    <Tag className="h-5 w-5 text-purple-500" />
-                    <CardTitle>Podsumowanie wg tagów</CardTitle>
-                </div>
+                <CardTitle>
+                    <Tag className="size-4 text-muted-foreground" />
+                    Podsumowanie wg tagów
+                </CardTitle>
                 <CardDescription>
                     Statystyki zadań z ostatnich 30 dni, grupowane według tagów
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                     {tagStats.map((tag) => (
                         <div
                             key={tag.id}
-                            className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                            className="rounded-lg border bg-muted/30 p-3.5 transition-colors hover:bg-muted/60"
                         >
                             <div className="flex items-center gap-2 mb-3">
-                                <div
-                                    className="w-3 h-3 rounded-full"
+                                <span
+                                    className="size-2 rounded-full"
                                     style={{ backgroundColor: tag.color }}
                                 />
-                                <Badge
-                                    variant="outline"
-                                    style={{
-                                        borderColor: tag.color,
-                                        color: tag.color
-                                    }}
-                                >
-                                    {tag.name}
-                                </Badge>
+                                <span className="truncate text-[13px] font-medium">{tag.name}</span>
                             </div>
 
                             <div className="space-y-2 text-sm">

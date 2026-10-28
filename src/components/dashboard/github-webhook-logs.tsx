@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { usePageHeader } from "@/contexts/header-context"
+import { PageHeader } from "@/components/dashboard/page-header"
 import {
   AlertCircle,
   CheckCircle2,
@@ -555,7 +556,10 @@ const ALL_EVENTS = "all"
 // (embedMode embeds them under another page's header, e.g. "Moje zadania").
 function GithubWebhookPageHeader() {
   usePageHeader(
-    <h1 className="text-2xl font-bold text-foreground">GitHub Webhooks</h1>,
+    <PageHeader
+      title="GitHub Webhooks"
+      description={<>Wszystkie przychodzące żądania do <code className="rounded bg-muted px-1 py-0.5 text-[11px]">/api/github-webhook</code></>}
+    />,
     []
   )
   return null
@@ -611,28 +615,13 @@ export function GithubWebhookLogs({ embedMode = false }: { embedMode?: boolean }
   const totalPages = data ? Math.ceil(data.total / limit) : 1
 
   return (
-    <div className={embedMode ? "flex flex-col gap-6" : "min-h-screen flex flex-col gap-6 p-4 md:p-6"}>
+    <div className={embedMode ? "flex flex-col gap-6" : "mx-auto w-full max-w-[1600px] flex flex-col gap-6 p-4 md:p-6"}>
       {!embedMode && <GithubWebhookPageHeader />}
       {/* ------------------------------------------------------------------ */}
       {/* Header                                                              */}
       {/* ------------------------------------------------------------------ */}
       {!embedMode ? (
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-violet-500/15 border border-violet-500/30">
-              <Webhook className="w-6 h-6 text-violet-400" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-                <GitBranch className="w-5 h-5 text-muted-foreground" />
-                GitHub Webhook Logs
-              </h1>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                Wszystkie przychodzące żądania do{" "}
-                <code className="text-xs bg-muted px-1 py-0.5 rounded">/api/github-webhook</code>
-              </p>
-            </div>
-          </div>
+        <div className="flex flex-col md:flex-row md:items-center justify-end gap-4">
 
           {/* Controls */}
           <div className="flex items-center gap-2 flex-wrap">

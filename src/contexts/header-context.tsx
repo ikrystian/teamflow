@@ -10,9 +10,7 @@ interface HeaderContextType {
 const HeaderContext = createContext<HeaderContextType | undefined>(undefined)
 
 export function HeaderProvider({ children }: { children: ReactNode }) {
-  const [headerContent, setHeaderContent] = useState<ReactNode>(
-    <h2 className="text-lg font-semibold">Dashboard</h2>
-  )
+  const [headerContent, setHeaderContent] = useState<ReactNode>(null)
 
   const setHeaderContentCallback = useCallback((content: ReactNode) => {
     setHeaderContent(content)
@@ -49,7 +47,7 @@ export function usePageHeader(content: ReactNode, deps: React.DependencyList = [
 
     // Cleanup - reset to default when component unmounts
     return () => {
-      setHeaderContent(<h2 className="text-lg font-semibold">Dashboard</h2>)
+      setHeaderContent(null)
     }
   }, [memoizedContent, setHeaderContent])
 }

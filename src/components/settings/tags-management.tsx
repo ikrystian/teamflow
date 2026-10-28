@@ -167,7 +167,7 @@ export function TagsManagement() {
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <div>
-                            <CardTitle className="flex items-center gap-2">
+                            <CardTitle>
                                 <Tag className="h-5 w-5" />
                                 Zarządzanie tagami
                             </CardTitle>

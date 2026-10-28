@@ -11,7 +11,6 @@ import {
   BreadcrumbSeparator,
   BreadcrumbPage,
 } from "@/components/ui/breadcrumb"
-import { Home } from "lucide-react"
 import { useProjects } from "@/contexts/projects-context"
 
 interface BreadcrumbSegment {
@@ -125,6 +124,9 @@ export function DashboardBreadcrumbs() {
         case 'github-webhook':
           label = 'GitHub Webhooks'
           break
+        case 'new':
+          label = 'Nowe zadanie'
+          break
         default:
           // Check if it's a dynamic segment (UUID-like)
           if (segment.length > 10) {
@@ -181,28 +183,28 @@ export function DashboardBreadcrumbs() {
   const breadcrumbs = generateBreadcrumbs()
 
   return (
-    <div className="px-4 py-2 border-b bg-muted/30">
-      <Breadcrumb>
-        <BreadcrumbList>
-          {breadcrumbs.map((breadcrumb, index) => (
-            <div key={breadcrumb.href} className="flex items-center">
-              {index > 0 && <BreadcrumbSeparator />}
-              <BreadcrumbItem>
-                {breadcrumb.isLast ? (
-                  <BreadcrumbPage>{breadcrumb.label}</BreadcrumbPage>
-                ) : (
-                  <BreadcrumbLink asChild>
-                    <Link href={breadcrumb.href} className="flex items-center gap-1">
-                      {index === 0 && <Home className="h-4 w-4" />}
-                      {breadcrumb.label}
-                    </Link>
-                  </BreadcrumbLink>
-                )}
-              </BreadcrumbItem>
-            </div>
-          ))}
-        </BreadcrumbList>
-      </Breadcrumb>
-    </div>
+    <Breadcrumb>
+      <BreadcrumbList className="flex-nowrap gap-1 text-[13px] sm:gap-1.5">
+        {breadcrumbs.map((breadcrumb, index) => (
+          <div
+            key={breadcrumb.href}
+            className={`flex min-w-0 items-center gap-1 sm:gap-1.5 ${breadcrumb.isLast ? "" : "max-sm:hidden"}`}
+          >
+            {index > 0 && <BreadcrumbSeparator className="max-sm:hidden" />}
+            <BreadcrumbItem className="min-w-0">
+              {breadcrumb.isLast ? (
+                <BreadcrumbPage className="truncate font-medium">{breadcrumb.label}</BreadcrumbPage>
+              ) : (
+                <BreadcrumbLink asChild>
+                  <Link href={breadcrumb.href} className="truncate">
+                    {breadcrumb.label}
+                  </Link>
+                </BreadcrumbLink>
+              )}
+            </BreadcrumbItem>
+          </div>
+        ))}
+      </BreadcrumbList>
+    </Breadcrumb>
   )
 }

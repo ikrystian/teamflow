@@ -125,9 +125,9 @@ export function FileUpload({
 
   const getCategoryColor = (category?: string) => {
     switch (category) {
-      case 'specification': return 'bg-blue-100 text-blue-800'
-      case 'design': return 'bg-purple-100 text-purple-800'
-      case 'manual': return 'bg-green-100 text-green-800'
+      case 'specification': return 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20'
+      case 'design': return 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/20'
+      case 'manual': return 'bg-green-500/10 text-green-700 dark:text-green-300 border-green-500/20'
       default: return 'bg-gray-100 text-gray-800'
     }
   }

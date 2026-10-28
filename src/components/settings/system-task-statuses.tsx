@@ -88,7 +88,7 @@ function SortableTaskStatus({ status, onEdit, onDelete }: SortableTaskStatusProp
     <div
       ref={ref}
       style={{ opacity: isDragging ? 0.3 : 1 }}
-      className={`relative flex items-center justify-between p-4 bg-white border rounded-lg shadow-sm transition-all duration-200 ${
+      className={`relative flex items-center justify-between p-4 bg-background border rounded-lg shadow-sm transition-all duration-200 ${
         isDragging ? 'shadow-lg scale-105' : 'hover:shadow-md'
       }`}
     >
@@ -96,10 +96,10 @@ function SortableTaskStatus({ status, onEdit, onDelete }: SortableTaskStatusProp
       <div className="flex items-center space-x-3">
         <div
           ref={handleRef}
-          className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-gray-100 transition-colors"
+          className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-accent transition-colors"
           title="Przeciągnij, aby zmienić kolejność"
         >
-          <GripVertical className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+          <GripVertical className="h-5 w-5 text-muted-foreground/70 hover:text-foreground" />
         </div>
 
         <div>
@@ -111,7 +111,7 @@ function SortableTaskStatus({ status, onEdit, onDelete }: SortableTaskStatusProp
               </Badge>
             )}
           </div>
-          <p className="text-sm text-gray-500">Kolejność: {status.order}</p>
+          <p className="text-sm text-muted-foreground">Kolejność: {status.order}</p>
         </div>
       </div>
       <div className="flex items-center space-x-2">
@@ -295,7 +295,7 @@ export function SystemTaskStatuses() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center space-x-2">
+              <CardTitle>
                 <Settings className="h-5 w-5" />
                 <span>Statusy zadań</span>
               </CardTitle>
@@ -324,8 +324,8 @@ export function SystemTaskStatuses() {
                 />
               ))
             ) : (
-              <div className="text-center py-8 text-gray-500">
-                <Settings className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+              <div className="text-center py-8 text-muted-foreground">
+                <Settings className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
                 <p>Brak statusów zadań. Dodaj pierwszy status.</p>
               </div>
             )}

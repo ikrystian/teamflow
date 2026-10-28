@@ -261,7 +261,7 @@ function SortableTaskCard({
       >
         <DropdownMenu open={isContextMenuOpen} onOpenChange={setIsContextMenuOpen}>
           <Card
-            className={`relative mb-2 cursor-pointer transition-all border-l-4 ${isDragging ? '' : 'hover-card-border-animate'}`}
+            className={`relative mb-2 cursor-pointer gap-0 transition-all border-l-[3px] ${isDragging ? '' : 'hover-card-border-animate'}`}
             style={{
               borderLeftColor: completed
                 ? '#10B981'
@@ -908,13 +908,13 @@ function KanbanColumn({
     <div className="flex-shrink-0 w-80">
       <div
         ref={scrollContainerRef}
-        className={`kanban-scroll rounded-lg p-4 overflow-y-auto h-[calc(100vh-237px)] backdrop-blur-sm transition-colors ${isOver ? 'bg-primary/10 ring-2 ring-primary/20' : 'bg-muted/80'
+        className={`kanban-scroll rounded-xl border p-2.5 overflow-y-auto h-[calc(100svh-200px)] md:h-[calc(100svh-216px)] transition-colors ${isOver ? 'bg-primary/10 border-primary/30 ring-2 ring-primary/15' : 'bg-muted/50 border-border/60'
           }`}
       >
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-2.5 px-1">
           <div className="flex items-center gap-2">
-            <h3 className="font-semibold text-sm">{status.name}</h3>
-            <Badge variant="secondary" className="text-xs">
+            <h3 className="font-medium text-[13px]">{status.name}</h3>
+            <Badge variant="secondary" className="text-[11px] tabular-nums text-muted-foreground">
               {badgeCount}
             </Badge>
           </div>

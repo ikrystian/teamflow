@@ -39,6 +39,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { usePageHeader } from "@/contexts/header-context"
+import { PageHeader } from "@/components/dashboard/page-header"
 import { ClientFormSheet } from "./client-form-sheet"
 import { type Client } from "@/types"
 
@@ -120,15 +121,16 @@ export function ClientsContent() {
   }
 
   usePageHeader(
-    <div className="flex justify-between items-center w-full">
-      <h1 className="text-2xl font-bold text-foreground">
-        Klienci i dane kontaktowe
-      </h1>
-      <Button onClick={handleCreate}>
-        <Plus className="mr-2 h-4 w-4" />
-        Dodaj klienta
-      </Button>
-    </div>,
+    <PageHeader
+      title="Klienci"
+      description="Dane kontaktowe, notatki i powiązane projekty"
+      actions={
+        <Button size="sm" onClick={handleCreate}>
+          <Plus />
+          <span className="hidden sm:inline">Dodaj klienta</span>
+        </Button>
+      }
+    />,
     []
   )
 
@@ -146,51 +148,58 @@ export function ClientsContent() {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-8 pt-6" id="client-content">
+    <div className="mx-auto w-full max-w-[1600px] space-y-6 p-4 md:p-6" id="client-content">
       {clients.length > 0 && (
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Szukaj klienta..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
+        <div className="flex items-center justify-between gap-3">
+          <div className="relative w-full max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Szukaj klienta..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-8 pl-9"
+            />
+          </div>
+          <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+            {filtered.length} / {clients.length}
+          </span>
         </div>
       )}
 
       {filtered.length === 0 ? (
-        <Card>
+        <Card className="border-dashed shadow-none">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <Contact className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">
+            <div className="mb-4 flex size-10 items-center justify-center rounded-lg bg-muted">
+              <Contact className="size-5 text-muted-foreground" />
+            </div>
+            <h3 className="text-sm font-semibold mb-1">
               {clients.length === 0 ? "Brak klientów" : "Brak wyników"}
             </h3>
-            <p className="text-muted-foreground text-center mb-4">
+            <p className="text-[13px] text-muted-foreground text-center mb-4">
               {clients.length === 0
                 ? "Dodaj pierwszego klienta, aby przechowywać dane kontaktowe i notatki."
                 : "Żaden klient nie pasuje do wyszukiwania."}
             </p>
             {clients.length === 0 && (
-              <Button onClick={handleCreate}>
-                <Plus className="mr-2 h-4 w-4" />
+              <Button size="sm" onClick={handleCreate}>
+                <Plus />
                 Dodaj klienta
               </Button>
             )}
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
           {filtered.map((client) => (
-            <Card key={client.id} className="flex flex-col">
-              <CardHeader className="pb-3">
+            <Card key={client.id} className="flex flex-col gap-4 transition-colors hover:border-foreground/15">
+              <CardHeader>
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                      <Building2 className="h-5 w-5" />
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-sm font-semibold text-primary">
+                      {client.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                      <CardTitle className="text-base truncate">{client.name}</CardTitle>
+                      <CardTitle className="block truncate leading-normal">{client.name}</CardTitle>
                       {client.contactPerson && (
                         <p className="text-xs text-muted-foreground truncate">
                           {client.contactPerson}
@@ -200,7 +209,7 @@ export function ClientsContent() {
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0">
+                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0 text-muted-foreground">
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -222,14 +231,14 @@ export function ClientsContent() {
                 </div>
               </CardHeader>
 
-              <CardContent className="flex-1 space-y-3 text-sm">
+              <CardContent className="flex flex-1 flex-col gap-3 text-[13px]">
                 <div className="space-y-2">
                   {client.email && (
                     <a
                       href={`mailto:${client.email}`}
                       className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      <Mail className="h-4 w-4 shrink-0" />
+                      <Mail className="h-3.5 w-3.5 shrink-0" />
                       <span className="truncate">{client.email}</span>
                     </a>
                   )}
@@ -238,7 +247,7 @@ export function ClientsContent() {
                       href={`tel:${client.phone}`}
                       className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      <Phone className="h-4 w-4 shrink-0" />
+                      <Phone className="h-3.5 w-3.5 shrink-0" />
                       <span className="truncate">{client.phone}</span>
                     </a>
                   )}
@@ -249,19 +258,19 @@ export function ClientsContent() {
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      <Globe className="h-4 w-4 shrink-0" />
+                      <Globe className="h-3.5 w-3.5 shrink-0" />
                       <span className="truncate">{client.website}</span>
                     </a>
                   )}
                   {client.address && (
                     <div className="flex items-center gap-2 text-muted-foreground">
-                      <MapPin className="h-4 w-4 shrink-0" />
+                      <MapPin className="h-3.5 w-3.5 shrink-0" />
                       <span className="truncate">{client.address}</span>
                     </div>
                   )}
                   {client.taxId && (
                     <div className="flex items-center gap-2 text-muted-foreground">
-                      <Building2 className="h-4 w-4 shrink-0" />
+                      <Building2 className="h-3.5 w-3.5 shrink-0" />
                       <span className="truncate">NIP: {client.taxId}</span>
                     </div>
                   )}
@@ -274,7 +283,7 @@ export function ClientsContent() {
                   </div>
                 )}
 
-                <div className="flex items-center gap-2 pt-1">
+                <div className="mt-auto flex items-center gap-2 border-t pt-3">
                   <Badge variant="secondary" className="font-normal">
                     <FolderOpen className="mr-1 h-3 w-3" />
                     {client._count?.projects ?? client.projects?.length ?? 0}{" "}

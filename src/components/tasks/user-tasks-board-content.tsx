@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { usePageHeader } from "@/contexts/header-context"
-import { Plus, LayoutGrid } from "lucide-react"
+import { Plus, LayoutGrid, Webhook } from "lucide-react"
+import { PageHeader } from "@/components/dashboard/page-header"
 import { KanbanBoard } from "@/components/shared/kanban-board"
 import { TaskDetailsDialog } from "@/components/tasks/task-details-dialog"
 import { TimeTrackingSheet } from "@/components/tasks/time-tracking-sheet"
@@ -153,17 +154,16 @@ export function UserTasksBoardContent() {
 
   // Page Header content
   usePageHeader(
-    <div className="flex items-center justify-between w-full">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Moje zadania</h1>
-      </div>
-      <div>
-        <Button onClick={handleCreateTask}>
-          <Plus className="mr-2 h-4 w-4" />
-          Dodaj zadanie
+    <PageHeader
+      title="Moje zadania"
+      description="Zadania przypisane do Ciebie ze wszystkich projektów"
+      actions={
+        <Button size="sm" onClick={handleCreateTask}>
+          <Plus />
+          <span className="hidden sm:inline">Dodaj zadanie</span>
         </Button>
-      </div>
-    </div>,
+      }
+    />,
     [handleCreateTask]
   )
 
@@ -172,33 +172,31 @@ export function UserTasksBoardContent() {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-8 pt-6 relative" id="user-tasks-board">
+    <div className="space-y-4 p-4 md:p-6 relative" id="user-tasks-board">
       <Tabs defaultValue="board" className="w-full">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b pb-4">
-          <div>
-            <h2 className="text-lg font-semibold text-foreground">Moje zadania</h2>
-            <p className="text-sm text-muted-foreground">Zarządzaj swoimi zadaniami oraz przeglądaj logi integracji GitHub</p>
-          </div>
+        <div className="flex items-center justify-between gap-4 mb-4">
           <TabsList className="grid w-full sm:w-[240px] grid-cols-2">
-            <TabsTrigger value="board">Tablica</TabsTrigger>
-            <TabsTrigger value="logs">Logi</TabsTrigger>
+            <TabsTrigger value="board"><LayoutGrid />Tablica</TabsTrigger>
+            <TabsTrigger value="logs"><Webhook />Logi GitHub</TabsTrigger>
           </TabsList>
         </div>
 
         <TabsContent value="board" className="mt-0">
           {tasks.length === 0 ? (
-            <Card>
+            <Card className="border-dashed shadow-none">
               <CardContent className="py-12">
                 <div className="text-center">
-                  <LayoutGrid className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-foreground mb-2">
+                  <div className="mx-auto mb-4 flex size-10 items-center justify-center rounded-lg bg-muted">
+                    <LayoutGrid className="size-5 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-foreground mb-1">
                     Brak zadań przypisanych do Ciebie
                   </h3>
-                  <p className="text-muted-foreground mb-4">
+                  <p className="text-[13px] text-muted-foreground mb-4">
                     Nie masz żadnych przypisanych zadań ze wszystkich projektów.
                   </p>
-                  <Button onClick={handleCreateTask}>
-                    <Plus className="mr-2 h-4 w-4" />
+                  <Button size="sm" onClick={handleCreateTask}>
+                    <Plus />
                     Utwórz zadanie
                   </Button>
                 </div>

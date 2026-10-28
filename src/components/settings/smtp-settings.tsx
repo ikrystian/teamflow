@@ -83,7 +83,7 @@ export function SMTPSettings() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle>
           <Mail className="h-5 w-5" />
           Ustawienia SMTP
         </CardTitle>
@@ -112,7 +112,7 @@ export function SMTPSettings() {
                 <Input
                   value={envSettings.smtp_host || "Nie skonfigurowane"}
                   readOnly
-                  className="bg-gray-50"
+                  className="bg-muted/50"
                 />
               </div>
 
@@ -121,7 +121,7 @@ export function SMTPSettings() {
                 <Input
                   value={envSettings.smtp_port || "587"}
                   readOnly
-                  className="bg-gray-50"
+                  className="bg-muted/50"
                 />
               </div>
             </div>
@@ -131,7 +131,7 @@ export function SMTPSettings() {
               <Input
                 value={envSettings.smtp_secure ? "true (SSL/TLS)" : "false (STARTTLS)"}
                 readOnly
-                className="bg-gray-50"
+                className="bg-muted/50"
               />
             </div>
 
@@ -141,7 +141,7 @@ export function SMTPSettings() {
                 <Input
                   value={envSettings.smtp_user || "Nie skonfigurowane"}
                   readOnly
-                  className="bg-gray-50"
+                  className="bg-muted/50"
                 />
               </div>
 
@@ -150,7 +150,7 @@ export function SMTPSettings() {
                 <Input
                   value={envSettings.smtp_password ? "••••••••" : "Nie skonfigurowane"}
                   readOnly
-                  className="bg-gray-50"
+                  className="bg-muted/50"
                 />
               </div>
             </div>
@@ -161,7 +161,7 @@ export function SMTPSettings() {
                 <Input
                   value={envSettings.smtp_from_email || "Nie skonfigurowane"}
                   readOnly
-                  className="bg-gray-50"
+                  className="bg-muted/50"
                 />
               </div>
 
@@ -170,7 +170,7 @@ export function SMTPSettings() {
                 <Input
                   value={envSettings.smtp_from_name || "Nexus"}
                   readOnly
-                  className="bg-gray-50"
+                  className="bg-muted/50"
                 />
               </div>
             </div>
@@ -206,9 +206,9 @@ export function SMTPSettings() {
           </div>
         </div>
 
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-          <h4 className="font-medium text-gray-900 mb-3">📝 Przykładowa konfiguracja .env:</h4>
-          <div className="bg-gray-800 text-gray-100 p-3 rounded text-sm font-mono overflow-x-auto">
+        <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+          <h4 className="font-medium text-foreground mb-3">📝 Przykładowa konfiguracja .env:</h4>
+          <div className="bg-zinc-900 text-zinc-100 p-3 rounded text-sm font-mono overflow-x-auto">
             <div className="space-y-1">
               <div><span className="text-green-400"># SMTP Configuration</span></div>
               <div><span className="text-blue-400">SMTP_HOST</span>=<span className="text-yellow-300">&quot;smtp.gmail.com&quot;</span></div>
@@ -222,8 +222,8 @@ export function SMTPSettings() {
           </div>
 
           <div className="mt-4">
-            <h5 className="font-medium text-gray-900 mb-2">Popularne ustawienia SMTP:</h5>
-            <div className="text-sm text-gray-700 space-y-1">
+            <h5 className="font-medium text-foreground mb-2">Popularne ustawienia SMTP:</h5>
+            <div className="text-sm text-foreground/80 space-y-1">
               <div><strong>Gmail:</strong> smtp.gmail.com, port 587, SMTP_SECURE=&quot;false&quot;</div>
               <div><strong>Outlook:</strong> smtp-mail.outlook.com, port 587, SMTP_SECURE=&quot;false&quot;</div>
               <div><strong>Yahoo:</strong> smtp.mail.yahoo.com, port 587, SMTP_SECURE=&quot;false&quot;</div>

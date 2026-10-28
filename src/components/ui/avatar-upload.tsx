@@ -278,7 +278,7 @@ export function AvatarUpload({
           </DialogContent>
         </Dialog>
 
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-muted-foreground">
           JPG, PNG lub GIF. Maksymalnie 5MB.
         </p>
       </div>

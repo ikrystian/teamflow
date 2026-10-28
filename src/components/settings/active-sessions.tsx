@@ -133,7 +133,7 @@ export function ActiveSessions() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle>
             <Monitor className="h-5 w-5" />
             Aktywne sesje
           </CardTitle>
@@ -154,7 +154,7 @@ export function ActiveSessions() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle>
           <Monitor className="h-5 w-5" />
           Aktywne sesje
         </CardTitle>

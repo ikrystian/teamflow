@@ -247,7 +247,7 @@ export function UserManagement() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle>
           <Users className="h-5 w-5" />
           Zarządzanie użytkownikami
         </CardTitle>
@@ -259,7 +259,7 @@ export function UserManagement() {
         {/* Search */}
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground/70 h-4 w-4" />
             <Input
               placeholder="Szukaj użytkowników..."
               value={searchTerm}
@@ -295,12 +295,12 @@ export function UserManagement() {
                         <h3 className="font-medium">{user.name || "Bez nazwy"}</h3>
                         {getRoleBadge(user.role)}
                       </div>
-                      <p className="text-sm text-gray-500 flex items-center gap-1">
+                      <p className="text-sm text-muted-foreground flex items-center gap-1">
                         <Mail className="h-3 w-3" />
                         {user.email}
                       </p>
                       {user.jobTitle && (
-                        <p className="text-sm text-gray-500 flex items-center gap-1">
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
                           <Briefcase className="h-3 w-3" />
                           {user.jobTitle}
                           {user.company && ` w ${user.company}`}
@@ -347,7 +347,7 @@ export function UserManagement() {
                 </div>
 
                 {/* User Stats */}
-                <div className="flex gap-4 text-sm text-gray-500">
+                <div className="flex gap-4 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Activity className="h-3 w-3" />
                     {user._count.assignedTasks} zadań
@@ -361,7 +361,7 @@ export function UserManagement() {
             ))}
 
             {users.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground">
                 Nie znaleziono użytkowników
               </div>
             )}

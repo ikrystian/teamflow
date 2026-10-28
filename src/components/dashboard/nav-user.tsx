@@ -79,19 +79,19 @@ export function NavUser() {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              className="h-11 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <Avatar className="h-8 w-8 rounded-lg">
+              <Avatar className="h-7 w-7 rounded-full">
                 <AvatarImage src={avatarUrl || ""} alt={displayName} />
-                <AvatarFallback className="rounded-lg">
+                <AvatarFallback className="rounded-full bg-primary/15 text-xs font-medium text-primary">
                   {displayName.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{displayName}</span>
-                <span className="truncate text-xs">{displayEmail}</span>
+              <div className="grid flex-1 text-left leading-tight">
+                <span className="truncate text-[13px] font-medium">{displayName}</span>
+                <span className="truncate text-[11px] text-sidebar-foreground/60">{displayEmail}</span>
               </div>
-              <MoreHorizontal className="ml-auto size-4" />
+              <MoreHorizontal className="ml-auto size-4 text-sidebar-foreground/60" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -102,9 +102,9 @@ export function NavUser() {
           >
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <Avatar className="h-8 w-8 rounded-lg">
+                <Avatar className="h-8 w-8 rounded-full">
                   <AvatarImage src={avatarUrl || ""} alt={displayName} />
-                  <AvatarFallback className="rounded-lg">
+                  <AvatarFallback className="rounded-full bg-primary/15 text-primary">
                     {displayName.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>

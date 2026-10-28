@@ -214,7 +214,7 @@ export function TimeTrackingSheet({
                 <span>Postęp</span>
                 <span>{formatHours(totalHours)} / {formatHours(task.estimatedHours)}</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-muted rounded-full h-2">
                 <div
                   className={`h-2 rounded-full transition-all ${getProgressColor()}`}
                   style={{ width: `${getProgressPercentage()}%` }}

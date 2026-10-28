@@ -192,7 +192,7 @@ function SortableProjectItem({ project, onEditProject, onDeleteProject, isMobile
       </SidebarMenuButton>
       {todoCount > 0 && (
         <SidebarMenuBadge
-          className="right-2.5 group-hover/menu-item:right-8 transition-all duration-200 font-semibold"
+          className="right-2 group-hover/menu-item:right-7 transition-all duration-200 text-[11px] font-medium"
           style={badgeStyle}
         >
           {todoCount}
@@ -360,8 +360,8 @@ export function NavProjects({ projects, onEditProject, onDeleteProject, onReorde
   }
 
   return (
-    <SidebarGroup>
-      {projects.length > 0 && <SidebarGroupLabel>Lista projektów</SidebarGroupLabel>}
+    <SidebarGroup className="pt-0">
+      {projects.length > 0 && <SidebarGroupLabel>Twoje projekty</SidebarGroupLabel>}
       <SidebarMenu>
         {/* Aktywne projekty — sortowalne */}
         {activeProjects.map((project) => (
@@ -381,7 +381,7 @@ export function NavProjects({ projects, onEditProject, onDeleteProject, onReorde
             <TooltipTrigger asChild>
               <SidebarMenuButton
                 onClick={() => setShowArchived(!showArchived)}
-                className="cursor-pointer"
+                className="cursor-pointer text-sidebar-foreground/60 hover:text-sidebar-accent-foreground"
               >
                 {showArchived ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 <span>Zarchiwizowane</span>

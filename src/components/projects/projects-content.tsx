@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { Plus, FolderOpen, Calendar, Users, ImageIcon, Edit, MoreVertical, Archive, ArchiveX, Trash2, Contact } from "lucide-react"
 import { CreateProjectSheet } from "./create-project-sheet"
 import { EditProjectSheet } from "./edit-project-sheet"
 import { usePageHeader } from "@/contexts/header-context"
+import { PageHeader, PageBody } from "@/components/dashboard/page-header"
 import { useProjects, useProjectsWithFilter } from "@/contexts/projects-context"
 import {
   DropdownMenu,
@@ -155,13 +156,13 @@ export function ProjectsContent() {
 
   // Set page header content
   usePageHeader(
-    <div className="flex justify-between items-center w-full">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Zarządzaj swoimi projektami i śledź postępy</h1>
-      </div>
-      <div className="flex items-center gap-4">
+    <PageHeader
+      title="Projekty"
+      description="Zarządzaj swoimi projektami i śledź postępy"
+      actions={
+      <>
         <Select value={projectFilter} onValueChange={handleFilterChange}>
-          <SelectTrigger className="w-48">
+          <SelectTrigger size="sm" className="w-44 max-sm:hidden">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -170,12 +171,13 @@ export function ProjectsContent() {
             <SelectItem value="all">Wszystkie projekty</SelectItem>
           </SelectContent>
         </Select>
-        <Button onClick={() => setCreateDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Utwórz projekt
+        <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
+          <Plus />
+          <span className="hidden sm:inline">Utwórz projekt</span>
         </Button>
-      </div>
-    </div>,
+      </>
+      }
+    />,
     [projectFilter]
   )
 
@@ -195,13 +197,13 @@ export function ProjectsContent() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Completed":
-        return "bg-green-100 text-green-800"
+        return "bg-green-500/10 text-green-700 dark:text-green-300 border-green-500/20"
       case "In Progress":
-        return "bg-blue-100 text-blue-800"
+        return "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20"
       case "On Hold":
-        return "bg-yellow-100 text-yellow-800"
+        return "bg-yellow-500/10 text-yellow-700 dark:text-yellow-300 border-yellow-500/20"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-muted text-muted-foreground"
     }
   }
 
@@ -210,9 +212,9 @@ export function ProjectsContent() {
       return { total: 0, completed: 0, inProgress: 0 }
     }
     const total = tasks.length
-    // TODO: Update to use statusId with proper status lookup
-    const completed = 0 // tasks.filter(task => task.statusId === "done-status-id").length
-    const inProgress = 0 // tasks.filter(task => task.statusId === "in-progress-status-id").length
+    const statusOf = (task: (typeof tasks)[number]) => task.taskStatus?.name?.toLowerCase()
+    const completed = tasks.filter(task => statusOf(task) === "done").length
+    const inProgress = tasks.filter(task => statusOf(task) === "in progress").length
     return { total, completed, inProgress }
   }
 
@@ -221,36 +223,40 @@ export function ProjectsContent() {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-8 pt-6" id="project-content">
-
-
+    <PageBody>
+    <div id="project-content">
       {getFilteredProjects().length === 0 ? (
-        <Card>
+        <Card className="border-dashed shadow-none">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <FolderOpen className="h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <div className="mb-4 flex size-10 items-center justify-center rounded-lg bg-muted">
+              <FolderOpen className="size-5 text-muted-foreground" />
+            </div>
+            <h3 className="text-sm font-semibold text-foreground mb-1">
               {projectFilter === "archived" ? "Brak zarchiwizowanych projektów" :
                 projectFilter === "all" ? "Brak projektów" : "Brak aktywnych projektów"}
             </h3>
-            <p className="text-gray-500 text-center mb-4">
+            <p className="text-[13px] text-muted-foreground text-center mb-4">
               {projectFilter === "archived" ? "Nie masz żadnych zarchiwizowanych projektów" :
                 "Utwórz swój pierwszy projekt, aby rozpocząć organizowanie zadań i współpracę"}
             </p>
             {projectFilter !== "archived" && (
-              <Button onClick={() => setCreateDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
+              <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
+                <Plus />
                 Utwórz projekt
               </Button>
             )}
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
           {getFilteredProjects().map((project) => {
             const stats = getTaskStats(project.tasks)
             return (
-              <Card key={project.id} className={`hover:shadow-md transition-shadow overflow-hidden relative pt-0 ${project.archived ? 'opacity-60 bg-muted/30' : ''
-                }`}>
+              <Card
+                key={project.id}
+                className={`group gap-0 overflow-hidden relative py-0 hover-card-border-animate ${project.archived ? 'opacity-60 bg-muted/30' : ''}`}
+                style={{ '--hover-border-color': project.color || 'var(--primary)' } as React.CSSProperties}
+              >
                 {/* Edit Button */}
                 <div className="absolute top-2 right-2 z-10">
                   <DropdownMenu>
@@ -258,7 +264,7 @@ export function ProjectsContent() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0 bg-white/80 hover:bg-white/90 backdrop-blur-sm open-project-menu"
+                        className="h-7 w-7 p-0 bg-background/80 hover:bg-background/95 backdrop-blur-sm open-project-menu opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100 focus-visible:opacity-100 max-md:opacity-100"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <MoreVertical className="h-4 w-4" />
@@ -300,7 +306,7 @@ export function ProjectsContent() {
 
                 <Link href={`/dashboard/projects/${project.id}`} className="block">
                   {/* Project Image */}
-                  <div className="relative h-48 bg-muted cursor-pointer">
+                  <div className="relative h-36 bg-muted cursor-pointer border-b">
                     {project.imageUrl ? (
                       <Image
                         src={project.imageUrl}
@@ -310,76 +316,81 @@ export function ProjectsContent() {
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       />
                     ) : (
-                      <div className="flex items-center justify-center h-full">
-                        <ImageIcon className="h-12 w-12 text-muted-foreground" />
+                      <div
+                        className="flex items-center justify-center h-full"
+                        style={{ background: `linear-gradient(135deg, color-mix(in oklch, ${project.color || 'var(--primary)'} 22%, transparent), transparent)` }}
+                      >
+                        <ImageIcon className="h-8 w-8 text-muted-foreground/50" />
                       </div>
                     )}
                   </div>
 
-                  <CardHeader className="pt-4">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg truncate">{project.name}</CardTitle>
-                      <div className="flex items-center gap-2">
-                        {project.archived && (
-                          <Badge variant="secondary" className="text-xs">
-                            <Archive className="mr-1 h-3 w-3" />
-                            Zarchiwizowany
-                          </Badge>
-                        )}
-                        {project.status && (
-                          <Badge className={getStatusColor(project.status)}>
-                            {project.status}
-                          </Badge>
-                        )}
+                  <div className="space-y-3 p-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: project.color || 'var(--primary)' }} />
+                          <h3 className="truncate text-sm font-semibold tracking-tight">{project.name}</h3>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1.5">
+                          {project.archived && (
+                            <Badge variant="secondary" className="text-[11px]">
+                              <Archive className="h-3 w-3" />
+                              Archiwum
+                            </Badge>
+                          )}
+                          {project.status && (
+                            <Badge variant="outline" className={`text-[11px] ${getStatusColor(project.status)}`}>
+                              {project.status}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      <p className="line-clamp-2 min-h-8 text-xs text-muted-foreground">
+                        {project.description || "Brak opisu"}
+                      </p>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">Postęp</span>
+                        <span className="font-medium tabular-nums">
+                          {stats.completed}/{stats.total}
+                        </span>
+                      </div>
+                      <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{
+                            width: stats.total > 0 ? `${(stats.completed / stats.total) * 100}%` : '0%',
+                            backgroundColor: project.color || 'var(--primary)',
+                          }}
+                        />
                       </div>
                     </div>
-                    <CardDescription className="line-clamp-2">
-                      {project.description || "Brak opisu"}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Users className="h-4 w-4 mr-2" />
-                        Projekt osobisty
-                      </div>
 
-                      {project.client && (
-                        <div className="flex items-center text-sm text-gray-600">
-                          <Contact className="h-4 w-4 mr-2" />
-                          <span className="truncate">{project.client.name}</span>
-                        </div>
-                      )}
-
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Postęp zadań</span>
-                          <span className="font-medium">
-                            {stats.completed}/{stats.total}
-                          </span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div
-                            className="bg-blue-600 h-2 rounded-full transition-all"
-                            style={{
-                              width: stats.total > 0 ? `${(stats.completed / stats.total) * 100}%` : '0%'
-                            }}
-                          />
-                        </div>
-                        <div className="flex justify-between text-xs text-gray-500">
-                          <span>{stats.completed} ukończono</span>
-                          <span>{stats.inProgress} w toku</span>
-                        </div>
-                      </div>
-
+                    <div className="flex items-center justify-between gap-2 border-t pt-3 text-xs text-muted-foreground">
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        {project.client ? (
+                          <>
+                            <Contact className="h-3.5 w-3.5 shrink-0" />
+                            <span className="truncate">{project.client.name}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Users className="h-3.5 w-3.5 shrink-0" />
+                            <span className="truncate">Projekt osobisty</span>
+                          </>
+                        )}
+                      </span>
                       {project.createdAt && (
-                        <div className="flex items-center text-sm text-gray-500">
-                          <Calendar className="h-4 w-4 mr-2" />
-                          Utworzono {new Date(project.createdAt).toLocaleDateString()}
-                        </div>
+                        <span className="flex shrink-0 items-center gap-1.5">
+                          <Calendar className="h-3.5 w-3.5" />
+                          {new Date(project.createdAt).toLocaleDateString("pl-PL", { day: "numeric", month: "short", year: "numeric" })}
+                        </span>
                       )}
                     </div>
-                  </CardContent>
+                  </div>
                 </Link>
               </Card>
             )
@@ -422,5 +433,6 @@ export function ProjectsContent() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </PageBody>
   )
 }

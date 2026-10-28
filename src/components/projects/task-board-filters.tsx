@@ -53,7 +53,7 @@ export function TaskBoardFilters({
     <div className="flex items-center space-x-3">
       <div className="flex items-center space-x-2">
         <Filter className="h-4 w-4" />
-        <span className="text-sm font-medium text-gray-700">Filtruj:</span>
+        <span className="text-sm font-medium text-foreground/80">Filtruj:</span>
       </div>
 
       <DropdownMenu>

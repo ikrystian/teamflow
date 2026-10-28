@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Clock, CheckCircle, Calendar, CalendarDays, CalendarCheck } from "lucide-react"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
+import { Clock, CheckCircle2 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 
 interface PeriodData {
@@ -42,19 +42,17 @@ export function UserReportSummary() {
 
     if (loading) {
         return (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                {[...Array(3)].map((_, i) => (
-                    <Card key={i}>
-                        <CardHeader className="pb-2">
-                            <Skeleton className="h-5 w-24" />
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                            <Skeleton className="h-8 w-16" />
-                            <Skeleton className="h-4 w-32" />
-                        </CardContent>
-                    </Card>
-                ))}
-            </div>
+            <Card className="gap-0 py-0">
+                <div className="grid grid-cols-1 divide-y sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+                    {[...Array(3)].map((_, i) => (
+                        <div key={i} className="space-y-3 p-5">
+                            <Skeleton className="h-4 w-20" />
+                            <Skeleton className="h-7 w-24" />
+                            <Skeleton className="h-3 w-32" />
+                        </div>
+                    ))}
+                </div>
+            </Card>
         )
     }
 
@@ -63,30 +61,9 @@ export function UserReportSummary() {
     }
 
     const periods = [
-        {
-            key: "today",
-            label: "Dzisiaj",
-            icon: Calendar,
-            color: "text-blue-500",
-            bgColor: "bg-blue-500/10",
-            data: data.today
-        },
-        {
-            key: "thisWeek",
-            label: "Ten tydzień",
-            icon: CalendarDays,
-            color: "text-green-500",
-            bgColor: "bg-green-500/10",
-            data: data.thisWeek
-        },
-        {
-            key: "thisMonth",
-            label: "Ten miesiąc",
-            icon: CalendarCheck,
-            color: "text-purple-500",
-            bgColor: "bg-purple-500/10",
-            data: data.thisMonth
-        }
+        { key: "today", label: "Dzisiaj", data: data.today },
+        { key: "thisWeek", label: "Ten tydzień", data: data.thisWeek },
+        { key: "thisMonth", label: "Ten miesiąc", data: data.thisMonth },
     ]
 
     const formatHours = (hours: number) => {
@@ -98,43 +75,30 @@ export function UserReportSummary() {
     }
 
     return (
-        <div className="space-y-4">
-            <div className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-muted-foreground" />
-                <h2 className="text-lg font-semibold">Moje raporty</h2>
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <Card className="gap-0 py-0">
+            <CardHeader className="border-b py-4 [.border-b]:pb-4">
+                <CardTitle>
+                    <Clock className="size-4 text-muted-foreground" />
+                    Mój czas pracy
+                </CardTitle>
+                <CardDescription>Zaraportowane godziny i ukończone zadania</CardDescription>
+            </CardHeader>
+            <div className="grid grid-cols-1 divide-y sm:grid-cols-3 sm:divide-x sm:divide-y-0">
                 {periods.map((period) => (
-                    <Card key={period.key} className="overflow-hidden">
-                        <CardHeader className="pb-2">
-                            <div className="flex items-center gap-2">
-                                <div className={`p-2 rounded-lg ${period.bgColor}`}>
-                                    <period.icon className={`h-4 w-4 ${period.color}`} />
-                                </div>
-                                <CardTitle className="text-sm font-medium">{period.label}</CardTitle>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between gap-3">
-                                    <div className="flex items-center gap-2 text-muted-foreground min-w-0">
-                                        <Clock className="h-4 w-4 shrink-0" />
-                                        <span className="text-sm">Zaraportowano</span>
-                                    </div>
-                                    <span className="text-xl font-bold shrink-0">{formatHours(period.data.hoursReported)}</span>
-                                </div>
-                                <div className="flex items-center justify-between gap-3">
-                                    <div className="flex items-center gap-2 text-muted-foreground min-w-0">
-                                        <CheckCircle className="h-4 w-4 shrink-0" />
-                                        <span className="text-sm">Ukończono zadań</span>
-                                    </div>
-                                    <span className="text-xl font-bold shrink-0">{period.data.tasksCompleted}</span>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <CardContent key={period.key} className="px-5 py-4">
+                        <div className="text-xs font-medium text-muted-foreground">{period.label}</div>
+                        <div className="mt-1.5 text-2xl font-semibold tracking-tight tabular-nums">
+                            {formatHours(period.data.hoursReported)}
+                        </div>
+                        <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <CheckCircle2 className="size-3.5 text-success" />
+                            <span>
+                                <span className="font-medium text-foreground tabular-nums">{period.data.tasksCompleted}</span> ukończonych zadań
+                            </span>
+                        </div>
+                    </CardContent>
                 ))}
             </div>
-        </div>
+        </Card>
     )
 }

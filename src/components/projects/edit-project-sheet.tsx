@@ -191,7 +191,7 @@ export function EditProjectSheet({
                   key={colorOption}
                   type="button"
                   className={`w-8 h-8 rounded-full border-2 transition-all ${
-                    color === colorOption ? "border-gray-900 scale-110" : "border-gray-300 hover:border-gray-400"
+                    color === colorOption ? "border-foreground scale-110" : "border-border hover:border-muted-foreground"
                   }`}
                   style={{ backgroundColor: colorOption }}
                   onClick={() => setColor(colorOption)}

@@ -112,7 +112,7 @@ export function PasswordChangeForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle>
           <Lock className="h-5 w-5" />
           Zmiana hasła
         </CardTitle>

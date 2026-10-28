@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { usePageHeader } from "@/contexts/header-context"
+import { PageHeader, PageBody } from "@/components/dashboard/page-header"
 import {
   ArrowLeft,
   CheckCircle,
@@ -16,7 +17,9 @@ import {
   FileText,
   Edit,
   Eye,
-  EyeOff
+  EyeOff,
+  ListChecks,
+  Clock
 } from "lucide-react"
 import Link from "next/link"
 import { FileUpload } from "@/components/ui/file-upload"
@@ -111,27 +114,14 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
   // Set page header content
   usePageHeader(
     project ? (
-      <div className="flex items-center justify-between w-full">
-        <div className="flex items-center space-x-4">
-          <Link href={`/dashboard/projects/${projectId}`}>
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Informacje o {project.name}</h1>
-          </div>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Badge>
-            {project.status}
-          </Badge>
-        </div>
-      </div>
+      <PageHeader
+        backHref={`/dashboard/projects/${projectId}`}
+        title={project.name}
+        description="Informacje, dane dostępowe i dokumenty projektu"
+        meta={<Badge variant="outline" className="text-[11px]">{project.status}</Badge>}
+      />
     ) : (
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Ładowanie informacji o projekcie...</h1>
-      </div>
+      <PageHeader title="Ładowanie informacji o projekcie..." />
     ),
     [project, projectId] // Re-render when project or projectId changes
   )
@@ -286,8 +276,8 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
   if (!project) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Projekt nie znaleziony</h3>
-        <p className="text-gray-500 mb-4">Projekt, którego szukasz, nie istnieje lub nie masz do niego dostępu.</p>
+        <h3 className="text-lg font-medium text-foreground mb-2">Projekt nie znaleziony</h3>
+        <p className="text-muted-foreground mb-4">Projekt, którego szukasz, nie istnieje lub nie masz do niego dostępu.</p>
         <Link href="/dashboard/projects">
           <Button>
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -301,175 +291,94 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
   const stats = getTaskStats(project.tasks)
 
   return (
-    <div className="space-y-6 p-4 md:p-8 pt-6" id="info">
-      {/* Header */}
-
+    <PageBody className="max-w-6xl">
+    <div className="space-y-6" id="info">
+      {/* Task Summary */}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        {[
+          { label: "Wszystkie zadania", value: stats.total, icon: ListChecks, tone: "text-muted-foreground bg-muted" },
+          { label: "Ukończone", value: stats.completed, icon: CheckCircle, tone: "text-success bg-success/10" },
+          { label: "W toku", value: stats.inProgress, icon: Clock, tone: "text-primary bg-primary/10" },
+          { label: "Zaległe", value: stats.overdue, icon: AlertCircle, tone: stats.overdue > 0 ? "text-destructive bg-destructive/10" : "text-muted-foreground bg-muted" },
+        ].map(({ label, value, icon: Icon, tone }) => (
+          <Card key={label} className="gap-0 py-4">
+            <CardContent className="px-4">
+              <div className="flex items-center justify-between">
+                <span className="text-[13px] font-medium text-muted-foreground">{label}</span>
+                <span className={`flex size-7 items-center justify-center rounded-md ${tone}`}>
+                  <Icon className="size-3.5" />
+                </span>
+              </div>
+              <div className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">{value}</div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
       {/* Project Overview */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Info className="h-5 w-5" />
-            <span>Przegląd projektu</span>
+          <CardTitle>
+            <Info className="size-4 text-muted-foreground" />
+            Przegląd projektu
           </CardTitle>
           <CardDescription>Podstawowe informacje o tym projekcie</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Project Name */}
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <h4 className="text-sm font-medium text-muted-foreground">Nazwa projektu</h4>
-              </div>
-              <p className="text-lg font-semibold text-foreground">{project.name}</p>
+          <dl className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="space-y-1">
+              <dt className="text-xs font-medium text-muted-foreground">Nazwa projektu</dt>
+              <dd className="flex items-center gap-2 text-sm font-medium">
+                <span className="size-2 rounded-full" style={{ backgroundColor: project.color || "var(--primary)" }} />
+                {project.name}
+              </dd>
             </div>
-
-            {/* Project Status */}
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <h4 className="text-sm font-medium text-muted-foreground">Status</h4>
-              </div>
-              <Badge variant="secondary">
-                {project.status}
-              </Badge>
+            <div className="space-y-1">
+              <dt className="text-xs font-medium text-muted-foreground">Status</dt>
+              <dd><Badge variant="secondary">{project.status}</Badge></dd>
             </div>
-            {/* Created Date */}
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                <h4 className="text-sm font-medium text-muted-foreground">Data utworzenia</h4>
-              </div>
-              <p className="text-sm font-medium text-foreground">
-                {new Date(project.createdAt).toLocaleDateString('pl-PL', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </p>
+            <div className="space-y-1">
+              <dt className="text-xs font-medium text-muted-foreground">Data utworzenia</dt>
+              <dd className="text-sm font-medium">
+                {new Date(project.createdAt).toLocaleDateString('pl-PL', { year: 'numeric', month: 'long', day: 'numeric' })}
+              </dd>
             </div>
-
-            {/* Last Updated */}
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                <h4 className="text-sm font-medium text-muted-foreground">Ostatnia aktualizacja</h4>
-              </div>
-              <p className="text-sm font-medium text-foreground">
-                {new Date(project.updatedAt).toLocaleDateString('pl-PL', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </p>
+            <div className="space-y-1">
+              <dt className="text-xs font-medium text-muted-foreground">Ostatnia aktualizacja</dt>
+              <dd className="text-sm font-medium">
+                {new Date(project.updatedAt).toLocaleDateString('pl-PL', { year: 'numeric', month: 'long', day: 'numeric' })}
+              </dd>
             </div>
-
-            {/* Task Progress */}
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
-                <h4 className="text-sm font-medium text-muted-foreground">Postęp zadań</h4>
-              </div>
-              <div className="space-y-1">
-                <p className="text-lg font-semibold text-foreground">
-                  {stats.completed}/{stats.total}
-                </p>
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div
-                    className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                    style={{
-                      width: `${stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}%`
-                    }}
-                  ></div>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}% ukończono
-                </p>
-              </div>
+            <div className="space-y-1.5 sm:col-span-2 lg:col-span-4">
+              <dt className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+                <span>Postęp zadań</span>
+                <span className="tabular-nums text-foreground">{stats.completed}/{stats.total} · {(stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0)}%</span>
+              </dt>
+              <dd className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-success transition-all duration-300"
+                  style={{ width: `${(stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0)}%` }}
+                />
+              </dd>
             </div>
-          </div>
+          </dl>
 
           {/* Project Description */}
           {project.description && (
-            <div className="mt-6 pt-6 border-t">
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
-                  <h4 className="text-sm font-medium text-muted-foreground">Opis projektu</h4>
-                </div>
-                <p className="text-sm text-foreground leading-relaxed bg-muted/30 p-4 rounded-lg">
-                  {project.description}
-                </p>
-              </div>
+            <div className="mt-5 border-t pt-5">
+              <h4 className="mb-2 text-xs font-medium text-muted-foreground">Opis projektu</h4>
+              <p className="rounded-lg bg-muted/40 p-3.5 text-sm leading-relaxed text-foreground">
+                {project.description}
+              </p>
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Project Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Postęp zadań</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.completed}/{stats.total}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}% ukończono
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Zadania zaległe</CardTitle>
-            <AlertCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.overdue}</div>
-            <p className="text-xs text-muted-foreground">
-              Wymaga uwagi
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-
-      {/* Task Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Podsumowanie zadań</CardTitle>
-          <CardDescription>Szczegółowy podział zadań projektu</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
-              <p className="text-sm text-gray-500">Wszystkie zadania</p>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
-              <p className="text-sm text-gray-500">Ukończone</p>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{stats.inProgress}</div>
-              <p className="text-sm text-gray-500">W toku</p>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">{stats.overdue}</div>
-              <p className="text-sm text-gray-500">Zaległe</p>
-            </div>
-          </div>
         </CardContent>
       </Card>
 
       {/* Access Credentials */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
+          <CardTitle>
             <Key className="h-5 w-5" />
             <span>Dane dostępowe</span>
           </CardTitle>
@@ -641,7 +550,7 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
       {/* Project Documentation */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
+          <CardTitle>
             <FileText className="h-5 w-5" />
             <span>Dokumentacja projektu</span>
           </CardTitle>
@@ -674,5 +583,6 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
         </CardContent>
       </Card>
     </div>
+    </PageBody>
   )
 }

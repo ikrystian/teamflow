@@ -176,7 +176,7 @@ export function CreateProjectContent({
                 key={predefinedColor}
                 type="button"
                 className={`w-8 h-8 rounded-full border-2 ${
-                  color === predefinedColor ? "border-gray-900" : "border-gray-300"
+                  color === predefinedColor ? "border-foreground" : "border-border"
                 }`}
                 style={{ backgroundColor: predefinedColor }}
                 onClick={() => setColor(predefinedColor)}

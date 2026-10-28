@@ -4,15 +4,15 @@ import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { type Session, type User } from "next-auth"
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Key, Save, Eye, EyeOff, X, Plus, Edit, Trash2, Share2, Copy, ExternalLink, Trash, MessageSquare, GitBranch } from "lucide-react"
+import { Key, Save, Eye, EyeOff, X, Plus, Edit, Trash2, Share2, Copy, ExternalLink, Trash, MessageSquare, GitBranch } from "lucide-react"
 import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { usePageHeader } from "@/contexts/header-context"
+import { PageHeader } from "@/components/dashboard/page-header"
 import { toast } from "sonner"
 import { ProjectMembersManager } from "./project-members-manager"
 import { type Project } from "@/types"
@@ -59,20 +59,13 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
   // Set page header content
   usePageHeader(
     project ? (
-      <div className="flex items-center space-x-4">
-        <Link href={`/dashboard/projects/${projectId}`}>
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Ustawienia projektu {project.name}</h1>
-        </div>
-      </div>
+      <PageHeader
+        backHref={`/dashboard/projects/${projectId}`}
+        title="Ustawienia projektu"
+        description={project.name}
+      />
     ) : (
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Ładowanie ustawień projektu...</h1>
-      </div>
+      <PageHeader title="Ładowanie ustawień projektu..." />
     ),
     [project, projectId] // Re-render when project or projectId changes
   )
@@ -332,7 +325,7 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-8 pt-6" id="settings">
+    <div className="mx-auto w-full max-w-5xl space-y-6 p-4 md:p-6" id="settings">
       {/* Header */}
 
       {/* Project Members */}
@@ -347,7 +340,7 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
       {/* Project Sharing */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
+          <CardTitle>
             <Share2 className="h-5 w-5" />
             <span>Udostępnianie projektu</span>
           </CardTitle>
@@ -431,7 +424,7 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
       {/* Access Credentials Configuration */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
+          <CardTitle>
             <Key className="h-5 w-5" />
             <span>Dane dostępowe</span>
           </CardTitle>
@@ -502,7 +495,7 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
       {/* Slack Integration */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
+          <CardTitle>
             <MessageSquare className="h-5 w-5" />
             <span>Integracja ze Slackiem</span>
           </CardTitle>
@@ -538,7 +531,7 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
       {/* GitHub Integration */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
+          <CardTitle>
             <GitBranch className="h-5 w-5" />
             <span>Integracja z GitHub</span>
           </CardTitle>

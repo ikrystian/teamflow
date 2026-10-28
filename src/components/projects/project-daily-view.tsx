@@ -43,10 +43,10 @@ interface TaskWithTime extends Task {
 
 const getPriorityColor = (priority?: string) => {
   switch (priority) {
-    case 'high': return 'bg-red-100 text-red-800 border-red-200'
-    case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-    case 'low': return 'bg-green-100 text-green-800 border-green-200'
-    default: return 'bg-gray-100 text-gray-800 border-gray-200'
+    case 'high': return 'bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/20'
+    case 'medium': return 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-300 border-yellow-500/20'
+    case 'low': return 'bg-green-500/10 text-green-700 dark:text-green-300 border-green-500/20'
+    default: return 'bg-muted text-muted-foreground border-border'
   }
 }
 
@@ -605,7 +605,7 @@ export function ProjectDailyView({
                 {/* Time grid background */}
                 <div className="space-y-1">
                   {timeSlots.map(({ hour, displayTime }) => (
-                    <div key={hour} className="grid grid-cols-[100px_1fr] gap-4 min-h-[60px] border-b border-gray-100">
+                    <div key={hour} className="grid grid-cols-[100px_1fr] gap-4 min-h-[60px] border-b border-border">
                       <div className="flex items-start pt-2">
                         <span className="text-sm text-muted-foreground font-mono">{displayTime}</span>
                       </div>
@@ -691,7 +691,7 @@ export function ProjectDailyView({
                 {/* Siatka godzin */}
                 <div className="space-y-1">
                   {timeSlots.map(({ hour, displayTime }) => (
-                    <div key={hour} className="grid grid-cols-[100px_1fr] gap-4 min-h-[60px] border-b border-gray-100">
+                    <div key={hour} className="grid grid-cols-[100px_1fr] gap-4 min-h-[60px] border-b border-border">
                       <div className="flex items-start pt-2">
                         <span className="text-sm text-muted-foreground font-mono">{displayTime}</span>
                       </div>
@@ -755,9 +755,9 @@ export function ProjectDailyView({
 
           {viewMode === "day" && tasksForDate.length === 0 && (
             <div className="text-center py-8">
-              <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Brak zadań na ten dzień</h3>
-              <p className="text-gray-500 mb-4">
+              <Calendar className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">Brak zadań na ten dzień</h3>
+              <p className="text-muted-foreground mb-4">
                 Nie ma żadnych zadań zaplanowanych na {formatDate(selectedDate)}
               </p>
               {onCreateTask && (
@@ -770,9 +770,9 @@ export function ProjectDailyView({
           )}
           {viewMode === "week" && tasksByWeekDay.every(({ tasks: dayTasks }) => dayTasks.length === 0) && (
             <div className="text-center py-8">
-              <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Brak zadań w tym tygodniu</h3>
-              <p className="text-gray-500 mb-4">
+              <Calendar className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">Brak zadań w tym tygodniu</h3>
+              <p className="text-muted-foreground mb-4">
                 Nie ma żadnych zadań zaplanowanych w tym tygodniu
               </p>
             </div>

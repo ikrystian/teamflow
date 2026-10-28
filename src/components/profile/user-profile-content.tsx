@@ -22,7 +22,9 @@ import {
   Settings
 } from "lucide-react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { usePageHeader } from "@/contexts/header-context"
+import { PageHeader } from "@/components/dashboard/page-header"
 import { getPriorityColor, getPriorityDisplayName, formatProjectDisplay } from "@/lib/task-format-utils"
 
 interface UserProfile {
@@ -106,25 +108,21 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
   // Set page header content - must be called before any conditional returns
   usePageHeader(
     userProfile ? (
-      <div className="flex items-center space-x-4">
-        <Button
-          variant="ghost"
-          onClick={() => router.back()}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Wróć
-        </Button>
-        <div>
-          <h1 className="text-xl font-bold text-foreground">
-            {isOwnProfile ? "Twój profil" : `Profil: ${userProfile.name}`}
-          </h1>
-        </div>
-      </div>
+      <PageHeader
+        onBack={() => router.back()}
+        title={isOwnProfile ? "Twój profil" : userProfile.name}
+        description={isOwnProfile ? "Twoje statystyki, zadania i aktywność" : "Profil użytkownika"}
+        actions={isOwnProfile ? (
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/dashboard/settings?tab=profile">
+              <Settings />
+              <span className="hidden sm:inline">Edytuj profil</span>
+            </Link>
+          </Button>
+        ) : undefined}
+      />
     ) : (
-      <div>
-        <h1 className="text-xl font-bold text-foreground">Ładowanie profilu...</h1>
-      </div>
+      <PageHeader title="Ładowanie profilu..." />
     ),
     [userProfile, isOwnProfile]
   )
@@ -182,7 +180,7 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
 
   if (loading) {
     return (
-      <div className="space-y-6 p-4 md:p-8 pt-6" id="profile-content">
+      <div className="mx-auto w-full max-w-5xl space-y-6 p-4 md:p-6" id="profile-content">
         <LoadingCard className="max-w-4xl" headerLines={3} contentLines={5} />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -195,7 +193,7 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
 
   if (error || !userProfile) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 p-4 md:p-8">
+      <div className="flex flex-col items-center justify-center py-12 p-4 md:p-6">
         <h3 className="text-lg font-medium text-foreground mb-2">Błąd</h3>
         <p className="text-muted-foreground mb-4">{error}</p>
         <Button onClick={() => router.back()}>
@@ -214,43 +212,44 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
       value: userProfile.stats.totalAssignedTasks.toString(),
       description: `${userProfile.stats.completedTasks} ukończonych`,
       icon: CheckSquare,
-      color: "text-blue-600"
+      color: "text-primary"
     },
     {
       name: "Czas pracy",
       value: `${userProfile.stats.totalHours}h`,
       description: "Łączny czas",
       icon: Clock,
-      color: "text-purple-600"
+      color: "text-chart-5"
     },
     {
       name: "Komentarze",
       value: userProfile.stats.totalComments.toString(),
       description: "Aktywność w zadaniach",
       icon: MessageSquare,
-      color: "text-orange-600"
+      color: "text-chart-3"
     }
   ]
 
   return (
-    <div className="space-y-6 p-4 md:p-8 pt-6" id="profile-content">
+    <div className="mx-auto w-full max-w-5xl space-y-6 p-4 md:p-6" id="profile-content">
       {/* Profile Header */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-start space-x-6">
-            <Avatar className="h-24 w-24">
+      <Card className="gap-0 overflow-hidden py-0">
+        <div className="h-24 bg-gradient-to-br from-primary/25 via-primary/10 to-transparent" />
+        <CardContent className="-mt-10 px-6 pb-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
+            <Avatar className="h-20 w-20 shrink-0 ring-4 ring-card">
               <AvatarImage src={userProfile.avatarUrl || ""} />
-              <AvatarFallback className="text-2xl">
+              <AvatarFallback className="bg-primary/15 text-2xl text-primary">
                 {userProfile.name?.charAt(0) || "U"}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold text-foreground">
+            <div className="min-w-0 flex-1 sm:pt-11">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <h2 className="truncate text-xl font-semibold tracking-tight text-foreground">
                     {userProfile.name}
                   </h2>
-                  <p className="text-muted-foreground">{userProfile.email}</p>
+                  <p className="truncate text-sm text-muted-foreground">{userProfile.email}</p>
                 </div>
                 {userProfile.stats.completionRate > 0 && (
                   <Badge variant="secondary" className="flex items-center gap-1">
@@ -260,42 +259,42 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
                 )}
               </div>
 
-              <div className="mt-4 space-y-2">
+              <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
                 {userProfile.jobTitle && (
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Briefcase className="h-4 w-4 mr-2" />
+                  <div className="flex items-center text-[13px] text-muted-foreground">
+                    <Briefcase className="h-3.5 w-3.5 mr-1.5" />
                     {userProfile.jobTitle}
                     {userProfile.company && ` w ${userProfile.company}`}
                   </div>
                 )}
                 {userProfile.location && (
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4 mr-2" />
+                  <div className="flex items-center text-[13px] text-muted-foreground">
+                    <MapPin className="h-3.5 w-3.5 mr-1.5" />
                     {userProfile.location}
                   </div>
                 )}
                 {userProfile.website && (
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Globe className="h-4 w-4 mr-2" />
+                  <div className="flex items-center text-[13px] text-muted-foreground">
+                    <Globe className="h-3.5 w-3.5 mr-1.5" />
                     <a
                       href={userProfile.website}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
+                      className="text-primary hover:underline"
                     >
                       {userProfile.website}
                     </a>
                   </div>
                 )}
-                <div className="flex items-center text-sm text-muted-foreground">
-                  <Calendar className="h-4 w-4 mr-2" />
+                <div className="flex items-center text-[13px] text-muted-foreground">
+                  <Calendar className="h-3.5 w-3.5 mr-1.5" />
                   Dołączył {formatDate(userProfile.createdAt)}
                 </div>
               </div>
 
               {userProfile.bio && (
-                <div className="mt-4">
-                  <p className="text-sm text-foreground">{userProfile.bio}</p>
+                <div className="mt-4 border-t pt-4">
+                  <p className="text-sm leading-relaxed text-foreground">{userProfile.bio}</p>
                 </div>
               )}
             </div>
@@ -304,30 +303,18 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
       </Card>
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {statsConfig.map((stat) => (
-          <Card key={stat.name}>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <stat.icon className={`h-6 w-6 ${stat.color}`} />
-                </div>
-                <div className="ml-4 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-muted-foreground truncate">
-                      {stat.name}
-                    </dt>
-                    <dd className="text-lg font-medium text-foreground">
-                      {stat.value}
-                    </dd>
-                  </dl>
-                </div>
+          <Card key={stat.name} className="gap-0 py-4">
+            <CardContent className="px-4">
+              <div className="flex items-center justify-between">
+                <span className="text-[13px] font-medium text-muted-foreground">{stat.name}</span>
+                <span className="flex size-7 items-center justify-center rounded-md bg-muted">
+                  <stat.icon className={`size-3.5 ${stat.color}`} />
+                </span>
               </div>
-              <div className="mt-4">
-                <div className="text-sm text-muted-foreground">
-                  {stat.description}
-                </div>
-              </div>
+              <div className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">{stat.value}</div>
+              <p className="mt-0.5 text-xs text-muted-foreground">{stat.description}</p>
             </CardContent>
           </Card>
         ))}
@@ -356,9 +343,9 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
                   Brak przypisanych zadań
                 </p>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {userProfile.assignedTasks.map((task) => (
-                    <div key={task.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div key={task.id} className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 transition-colors hover:bg-accent/40">
                       <div className="flex-1">
                         <h4 className="font-medium text-sm">{task.title}</h4>
                         <div className="flex items-center gap-2 mt-1">
@@ -398,9 +385,9 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
                   Brak komentarzy
                 </p>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {userProfile.comments.map((comment) => (
-                    <div key={comment.id} className="p-3 border rounded-lg">
+                    <div key={comment.id} className="rounded-lg border px-3 py-2.5">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <p className="text-sm">{comment.content}</p>
@@ -436,9 +423,9 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
                   Brak wpisów czasu pracy
                 </p>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {userProfile.timeEntries.map((entry) => (
-                    <div key={entry.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div key={entry.id} className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 transition-colors hover:bg-accent/40">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4 text-muted-foreground" />
@@ -468,7 +455,7 @@ export function UserProfileContent({ userId }: UserProfileContentProps) {
           <TabsContent value="settings" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle>
                   <Settings className="h-5 w-5" />
                   Ustawienia
                 </CardTitle>

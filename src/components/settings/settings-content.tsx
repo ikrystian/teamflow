@@ -29,6 +29,7 @@ import {
 import { useSession } from "next-auth/react"
 import type { Session } from "next-auth"
 import { usePageHeader } from "@/contexts/header-context"
+import { PageHeader } from "@/components/dashboard/page-header"
 import { SystemTaskStatuses } from "./system-task-statuses"
 import { PasswordChangeForm } from "./password-change-form"
 import { ActiveSessions } from "./active-sessions"
@@ -52,6 +53,38 @@ interface UserProfile {
   updatedAt: string
 }
 
+const settingsNav: {
+  label: string
+  adminOnly?: boolean
+  items: { value: string; label: string; icon: React.ComponentType<{ className?: string }> }[]
+}[] = [
+  {
+    label: "Konto",
+    items: [
+      { value: "profile", label: "Profil", icon: User },
+      { value: "security", label: "Bezpieczeństwo", icon: Key },
+      { value: "notifications", label: "Powiadomienia", icon: Bell },
+      { value: "privacy", label: "Prywatność", icon: Shield },
+      { value: "appearance", label: "Wygląd", icon: Palette },
+    ],
+  },
+  {
+    label: "Przestrzeń robocza",
+    items: [
+      { value: "task-statuses", label: "Statusy zadań", icon: Settings },
+      { value: "tags", label: "Tagi", icon: Tag },
+    ],
+  },
+  {
+    label: "Administracja",
+    adminOnly: true,
+    items: [
+      { value: "smtp", label: "SMTP", icon: Mail },
+      { value: "users", label: "Użytkownicy", icon: Users },
+    ],
+  },
+]
+
 export function SettingsContent() {
   const { data: session } = useSession() as { data: Session | null }
   const [isLoading, setIsLoading] = useState(false)
@@ -60,9 +93,7 @@ export function SettingsContent() {
 
   // Set page header content
   usePageHeader(
-    <div>
-      <h1 className="text-2xl font-bold text-foreground">Zarządzaj swoim profilem i preferencjami aplikacji</h1>
-    </div>,
+    <PageHeader title="Ustawienia" description="Zarządzaj swoim profilem i preferencjami aplikacji" />,
     [] // Static content, no dependencies
   )
 
@@ -278,10 +309,10 @@ export function SettingsContent() {
 
   if (isLoadingProfile) {
     return (
-      <div className="container mx-auto py-6 px-4">
+      <div className="mx-auto w-full max-w-6xl p-4 md:p-6">
         <div className="flex items-center justify-center min-h-[400px]">
-          <div className="flex items-center gap-2">
-            <Loader2 className="h-6 w-6 animate-spin" />
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
             <span>Ładowanie profilu...</span>
           </div>
         </div>
@@ -290,56 +321,44 @@ export function SettingsContent() {
   }
 
   return (
-    <div className="container mx-auto py-6 px-4">
+    <div className="mx-auto w-full max-w-6xl p-4 md:p-6">
 
-      <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-6">
-        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-10' : 'grid-cols-7'}`}>
-          <TabsTrigger value="profile" className="flex items-center gap-2">
-            <User className="h-4 w-4" />
-            Profil
-          </TabsTrigger>
-          <TabsTrigger value="security" className="flex items-center gap-2">
-            <Key className="h-4 w-4" />
-            Bezpieczeństwo
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center gap-2">
-            <Bell className="h-4 w-4" />
-            Powiadomienia
-          </TabsTrigger>
-          <TabsTrigger value="privacy" className="flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            Prywatność
-          </TabsTrigger>
-          <TabsTrigger value="appearance" className="flex items-center gap-2">
-            <Palette className="h-4 w-4" />
-            Wygląd
-          </TabsTrigger>
-          <TabsTrigger value="task-statuses" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            Statusy zadań
-          </TabsTrigger>
-          <TabsTrigger value="tags" className="flex items-center gap-2">
-            <Tag className="h-4 w-4" />
-            Tagi
-          </TabsTrigger>
-          {isAdmin && (
-            <>
-              <TabsTrigger value="smtp" className="flex items-center gap-2">
-                <Mail className="h-4 w-4" />
-                SMTP
-              </TabsTrigger>
-              <TabsTrigger value="users" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Użytkownicy
-              </TabsTrigger>
-            </>
-          )}
+      <Tabs
+        value={currentTab}
+        onValueChange={handleTabChange}
+        orientation="vertical"
+        className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-10"
+      >
+        <TabsList
+          aria-label="Sekcje ustawień"
+          className="h-auto w-full shrink-0 justify-start gap-0.5 overflow-x-auto rounded-none border-0 border-b bg-transparent p-0 pb-2 lg:sticky lg:top-0 lg:w-52 lg:flex-col lg:items-stretch lg:overflow-visible lg:border-b-0 lg:pb-0"
+        >
+          {settingsNav
+            .filter((group) => !group.adminOnly || isAdmin)
+            .map((group) => (
+              <div key={group.label} className="contents lg:block lg:[&:not(:first-child)]:mt-4">
+                <div className="hidden px-2 pb-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70 lg:block">
+                  {group.label}
+                </div>
+                {group.items.map(({ value, label, icon: Icon }) => (
+                  <TabsTrigger
+                    key={value}
+                    value={value}
+                    className="h-8 shrink-0 justify-start gap-2 rounded-md px-2.5 font-normal text-muted-foreground hover:bg-accent/60 data-[state=active]:bg-accent data-[state=active]:font-medium data-[state=active]:shadow-none lg:w-full dark:data-[state=active]:bg-accent"
+                  >
+                    <Icon className="h-4 w-4" />
+                    {label}
+                  </TabsTrigger>
+                ))}
+              </div>
+            ))}
         </TabsList>
 
-        <TabsContent value="profile" className="space-y-6">
+        <div className="min-w-0 flex-1">
+        <TabsContent value="profile" className="mt-0 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle>
                 <User className="h-5 w-5" />
                 Informacje osobiste
               </CardTitle>
@@ -466,15 +485,15 @@ export function SettingsContent() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="security" className="space-y-6">
+        <TabsContent value="security" className="mt-0 space-y-6">
           <PasswordChangeForm />
           <ActiveSessions />
         </TabsContent>
 
-        <TabsContent value="notifications" className="space-y-6">
+        <TabsContent value="notifications" className="mt-0 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle>
                 <Bell className="h-5 w-5" />
                 Powiadomienia
               </CardTitle>
@@ -487,7 +506,7 @@ export function SettingsContent() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Powiadomienia email</Label>
-                    <p className="text-sm text-gray-500">Otrzymuj powiadomienia na email</p>
+                    <p className="text-sm text-muted-foreground">Otrzymuj powiadomienia na email</p>
                   </div>
                   <Switch disabled
                     checked={otherSettings.notifications.email}
@@ -500,7 +519,7 @@ export function SettingsContent() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Powiadomienia push</Label>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground">
                       {!pushSupported
                         ? "Twoja przeglądarka nie obsługuje powiadomień push"
                         : "Otrzymuj powiadomienia w przeglądarce"
@@ -519,7 +538,7 @@ export function SettingsContent() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Przypisanie zadania</Label>
-                    <p className="text-sm text-gray-500">Gdy zostaniesz przypisany do zadania</p>
+                    <p className="text-sm text-muted-foreground">Gdy zostaniesz przypisany do zadania</p>
                   </div>
                   <Switch
                     checked={otherSettings.notifications.taskAssigned}
@@ -530,7 +549,7 @@ export function SettingsContent() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Ukończenie zadania</Label>
-                    <p className="text-sm text-gray-500">Gdy zadanie zostanie ukończone</p>
+                    <p className="text-sm text-muted-foreground">Gdy zadanie zostanie ukończone</p>
                   </div>
                   <Switch disabled
                     checked={otherSettings.notifications.taskCompleted}
@@ -541,7 +560,7 @@ export function SettingsContent() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Aktualizacje projektów</Label>
-                    <p className="text-sm text-gray-500">Zmiany w projektach, w których uczestniczysz</p>
+                    <p className="text-sm text-muted-foreground">Zmiany w projektach, w których uczestniczysz</p>
                   </div>
                   <Switch disabled
                     checked={otherSettings.notifications.projectUpdates}
@@ -555,7 +574,7 @@ export function SettingsContent() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Raport tygodniowy</Label>
-                    <p className="text-sm text-gray-500">Podsumowanie aktywności z tygodnia</p>
+                    <p className="text-sm text-muted-foreground">Podsumowanie aktywności z tygodnia</p>
                   </div>
                   <Switch disabled
                     checked={otherSettings.notifications.weeklyReport}
@@ -566,7 +585,7 @@ export function SettingsContent() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Wiadomości marketingowe</Label>
-                    <p className="text-sm text-gray-500">Informacje o nowych funkcjach i aktualizacjach</p>
+                    <p className="text-sm text-muted-foreground">Informacje o nowych funkcjach i aktualizacjach</p>
                   </div>
                   <Switch disabled
                     checked={otherSettings.notifications.marketing}
@@ -578,10 +597,10 @@ export function SettingsContent() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="privacy" className="space-y-6">
+        <TabsContent value="privacy" className="mt-0 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle>
                 <Shield className="h-5 w-5" />
                 Prywatność i bezpieczeństwo
               </CardTitle>
@@ -594,7 +613,7 @@ export function SettingsContent() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Widoczny profil</Label>
-                    <p className="text-sm text-gray-500">Czy inni mogą zobaczyć Twój profil</p>
+                    <p className="text-sm text-muted-foreground">Czy inni mogą zobaczyć Twój profil</p>
                   </div>
                   <Switch disabled
                     checked={otherSettings.privacy.profileVisible}
@@ -605,7 +624,7 @@ export function SettingsContent() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Pokaż email</Label>
-                    <p className="text-sm text-gray-500">Czy inni mogą zobaczyć Twój adres email</p>
+                    <p className="text-sm text-muted-foreground">Czy inni mogą zobaczyć Twój adres email</p>
                   </div>
                   <Switch disabled
                     checked={otherSettings.privacy.showEmail}
@@ -616,7 +635,7 @@ export function SettingsContent() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Pokaż telefon</Label>
-                    <p className="text-sm text-gray-500">Czy inni mogą zobaczyć Twój numer telefonu</p>
+                    <p className="text-sm text-muted-foreground">Czy inni mogą zobaczyć Twój numer telefonu</p>
                   </div>
                   <Switch disabled
                     checked={otherSettings.privacy.showPhone}
@@ -627,7 +646,7 @@ export function SettingsContent() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Widoczna aktywność</Label>
-                    <p className="text-sm text-gray-500">Czy inni mogą zobaczyć Twoją aktywność</p>
+                    <p className="text-sm text-muted-foreground">Czy inni mogą zobaczyć Twoją aktywność</p>
                   </div>
                   <Switch disabled
                     checked={otherSettings.privacy.activityVisible}
@@ -639,10 +658,10 @@ export function SettingsContent() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="appearance" className="space-y-6">
+        <TabsContent value="appearance" className="mt-0 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle>
                 <Palette className="h-5 w-5" />
                 Wygląd i personalizacja
               </CardTitle>
@@ -712,25 +731,26 @@ export function SettingsContent() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="task-statuses" className="space-y-6">
+        <TabsContent value="task-statuses" className="mt-0 space-y-6">
           <SystemTaskStatuses />
         </TabsContent>
 
-        <TabsContent value="tags" className="space-y-6">
+        <TabsContent value="tags" className="mt-0 space-y-6">
           <TagsManagement />
         </TabsContent>
 
         {isAdmin && (
           <>
-            <TabsContent value="smtp" className="space-y-6">
+            <TabsContent value="smtp" className="mt-0 space-y-6">
               <SMTPSettings />
             </TabsContent>
 
-            <TabsContent value="users" className="space-y-6">
+            <TabsContent value="users" className="mt-0 space-y-6">
               <UserManagement />
             </TabsContent>
           </>
         )}
+        </div>
       </Tabs>
     </div>
   )

@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { useProjectViewPreferences } from "@/hooks/use-project-view-preferences"
 import { usePageHeader } from "@/contexts/header-context"
+import { PageHeader } from "@/components/dashboard/page-header"
 
 
 import {
@@ -361,76 +362,61 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   // Set page header content
   usePageHeader(
     project ? (
-      <div className="flex items-center justify-between gap-2 w-full min-w-0">
-        <div className="flex items-center space-x-4 min-w-0">
-          <Link href="/dashboard/projects">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div className="min-w-0">
-            <h1 className="text-2xl font-bold text-foreground truncate">{project.name}</h1>
-          </div>
-        </div>
-        <div className="flex items-center space-x-2 shrink-0">
-          <Badge className="hidden lg:inline-flex">
-            {project.status}
-          </Badge>
+      <PageHeader
+        backHref="/dashboard/projects"
+        title={project.name}
+        icon={<span className="block size-2.5 rounded-full" style={{ backgroundColor: project.color || "var(--primary)" }} />}
+        meta={project.status ? (
+          <Badge variant="outline" className="hidden text-[11px] lg:inline-flex">{project.status}</Badge>
+        ) : null}
+        actions={
+          <>
+            {/* View Toggle */}
+            <div className="flex h-8 items-center rounded-md border bg-muted/60 p-0.5">
+              {([
+                { mode: "list", icon: List, label: "Lista" },
+                { mode: "board", icon: LayoutGrid, label: "Tablica" },
+                { mode: "daily", icon: Calendar, label: "Kalendarz" },
+              ] as const).map(({ mode, icon: Icon, label }) => (
+                <Button
+                  key={mode}
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => updateViewMode(mode)}
+                  title={label}
+                  aria-pressed={viewMode === mode}
+                  className={`h-full rounded-[5px] px-2 text-muted-foreground hover:bg-transparent hover:text-foreground ${viewMode === mode ? "bg-card text-foreground shadow-xs dark:bg-accent" : ""}`}
+                >
+                  <Icon className="h-4 w-4" />
+                </Button>
+              ))}
+            </div>
 
-          {/* View Toggle */}
-          <div className="flex items-center border rounded-lg">
-            <Button
-              variant={viewMode === "list" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => updateViewMode("list")}
-              className="rounded-r-none"
-            >
-              <List className="h-4 w-4" />
+            {/* Below lg the outline buttons collapse to icons so the fixed-height
+                header doesn't overflow horizontally on medium screens. */}
+            <Button variant="outline" size="sm" title="Ustawienia" className="max-sm:hidden" asChild>
+              <Link href={`/dashboard/projects/${projectId}/settings`}>
+                <Settings className="h-4 w-4" />
+                <span className="hidden lg:inline">Ustawienia</span>
+              </Link>
             </Button>
-            <Button
-              variant={viewMode === "board" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => updateViewMode("board")}
-              className="rounded-none"
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === "daily" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => updateViewMode("daily")}
-              className="rounded-l-none"
-            >
-              <Calendar className="h-4 w-4" />
-            </Button>
-          </div>
 
-          {/* Below lg the outline buttons collapse to icons so the fixed-height
-              header doesn't overflow horizontally on medium screens. */}
-          <Link href={`/dashboard/projects/${projectId}/settings`}>
-            <Button variant="outline" size="sm" title="Ustawienia">
-              <Settings className="h-4 w-4 lg:mr-2" />
-              <span className="hidden lg:inline">Ustawienia</span>
+            <Button variant="outline" size="sm" title="Informacje o projekcie" className="max-sm:hidden" asChild>
+              <Link href={`/dashboard/projects/${projectId}/info`}>
+                <Info className="h-4 w-4" />
+                <span className="hidden lg:inline">Informacje</span>
+              </Link>
             </Button>
-          </Link>
 
-          <Link href={`/dashboard/projects/${projectId}/info`}>
-            <Button variant="outline" size="sm" title="Informacje o projekcie">
-              <Info className="h-4 w-4 lg:mr-2" />
-              <span className="hidden lg:inline">Informacje o projekcie</span>
+            <Button size="sm" onClick={handleCreateTask} title="Dodaj zadanie">
+              <Plus className="h-4 w-4" />
+              <span className="hidden lg:inline">Dodaj zadanie</span>
             </Button>
-          </Link>
-
-          <Button onClick={handleCreateTask} title="Dodaj zadanie">
-            <Plus className="h-4 w-4 lg:mr-2" />
-            <span className="hidden lg:inline">Dodaj zadanie</span>
-          </Button>
-        </div>
-      </div>
+          </>
+        }
+      />
     ) : (
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Ładowanie projektu...</h1>
-      </div>
+      <PageHeader title="Ładowanie projektu..." />
     ),
     [project, viewMode, projectId] // Re-render when project, viewMode or projectId changes
   )
@@ -527,13 +513,13 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   const getPriorityColor = (priority?: string) => {
     switch (priority?.toLowerCase()) {
       case "high":
-        return "bg-red-100 text-red-800"
+        return "bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/20"
       case "medium":
-        return "bg-yellow-100 text-yellow-800"
+        return "bg-yellow-500/10 text-yellow-700 dark:text-yellow-300 border-yellow-500/20"
       case "low":
-        return "bg-green-100 text-green-800"
+        return "bg-green-500/10 text-green-700 dark:text-green-300 border-green-500/20"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-muted text-muted-foreground"
     }
   }
 
@@ -644,8 +630,8 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   if (!project) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Projekt nie znaleziony</h3>
-        <p className="text-gray-500 mb-4">Projekt, którego szukasz, nie istnieje lub nie masz do niego dostępu.</p>
+        <h3 className="text-lg font-medium text-foreground mb-2">Projekt nie znaleziony</h3>
+        <p className="text-muted-foreground mb-4">Projekt, którego szukasz, nie istnieje lub nie masz do niego dostępu.</p>
         <Link href="/dashboard/projects">
           <Button>
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -660,12 +646,14 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
 
   return (
     <div
-      className="space-y-6 p-4 md:p-8 pt-6 relative"
+      className="space-y-6 p-4 md:p-6 relative min-h-full"
       id="tasks"
       style={{
         ...(project.imageUrl
           ? {
-            backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.45)), url(${project.imageUrl})`,
+            // Theme-tinted veil keeps the project image as ambient backdrop without
+            // fighting the board's contrast in either theme.
+            backgroundImage: `linear-gradient(to bottom, color-mix(in oklch, var(--background) 72%, transparent), color-mix(in oklch, var(--background) 88%, transparent)), url(${project.imageUrl})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
@@ -679,16 +667,16 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
       {viewMode === "list" ? (
         <div >
           <div>
-            <div className="flex items-center justify-between">
-              <div>
-                <div>Zadania</div>
-                <div>
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+              <div className={`rounded-md ${project.imageUrl ? "bg-card/80 px-3 py-1.5 backdrop-blur-sm" : ""}`}>
+                <h2 className="text-sm font-semibold">Zadania</h2>
+                <div className="text-xs text-muted-foreground">
                   {taskFilter === "all" ? "Wszystkie zadania w tym projekcie" :
                     taskFilter === "mine" ? "Twoje zadania w tym projekcie" :
                       `Zadania przypisane do ${getProjectMembers(project).find(m => m.id === taskFilter)?.name || "Nieznany użytkownik"}`}
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <QuickAddTaskCommand
                   projectId={projectId}
                   onTaskCreated={refreshActiveView}
@@ -706,7 +694,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                   onTaskCreated={refreshActiveView}
                 />
                 <Button onClick={handleCreateTask} size="sm">
-                  <Plus className="mr-2 h-4 w-4" />
+                  <Plus />
                   Dodaj zadanie
                 </Button>
               </div>
@@ -715,13 +703,13 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
           <div>
             {getFilteredTasks(tasks).length === 0 ? (
               <div className="text-center py-8">
-                <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                <Clock className="h-12 w-12 text-muted-foreground/70 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">
                   {taskFilter === "all" ? "Brak zadań" :
                     taskFilter === "mine" ? "Brak zadań przypisanych do Ciebie" :
                       "Brak zadań przypisanych tej osobie"}
                 </h3>
-                <p className="text-gray-500 mb-4">
+                <p className="text-muted-foreground mb-4">
                   {taskFilter === "all" ? "Utwórz swoje pierwsze zadanie, aby rozpocząć" :
                     taskFilter === "mine" ? "Brak zadań przypisanych Tobie w tym projekcie" :
                       "Ten członek zespołu nie ma przypisanych zadań w tym projekcie"}
@@ -732,11 +720,11 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                 </Button>
               </div>
             ) : (
-               <div className="space-y-4">
+               <div className="space-y-2">
                 {getFilteredTasks(tasks).map((task) => (
                   <div
                     key={task.id}
-                    className={`border rounded-lg p-4 hover:bg-gray-50/50 cursor-pointer transition-colors border-l-4 hover-card-border-animate ${deletingTaskIds.has(task.id) ? ' task-deleting' : ''}`}
+                    className={`border rounded-lg bg-card p-3.5 hover:bg-accent/40 cursor-pointer transition-colors border-l-[3px] hover-card-border-animate ${deletingTaskIds.has(task.id) ? ' task-deleting' : ''}`}
                     style={{
                       borderLeftColor: project.color || '#3B82F6',
                       '--hover-border-color': project.color || '#3B82F6',
@@ -746,7 +734,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-2">
-                          <h4 className="font-medium">{task.title}</h4>
+                          <h4 className="text-sm font-medium">{task.title}</h4>
 
                           {task.priority && (
                             <Badge className={getPriorityColor(task.priority)} variant="outline">
@@ -755,9 +743,9 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                           )}
                         </div>
                         {task.description && (
-                          <div className="text-sm text-gray-600 mb-2" dangerouslySetInnerHTML={{ __html: task.description }} />
+                          <div className="text-[13px] text-muted-foreground mb-2 line-clamp-2" dangerouslySetInnerHTML={{ __html: task.description }} />
                         )}
-                        <div className="flex items-center space-x-4 text-xs text-gray-500">
+                        <div className="flex items-center space-x-4 text-xs text-muted-foreground">
                           {task.assignee && (
                             <div className="flex items-center space-x-1">
                               <Avatar className="h-4 w-4">
@@ -824,21 +812,20 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
           />
         ) : (
           <div>
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className={`text-lg font-semibold ${project.imageUrl ? "text-white drop-shadow-md" : "text-foreground"}`}>Tablica zadań</h2>
-                <p className={`text-sm ${project.imageUrl ? "text-white/90 drop-shadow-md" : "text-muted-foreground"}`}>Przeciągnij zadania między kolumnami, aby zaktualizować ich status</p>
-                <p className={`mt-1 flex items-center gap-1.5 text-xs ${project.imageUrl ? "text-white/90 drop-shadow-md" : "text-muted-foreground"}`}>
-                  <Send className="h-3.5 w-3.5" />
-                  Ostatnia zaplanowana wysyłka na Slack:{" "}
-                  <span className="font-medium">
-                    {lastSlackSendAt
-                      ? new Date(lastSlackSendAt).toLocaleString("pl-PL")
-                      : "brak"}
-                  </span>
-                </p>
-              </div>
-              <div className="flex items-center space-x-2">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+              <p
+                className="flex h-8 items-center gap-1.5 rounded-md border bg-card/80 px-2.5 text-xs text-muted-foreground backdrop-blur-sm"
+                title="Przeciągnij zadania między kolumnami, aby zaktualizować ich status"
+              >
+                <Send className="h-3.5 w-3.5" />
+                Ostatnia wysyłka na Slack:{" "}
+                <span className="font-medium text-foreground">
+                  {lastSlackSendAt
+                    ? new Date(lastSlackSendAt).toLocaleString("pl-PL")
+                    : "brak"}
+                </span>
+              </p>
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <QuickAddTaskCommand
                   projectId={projectId}
                   onTaskCreated={refreshActiveView}
@@ -855,13 +842,13 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
               <Card >
                 <CardContent className="py-12">
                   <div className="text-center">
-                    <LayoutGrid className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    <LayoutGrid className="h-12 w-12 text-muted-foreground/70 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-foreground mb-2">
                       {taskFilter === "all" ? "Brak zadań" :
                         taskFilter === "mine" ? "Brak zadań przypisanych do Ciebie" :
                           "Brak zadań przypisanych tej osobie"}
                     </h3>
-                    <p className="text-gray-500 mb-4">
+                    <p className="text-muted-foreground mb-4">
                       {taskFilter === "all" ? "Utwórz swoje pierwsze zadanie, aby zobaczyć tablicę" :
                         taskFilter === "mine" ? "Brak zadań przypisanych Tobie w tym projekcie" :
                           "Ten członek zespołu nie ma przypisanych zadań w tym projekcie"}
