@@ -443,7 +443,7 @@ export function DashboardContent({ crmSection }: { crmSection?: React.ReactNode 
     <PageBody className="space-y-10" >
       <div id="dashboard-content" className="space-y-10">
         {/* Hero: the greeting is the type-led signature moment, the bento carries the numbers */}
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] xl:gap-10">
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,0.6fr)_minmax(0,1.4fr)] xl:gap-10">
           <section className="glass-rise flex flex-col justify-end gap-4 py-2 xl:py-6" style={rise(0)} aria-label="Powitanie">
             <p className="kicker text-primary">{todayLabel}</p>
             <h2 className="font-display text-5xl leading-[0.95] font-light tracking-tight md:text-6xl 2xl:text-7xl">
