@@ -168,9 +168,9 @@ export function CredentialsView({ clientId, canShareExternal, maxShareHours, pas
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-start">
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Szukaj: nazwa, klient, adres, login, tag…" aria-label="Szukaj dostępów" className="lg:max-w-sm" />
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 justify-end">
           <Select value={category} onValueChange={(v) => setCategory(v as CategoryId | "all")}>
             <SelectTrigger className="w-44" aria-label="Kategoria">
               <SelectValue />
@@ -249,7 +249,7 @@ export function CredentialsView({ clientId, canShareExternal, maxShareHours, pas
       ) : null}
 
       {selection.size ? (
-        <div className="sticky top-16 z-10 flex flex-wrap items-center gap-2 rounded-lg border bg-background p-2 shadow-sm" role="region" aria-label="Operacje zbiorcze">
+        <div className="glass-solid sticky top-16 z-10 flex flex-wrap items-center gap-2 rounded-lg border p-2" role="region" aria-label="Operacje zbiorcze">
           <span className="px-2 text-sm font-medium">Zaznaczono: {selection.size}</span>
           <Button size="sm" variant="outline" onClick={() => setBulk("move")} disabled={selectedItems.some((i) => !i.canEdit)}>
             <Move aria-hidden /> Przenieś do klienta

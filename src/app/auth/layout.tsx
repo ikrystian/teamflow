@@ -1,12 +1,14 @@
 import { LockKeyhole } from "lucide-react";
 import Link from "next/link";
+import { GlassAtmosphere } from "@/components/layout/glass-atmosphere";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-dvh flex-col bg-muted/40">
+    <div className="flex min-h-dvh flex-col">
+      <GlassAtmosphere />
       <header className="flex items-center justify-between px-4 py-4 sm:px-8">
         <Link href="/" className="flex items-center gap-2 font-semibold">
-          <span className="inline-flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <span className="inline-flex size-8 items-center justify-center rounded-lg bg-primary bg-linear-to-b from-white/16 to-transparent text-primary-foreground shadow-[inset_0_1px_0_oklch(1_0_0/0.28),0_6px_18px_-8px_var(--primary)]">
             <LockKeyhole className="size-4" aria-hidden />
           </span>
           Nexus

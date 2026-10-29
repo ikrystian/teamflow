@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useSession } from "@/lib/auth/use-session"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import type { Task, User, TaskStatus } from "@/types"
@@ -22,12 +22,42 @@ import { PageHeader, PageBody } from "./page-header"
 const pluralizeTasks = (count: number) =>
   count === 1 ? "zadanie" : count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20) ? "zadania" : "zadań"
 
+/** Staggered entrance step for the dashboard's choreographed load (see .glass-rise). */
+const rise = (step: number) => ({ "--rise": step }) as React.CSSProperties
+
+/** Counts from the previously shown value to `target`, so figures roll rather than jump. */
+function useCountUp(target: number) {
+  const [value, setValue] = useState(0)
+  const shown = useRef(0)
+
+  useEffect(() => {
+    const from = shown.current
+    const duration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 900
+    const start = performance.now()
+    let frame = requestAnimationFrame(function tick(now) {
+      const t = duration ? Math.min(1, (now - start) / duration) : 1
+      shown.current = Math.round(from + (target - from) * (1 - (1 - t) ** 4))
+      setValue(shown.current)
+      if (t < 1) frame = requestAnimationFrame(tick)
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [target])
+
+  return value
+}
+
 interface StatTileProps {
+  index: string
   label: string
-  value: number | string
+  value: number
   hint: string
   icon: React.ComponentType<{ className?: string }>
   tone?: "default" | "primary" | "warning" | "danger"
+  /** Bento role: the tall lead tile, a wide strip, or a compact tile. */
+  shape?: "lead" | "wide" | "compact"
+  step: number
+  className?: string
+  children?: React.ReactNode
 }
 
 const toneClasses: Record<NonNullable<StatTileProps["tone"]>, string> = {
@@ -37,20 +67,62 @@ const toneClasses: Record<NonNullable<StatTileProps["tone"]>, string> = {
   danger: "bg-destructive/10 text-destructive",
 }
 
-function StatTile({ label, value, hint, icon: Icon, tone = "default" }: StatTileProps) {
+function StatTile({ index, label, value, hint, icon: Icon, tone = "default", shape = "compact", step, className, children }: StatTileProps) {
+  const shown = useCountUp(value)
+
   return (
-    <Card className="gap-3 py-4">
-      <CardContent className="px-4">
-        <div className="flex items-center justify-between">
-          <span className="text-[13px] font-medium text-muted-foreground">{label}</span>
-          <span className={cn("flex size-7 items-center justify-center rounded-md", toneClasses[tone])}>
+    <Card className={cn("glass-rise relative gap-0 overflow-hidden py-0", className)} style={rise(step)}>
+      {shape === "lead" && (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -top-28 -right-20 size-72 rounded-full bg-[radial-gradient(closest-side,var(--primary),transparent)] opacity-25"
+        />
+      )}
+      <CardContent className={cn("relative flex h-full flex-col px-5", shape === "lead" ? "py-6" : "py-4")}>
+        <div className="flex items-center justify-between gap-2">
+          <span className="kicker truncate text-muted-foreground">
+            <span className="text-foreground/60">{index}</span> — {label}
+          </span>
+          <span className={cn("flex size-7 shrink-0 items-center justify-center rounded-lg shadow-[var(--glass-edge)]", toneClasses[tone])}>
             <Icon className="size-3.5" />
           </span>
         </div>
-        <div className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">{value}</div>
-        <p className="mt-0.5 truncate text-xs text-muted-foreground">{hint}</p>
+        <div className={cn("mt-auto pt-5", shape === "wide" && "flex items-end justify-between gap-6")}>
+          <div
+            className={cn(
+              "font-display leading-[0.85] font-light tracking-tight tabular-nums",
+              shape === "lead" ? "text-7xl md:text-8xl" : "text-5xl",
+              tone === "danger" && "text-destructive"
+            )}
+          >
+            {shown}
+          </div>
+          <p className={cn("text-xs text-muted-foreground", shape === "wide" ? "max-w-56 text-right" : "mt-2 truncate")}>{hint}</p>
+        </div>
+        {children}
       </CardContent>
     </Card>
+  )
+}
+
+function CompletionMeter({ done, total }: { done: number; total: number }) {
+  const percent = useCountUp(total ? Math.round((done / total) * 100) : 0)
+
+  return (
+    <div className="mt-6">
+      <div className="flex items-baseline justify-between text-xs text-muted-foreground">
+        <span>
+          {done} z {total} ukończonych
+        </span>
+        <span className="font-medium text-foreground tabular-nums">{percent}%</span>
+      </div>
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100} aria-label="Ukończone zadania">
+        <div
+          className="h-full rounded-full bg-linear-to-r from-primary to-chart-5 shadow-[0_0_12px_var(--primary)]"
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+    </div>
   )
 }
 
@@ -164,8 +236,8 @@ export function DashboardContent({ crmSection }: { crmSection?: React.ReactNode 
 
   usePageHeader(
     <PageHeader
-      title={firstName ? `Cześć, ${firstName}` : "Panel"}
-      description={`${todayLabel.charAt(0).toUpperCase()}${todayLabel.slice(1)} · ${isAdmin ? "przegląd wszystkich zadań w systemie" : "przegląd Twoich zadań"}`}
+      title="Panel"
+      description={isAdmin ? "Przegląd wszystkich zadań w systemie" : "Przegląd Twoich zadań"}
       actions={
         <>
           <PrintTodosDialog tasks={tasks} />
@@ -178,7 +250,7 @@ export function DashboardContent({ crmSection }: { crmSection?: React.ReactNode 
         </>
       }
     />,
-    [isAdmin, tasks, firstName, todayLabel] // Re-render when admin status or tasks change
+    [isAdmin, tasks] // Re-render when admin status or tasks change
   )
 
   const fetchTasks = useCallback(async () => {
@@ -358,48 +430,95 @@ export function DashboardContent({ crmSection }: { crmSection?: React.ReactNode 
   const startOfToday = new Date()
   startOfToday.setHours(0, 0, 0, 0)
   const overdueTasks = openTasks.filter(task => task.dueDate && new Date(task.dueDate) < startOfToday)
+  const nextDue = upcomingTasks.find(task => !isTaskDone(task))
+
+  const focusLine =
+    overdueTasks.length > 0
+      ? `Najpierw zaległości: ${overdueTasks.length} po terminie.`
+      : nextDue
+        ? `Najbliższy termin: „${nextDue.title}” · ${formatTaskDueDateWithRelative(nextDue.dueDate!)}`
+        : "Spokojnie — w najbliższych dniach nic nie goni."
 
   return (
-    <PageBody className="space-y-8" >
-      <div id="dashboard-content" className="space-y-8">
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatTile
-            label="Otwarte zadania"
-            value={openTasks.length}
-            hint={isAdmin ? "w całym systemie" : "przypisane lub utworzone przez Ciebie"}
-            icon={CircleDot}
-            tone="primary"
-          />
-          <StatTile
-            label="Po terminie"
-            value={overdueTasks.length}
-            hint={overdueTasks.length === 0 ? "wszystko na czas" : "wymagają uwagi"}
-            icon={AlertTriangle}
-            tone={overdueTasks.length > 0 ? "danger" : "default"}
-          />
-          <StatTile
-            label="Termin w 7 dni"
-            value={upcomingTasks.length}
-            hint={`${upcomingTasks.length} ${pluralizeTasks(upcomingTasks.length)} do wykonania`}
-            icon={CalendarClock}
-            tone="warning"
-          />
-          <StatTile
-            label="Nowe (3 dni)"
-            value={recentlyUpdatedTasks.length}
-            hint="ostatnio dodane zadania"
-            icon={Sparkles}
-          />
+    <PageBody className="space-y-10" >
+      <div id="dashboard-content" className="space-y-10">
+        {/* Hero: the greeting is the type-led signature moment, the bento carries the numbers */}
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] xl:gap-10">
+          <section className="glass-rise flex flex-col justify-end gap-4 py-2 xl:py-6" style={rise(0)} aria-label="Powitanie">
+            <p className="kicker text-primary">{todayLabel}</p>
+            <h2 className="font-display text-5xl leading-[0.95] font-light tracking-tight md:text-6xl 2xl:text-7xl">
+              {firstName ? "Cześć," : "Dzień dobry"}
+              {firstName && (
+                <>
+                  <br />
+                  <span className="display-italic bg-linear-to-r from-primary to-chart-5 bg-clip-text pr-[0.12em] text-transparent">
+                    {firstName}
+                  </span>
+                </>
+              )}
+            </h2>
+            <p className="max-w-md text-sm text-pretty text-muted-foreground">{focusLine}</p>
+          </section>
+
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <StatTile
+              index="01"
+              label="W toku"
+              value={openTasks.length}
+              hint={isAdmin ? "otwarte zadania w całym systemie" : "przypisane lub utworzone przez Ciebie"}
+              icon={CircleDot}
+              tone="primary"
+              shape="lead"
+              step={1}
+              className="col-span-2 sm:col-span-1 sm:row-span-2"
+            >
+              <CompletionMeter done={myTasks.length - openTasks.length} total={myTasks.length} />
+            </StatTile>
+            <StatTile
+              index="02"
+              label="Po terminie"
+              value={overdueTasks.length}
+              hint={overdueTasks.length === 0 ? "wszystko na czas" : "wymagają uwagi"}
+              icon={AlertTriangle}
+              tone={overdueTasks.length > 0 ? "danger" : "default"}
+              step={2}
+            />
+            <StatTile
+              index="03"
+              label="7 dni"
+              value={upcomingTasks.length}
+              hint={`${pluralizeTasks(upcomingTasks.length)} z terminem`}
+              icon={CalendarClock}
+              tone="warning"
+              step={3}
+            />
+            <StatTile
+              index="04"
+              label="Nowe · 3 dni"
+              value={recentlyUpdatedTasks.length}
+              hint="ostatnio dodane zadania — zajrzyj, zanim zgubią się w kolumnach"
+              icon={Sparkles}
+              shape="wide"
+              step={4}
+              className="col-span-2"
+            />
+          </div>
         </div>
 
         {/* Clients & vault (CRM module) */}
-        {crmSection}
+        {crmSection && (
+          <div className="glass-rise" style={rise(5)}>
+            {crmSection}
+          </div>
+        )}
 
         {/* User Report Summary */}
-        <UserReportSummary />
+        <div className="glass-rise empty:hidden" style={rise(6)}>
+          <UserReportSummary />
+        </div>
 
         {/* Quick Overview Cards */}
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <div className="glass-rise grid grid-cols-1 gap-4 xl:grid-cols-2" style={rise(7)}>
           {/* Upcoming Tasks */}
           <Card className="gap-3">
             <CardHeader>
@@ -484,7 +603,9 @@ export function DashboardContent({ crmSection }: { crmSection?: React.ReactNode 
         </div>
 
         {/* Tags Summary */}
-        <TagsSummary />
+        <div className="glass-rise empty:hidden" style={rise(8)}>
+          <TagsSummary />
+        </div>
       </div>
     </PageBody>
   )

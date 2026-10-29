@@ -647,21 +647,19 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
 
   return (
     <div
-      className="space-y-6 p-4 md:p-6 relative min-h-full"
+      // The backdrop lives on ::before at half opacity, so only the background
+      // fades — not the board on top of it. `isolate` keeps the -z layer inside.
+      className={`space-y-6 p-4 md:p-6 relative isolate min-h-full ${project.imageUrl ? "before:pointer-events-none before:absolute before:inset-0 before:-z-10 before:bg-(image:--tasks-bg) before:bg-cover before:bg-center before:bg-no-repeat before:bg-fixed before:opacity-20" : ""}`}
       id="tasks"
-      style={{
-        ...(project.imageUrl
-          ? {
+      style={
+        project.imageUrl
+          ? ({
             // Theme-tinted veil keeps the project image as ambient backdrop without
             // fighting the board's contrast in either theme.
-            backgroundImage: `linear-gradient(to bottom, color-mix(in oklch, var(--background) 72%, transparent), color-mix(in oklch, var(--background) 88%, transparent)), url(${project.imageUrl})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-            backgroundAttachment: 'fixed',
-          }
-          : {}),
-      }}
+            "--tasks-bg": `linear-gradient(to bottom, color-mix(in oklch, var(--background) 72%, transparent), color-mix(in oklch, var(--background) 88%, transparent)), url(${project.imageUrl})`,
+          } as React.CSSProperties)
+          : undefined
+      }
     >
 
       {/* Tasks */}
@@ -721,7 +719,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                 </Button>
               </div>
             ) : (
-               <div className="space-y-2">
+              <div className="space-y-2">
                 {getFilteredTasks(tasks).map((task) => (
                   <div
                     key={task.id}
@@ -826,17 +824,18 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                     : "brak"}
                 </span>
               </p>
-              <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <div className="flex min-w-0 flex justify-end items-center gap-2">
+                <CreateTaskFromCommitDialog
+                  projectId={projectId}
+                  onTaskCreated={refreshActiveView}
+                />
                 <QuickAddTaskCommand
                   projectId={projectId}
                   onTaskCreated={refreshActiveView}
                   onOptimisticCreate={handleOptimisticCreate}
                   onOptimisticRollback={handleOptimisticRollback}
                 />
-                <CreateTaskFromCommitDialog
-                  projectId={projectId}
-                  onTaskCreated={refreshActiveView}
-                />
+
               </div>
             </div>
             {boardLoaded && boardTotal === 0 ? (

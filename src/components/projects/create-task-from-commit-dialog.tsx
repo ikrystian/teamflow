@@ -12,6 +12,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { GitCommitHorizontal, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -58,12 +63,16 @@ export function CreateTaskFromCommitDialog({
 
   return (
     <Dialog open={open} onOpenChange={(next) => !loading && setOpen(next)}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <GitCommitHorizontal className="mr-2 h-4 w-4" />
-          Z commita
-        </Button>
-      </DialogTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm">
+              <GitCommitHorizontal className="h-4 w-4" />
+            </Button>
+          </DialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent>Z commita</TooltipContent>
+      </Tooltip>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Utwórz zadanie z commita</DialogTitle>

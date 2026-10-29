@@ -16,7 +16,8 @@ export function NewTaskPageContent() {
 
   return (
     <div className="mx-auto w-full max-w-3xl p-4 md:p-6">
-      <div className="rounded-xl border bg-card p-4 shadow-xs md:p-6">
+      {/* The form brings its own padding and footer bar. */}
+      <div className="glass-inset flex flex-col overflow-hidden rounded-xl border">
         <TaskFormContent mode="create" />
       </div>
     </div>

@@ -48,6 +48,7 @@ import { NavProjects } from "@/components/dashboard/nav-projects"
 import { DashboardBreadcrumbs } from "@/components/dashboard/breadcrumbs"
 import { EditProjectSheet } from "@/components/projects/edit-project-sheet"
 import { CommandPalette, usePalette } from "@/components/layout/command-palette"
+import { GlassAtmosphere } from "@/components/layout/glass-atmosphere"
 import { NotificationsBell } from "@/components/layout/notifications-bell"
 import { ShortcutsDialog } from "@/components/layout/shortcuts-dialog"
 import { VaultSession } from "@/components/layout/vault-gate"
@@ -161,6 +162,7 @@ function DashboardLayoutInner({ children, crm }: DashboardLayoutProps) {
 
   return (
     <SidebarProvider>
+      <GlassAtmosphere />
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded focus:bg-background focus:px-3 focus:py-2">
         Przejdź do treści
       </a>
@@ -252,8 +254,9 @@ function DashboardLayoutInner({ children, crm }: DashboardLayoutProps) {
         <SidebarRail />
       </Sidebar>
       {/* The inset panel owns scrolling: the top bar and page header stay put
-          while only the page body scrolls, Linear-style. */}
-      <SidebarInset className="h-svh overflow-hidden md:h-[calc(100svh-1rem)] md:border md:shadow-xs">
+          while only the page body scrolls, Linear-style. It is the one frosted
+          pane for the page, so everything inside renders as glass tiles. */}
+      <SidebarInset className="h-svh overflow-hidden md:h-[calc(100svh-1rem)] md:border">
         <header className="flex h-12 shrink-0 items-center gap-2 border-b px-3">
           <SidebarTrigger className="text-muted-foreground" />
           <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-4" />
@@ -288,7 +291,7 @@ function DashboardLayoutInner({ children, crm }: DashboardLayoutProps) {
             {headerContent}
           </div>
         )}
-        <div id="main" tabIndex={-1} className="dashboard-scroll min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
+        <div id="main" tabIndex={-1} className="dashboard-scroll page-rise min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
           {children}
         </div>
       </SidebarInset>

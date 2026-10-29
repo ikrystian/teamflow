@@ -4,19 +4,69 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { useSession } from "@/lib/auth/use-session"
 import type { AppSession as Session } from "@/lib/auth/types"
 import TextareaAutosize from "react-textarea-autosize"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { DateTimePicker } from "@/components/ui/datetime-picker"
 import type { Task, TaskStatus, Project, Tag, TaskAttachment } from "@/types"
 import { ReminderSettings } from "@/components/tasks/reminder-settings"
 import { TaskComments } from "@/components/tasks/task-comments"
 import { FileUpload } from "@/components/ui/file-upload"
-import { Badge } from "@/components/ui/badge"
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
-import { Send, Plus, Trash2, Clock, Check, GitBranch, AlertTriangle, Eye } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  AlertTriangle,
+  CalendarClock,
+  CalendarRange,
+  Check,
+  ChevronRight,
+  CircleDot,
+  Clock,
+  Copy,
+  Eye,
+  Flag,
+  FolderKanban,
+  GitBranch,
+  Hourglass,
+  ListChecks,
+  Loader2,
+  MessageSquareText,
+  MoreHorizontal,
+  Send,
+  Tags,
+  Timer,
+  Trash2,
+  UserRound,
+  X,
+} from "lucide-react"
 import { toast } from "sonner"
+import { cn } from "@/lib/utils"
+import {
+  Meter,
+  NativeSelect,
+  PropertyRow,
+  SaveIndicator,
+  SectionHeader,
+  Segmented,
+  SubtaskList,
+  TagPicker,
+  TimeReport,
+  type SubtaskDraft,
+} from "@/components/tasks/task-form-parts"
 import {
   getEstimatedHoursOptions,
   hoursToSelectValue,
@@ -117,8 +167,7 @@ export function TaskFormContent({
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
 
   // Subtasks state
-  const [subtasks, setSubtasks] = useState<Array<{ id: string; title: string; isCompleted: boolean; timeSpent?: number; isNew?: boolean }>>([])
-  const [newSubtaskTitle, setNewSubtaskTitle] = useState("")
+  const [subtasks, setSubtasks] = useState<SubtaskDraft[]>([])
 
   // People with access to the project (project creator + members), used for the assignee select
   const [projectMembers, setProjectMembers] = useState<
@@ -142,15 +191,15 @@ export function TaskFormContent({
       : null
   )
 
-  // Collapsible sections state
-  const [showNotes, setShowNotes] = useState(false)
-  const [showAdvanced, setShowAdvanced] = useState(false)
+  // Collapsible "changes" (Slack notes) section
+  const [showNotes, setShowNotes] = useState(Boolean(task?.changes))
 
   const isCreateMode = mode === "create"
   const isEditMode = mode === "edit"
 
   // Auto-save state (edit mode only)
   const [isSaving, setIsSaving] = useState(false)
+  const [savedAt, setSavedAt] = useState<Date | null>(null)
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   // Latest onTaskUpdated callback, accessed via ref so autoSave stays stable
   // even when the parent passes a new (non-memoized) callback each render.
@@ -182,6 +231,9 @@ export function TaskFormContent({
   const [slackScheduledSendAt, setSlackScheduledSendAt] = useState<Date | undefined>(
     task?.changesScheduledSendAt ? new Date(task.changesScheduledSendAt) : undefined
   )
+  // The picker doubles as the server-side schedule; this tells a time that is
+  // actually scheduled apart from one that was only picked.
+  const [slackScheduleConfirmed, setSlackScheduleConfirmed] = useState(Boolean(task?.changesScheduledSendAt))
   const [serverTime, setServerTime] = useState<Date>(new Date())
 
 
@@ -357,6 +409,9 @@ export function TaskFormContent({
       setChanges(task.changes || "")
       setSlackSentAt(task.changesSentAt ?? null)
       setSlackScheduledSendAt(task.changesScheduledSendAt ? new Date(task.changesScheduledSendAt) : undefined)
+      setSlackScheduleConfirmed(Boolean(task.changesScheduledSendAt))
+      setShowNotes(Boolean(task.changes))
+      setSavedAt(null)
       setSelectedProjectId(task.project?.id || "")
       setAssigneeId(task.assignee?.id || "")
       setPriority(task.priority || "")
@@ -526,6 +581,7 @@ export function TaskFormContent({
       } else {
         // Remember what we just persisted so the refetch below doesn't bounce.
         lastSavedSnapshotRef.current = snapshotAtCall
+        setSavedAt(new Date())
         onTaskUpdatedRef.current?.()
       }
     } catch (error) {
@@ -647,10 +703,9 @@ export function TaskFormContent({
     }
   }
 
-  // Reported time = direct task time entries + time logged on subtasks.
+  // Reported time = direct task time entries + time logged on subtasks (summed in TimeReport).
   const taskReportedHours = timeEntries.reduce((sum, e) => sum + e.hours, 0)
   const subtaskReportedHours = subtasks.reduce((sum, s) => sum + (s.timeSpent || 0), 0)
-  const totalReportedHours = taskReportedHours + subtaskReportedHours
   const plannedHours = selectValueToHours(estimatedHours) || 0
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -854,6 +909,7 @@ export function TaskFormContent({
       if (response.ok) {
         if (data.scheduled) {
           setSlackScheduledSendAt(scheduledTime)
+          setSlackScheduleConfirmed(true)
           toast.success(`Zaplanowano wysyłkę na ${scheduledTime?.toLocaleString("pl-PL")}`)
         } else {
           setSlackSentAt(data.changesSentAt ?? new Date().toISOString())
@@ -998,20 +1054,6 @@ export function TaskFormContent({
       return !original || s.title !== original.title || s.isCompleted !== original.isCompleted || (s.timeSpent || 0) !== (original.timeSpent || 0)
     })
 
-  const hasChanges = isEditMode && task ? (
-    title.trim() !== task.title ||
-    (description.trim() || undefined) !== task.description ||
-    (changes.trim() || undefined) !== task.changes ||
-    statusId !== task.statusId ||
-    (assigneeId || undefined) !== task.assignee?.id ||
-    (priority || undefined) !== task.priority ||
-    (dueDate ? dueDate.toISOString() : undefined) !== task.dueDate ||
-    (startTime ? startTime.toISOString() : undefined) !== task.startTime ||
-    (endTime ? endTime.toISOString() : undefined) !== task.endTime ||
-    selectValueToHours(estimatedHours) !== task.estimatedHours ||
-    hasSubtaskChanges
-  ) : true
-
   // People available in the assignee select. Make sure the current user is always
   // selectable so the default assignment (the task creator) shows up.
   const assigneeOptions = session?.user?.id && !projectMembers.some(m => m.id === session.user.id)
@@ -1026,779 +1068,632 @@ export function TaskFormContent({
     ]
     : projectMembers
 
-  return (
+  const currentStatus = taskStatuses.find(status => status.id === statusId)
+  const currentPriority = getPriorityOptions().find(option => option.value === priority)
+  const projectName =
+    projectsList.find(p => p.id === selectedProjectId)?.name ??
+    (task?.project?.id === selectedProjectId ? task?.project?.name : undefined)
+  const completedSubtasks = subtasks.filter(s => s.isCompleted).length
+  // Creating from a project board pins the task to that board's project.
+  const projectLocked = isCreateMode && Boolean(projectId)
+
+  const toggleTag = (tagId: string) =>
+    setSelectedTagIds(prev => (prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]))
+
+  const copyTaskKey = async () => {
+    if (!task) return
+    try {
+      await navigator.clipboard.writeText(task.key || task.id)
+      toast.success(`Skopiowano ${task.key || "identyfikator zadania"}`)
+    } catch {
+      toast.error("Nie udało się skopiować")
+    }
+  }
+
+  const slackStatus = slackSentAt
+    ? { label: `Wysłano ${new Date(slackSentAt).toLocaleDateString("pl-PL")}`, className: "text-success" }
+    : slackScheduledSendAt && slackScheduleConfirmed
+      ? { label: `Zaplanowano na ${slackScheduledSendAt.toLocaleString("pl-PL", { dateStyle: "short", timeStyle: "short" })}`, className: "text-primary" }
+      : changes.trim()
+        ? { label: "Szkic", className: "text-muted-foreground" }
+        : null
+
+  // Date pickers rendered as quiet inline controls inside the properties panel.
+  const inlinePickerClass = "h-8 border-transparent bg-transparent px-2.5 text-[13px] shadow-none hover:bg-accent [&_svg]:mr-1.5 [&_svg]:size-3.5"
+
+  // --- Sections -------------------------------------------------------------
+
+  const titleField = (
+    <TextareaAutosize
+      id="title"
+      aria-label="Tytuł zadania"
+      placeholder="Tytuł zadania"
+      value={title}
+      onChange={(e) => setTitle(e.target.value)}
+      required
+      minRows={1}
+      className="w-full resize-none border-none bg-transparent p-0 text-xl font-semibold tracking-tight outline-none placeholder:text-muted-foreground/60 sm:text-2xl"
+    />
+  )
+
+  const descriptionField = (
+    <RichTextEditor
+      content={description}
+      onChange={setDescription}
+      placeholder="Dodaj opis — kontekst, kryteria akceptacji, linki…"
+      showToolbarOnFocus={true}
+      editable={!readOnly}
+    />
+  )
+
+  const propertyFields = (
     <>
-      {/* Form Content */}
-      <form onSubmit={handleSubmit} onBlur={flushAutoSave} className="space-y-6 modal-form">
-        {readOnly && (
-          <div className="flex items-center gap-2 p-3 text-sm rounded-md border border-amber-300/60 bg-amber-50 text-amber-800 dark:bg-amber-950/30 dark:text-amber-200 dark:border-amber-800/60">
-            <Eye className="h-4 w-4 flex-shrink-0" />
-            Tryb podglądu — nie masz uprawnień do edycji tego zadania.
-          </div>
+      <PropertyRow label="Status" icon={CircleDot} htmlFor="task-status">
+        <NativeSelect
+          id="task-status"
+          value={statusId}
+          onChange={(e) => setStatusId(e.target.value)}
+          leading={<span className="size-2 rounded-full" style={{ backgroundColor: currentStatus?.color || "var(--muted-foreground)" }} />}
+        >
+          <option value="">Brak statusu</option>
+          {taskStatuses.map((status) => (
+            <option key={status.id} value={status.id}>
+              {status.name}
+            </option>
+          ))}
+        </NativeSelect>
+      </PropertyRow>
+
+      <PropertyRow label="Osoba" icon={UserRound} htmlFor="task-assignee">
+        <NativeSelect
+          id="task-assignee"
+          value={assigneeId}
+          onChange={(e) => setAssigneeId(e.target.value)}
+          disabled={isCreateMode && forceAssignToCurrentUser}
+        >
+          <option value="">Nieprzypisane</option>
+          {assigneeOptions.map((member) => (
+            <option key={member.id} value={member.id}>
+              {member.name || member.email}
+              {member.id === session?.user?.id ? " (Ty)" : ""}
+            </option>
+          ))}
+        </NativeSelect>
+      </PropertyRow>
+
+      <PropertyRow label="Priorytet" icon={Flag} htmlFor="task-priority">
+        <NativeSelect
+          id="task-priority"
+          value={priority || "none"}
+          onChange={(e) => setPriority(e.target.value === "none" ? "" : e.target.value)}
+          leading={<span className={cn("size-2 rounded-full", currentPriority?.color ?? "bg-muted-foreground/40")} />}
+        >
+          <option value="none">Brak</option>
+          {getPriorityOptions().map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </NativeSelect>
+      </PropertyRow>
+
+      <PropertyRow label="Projekt" icon={FolderKanban} htmlFor="task-project">
+        <NativeSelect
+          id="task-project"
+          value={selectedProjectId || "no-project"}
+          onChange={(e) => setSelectedProjectId(e.target.value === "no-project" ? "" : e.target.value)}
+          disabled={projectLocked}
+        >
+          <option value="no-project">Bez projektu</option>
+          {projectsList.map((project) => (
+            <option key={project.id} value={project.id}>
+              {project.name}
+            </option>
+          ))}
+        </NativeSelect>
+      </PropertyRow>
+
+      <PropertyRow label={timePlanningMode === "reporting" ? "Termin" : "Termin (opcj.)"} icon={CalendarClock}>
+        <DateTimePicker
+          value={dueDate}
+          onChange={setDueDate}
+          placeholder="Ustaw termin"
+          className={inlinePickerClass}
+          disablePast={isCreateMode}
+          defaultTimeOnSelect={isCreateMode}
+        />
+      </PropertyRow>
+
+      {availableTags.length > 0 && (
+        <PropertyRow label="Tagi" icon={Tags}>
+          <TagPicker tags={availableTags} selectedIds={selectedTagIds} onToggle={toggleTag} />
+        </PropertyRow>
+      )}
+    </>
+  )
+
+  const timeSection = (
+    <div className="space-y-3">
+      <SectionHeader icon={Timer} title="Czas pracy" />
+      <Segmented
+        label="Tryb planowania czasu"
+        value={timePlanningMode}
+        onChange={handleTimePlanningModeChange}
+        options={[
+          { value: "reporting", label: "Raportowanie" },
+          { value: "scheduled", label: "Zaplanowana praca" },
+        ]}
+      />
+      <div className="space-y-1">
+        {timePlanningMode === "scheduled" && (
+          <>
+            <PropertyRow label="Początek *" icon={CalendarRange}>
+              <DateTimePicker
+                value={startTime}
+                onChange={setStartTime}
+                placeholder="Wybierz początek"
+                className={inlinePickerClass}
+                disablePast={isCreateMode}
+              />
+            </PropertyRow>
+            <PropertyRow label="Koniec *" icon={CalendarRange}>
+              <DateTimePicker
+                value={endTime}
+                onChange={setEndTime}
+                placeholder="Wybierz koniec"
+                className={inlinePickerClass}
+                disablePast={isCreateMode}
+              />
+            </PropertyRow>
+          </>
         )}
-        <fieldset disabled={readOnly} className="space-y-4 min-w-0 border-0 m-0 p-0 disabled:opacity-100">
-          {/* Header Row with Status, Assignee, Priority, Project */}
-          {isEditMode && (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 p-0 bg-muted/30 rounded-lg">
-              {/* Status */}
-              <div className="space-y-1">
-                <select
-                  value={statusId}
-                  onChange={(e) => setStatusId(e.target.value)}
-                  className="h-8 w-full px-2 py-1 appearance-none bg-background rounded text-sm focus:outline-none"
-                >
-                  <option value="">Status</option>
-                  {taskStatuses.map((status) => (
-                    <option key={status.id} value={status.id}>
-                      {status.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Assignee */}
-              <div className="space-y-1">
-                <select
-                  value={assigneeId}
-                  onChange={(e) => setAssigneeId(e.target.value)}
-                  className="h-8 w-full px-2 py-1 appearance-none bg-background rounded text-sm focus:outline-none"
-                >
-                  <option value="">Osoba</option>
-                  {assigneeOptions.map((member) => (
-                    <option key={member.id} value={member.id}>
-                      {member.name || member.email}
-                      {member.id === session?.user?.id ? " (Ty)" : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Priority */}
-              <div className="space-y-1">
-                <select
-                  value={priority || "none"}
-                  onChange={(e) => setPriority(e.target.value === "none" ? "" : e.target.value)}
-                  className="h-8 w-full px-2 py-1 appearance-none bg-background rounded text-sm focus:outline-none"
-                >
-                  <option value="none">Priorytet</option>
-                  {getPriorityOptions().map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Project */}
-              <div className="space-y-1">
-                <select
-                  value={selectedProjectId || "no-project"}
-                  onChange={(e) => setSelectedProjectId(e.target.value === "no-project" ? "" : e.target.value)}
-                  className="h-8 w-full px-2 py-1 appearance-none bg-background rounded text-sm focus:outline-none"
-                >
-                  <option value="no-project">Projekt</option>
-                  {projectsList.map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {isEditMode && (
-                <Popover open={showTimeReporting} onOpenChange={setShowTimeReporting}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="gap-1.5"
-                      title="Zaraportowany / planowany czas"
-                    >
-                      <Clock className="h-4 w-4" />
-                      <span className="font-medium">
-                        {Number.isInteger(totalReportedHours) ? totalReportedHours : totalReportedHours.toFixed(1)}
-                        /{Number.isInteger(plannedHours) ? plannedHours : plannedHours.toFixed(1)}h
-                      </span>
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80 p-4 space-y-4 z-[9999]" align="end">
-                    <div className="space-y-1.5">
-                      <h4 className="font-semibold text-sm leading-none">Raportowanie czasu</h4>
-                      <p className="text-xs text-muted-foreground">
-                        Zaraportowano {Number.isInteger(totalReportedHours) ? totalReportedHours : totalReportedHours.toFixed(1)}h z planowanych {Number.isInteger(plannedHours) ? plannedHours : plannedHours.toFixed(1)}h.
-                      </p>
-                    </div>
-
-                    {/* Existing entries (task-level time) */}
-                    {timeEntries.length > 0 && (
-                      <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
-                        {timeEntries.map((entry) => (
-                          <div key={entry.id} className="flex items-center justify-between gap-2 text-xs p-2 bg-muted/50 border rounded-md">
-                            <span className="font-semibold">{entry.hours}h</span>
-                            <span className="text-muted-foreground text-[10px]">
-                              {new Date(entry.date).toLocaleDateString("pl-PL")}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteTimeEntry(entry.id)}
-                              className="text-destructive hover:text-destructive/80 transition-colors"
-                              title="Usuń wpis"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Quick add */}
-                    <div className="space-y-2 border-t pt-3">
-                      <Label className="text-xs font-semibold">Dodaj nowy wpis</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.5"
-                          placeholder="Godz."
-                          value={newTimeHours}
-                          onChange={(e) => setNewTimeHours(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault()
-                              handleAddTimeEntry()
-                            }
-                          }}
-                          className="h-9 w-24 text-sm"
-                        />
-                        <Button
-                          type="button"
-                          variant="default"
-                          size="sm"
-                          onClick={handleAddTimeEntry}
-                          disabled={loggingTime}
-                          className="flex-1"
-                        >
-                          <Plus className="h-4 w-4 mr-1 shrink-0" />
-                          Dodaj
-                        </Button>
-                      </div>
-                    </div>
-
-                    {subtaskReportedHours > 0 && (
-                      <div className="text-[10px] text-muted-foreground border-t pt-2 space-y-0.5">
-                        <p>W podzadaniach: {subtaskReportedHours}h</p>
-                        <p>Zadanie bezpośrednio: {taskReportedHours}h</p>
-                      </div>
-                    )}
-                  </PopoverContent>
-                </Popover>
-              )}
-
-            </div>
+        <PropertyRow label="Szacowany" icon={Hourglass} htmlFor="estimatedHours">
+          {timePlanningMode === "reporting" ? (
+            <NativeSelect id="estimatedHours" value={estimatedHours} onChange={(e) => setEstimatedHours(e.target.value)}>
+              {getEstimatedHoursOptions().map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </NativeSelect>
+          ) : (
+            <span className="flex h-8 items-center px-2.5 text-[13px] text-muted-foreground">
+              {estimatedHours && estimatedHours !== "none"
+                ? `${selectValueToHours(estimatedHours)} h (wyliczone)`
+                : "z początku i końca"}
+            </span>
           )}
+        </PropertyRow>
+      </div>
+      {isEditMode && task && (
+        <TimeReport
+          entries={timeEntries}
+          taskHours={taskReportedHours}
+          subtaskHours={subtaskReportedHours}
+          plannedHours={plannedHours}
+          newHours={newTimeHours}
+          onNewHoursChange={setNewTimeHours}
+          onAdd={handleAddTimeEntry}
+          onDelete={handleDeleteTimeEntry}
+          adding={loggingTime}
+          open={showTimeReporting}
+          onOpenChange={setShowTimeReporting}
+        />
+      )}
+    </div>
+  )
 
-          {/* Title */}
-          <div className="flex items-start gap-2 w-full">
-            {isEditMode && task?.key && (
-              <span className="inline-block text-xs font-mono font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded select-all shrink-0 mt-1.5">
-                {task.key}
-              </span>
-            )}
-            <TextareaAutosize
-              id="title"
-              placeholder="Tytuł zadania"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-              minRows={1}
-              className="flex-1 w-full resize-none p-0 px-1 font-medium text-xl border-none bg-transparent outline-none hover:text-primary focus:border-none focus:outline-none"
-            />
-          </div>
+  const reminderSection = (
+    <ReminderSettings
+      reminderEnabled={reminderEnabled}
+      reminderType={reminderType}
+      reminderValue={reminderValue}
+      dueDate={dueDate}
+      onReminderChange={handleReminderChange}
+    />
+  )
 
-          {isEditMode && task?.githubWorkflowError && (
-            <div className="bg-red-500/10 border border-red-500/25 text-red-600 dark:text-red-400 p-3 rounded-lg flex items-start gap-2.5 text-sm">
-              <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5 animate-pulse" />
-              <div className="space-y-1">
-                <span className="font-semibold block text-sm">Błąd GitHub Workflow</span>
-                <p className="text-xs break-all">{task.githubWorkflowError}</p>
-              </div>
+  const documentsSection = isCreateMode ? (
+    <div className="space-y-2">
+      <FileUpload
+        files={attachments.map((file, index) => ({
+          id: `temp-${index}`,
+          filename: file.name,
+          originalName: file.name,
+          url: '',
+          mimeType: file.type,
+          size: file.size,
+          createdAt: new Date().toISOString(),
+          uploadedBy: { id: '', name: '', email: '', avatarUrl: '' }
+        }))}
+        onFileUpload={handleFileUpload}
+        onFileDelete={async (fileId) => {
+          const index = parseInt(fileId.replace('temp-', ''))
+          setAttachments(prev => prev.filter((_, i) => i !== index))
+        }}
+        editable={true}
+        accept="*/*"
+        maxSize={10 * 1024 * 1024}
+        maxFiles={10}
+        title="Dokumenty"
+        description="Dodaj dokumenty do zadania (max 10MB każdy)"
+        categories={["specification", "design", "manual", "other"]}
+        showCategories={false}
+        showDescriptions={false}
+        className="rounded-xl border bg-card p-4"
+      />
+      {uploadingFiles && (
+        <p className="text-sm text-muted-foreground">Przesyłanie plików…</p>
+      )}
+    </div>
+  ) : (
+    <FileUpload
+      files={taskAttachments}
+      onFileUpload={handleFileUpload}
+      onFileDelete={handleFileDelete}
+      editable={!readOnly}
+      accept="*/*"
+      maxSize={10 * 1024 * 1024}
+      maxFiles={10}
+      title="Dokumenty"
+      description="Dokumenty załączone do zadania"
+      categories={["specification", "design", "manual", "other"]}
+      showCategories={true}
+      showDescriptions={true}
+      className="rounded-xl border bg-card p-4"
+    />
+  )
+
+  const errorBanner = error ? (
+    <div role="alert" className="rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
+      {error}
+    </div>
+  ) : null
+
+  // --- Edit mode only -------------------------------------------------------
+
+  const subtasksSection = (
+    <section className="space-y-3">
+      <SectionHeader
+        icon={ListChecks}
+        title="Podzadania"
+        meta={subtasks.length > 0 ? `${completedSubtasks}/${subtasks.length}` : undefined}
+      >
+        {hasSubtaskChanges && !readOnly && (
+          <span className="text-[11px] font-medium text-warning">Niezapisane zmiany</span>
+        )}
+      </SectionHeader>
+      {subtasks.length > 0 && (
+        <Meter value={completedSubtasks} max={subtasks.length} label="Ukończone podzadania" />
+      )}
+      <SubtaskList subtasks={subtasks} onChange={setSubtasks} readOnly={readOnly} />
+    </section>
+  )
+
+  const slackSection = (
+    <section className="overflow-hidden rounded-xl border bg-card">
+      <button
+        type="button"
+        onClick={() => setShowNotes(open => !open)}
+        aria-expanded={showNotes}
+        aria-controls="task-changes"
+        className="flex w-full items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-accent"
+      >
+        <ChevronRight className={cn("size-4 shrink-0 text-muted-foreground transition-transform", showNotes && "rotate-90")} />
+        <MessageSquareText className="size-4 shrink-0 text-muted-foreground" />
+        <span className="text-[13px] font-semibold">Notatki ze zmian</span>
+        <span className="hidden text-xs text-muted-foreground sm:inline">· Slack</span>
+        {slackStatus && (
+          <span className={cn("ml-auto truncate text-xs font-medium", slackStatus.className)}>{slackStatus.label}</span>
+        )}
+      </button>
+      {showNotes && (
+        <div id="task-changes" className="space-y-3 border-t px-4 py-4">
+          <TextareaAutosize
+            id="changes"
+            value={changes}
+            onChange={(e) => {
+              setChanges(e.target.value)
+              if (slackSentAt) setSlackSentAt(null)
+              if (slackScheduledSendAt) {
+                setSlackScheduledSendAt(undefined)
+                setSlackScheduleConfirmed(false)
+              }
+            }}
+            placeholder="Co się zmieniło? Treść trafi na Slacka w formacie markdown."
+            minRows={4}
+            className="w-full resize-none rounded-md border border-input bg-background px-3 py-2 font-mono text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/20"
+          />
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="min-w-52 flex-1">
+              <DateTimePicker
+                value={slackScheduledSendAt}
+                onChange={(date) => {
+                  setSlackScheduledSendAt(date)
+                  setSlackScheduleConfirmed(false)
+                }}
+                placeholder="Wyślij od razu lub zaplanuj…"
+                className="h-8 text-[13px]"
+              />
             </div>
-          )}
-          {/* Edit mode: dwie kolumny — treść (opis, notatki, dokumenty, komentarze)
-              po lewej, parametry zadania (terminy, tagi, zaawansowane) po prawej.
-              Create mode: jedna kolumna. */}
-          <div className={isEditMode ? "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_540px] gap-6 items-start" : "space-y-4"}>
-            <div className="space-y-4 min-w-0">
-              <div className="space-y-2">
-                <div className="rounded-md">
-                  <RichTextEditor
-                    content={description}
-                    onChange={setDescription}
-                    placeholder="Wprowadź szczegółowy opis zadania..."
-                    showToolbarOnFocus={true}
-                    editable={!readOnly}
-                  />
-                </div>
-              </div>
-
-              {/* Changes field - collapsible in edit mode with Slack sending option */}
-              {isEditMode && (
-                <div className="space-y-2">
-                  <div className="flex items-start gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowNotes(!showNotes)}
-                      className="flex-1 justify-start"
-                    >
-                      {showNotes ? "▼" : "▶"} Notatki ze zmian
-                    </Button>
-                    <div className="space-y-2">
-                      <div className="flex gap-2 items-center">
-                        <div className="flex-1">
-                          <DateTimePicker
-                            value={slackScheduledSendAt}
-                            onChange={setSlackScheduledSendAt}
-                          />
-                          {slackScheduledSendAt && !slackSentAt && (
-                            <div className="text-xs text-blue-600 dark:text-blue-400 space-y-1">
-                              <p className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                Zaplanowano na {slackScheduledSendAt.toLocaleString("pl-PL")}
-                              </p>
-
-                            </div>
-                          )}
-                        </div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setSlackScheduledSendAt(undefined)
-                          }}
-                          disabled={!slackScheduledSendAt}
-                        >
-                          Wyczyść
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={() => handleSendToSlack(slackScheduledSendAt)}
-                          disabled={sendingToSlack || !changes.trim()}
-                        >
-                          <Send className="h-4 w-4 mr-1" />
-                          {sendingToSlack ? "Wysyłanie..." : "Wyślij na Slack"}
-                        </Button>
-                      </div>
-                      {slackSentAt && (
-                        <div className="flex items-center gap-2">
-                          <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
-                            <Check className="h-3 w-3" />
-                            Wysłano {new Date(slackSentAt).toLocaleDateString("pl-PL")}
-                          </p>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 px-2 text-xs text-red-600 hover:text-red-700 dark:text-red-400"
-                            onClick={handleDeleteFromSlack}
-                            disabled={deletingFromSlack}
-                          >
-                            <Trash2 className="h-3 w-3 mr-1" />
-                            {deletingFromSlack ? "Usuwanie..." : "Usuń ze Slacka"}
-                          </Button>
-                        </div>
-                      )}
-                      {slackScheduledSendAt && !slackSentAt && (
-                        <div className="text-xs text-blue-600 dark:text-blue-400 space-y-1">
-
-                          <p className="text-blue-500 dark:text-blue-300 flex items-center gap-1">
-                            Obecny czas: {serverTime.toLocaleString("pl-PL")}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                  </div>
-                  {showNotes && (
-                    <div className="space-y-3 p-3 border rounded-md bg-muted/20">
-                      <TextareaAutosize
-                        id="changes"
-                        value={changes}
-                        onChange={(e) => {
-                          setChanges(e.target.value)
-                          if (slackSentAt) setSlackSentAt(null)
-                          if (slackScheduledSendAt) setSlackScheduledSendAt(undefined)
-                        }}
-                        placeholder="Notatki dotyczące zmian (będą wysłane na Slack w formacie markdown)"
-                        minRows={4}
-                        className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 font-mono resize-none"
-                      />
-
-
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Dokumenty zadania — upload i lista z rozróżnieniem typów plików */}
-              <div className="space-y-2">
-                {isCreateMode ? (
-                  <div className="space-y-2">
-                    <FileUpload
-                      files={attachments.map((file, index) => ({
-                        id: `temp-${index}`,
-                        filename: file.name,
-                        originalName: file.name,
-                        url: '',
-                        mimeType: file.type,
-                        size: file.size,
-                        createdAt: new Date().toISOString(),
-                        uploadedBy: { id: '', name: '', email: '', avatarUrl: '' }
-                      }))}
-                      onFileUpload={handleFileUpload}
-                      onFileDelete={async (fileId) => {
-                        const index = parseInt(fileId.replace('temp-', ''))
-                        setAttachments(prev => prev.filter((_, i) => i !== index))
-                      }}
-                      editable={true}
-                      accept="*/*"
-                      maxSize={10 * 1024 * 1024}
-                      maxFiles={10}
-                      title="Dokumenty"
-                      description="Dodaj dokumenty do zadania (max 10MB każdy)"
-                      categories={["specification", "design", "manual", "other"]}
-                      showCategories={false}
-                      showDescriptions={false}
-                      className="border rounded-lg p-4"
-                    />
-                    {uploadingFiles && (
-                      <div className="text-sm text-muted-foreground">
-                        Przesyłanie plików...
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <FileUpload
-                    files={taskAttachments}
-                    onFileUpload={handleFileUpload}
-                    onFileDelete={handleFileDelete}
-                    editable={!readOnly}
-                    accept="*/*"
-                    maxSize={10 * 1024 * 1024}
-                    maxFiles={10}
-                    title="Dokumenty"
-                    description="Dokumenty załączone do zadania"
-                    categories={["specification", "design", "manual", "other"]}
-                    showCategories={true}
-                    showDescriptions={true}
-                    className="border rounded-lg p-4"
-                  />
-                )}
-              </div>
-
-            </div>
-
-            {/* Kolumna boczna: planowanie czasu, tagi, zaawansowane */}
-            <div className="space-y-4">
-
-              {/* Tags Selection */}
-              {availableTags.length > 0 && (
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Tagi</Label>
-                  <div className="flex flex-wrap gap-2 p-3 border rounded-md min-h-[42px]">
-                    {availableTags.map((tag) => {
-                      const isSelected = selectedTagIds.includes(tag.id)
-                      return (
-                        <Badge
-                          key={tag.id}
-                          variant={isSelected ? "default" : "outline"}
-                          className="cursor-pointer transition-all hover:scale-105"
-                          style={isSelected ? {
-                            backgroundColor: tag.color,
-                            borderColor: tag.color,
-                            color: '#fff'
-                          } : {
-                            borderColor: tag.color,
-                            color: tag.color
-                          }}
-                          onClick={() => {
-                            if (isSelected) {
-                              setSelectedTagIds(prev => prev.filter(id => id !== tag.id))
-                            } else {
-                              setSelectedTagIds(prev => [...prev, tag.id])
-                            }
-                          }}
-                        >
-                          {tag.name}
-                        </Badge>
-                      )
-                    })}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Kliknij na tag, aby go zaznaczyć lub odznaczyć
-                  </p>
-                </div>
-              )}
-
-              {/* Advanced Button */}
+            {slackScheduledSendAt && (
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                onClick={() => setShowAdvanced(!showAdvanced)}
-                className="w-full justify-start mt-2"
+                onClick={() => {
+                  setSlackScheduledSendAt(undefined)
+                  setSlackScheduleConfirmed(false)
+                }}
               >
-                {showAdvanced ? "▼" : "▶"} Zaawansowane
+                Wyczyść
               </Button>
+            )}
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => handleSendToSlack(slackScheduledSendAt)}
+              disabled={sendingToSlack || !changes.trim()}
+            >
+              <Send />
+              {sendingToSlack ? "Wysyłanie…" : slackScheduledSendAt ? "Zaplanuj wysyłkę" : "Wyślij na Slacka"}
+            </Button>
+          </div>
+          {slackScheduledSendAt && slackScheduleConfirmed && !slackSentAt && (
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Clock className="size-3.5" />
+              Wysyłka {slackScheduledSendAt.toLocaleString("pl-PL")} · teraz {serverTime.toLocaleTimeString("pl-PL")}
+            </p>
+          )}
+          {slackSentAt && (
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <span className="flex items-center gap-1.5 text-success">
+                <Check className="size-3.5" />
+                Wysłano {new Date(slackSentAt).toLocaleString("pl-PL")}
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                onClick={handleDeleteFromSlack}
+                disabled={deletingFromSlack}
+              >
+                <Trash2 className="size-3" />
+                {deletingFromSlack ? "Usuwanie…" : "Usuń ze Slacka"}
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  )
 
-              {/* Advanced Section */}
-              {showAdvanced && (
-                <div className="space-y-4 p-3 border rounded-md bg-muted/20">
-                  {/* Subtasks Management */}
-                  {isEditMode && (
-                    <div className="space-y-3 border rounded-lg p-4 bg-background">
+  const branchControl = branchCreated ? (
+    <a
+      href={branchCreated.url || makeBranchUrl(branchCreated.name, task?.project?.githubRepo) || '#'}
+      target="_blank"
+      rel="noopener noreferrer"
+      title={`Otwórz branch ${branchCreated.name} na GitHub`}
+      className="inline-flex h-8 max-w-[13rem] items-center gap-1.5 rounded-md px-2 font-mono text-xs text-success transition-colors hover:bg-accent"
+    >
+      <GitBranch className="size-3.5 shrink-0" />
+      <span className="truncate">{branchCreated.name}</span>
+    </a>
+  ) : (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      onClick={handleCreateGithubBranch}
+      disabled={creatingBranch}
+      title="Utwórz branch GitHub"
+      className="h-8 gap-1.5 text-muted-foreground"
+    >
+      <GitBranch />
+      <span className="hidden md:inline">{creatingBranch ? "Tworzenie…" : "Utwórz branch"}</span>
+    </Button>
+  )
 
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-sm font-medium">Podzadania</Label>
-                          <span className="text-xs text-muted-foreground">
-                            {subtasks.filter(s => s.isCompleted).length}/{subtasks.length} ukończone
-                          </span>
-                        </div>
-                        {subtasks.length > 0 && subtasks.some(s => s.timeSpent) && (
-                          <div className="text-xs text-muted-foreground">
-                            Zaraportowany czas: {subtasks.reduce((sum, s) => sum + (s.timeSpent || 0), 0)}h
-                          </div>
-                        )}
-                      </div>
+  // Header: where the task lives + auto-save state and actions. Shown for every
+  // edit view and for the create dialog (the create page has its own title).
+  const header = isEditMode || onClose ? (
+    <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4 sm:px-6">
+      {isEditMode && task ? (
+        <div className="flex min-w-0 items-center gap-1.5 text-[13px]">
+          <span
+            aria-hidden
+            className="size-2.5 shrink-0 rounded-full"
+            style={{ backgroundColor: task.project?.color || "var(--primary)" }}
+          />
+          <span className="truncate text-muted-foreground">{projectName ?? "Bez projektu"}</span>
+          {task.key && (
+            <>
+              <ChevronRight aria-hidden className="size-3.5 shrink-0 text-muted-foreground/60" />
+              <span className="shrink-0 font-mono text-xs font-medium select-all">{task.key}</span>
+            </>
+          )}
+          {readOnly && (
+            <span className="ml-1 inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">
+              <Eye className="size-3" />
+              Tylko podgląd
+            </span>
+          )}
+        </div>
+      ) : (
+        <h2 className="text-sm font-semibold">Nowe zadanie</h2>
+      )}
 
-                      {/* Existing subtasks */}
-                      {subtasks.length > 0 && (
-                        <div className="space-y-2">
-                          {subtasks.map((subtask) => (
-                            <form key={subtask.id} className="flex items-center gap-2 p-2 bg-background border rounded-md">
-                              <input
-                                type="checkbox"
-                                checked={subtask.isCompleted}
-                                onChange={(e) => {
-                                  setSubtasks(prev => prev.map(s =>
-                                    s.id === subtask.id ? { ...s, isCompleted: e.target.checked } : s
-                                  ))
-                                }}
-                                className="w-4 h-4 cursor-pointer"
-                              />
-                              <input
-                                type="text"
-                                value={subtask.title}
-                                onChange={(e) => {
-                                  setSubtasks(prev => prev.map(s =>
-                                    s.id === subtask.id ? { ...s, title: e.target.value } : s
-                                  ))
-                                }}
-                                className="flex-1 px-2 py-1 text-sm border-0 bg-transparent focus:outline-none"
-                              />
-                              <input
-                                type="number"
-                                min="0"
-                                step="0.5"
-                                value={subtask.timeSpent || ""}
-                                onChange={(e) => {
-                                  setSubtasks(prev => prev.map(s =>
-                                    s.id === subtask.id ? { ...s, timeSpent: e.target.value ? parseFloat(e.target.value) : 0 } : s
-                                  ))
-                                }}
-                                className="w-16 px-2 py-1 text-sm border-0 bg-transparent focus:outline-none text-right"
-                                placeholder="h"
-                                title="Zaraportowany czas w godzinach"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setSubtasks(prev => prev.filter(s => s.id !== subtask.id))
-                                }}
-                                className="text-xs text-destructive hover:text-destructive/80 px-2"
-                              >
-                                Usuń
-                              </button>
-                            </form>
-                          ))}
-                        </div>
-                      )}
+      <div className="ml-auto flex shrink-0 items-center gap-1">
+        {isEditMode && task && (
+          <>
+            {!readOnly && <SaveIndicator saving={isSaving} savedAt={savedAt} />}
+            {!readOnly && branchControl}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button type="button" variant="ghost" size="icon" className="size-8 text-muted-foreground" aria-label="Więcej akcji">
+                  <MoreHorizontal />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem onSelect={copyTaskKey}>
+                  <Copy />
+                  Kopiuj klucz zadania
+                </DropdownMenuItem>
+                {!readOnly && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem variant="destructive" onSelect={() => setShowDeleteConfirm(true)}>
+                      <Trash2 />
+                      Usuń zadanie
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
+        )}
+        {onClose && (
+          <Button type="button" variant="ghost" size="icon" className="size-8 text-muted-foreground" onClick={handleClose} aria-label="Zamknij">
+            <X />
+          </Button>
+        )}
+      </div>
+    </header>
+  ) : null
 
-                      {/* Add new subtask */}
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Dodaj nowe podzadanie..."
-                          value={newSubtaskTitle}
-                          onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && newSubtaskTitle.trim()) {
-                              setSubtasks(prev => [...prev, {
-                                id: `temp-${Date.now()}`,
-                                title: newSubtaskTitle.trim(),
-                                isCompleted: false,
-                                isNew: true
-                              }])
-                              setNewSubtaskTitle("")
-                            }
-                          }}
-                          className="h-9 text-sm"
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            if (newSubtaskTitle.trim()) {
-                              setSubtasks(prev => [...prev, {
-                                id: `temp-${Date.now()}`,
-                                title: newSubtaskTitle.trim(),
-                                isCompleted: false,
-                                isNew: true
-                              }])
-                              setNewSubtaskTitle("")
-                            }
-                          }}
-                        >
-                          Dodaj
-                        </Button>
+  return (
+    <form onSubmit={handleSubmit} onBlur={flushAutoSave} className="modal-form flex min-h-0 flex-1 flex-col">
+      {header}
+
+      {/* The body scrolls on its own so the header and footer stay put in the dialog.
+          Columns follow the container width (not the viewport), since the same
+          form renders in dialogs and pages of different sizes. */}
+      <div className="@container min-h-0 flex-1 overflow-y-auto">
+        <fieldset
+          disabled={readOnly}
+          className={cn(
+            "m-0 min-w-0 border-0 p-0 disabled:opacity-100",
+            isEditMode && "grid @3xl:min-h-full @3xl:grid-cols-[minmax(0,1fr)_21rem]"
+          )}
+        >
+          {isEditMode && task ? (
+            <>
+              {/* Main column: what the task is about and the work on it */}
+              <div className="min-w-0 space-y-8 px-4 py-6 sm:px-6">
+                <div className="space-y-4">
+                  {titleField}
+                  {task.githubWorkflowError && (
+                    <div className="flex items-start gap-2.5 rounded-lg border border-destructive/25 bg-destructive/10 p-3 text-sm text-destructive">
+                      <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+                      <div className="min-w-0 space-y-1">
+                        <span className="block font-semibold">Błąd GitHub Workflow</span>
+                        <p className="text-xs break-all">{task.githubWorkflowError}</p>
                       </div>
                     </div>
                   )}
-
-                  {/* Reminder Settings */}
-                  <ReminderSettings
-                    reminderEnabled={reminderEnabled}
-                    reminderType={reminderType}
-                    reminderValue={reminderValue}
-                    dueDate={dueDate}
-                    onReminderChange={handleReminderChange}
-                  />
+                  {descriptionField}
                 </div>
-              )}
-
-              {/* Time Planning Mode Selection */}
-              <div className="space-y-3">
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant={timePlanningMode === "reporting" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleTimePlanningModeChange("reporting")}
-                    className="flex-1"
-                  >
-                    Raportowanie czasu
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={timePlanningMode === "scheduled" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleTimePlanningModeChange("scheduled")}
-                    className="flex-1"
-                  >
-                    Zaplanowana praca
-                  </Button>
-                </div>
-              </div>
-
-              <div className={`grid grid-cols-1 ${isCreateMode ? "md:grid-cols-2" : ""} gap-4`}>
-                <div className="space-y-2">
-                  <Label htmlFor="dueDate" className="text-sm font-medium">
-                    {timePlanningMode === "reporting" ? "Termin wykonania" : "Termin wykonania (opcjonalnie)"}
-                  </Label>
-                  <DateTimePicker
-                    value={dueDate}
-                    onChange={setDueDate}
-                    className="rounded-lg border shadow-sm"
-                    disablePast={isCreateMode}
-                    defaultTimeOnSelect={isCreateMode}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="estimatedHours" className="text-sm font-medium">
-                    Szacowany czas
-                    {timePlanningMode === "scheduled" && " (wyliczane)"}
-                  </Label>
-                  {timePlanningMode === "reporting" ? (
-                    <select
-                      id="estimatedHours"
-                      value={estimatedHours}
-                      onChange={(e) => setEstimatedHours(e.target.value)}
-                      className="h-10 w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                    >
-                      {getEstimatedHoursOptions().map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <div className="h-10 px-3 py-2 border border-input bg-muted/50 rounded-md flex items-center text-sm text-muted-foreground">
-                      {estimatedHours && estimatedHours !== "none"
-                        ? `${selectValueToHours(estimatedHours)}h`
-                        : "Wybierz czas rozpoczęcia i zakończenia"
-                      }
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Time Fields */}
-              {timePlanningMode === "scheduled" && (
-
-                <div className={`grid grid-cols-1 ${isCreateMode ? "md:grid-cols-2" : ""} gap-4`}>
-                  <div className="space-y-2">
-                    <Label htmlFor="startTime" className="text-sm font-medium">
-                      Czas rozpoczęcia
-                      <span className="text-destructive"> *</span>
-                    </Label>
-                    <DateTimePicker
-                      value={startTime}
-                      onChange={setStartTime}
-                      placeholder="Wybierz czas rozpoczęcia"
-                      className="rounded-lg border shadow-sm"
-                      disablePast={isCreateMode}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="endTime" className="text-sm font-medium">
-                      Czas zakończenia
-                      <span className="text-destructive"> *</span>
-                    </Label>
-                    <DateTimePicker
-                      value={endTime}
-                      onChange={setEndTime}
-                      placeholder="Wybierz czas zakończenia"
-                      className="rounded-lg border shadow-sm"
-                      disablePast={isCreateMode}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Komentarze zadania — pod szacowanym czasem (tylko w trybie
-                edycji; nowe zadanie nie ma jeszcze id) */}
-              {isEditMode && task && (
-                <div className="border rounded-lg p-4">
+                {subtasksSection}
+                {documentsSection}
+                {slackSection}
+                {errorBanner}
+                <section className="border-t pt-6">
                   <TaskComments
                     taskId={task.id}
                     readOnly={readOnly}
                     onCommentsChanged={() => onTaskUpdatedRef.current?.()}
                   />
-                </div>
-              )}
-            </div>
-          </div>
+                </section>
+              </div>
 
-          {error && (
-            <div className="p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-              {error}
+              {/* Side panel: task parameters */}
+              <aside aria-label="Właściwości zadania" className="space-y-6 border-t bg-muted px-4 py-6 sm:px-5 @3xl:border-t-0 @3xl:border-l">
+                <div className="space-y-1">
+                  <p className="kicker mb-2 text-muted-foreground">Właściwości</p>
+                  {propertyFields}
+                </div>
+                {timeSection}
+                {reminderSection}
+                <p className="text-[11px] leading-relaxed text-muted-foreground">
+                  Utworzone {new Date(task.createdAt).toLocaleString("pl-PL", { dateStyle: "medium", timeStyle: "short" })}
+                  {task.createdBy?.name ? ` przez ${task.createdBy.name}` : ""}
+                </p>
+              </aside>
+            </>
+          ) : (
+            <div className="space-y-6 px-4 py-6 sm:px-6">
+              <div className="space-y-4">
+                {titleField}
+                {descriptionField}
+              </div>
+              <div className="grid gap-x-6 gap-y-1 rounded-xl border bg-card p-3 @xl:grid-cols-2">
+                {propertyFields}
+              </div>
+              <div className="rounded-xl border bg-card p-4">{timeSection}</div>
+              {documentsSection}
+              {reminderSection}
+              {errorBanner}
             </div>
           )}
         </fieldset>
+      </div>
 
-        {/* Action Buttons — hidden in read-only mode (view only) */}
-        {!readOnly && (
-          <div className="flex flex-col-reverse sm:flex-row gap-2 pt-6">
-            {/* Delete task — edit mode only */}
-            {isEditMode && task && (
-              <div className="sm:mr-auto">
-                {showDeleteConfirm ? (
-                  <div className="flex items-center gap-2 p-2 bg-destructive/10 border border-destructive/20 rounded-md">
-                    <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
-                    <span className="text-sm text-destructive">Na pewno usunąć?</span>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      onClick={handleDeleteTask}
-                      disabled={deleting}
-                      className="h-7"
-                    >
-                      {deleting ? "Usuwanie..." : "Tak"}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowDeleteConfirm(false)}
-                      disabled={deleting}
-                      className="h-7"
-                    >
-                      Anuluj
-                    </Button>
-                  </div>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowDeleteConfirm(true)}
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-2"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Usuń zadanie
-                  </Button>
-                )}
-              </div>
+      {/* Footer — hidden in read-only mode (view only) */}
+      {!readOnly && (
+        <footer className="flex shrink-0 items-center gap-2 border-t px-4 py-3 sm:px-6">
+          {isEditMode && (
+            <p className="mr-auto hidden text-xs text-muted-foreground sm:block">
+              {hasSubtaskChanges ? "Podzadania zapiszą się po kliknięciu „Zapisz”." : "Zmiany pól zapisują się automatycznie."}
+            </p>
+          )}
+          <div className="ml-auto flex items-center gap-2">
+            {onClose && (
+              <Button type="button" variant="ghost" onClick={handleClose}>
+                {isCreateMode ? "Anuluj" : "Zamknij"}
+              </Button>
             )}
-            <Button
-              type="submit"
-              disabled={loading || !isFormValid() || isSaving}
-              className="h-10"
-            >
+            <Button type="submit" disabled={loading || !isFormValid() || isSaving} className="min-w-36">
               {loading ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
-                  {isCreateMode ? "Tworzenie..." : "Aktualizowanie..."}
+                  <Loader2 className="animate-spin" />
+                  {isCreateMode ? "Tworzenie…" : "Zapisywanie…"}
                 </>
-              ) : isSaving ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
-                  Zapisywanie...
-                </>
+              ) : isCreateMode ? (
+                "Utwórz zadanie"
               ) : (
-                isCreateMode ? "Utwórz zadanie" : "Zaktualizuj zadanie"
+                "Zapisz i zamknij"
               )}
             </Button>
-
-            {/* GitHub branch button — edit mode only */}
-            {isEditMode && task && (
-              <div className="flex items-center gap-2">
-                {branchCreated ? (
-                  <a
-                    href={branchCreated.url || makeBranchUrl(branchCreated.name, task?.project?.githubRepo) || '#'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title={`Otwórz branch ${branchCreated.name} na GitHub`}
-                    className="inline-flex items-center gap-1.5 text-sm font-mono px-3 py-2 rounded-md border bg-muted/50 hover:bg-muted transition-colors"
-                  >
-                    <GitBranch className="h-4 w-4 text-green-600" />
-                    <span className="text-green-700 dark:text-green-400 max-w-[200px] truncate">{branchCreated.name}</span>
-                  </a>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCreateGithubBranch}
-                    disabled={creatingBranch}
-                    className="gap-2"
-                  >
-                    <GitBranch className="h-4 w-4" />
-                    {creatingBranch ? "Tworzenie brancha..." : "Utwórz branch GitHub"}
-                  </Button>
-                )}
-              </div>
-            )}
           </div>
-        )}
-      </form>
-    </>
+        </footer>
+      )}
+
+      {isEditMode && task && (
+        <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Usunąć zadanie?</AlertDialogTitle>
+              <AlertDialogDescription>
+                „{task.title}” zostanie usunięte. Przez 5 sekund możesz je przywrócić przyciskiem „Cofnij”.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleting}>Anuluj</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => {
+                  e.preventDefault()
+                  handleDeleteTask()
+                }}
+                disabled={deleting}
+                className={buttonVariants({ variant: "destructive" })}
+              >
+                {deleting ? "Usuwanie…" : "Usuń zadanie"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+    </form>
   )
 }

@@ -5,7 +5,7 @@ const STEPS = ["Konto", "Sejf", "Przestrzeń"];
 
 export function AuthCard({ title, description, step, children, className }: { title: string; description?: React.ReactNode; step?: number; children: React.ReactNode; className?: string }) {
   return (
-    <Card className={cn("shadow-sm", className)}>
+    <Card className={cn("glass-surface-soft glass-rise rounded-2xl", className)}>
       <CardHeader>
         {step ? (
           <ol className="mb-3 flex items-center gap-2 text-xs" aria-label="Kroki rejestracji">

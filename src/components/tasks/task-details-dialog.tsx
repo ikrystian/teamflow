@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { cn } from "@/lib/utils"
 import type { Task } from "@/types"
 import { TaskFormContent } from "../shared/task-form-content"
 
@@ -67,30 +68,33 @@ export function TaskDetailsDialog({
         // Pinned a fixed distance from the top of the viewport (instead of
         // vertically centered) so the dialog doesn't jump when its content
         // grows or shrinks, e.g. after expanding a section.
-        // Edit mode is wider to fit the two-column layout (content | task params);
-        // it's sized in vw (rather than a fixed max-w) so it stays >= 80vw on desktop.
-        className={`${isCreateMode ? "xl:max-w-3xl" : "md:w-[80vw] md:max-w-none xl:w-[80vw]"} top-[6vh] translate-y-0 max-h-[88vh] flex flex-col overflow-hidden`}
+        // The form fills the dialog edge to edge: its own header and footer stay
+        // put while the body scrolls. Edit mode is wide enough for the
+        // content | properties columns; the form collapses them when narrower.
+        className={cn(
+          "top-[5vh] flex max-h-[90vh] translate-y-0 flex-col gap-0 overflow-hidden p-0",
+          isCreateMode ? "sm:max-w-3xl" : "md:max-w-5xl"
+        )}
         showCloseButton={false}
         disableAnimation
       >
-        <DialogHeader className="hidden">
-          <DialogTitle className="hidden">
-            {isCreateMode ? "Utwórz zadanie" : task?.title}
-          </DialogTitle>
+        <DialogHeader className="sr-only">
+          <DialogTitle>{isCreateMode ? "Nowe zadanie" : task?.title}</DialogTitle>
+          <DialogDescription>
+            {isCreateMode ? "Uzupełnij szczegóły nowego zadania" : `Szczegóły zadania ${task?.key ?? ""}`}
+          </DialogDescription>
         </DialogHeader>
-        <div className="overflow-y-auto flex-1 pr-1">
-          <TaskFormContent
-            task={task}
-            mode={mode}
-            readOnly={readOnly}
-            projectId={projectId}
-            projects={projects}
-            onClose={() => onOpenChange(false)}
-            onTaskUpdated={onTaskUpdated}
-            onTaskCreated={onTaskCreated}
-            onTaskDeleted={() => { onTaskDeleted?.(); onOpenChange(false) }}
-          />
-        </div>
+        <TaskFormContent
+          task={task}
+          mode={mode}
+          readOnly={readOnly}
+          projectId={projectId}
+          projects={projects}
+          onClose={() => onOpenChange(false)}
+          onTaskUpdated={onTaskUpdated}
+          onTaskCreated={onTaskCreated}
+          onTaskDeleted={() => { onTaskDeleted?.(); onOpenChange(false) }}
+        />
       </DialogContent>
     </Dialog>
   )

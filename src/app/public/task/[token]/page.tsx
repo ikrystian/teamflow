@@ -7,6 +7,7 @@ import * as LucideIcons from "lucide-react"
 import { env } from "@/lib/env"
 import { prisma } from "@/lib/prisma"
 import { Badge } from "@/components/ui/badge"
+import { GlassAtmosphere } from "@/components/layout/glass-atmosphere"
 import {
   formatEstimatedHours,
   getPriorityColor,
@@ -368,7 +369,8 @@ export default async function PublicTaskPage({
   const markdownComponents = getMarkdownComponents(projectColor)
 
   return (
-    <div className="min-h-screen bg-slate-50/50 text-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 font-sans antialiased relative overflow-hidden pb-16">
+    <div className="min-h-screen text-neutral-800 dark:text-neutral-100 font-sans antialiased relative overflow-hidden pb-16">
+      <GlassAtmosphere />
       
       {/* Decorative top blur blob */}
       <div 
@@ -379,7 +381,7 @@ export default async function PublicTaskPage({
       />
 
       {/* Floating navigation header */}
-      <nav className="sticky top-0 z-40 w-full border-b border-neutral-200/50 bg-white/75 backdrop-blur-md dark:border-neutral-800/50 dark:bg-neutral-900/75">
+      <nav className="glass-surface sticky top-0 z-40 w-full border-b">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-2 sm:gap-3">
             <span 
@@ -487,7 +489,7 @@ export default async function PublicTaskPage({
             
             {/* Description */}
             {task.description && !isDescriptionEmpty(task.description) && (
-              <section className="rounded-2xl border border-neutral-200/50 bg-white/80 dark:bg-neutral-900/60 dark:border-neutral-800/40 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.01)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all duration-300 backdrop-blur-md">
+              <section className="glass-surface rounded-2xl border p-6 sm:p-8">
                 <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-5 flex items-center gap-2">
                   <FileText className="h-4 w-4" style={{ color: projectColor }} /> Opis zadania
                 </h2>
@@ -505,7 +507,7 @@ export default async function PublicTaskPage({
 
             {/* Subtasks */}
             {task.todos.length > 0 && (
-              <section className="rounded-2xl border border-neutral-200/50 bg-white/80 dark:bg-neutral-900/60 dark:border-neutral-800/40 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.01)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all duration-300 backdrop-blur-md">
+              <section className="glass-surface rounded-2xl border p-6 sm:p-8">
                 <div className="mb-5">
                   <div className="flex items-center justify-between">
                     <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 flex items-center gap-2">
@@ -556,7 +558,7 @@ export default async function PublicTaskPage({
             {/* Changes / What was done */}
             {task.changes && task.changes.trim() && (
               <section 
-                className="rounded-2xl border-l-4 bg-white/80 dark:bg-neutral-900/60 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.01)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all duration-300 backdrop-blur-md border-y border-r border-neutral-200/50 dark:border-neutral-800/40"
+                className="glass-surface rounded-2xl border border-l-4 p-6 sm:p-8"
                 style={{ borderLeftColor: projectColor }}
               >
                 <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-5 flex items-center gap-2">
@@ -576,7 +578,7 @@ export default async function PublicTaskPage({
 
             {/* Images */}
             {task.images.length > 0 && (
-              <section className="rounded-2xl border border-neutral-200/50 bg-white/80 dark:bg-neutral-900/60 dark:border-neutral-800/40 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.01)] backdrop-blur-md">
+              <section className="glass-surface rounded-2xl border p-6 sm:p-8">
                 <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-5 flex items-center gap-2">
                   <ImageIcon className="h-4 w-4 text-neutral-400" /> Obrazy i zrzuty ekranu
                 </h2>
@@ -605,7 +607,7 @@ export default async function PublicTaskPage({
 
             {/* Attachments */}
             {task.attachments.length > 0 && (
-              <section className="rounded-2xl border border-neutral-200/50 bg-white/80 dark:bg-neutral-900/60 dark:border-neutral-800/40 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.01)] backdrop-blur-md">
+              <section className="glass-surface rounded-2xl border p-6 sm:p-8">
                 <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-5 flex items-center gap-2">
                   <Paperclip className="h-4 w-4 text-neutral-400" /> Załączone pliki ({task.attachments.length})
                 </h2>
@@ -647,7 +649,7 @@ export default async function PublicTaskPage({
           <div className="space-y-6">
             
             {/* Meta Properties Pane */}
-            <div className="rounded-2xl border border-neutral-200/50 bg-white/80 dark:bg-neutral-900/60 dark:border-neutral-800/40 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.01)] backdrop-blur-md">
+            <div className="glass-surface rounded-2xl border p-6">
               <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-5 flex items-center gap-2">
                 <Info className="h-3.5 w-3.5" style={{ color: projectColor }} /> Informacje
               </h3>
@@ -742,7 +744,7 @@ export default async function PublicTaskPage({
 
             {/* Time Tracking Widget */}
             {task.timeEntries.length > 0 && (
-              <div className="rounded-2xl border border-neutral-200/50 bg-white/80 dark:bg-neutral-900/60 dark:border-neutral-800/40 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.01)] backdrop-blur-md">
+              <div className="glass-surface rounded-2xl border p-6">
                 <div className="flex items-center justify-between mb-5">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 flex items-center gap-2">
                     <Timer className="h-3.5 w-3.5 text-neutral-400 shrink-0" /> Zarejestrowany czas
@@ -786,7 +788,7 @@ export default async function PublicTaskPage({
 
             {/* Comments List */}
             {task.comments.length > 0 && (
-              <div className="rounded-2xl border border-neutral-200/50 bg-white/80 dark:bg-neutral-900/60 dark:border-neutral-800/40 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.01)] backdrop-blur-md">
+              <div className="glass-surface rounded-2xl border p-6">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-5 flex items-center gap-2">
                   <MessageSquare className="h-3.5 w-3.5 text-neutral-400" /> Komentarze ({task.comments.length})
                 </h3>

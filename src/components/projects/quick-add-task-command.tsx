@@ -110,7 +110,7 @@ export function QuickAddTaskCommand({ projectId, onTaskCreated, onOptimisticCrea
         variant="outline"
         className="relative h-8 w-full justify-start text-sm text-muted-foreground sm:pr-12"
       >
-        <Search className="mr-2 h-4 w-4" />
+        <Plus className="mr-2 h-4 w-4" />
         <span className="hidden lg:inline">Szybkie dodanie zadania...</span>
         <span className="inline lg:hidden">Dodaj zadanie...</span>
         <kbd className="pointer-events-none absolute right-[0.3rem] top-[0.3rem] hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
