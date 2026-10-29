@@ -1,7 +1,5 @@
 import { redirect } from "next/navigation"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
-import { DashboardLayout } from "@/components/dashboard/layout"
+import { getSession } from "@/lib/auth/session"
 import { ProjectDetailsContent } from "@/components/projects/project-details-content"
 
 interface ProjectPageProps {
@@ -11,7 +9,7 @@ interface ProjectPageProps {
 }
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
-  const session = await getServerSession(authOptions)
+  const session = await getSession()
 
   if (!session) {
     redirect("/auth/signin")
@@ -20,8 +18,6 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   const { projectId } = await params
 
   return (
-    <DashboardLayout>
-      <ProjectDetailsContent projectId={projectId} />
-    </DashboardLayout>
+    <ProjectDetailsContent projectId={projectId} />
   )
 }

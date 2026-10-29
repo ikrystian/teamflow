@@ -13,17 +13,17 @@ import {
   CheckCircle,
   AlertCircle,
   Info,
-  Key,
   FileText,
   Edit,
   Eye,
-  EyeOff,
   ListChecks,
   Clock
 } from "lucide-react"
 import Link from "next/link"
 import { FileUpload } from "@/components/ui/file-upload"
+import { ProjectAccessCard } from "./project-access-card"
 import { RichTextEditor } from "@/components/ui/rich-text-editor"
+import { SafeHtml } from "@/components/ui/safe-html"
 
 interface ProjectDetails {
   id: string
@@ -44,6 +44,7 @@ interface ProjectDetails {
   stagingUrl?: string
   productionUrl?: string
   credentials?: string
+  client?: { id: string; name: string } | null
 
   tasks?: {
     id: string
@@ -97,6 +98,8 @@ interface ProjectDetails {
   }[]
 }
 
+const CRM_CLIENT_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 interface ProjectInfoContentProps {
   projectId: string
 }
@@ -105,7 +108,6 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
   const [project, setProject] = useState<ProjectDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [documents, setDocuments] = useState<ProjectDetails['documents']>([])
-  const [showCredentials, setShowCredentials] = useState<Record<string, boolean>>({})
   const [isEditingReadme, setIsEditingReadme] = useState(false)
   const [readmeContent, setReadmeContent] = useState("")
   const [readmeLoading, setReadmeLoading] = useState(false)
@@ -289,6 +291,8 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
   }
 
   const stats = getTaskStats(project.tasks)
+  // Klient z modułu CRM (UUID); identyfikator sprzed importu wskazuje jeszcze starą kolekcję klientów.
+  const crmClient = project.client && CRM_CLIENT_ID.test(project.client.id) ? project.client : null
 
   return (
     <PageBody className="max-w-6xl">
@@ -338,6 +342,20 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
               <dd><Badge variant="secondary">{project.status}</Badge></dd>
             </div>
             <div className="space-y-1">
+              <dt className="text-xs font-medium text-muted-foreground">Klient</dt>
+              <dd className="text-sm font-medium">
+                {crmClient ? (
+                  <Link href={`/dashboard/clients/${crmClient.id}`} className="underline-offset-4 hover:underline">
+                    {crmClient.name}
+                  </Link>
+                ) : project.client ? (
+                  <span title="Klient zostanie przeniesiony do modułu klientów przy konfiguracji sejfu organizacji">{project.client.name}</span>
+                ) : (
+                  <span className="text-muted-foreground">—</span>
+                )}
+              </dd>
+            </div>
+            <div className="space-y-1">
               <dt className="text-xs font-medium text-muted-foreground">Data utworzenia</dt>
               <dd className="text-sm font-medium">
                 {new Date(project.createdAt).toLocaleDateString('pl-PL', { year: 'numeric', month: 'long', day: 'numeric' })}
@@ -375,103 +393,14 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
         </CardContent>
       </Card>
 
-      {/* Access Credentials */}
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            <Key className="h-5 w-5" />
-            <span>Dane dostępowe</span>
-          </CardTitle>
-          <CardDescription>Dane dostępowe do projektu (hasła, klucze API, linki, itp.)</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {(() => {
-            // Parse credentials from JSON if exists
-            let parsedCredentials: Array<{ id: string, name: string, content: string }> = []
-            if (project.credentials) {
-              try {
-                const parsed = JSON.parse(project.credentials)
-                // Handle both old format (single object) and new format (array)
-                if (Array.isArray(parsed)) {
-                  parsedCredentials = parsed
-                } else if (parsed.name && parsed.content) {
-                  // Convert old format to new format for display
-                  parsedCredentials = [{
-                    id: 'legacy',
-                    name: parsed.name,
-                    content: parsed.content
-                  }]
-                }
-              } catch (error) {
-                console.error('Error parsing credentials:', error)
-              }
-            }
-
-            if (parsedCredentials.length > 0) {
-              return (
-                <div className="space-y-4">
-                  {parsedCredentials.map((credential) => (
-                    <div key={credential.id} className="border rounded-lg p-4 bg-muted/50">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="text-sm font-medium text-foreground">
-                          {credential.name}
-                        </h4>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setShowCredentials(prev => ({
-                            ...prev,
-                            [credential.id]: !prev[credential.id]
-                          }))}
-                        >
-                          {showCredentials[credential.id] ? (
-                            <>
-                              <EyeOff className="mr-2 h-4 w-4" />
-                              Ukryj
-                            </>
-                          ) : (
-                            <>
-                              <Eye className="mr-2 h-4 w-4" />
-                              Pokaż
-                            </>
-                          )}
-                        </Button>
-                      </div>
-
-                      {showCredentials[credential.id] ? (
-                        <div
-                          className="prose prose-sm max-w-none text-foreground"
-                          dangerouslySetInnerHTML={{ __html: credential.content }}
-                        />
-                      ) : (
-                        <div className="text-sm text-muted-foreground italic">
-                          Dane dostępowe są ukryte. Kliknij &quot;Pokaż&quot; aby je wyświetlić.
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )
-            } else {
-              return (
-                <div className="text-center py-4 text-muted-foreground">
-                  <p className="text-sm">Brak skonfigurowanych danych dostępowych</p>
-                  <p className="text-xs mt-1">Skonfiguruj je w ustawieniach projektu</p>
-                </div>
-              )
-            }
-          })()}
-
-          <div className="pt-2 border-t">
-            <Link href={`/dashboard/projects/${projectId}/settings`}>
-              <Button variant="outline" size="sm">
-                <Edit className="h-4 w-4 mr-2" />
-                Edytuj dane dostępowe
-              </Button>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Access Credentials — z sejfu klienta (E2E) */}
+      <ProjectAccessCard
+        projectId={projectId}
+        projectName={project.name}
+        client={crmClient}
+        legacyRaw={project.credentials}
+        onLegacyCleared={() => setProject((prev) => (prev ? { ...prev, credentials: undefined } : prev))}
+      />
 
       {/* Project README */}
       <Card>
@@ -531,10 +460,7 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
           ) : (
             <div className="min-h-[120px]">
               {project.readme ? (
-                <div
-                  className="prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: project.readme }}
-                />
+                <SafeHtml className="prose prose-sm max-w-none" html={project.readme} />
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />

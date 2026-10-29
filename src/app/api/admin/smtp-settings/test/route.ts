@@ -1,6 +1,6 @@
 import {  NextResponse } from "next/server"
 import { getAdminSession } from "@/lib/admin"
-import { testSMTPConnection } from "@/lib/email"
+import { testEmailTransport } from "@/lib/email"
 
 // POST /api/admin/smtp-settings/test - Testuj połączenie SMTP (admin only)
 export async function POST() {
@@ -11,7 +11,7 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 })
     }
 
-    const isConnectionValid = await testSMTPConnection()
+    const isConnectionValid = await testEmailTransport()
 
     if (isConnectionValid) {
       return NextResponse.json({

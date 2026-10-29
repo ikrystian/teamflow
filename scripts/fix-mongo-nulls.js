@@ -25,13 +25,12 @@ const prisma = new PrismaClient()
 
 // Every optional (nullable) field per collection, mirroring schema.prisma.
 const NULLABLE_FIELDS = {
-  User: ['name', 'avatarUrl', 'phone', 'location', 'bio', 'jobTitle', 'company', 'website'],
+  User: ['name', 'password', 'avatarUrl', 'phone', 'location', 'bio', 'jobTitle', 'company', 'website'],
   Project: [
     'description', 'readme', 'imageUrl', 'repositoryUrl', 'databaseUrl', 'serverUrl',
     'apiUrl', 'adminPanelUrl', 'stagingUrl', 'productionUrl', 'credentials',
     'shareToken', 'icon', 'slackChannelId', 'clientId', 'githubRepo',
   ],
-  Client: ['contactPerson', 'email', 'phone', 'website', 'address', 'taxId', 'notes'],
   Task: [
     'description', 'statusId', 'priority', 'dueDate', 'startTime', 'endTime',
     'estimatedHours', 'deletedAt', 'projectId', 'assigneeId', 'createdById',
@@ -44,7 +43,6 @@ const NULLABLE_FIELDS = {
   TimeEntry: ['description'],
   ProjectDocument: ['description', 'category'],
   TaskAttachment: ['description', 'category'],
-  Session: ['userAgent', 'ipAddress'],
   PushSubscription: ['userAgent'],
   ChatRoom: ['name', 'projectId'],
   UserChatRoom: ['lastReadAt'],

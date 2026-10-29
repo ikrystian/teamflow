@@ -35,8 +35,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
-import { useSession } from "next-auth/react"
-import { Session } from "next-auth"
+import { useSession } from "@/lib/auth/use-session"
+import type { AppSession as Session } from "@/lib/auth/types"
 import { formatCreatedDate } from "@/lib/date-utils"
 import {
   Users,

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/lib/auth/use-session"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ClickableAvatar } from "@/components/ui/clickable-avatar"
@@ -49,7 +49,7 @@ import {
 } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge"
 import { DropIndicator } from "@/components/ui/drop-indicator"
 import type { Task, TaskStatus } from "@/types"
-import type { Session } from "next-auth"
+import type { AppSession as Session } from "@/lib/auth/types"
 import { toast } from "sonner"
 import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
 import { isManagerRole } from "@/lib/roles"

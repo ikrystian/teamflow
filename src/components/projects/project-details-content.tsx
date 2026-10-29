@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { useSession } from "next-auth/react"
-import type { Session } from "next-auth"
+import { useSession } from "@/lib/auth/use-session"
+import type { AppSession as Session } from "@/lib/auth/types"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -50,6 +50,7 @@ import { softDeleteTaskWithUndo } from "@/lib/task-delete"
 import { isManagerRole } from "@/lib/roles"
 import { managerCanEditStatus } from "@/lib/task-status-helpers"
 import { toast } from "sonner"
+import { SafeHtml } from "@/components/ui/safe-html"
 
 interface ProjectDetailsContentProps {
   projectId: string
@@ -743,7 +744,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                           )}
                         </div>
                         {task.description && (
-                          <div className="text-[13px] text-muted-foreground mb-2 line-clamp-2" dangerouslySetInnerHTML={{ __html: task.description }} />
+                          <SafeHtml className="text-[13px] text-muted-foreground mb-2 line-clamp-2" html={task.description} />
                         )}
                         <div className="flex items-center space-x-4 text-xs text-muted-foreground">
                           {task.assignee && (

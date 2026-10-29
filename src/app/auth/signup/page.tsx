@@ -1,35 +1,40 @@
-import { Zap } from "lucide-react"
-import Link from "next/link"
-import Image from "next/image"
-import { SignupForm } from "@/components/auth/signup-form"
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
+import { AuthCard } from "@/components/auth/auth-card";
+import { RegisterForm } from "@/components/auth/register-form";
+import { getAuthState } from "@/lib/dal/session";
+import { env } from "@/lib/env";
+import { isFreshInstallation } from "@/lib/identity";
+import { safeNext } from "@/lib/safe-next";
 
-export default function SignUp() {
+export const metadata = { title: "Rejestracja" };
 
+export default async function RegisterPage({ searchParams }: PageProps<"/auth/signup">) {
+  const sp = await searchParams;
+  const next = safeNext(sp.next);
+  const state = await getAuthState();
+  if (state) redirect(next);
+  const t = await getTranslations("auth");
+  // Jedna organizacja: konto zakłada się z zaproszenia (wyjątek: pierwsze konto nowej instalacji).
+  const open = env.DEPLOYMENT_MODE !== "single" || next.startsWith("/invite/") || (await isFreshInstallation());
   return (
-    <div className="grid min-h-svh lg:grid-cols-2">
-      <div className="flex flex-col gap-4 p-6 md:p-10">
-        <div className="flex justify-center gap-2 md:justify-start">
-          <Link href="/" className="flex items-center gap-2 font-medium">
-            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <Zap className="size-4" />
-            </div>
-            Nexus
-          </Link>
+    <AuthCard title={t("registerTitle")} description={t("registerSubtitle")}>
+      {open ? (
+        <RegisterForm next={next} inviteEmail={typeof sp.email === "string" ? sp.email : undefined} />
+      ) : (
+        <div className="space-y-4 text-sm">
+          <p className="text-muted-foreground">
+            Nexus działa jako system jednej firmy — konto założysz z linku w zaproszeniu od administratora (Ustawienia → Zespół i dostęp do klientów).
+          </p>
+          <p>
+            Masz już konto?{" "}
+            <Link href={`/auth/signin?next=${encodeURIComponent(next)}`} className="font-medium underline-offset-4 hover:underline">
+              Zaloguj się
+            </Link>
+          </p>
         </div>
-        <div className="flex flex-1 items-center justify-center">
-          <div className="w-full max-w-xs">
-            <SignupForm />
-          </div>
-        </div>
-      </div>
-      <div className="relative hidden bg-muted lg:block">
-        <Image
-          src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=1920&q=80"
-          alt="workspace"
-          fill
-          className="object-cover"
-        />
-      </div>
-    </div>
-  )
+      )}
+    </AuthCard>
+  );
 }

@@ -49,6 +49,12 @@ This option calls your app's HTTP endpoint, which is ideal for cloud deployments
    */5 * * * * curl -s "https://your-domain.com/api/cron/slack-scheduler" -H "Authorization: Bearer your-secure-random-string-here"
    ```
 
+4. Clients & vault module (same `CRON_SECRET`) — once a day: domain/SSL/hosting/API key
+   expiry reminders, old-password reminders, audit-log retention, SSL checks:
+   ```cron
+   15 6 * * * curl -s "https://your-domain.com/api/cron/daily" -H "Authorization: Bearer your-secure-random-string-here"
+   ```
+
 ### Option 2: Using Direct Node Script (Recommended for Local Development)
 
 This option runs the Node.js script directly.
@@ -116,7 +122,7 @@ Required:
 
 Optional:
 - `CRON_SECRET` - Secret token for securing the HTTP endpoint (recommended)
-- `NEXTAUTH_URL` - Your app's base URL (used for generating share links)
+- `APP_URL` - Your app's base URL (used for generating share links; the legacy `NEXTAUTH_URL` is still read as a fallback)
 - `DATABASE_URL` - Your database connection string
 
 ## Troubleshooting

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
+import { getSession } from "@/lib/auth/session"
+import { env } from "@/lib/env"
 import { prisma } from "@/lib/prisma"
-import type { Session } from "next-auth"
+import type { AppSession as Session } from "@/lib/auth/types"
 import { randomBytes } from "crypto"
 
 // POST /api/projects/[projectId]/share - Generate or regenerate share token
@@ -11,7 +11,7 @@ export async function POST(
   { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions) as Session | null
+    const session = await getSession() as Session | null
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -40,7 +40,7 @@ export async function POST(
 
     return NextResponse.json({
       shareToken,
-      shareUrl: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/public/project/${shareToken}`
+      shareUrl: new URL(`/public/project/${shareToken}`, env.APP_URL).toString()
     })
   } catch (error) {
     console.error("Error generating share token:", error)
@@ -57,7 +57,7 @@ export async function DELETE(
   { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions) as Session | null
+    const session = await getSession() as Session | null
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -106,7 +106,7 @@ export async function GET(
   { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions) as Session | null
+    const session = await getSession() as Session | null
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -138,7 +138,7 @@ export async function GET(
 
     return NextResponse.json({
       shareToken: project.shareToken,
-      shareUrl: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/public/project/${project.shareToken}`
+      shareUrl: new URL(`/public/project/${project.shareToken}`, env.APP_URL).toString()
     })
   } catch (error) {
     console.error("Error getting share token:", error)

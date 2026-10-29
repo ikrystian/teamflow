@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
+import { getSession } from "@/lib/auth/session"
 import { prisma } from "@/lib/prisma"
 import { isAdmin } from "@/lib/admin"
-import type { Session } from "next-auth"
+import type { AppSession as Session } from "@/lib/auth/types"
 
 // Restore a soft-deleted task (undo a delete) by clearing its deletedAt marker.
 // Mirrors the permission rules of the task DELETE handler.
@@ -12,7 +11,7 @@ export async function POST(
   { params }: { params: Promise<{ taskId: string }> }
 ) {
   try {
-    const session = (await getServerSession(authOptions)) as Session | null
+    const session = (await getSession()) as Session | null
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

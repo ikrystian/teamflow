@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import remarkBreaks from "remark-breaks"
 import * as LucideIcons from "lucide-react"
+import { env } from "@/lib/env"
 import { prisma } from "@/lib/prisma"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -266,17 +267,9 @@ export async function generateMetadata({
   const cleanDesc = task.description ? stripMarkdownAndHtml(task.description).substring(0, 160) : ""
   const ogDescription = metaInfo + (cleanDesc ? ` — ${cleanDesc}...` : "")
 
-  // Determine metadataBase dynamically if possible or fall back to local
-  const base = process.env.NEXTAUTH_URL || "http://localhost:3000"
-  const baseClean = base.endsWith("/") ? base.slice(0, -1) : base
-  let metadataBase: URL | undefined = undefined
-  try {
-    metadataBase = new URL(baseClean)
-  } catch (e) {
-    console.error("Invalid NEXTAUTH_URL", e)
-  }
-
-  const ogImageUrl = `${baseClean}/public/task/${token}/opengraph-image`
+  // APP_URL jest walidowany przy starcie (src/lib/env.ts), więc zawsze jest poprawnym adresem.
+  const metadataBase = new URL(env.APP_URL)
+  const ogImageUrl = new URL(`/public/task/${token}/opengraph-image`, env.APP_URL).toString()
 
   return {
     metadataBase,
@@ -288,7 +281,7 @@ export async function generateMetadata({
       description: ogDescription,
       type: "website",
       siteName: "Nexus",
-      url: `${baseClean}/public/task/${token}`,
+      url: new URL(`/public/task/${token}`, env.APP_URL).toString(),
       locale: "pl_PL",
       images: [
         {

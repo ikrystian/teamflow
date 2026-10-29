@@ -149,6 +149,10 @@ jobs:
             git pull origin main
             bun install
             bun run build
+
+            # === Migracje PostgreSQL: konta, klienci, sejf (transakcyjne — błąd przerywa deploy) ===
+            # Wymaga w .env: POSTGRES_URL, POSTGRES_MIGRATION_URL, BETTER_AUTH_SECRET (zob. env.example).
+            bun run db:pg:migrate
       
             # === Migracje z automatycznym rollbackiem przy błędzie ===
             if ! bunx prisma migrate deploy; then

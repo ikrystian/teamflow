@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
+import { getSession } from "@/lib/auth/session"
 import { prisma } from "@/lib/prisma"
 import { isAdmin } from "@/lib/admin"
 import { deleteGithubBranch } from "@/lib/github"
@@ -8,14 +7,14 @@ import { sendDoneTaskChangesToSlack } from "@/lib/slack-task-message"
 import { computeAutoMoveAt } from "@/lib/auto-move-tasks"
 import { isDoneStatusName, isInProgressStatusName, isTodoStatusName, managerCanEditStatus, managerCanMoveTask } from "@/lib/task-status-helpers"
 import { isManagerRole } from "@/lib/roles"
-import type { Session } from "next-auth"
+import type { AppSession as Session } from "@/lib/auth/types"
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ taskId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions) as Session | null
+    const session = await getSession() as Session | null
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -169,7 +168,7 @@ export async function PATCH(
   { params }: { params: Promise<{ taskId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions) as Session | null
+    const session = await getSession() as Session | null
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -697,7 +696,7 @@ export async function DELETE(
   { params }: { params: Promise<{ taskId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions) as Session | null
+    const session = await getSession() as Session | null
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

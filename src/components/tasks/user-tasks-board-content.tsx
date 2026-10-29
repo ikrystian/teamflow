@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { useSession } from "next-auth/react"
-import type { Session } from "next-auth"
+import { useSession } from "@/lib/auth/use-session"
+import type { AppSession as Session } from "@/lib/auth/types"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"

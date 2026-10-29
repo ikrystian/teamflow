@@ -21,8 +21,9 @@ const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
 
 function buildTaskShareUrl(shareToken) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
-  return `${baseUrl}/public/task/${shareToken}`
+  // Ta sama kolejność co w src/lib/env.ts: APP_URL, potem dawne NEXTAUTH_URL.
+  const baseUrl = process.env.APP_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000'
+  return new URL(`/public/task/${shareToken}`, baseUrl).toString()
 }
 
 // Same lazy token generation as src/lib/task-share.ts.

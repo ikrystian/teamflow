@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
+import { getSession } from "@/lib/auth/session"
 import { prisma } from "@/lib/prisma"
 import { createTasksFromCommits } from "@/lib/commit-task"
-import type { Session } from "next-auth"
+import type { AppSession as Session } from "@/lib/auth/types"
 
 // Match a public GitHub commit URL and capture the "owner/repo" slug.
 const COMMIT_URL_RE = /github\.com\/([^/\s]+\/[^/\s]+)\/commit\/[0-9a-fA-F]{7,40}/
@@ -22,7 +21,7 @@ export async function POST(
   { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
-    const session = (await getServerSession(authOptions)) as Session | null
+    const session = (await getSession()) as Session | null
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

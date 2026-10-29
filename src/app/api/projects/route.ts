@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
+import { getSession } from "@/lib/auth/session"
 import { prisma } from "@/lib/prisma"
-import type { Session } from "next-auth"
+import type { AppSession as Session } from "@/lib/auth/types"
+import { isAssignableClient, withClientRef, withClientRefs } from "@/lib/crm/directory"
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions) as Session | null
+    const session = await getSession() as Session | null
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -55,12 +55,6 @@ export async function GET(request: NextRequest) {
             avatarUrl: true
           }
         },
-        client: {
-          select: {
-            id: true,
-            name: true
-          }
-        },
         members: {
           include: {
             user: {
@@ -100,7 +94,7 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    return NextResponse.json({ projects })
+    return NextResponse.json({ projects: await withClientRefs(projects) })
   } catch (error) {
     console.error("Error fetching projects:", error)
     return NextResponse.json(
@@ -112,7 +106,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions) as Session | null
+    const session = await getSession() as Session | null
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -125,6 +119,10 @@ export async function POST(request: NextRequest) {
         { error: "Name is required" },
         { status: 400 }
       )
+    }
+
+    if (clientId && !(await isAssignableClient(session.user.id, clientId))) {
+      return NextResponse.json({ error: "Nieprawidłowy klient" }, { status: 400 })
     }
 
     // Create the project with the creator as the owner
@@ -154,12 +152,6 @@ export async function POST(request: NextRequest) {
             email: true
           }
         },
-        client: {
-          select: {
-            id: true,
-            name: true
-          }
-        },
         members: {
           include: {
             user: {
@@ -175,7 +167,7 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    return NextResponse.json({ project: result }, { status: 201 })
+    return NextResponse.json({ project: await withClientRef(result) }, { status: 201 })
   } catch (error) {
     console.error("Error creating project:", error)
     return NextResponse.json(

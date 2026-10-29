@@ -1,7 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,7 +8,6 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { AvatarUpload } from "@/components/ui/avatar-upload"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
 
 import { Separator } from "@/components/ui/separator"
@@ -20,19 +18,10 @@ import {
   Palette,
   Save,
   Loader2,
-  Settings,
-  Key,
-  Users,
-  Mail,
-  Tag,
 } from "lucide-react"
-import { useSession } from "next-auth/react"
-import type { Session } from "next-auth"
-import { usePageHeader } from "@/contexts/header-context"
-import { PageHeader } from "@/components/dashboard/page-header"
+import { useSession } from "@/lib/auth/use-session"
+import type { AppSession as Session } from "@/lib/auth/types"
 import { SystemTaskStatuses } from "./system-task-statuses"
-import { PasswordChangeForm } from "./password-change-form"
-import { ActiveSessions } from "./active-sessions"
 import { UserManagement } from "./user-management"
 import { SMTPSettings } from "./smtp-settings"
 import { TagsManagement } from "./tags-management"
@@ -53,49 +42,14 @@ interface UserProfile {
   updatedAt: string
 }
 
-const settingsNav: {
-  label: string
-  adminOnly?: boolean
-  items: { value: string; label: string; icon: React.ComponentType<{ className?: string }> }[]
-}[] = [
-  {
-    label: "Konto",
-    items: [
-      { value: "profile", label: "Profil", icon: User },
-      { value: "security", label: "Bezpieczeństwo", icon: Key },
-      { value: "notifications", label: "Powiadomienia", icon: Bell },
-      { value: "privacy", label: "Prywatność", icon: Shield },
-      { value: "appearance", label: "Wygląd", icon: Palette },
-    ],
-  },
-  {
-    label: "Przestrzeń robocza",
-    items: [
-      { value: "task-statuses", label: "Statusy zadań", icon: Settings },
-      { value: "tags", label: "Tagi", icon: Tag },
-    ],
-  },
-  {
-    label: "Administracja",
-    adminOnly: true,
-    items: [
-      { value: "smtp", label: "SMTP", icon: Mail },
-      { value: "users", label: "Użytkownicy", icon: Users },
-    ],
-  },
-]
+/** Sekcje ustawień obsługiwane przez ten komponent (pozostałe pochodzą z modułu klientów i sejfu). */
+export type SettingsSection = "profile" | "notifications" | "privacy" | "appearance" | "task-statuses" | "tags" | "smtp" | "users"
 
-export function SettingsContent() {
+export function SettingsContent({ section }: { section: SettingsSection }) {
   const { data: session } = useSession() as { data: Session | null }
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
-
-  // Set page header content
-  usePageHeader(
-    <PageHeader title="Ustawienia" description="Zarządzaj swoim profilem i preferencjami aplikacji" />,
-    [] // Static content, no dependencies
-  )
 
   // Check if user is admin
   const isAdmin = session?.user?.role === 'admin' || session?.user?.email === 'krystian@bpcoders.pl'
@@ -110,13 +64,6 @@ export function SettingsContent() {
     subscribe: subscribePush,
     unsubscribe: unsubscribePush
   } = usePushNotifications()
-
-  // Router for URL state management
-  const router = useRouter()
-  const searchParams = useSearchParams()
-
-  // Get current tab from URL or default to 'profile'
-  const currentTab = searchParams.get('tab') || 'profile'
 
   // Form state for profile data
   const [formData, setFormData] = useState({
@@ -286,76 +233,20 @@ export function SettingsContent() {
     } : null)
   }
 
-  // Available tabs based on user role
-  const availableTabs = useMemo(() => isAdmin
-    ? ['profile', 'security', 'notifications', 'privacy', 'appearance', 'task-statuses', 'tags', 'smtp', 'database', 'users']
-    : ['profile', 'security', 'notifications', 'privacy', 'appearance', 'task-statuses', 'tags'], [isAdmin])
-
-  // Validate current tab and redirect if invalid
-  useEffect(() => {
-    if (!availableTabs.includes(currentTab)) {
-      const params = new URLSearchParams(searchParams.toString())
-      params.set('tab', 'profile')
-      router.replace(`/dashboard/settings?${params.toString()}`)
-    }
-  }, [currentTab, availableTabs, router, searchParams])
-
-  // Handle tab change with URL update
-  const handleTabChange = (value: string) => {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set('tab', value)
-    router.push(`/dashboard/settings?${params.toString()}`)
-  }
-
-  if (isLoadingProfile) {
+  if (section === "profile" && isLoadingProfile) {
     return (
-      <div className="mx-auto w-full max-w-6xl p-4 md:p-6">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Ładowanie profilu...</span>
-          </div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Ładowanie profilu...</span>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl p-4 md:p-6">
-
-      <Tabs
-        value={currentTab}
-        onValueChange={handleTabChange}
-        orientation="vertical"
-        className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-10"
-      >
-        <TabsList
-          aria-label="Sekcje ustawień"
-          className="h-auto w-full shrink-0 justify-start gap-0.5 overflow-x-auto rounded-none border-0 border-b bg-transparent p-0 pb-2 lg:sticky lg:top-0 lg:w-52 lg:flex-col lg:items-stretch lg:overflow-visible lg:border-b-0 lg:pb-0"
-        >
-          {settingsNav
-            .filter((group) => !group.adminOnly || isAdmin)
-            .map((group) => (
-              <div key={group.label} className="contents lg:block lg:[&:not(:first-child)]:mt-4">
-                <div className="hidden px-2 pb-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70 lg:block">
-                  {group.label}
-                </div>
-                {group.items.map(({ value, label, icon: Icon }) => (
-                  <TabsTrigger
-                    key={value}
-                    value={value}
-                    className="h-8 shrink-0 justify-start gap-2 rounded-md px-2.5 font-normal text-muted-foreground hover:bg-accent/60 data-[state=active]:bg-accent data-[state=active]:font-medium data-[state=active]:shadow-none lg:w-full dark:data-[state=active]:bg-accent"
-                  >
-                    <Icon className="h-4 w-4" />
-                    {label}
-                  </TabsTrigger>
-                ))}
-              </div>
-            ))}
-        </TabsList>
-
-        <div className="min-w-0 flex-1">
-        <TabsContent value="profile" className="mt-0 space-y-6">
+    <div className="min-w-0">
+        {section === "profile" && (<div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>
@@ -483,14 +374,9 @@ export function SettingsContent() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>)}
 
-        <TabsContent value="security" className="mt-0 space-y-6">
-          <PasswordChangeForm />
-          <ActiveSessions />
-        </TabsContent>
-
-        <TabsContent value="notifications" className="mt-0 space-y-6">
+        {section === "notifications" && (<div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>
@@ -595,9 +481,9 @@ export function SettingsContent() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>)}
 
-        <TabsContent value="privacy" className="mt-0 space-y-6">
+        {section === "privacy" && (<div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>
@@ -656,9 +542,9 @@ export function SettingsContent() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>)}
 
-        <TabsContent value="appearance" className="mt-0 space-y-6">
+        {section === "appearance" && (<div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>
@@ -729,29 +615,27 @@ export function SettingsContent() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>)}
 
-        <TabsContent value="task-statuses" className="mt-0 space-y-6">
+        {section === "task-statuses" && (<div className="space-y-6">
           <SystemTaskStatuses />
-        </TabsContent>
+        </div>)}
 
-        <TabsContent value="tags" className="mt-0 space-y-6">
+        {section === "tags" && (<div className="space-y-6">
           <TagsManagement />
-        </TabsContent>
+        </div>)}
 
         {isAdmin && (
           <>
-            <TabsContent value="smtp" className="mt-0 space-y-6">
+            {section === "smtp" && (<div className="space-y-6">
               <SMTPSettings />
-            </TabsContent>
+            </div>)}
 
-            <TabsContent value="users" className="mt-0 space-y-6">
+            {section === "users" && (<div className="space-y-6">
               <UserManagement />
-            </TabsContent>
+            </div>)}
           </>
         )}
-        </div>
-      </Tabs>
     </div>
   )
 }

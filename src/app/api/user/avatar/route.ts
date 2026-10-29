@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
+import { getSession } from "@/lib/auth/session"
 import { prisma } from "@/lib/prisma"
+import { setAvatar } from "@/lib/identity"
 import { writeFile, mkdir, unlink } from "fs/promises"
 import { join } from "path"
 import { existsSync } from "fs"
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getSession()
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
 
     // Get current user to check for existing avatar
     const currentUser = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { id: session.user.id },
       select: { id: true, avatarUrl: true }
     })
 
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     // Update user avatar URL in database
     const avatarUrl = `/uploads/avatars/${filename}`
     const updatedUser = await prisma.user.update({
-      where: { email: session.user.email },
+      where: { id: session.user.id },
       data: { avatarUrl },
       select: {
         id: true,
@@ -90,6 +90,8 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    await setAvatar(currentUser.id, avatarUrl)
+
     return NextResponse.json({
       message: "Avatar updated successfully",
       user: updatedUser,
@@ -106,14 +108,14 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE() {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getSession()
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     // Get current user
     const currentUser = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { id: session.user.id },
       select: { id: true, avatarUrl: true }
     })
 
@@ -135,7 +137,7 @@ export async function DELETE() {
 
     // Remove avatar URL from database
     const updatedUser = await prisma.user.update({
-      where: { email: session.user.email },
+      where: { id: session.user.id },
       data: { avatarUrl: null },
       select: {
         id: true,
@@ -152,6 +154,8 @@ export async function DELETE() {
         updatedAt: true,
       },
     })
+
+    await setAvatar(currentUser.id, null)
 
     return NextResponse.json({
       message: "Avatar removed successfully",

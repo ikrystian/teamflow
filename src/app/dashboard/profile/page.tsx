@@ -1,11 +1,9 @@
 import { redirect } from "next/navigation"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
-import { DashboardLayout } from "@/components/dashboard/layout"
+import { getSession } from "@/lib/auth/session"
 import { UserProfileContent } from "@/components/profile/user-profile-content"
 
 export default async function ProfilePage() {
-  const session = await getServerSession(authOptions)
+  const session = await getSession()
 
   if (!session) {
     redirect("/auth/signin")
@@ -19,8 +17,6 @@ export default async function ProfilePage() {
   }
 
   return (
-    <DashboardLayout>
-      <UserProfileContent userId={userId} />
-    </DashboardLayout>
+    <UserProfileContent userId={userId} />
   )
 }

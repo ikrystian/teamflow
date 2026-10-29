@@ -1,14 +1,15 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/lib/auth/use-session"
 import Link from "next/link"
 import {
   Settings,
   MoreHorizontal,
   User as UserIcon,
   CreditCard,
-  Bell
+  Bell,
+  Keyboard
 } from "lucide-react"
 import {
   Avatar,
@@ -39,7 +40,7 @@ interface UserProfile {
   avatarUrl: string | null
 }
 
-export function NavUser() {
+export function NavUser({ onShortcuts }: { onShortcuts?: () => void }) {
   const { data: session } = useSession()
   const { isMobile } = useSidebar()
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
@@ -128,10 +129,18 @@ export function NavUser() {
                   Ustawienia
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem disabled>
-                <Bell className="mr-2 h-4 w-4" />
-                Powiadomienia
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/notifications">
+                  <Bell className="mr-2 h-4 w-4" />
+                  Powiadomienia
+                </Link>
               </DropdownMenuItem>
+              {onShortcuts && (
+                <DropdownMenuItem onSelect={onShortcuts}>
+                  <Keyboard className="mr-2 h-4 w-4" />
+                  Skróty klawiaturowe
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem disabled>
                 <CreditCard className="mr-2 h-4 w-4" />
                 Płatności

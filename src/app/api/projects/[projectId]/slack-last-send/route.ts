@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
+import { getSession } from "@/lib/auth/session"
 import { prisma } from "@/lib/prisma"
 import { getProjectLastSlackSendAt } from "@/lib/slack-auto-schedule"
-import type { Session } from "next-auth"
+import type { AppSession as Session } from "@/lib/auth/types"
 
 // Returns the date of the latest scheduled (pending) or already-sent Slack
 // change-note message in this project — shown at the top of the Kanban board.
@@ -12,7 +11,7 @@ export async function GET(
   { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
-    const session = (await getServerSession(authOptions)) as Session | null
+    const session = (await getSession()) as Session | null
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

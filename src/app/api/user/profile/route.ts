@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
+import { getSession } from "@/lib/auth/session"
 import { prisma } from "@/lib/prisma"
+import { setDisplayName } from "@/lib/identity"
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getSession()
     
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { id: session.user.id },
       select: {
         id: true,
         name: true,
@@ -42,7 +42,7 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getSession()
     
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -66,7 +66,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const updatedUser = await prisma.user.update({
-      where: { email: session.user.email },
+      where: { id: session.user.id },
       data: {
         name: name.trim(),
         phone: phone?.trim() || null,
@@ -91,6 +91,9 @@ export async function PUT(request: NextRequest) {
         updatedAt: true,
       },
     })
+
+    // Imię i nazwisko jest też w koncie (Better Auth) — widoczne w module klientów i e-mailach.
+    await setDisplayName(session.user.id, updatedUser.name ?? name.trim())
 
     return NextResponse.json(updatedUser)
   } catch (error) {

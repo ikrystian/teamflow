@@ -2,15 +2,22 @@
 
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 
 import {
+  Activity,
+  Bell,
   Home,
   CheckSquare,
   FolderOpen,
   BarChart3,
+  Inbox,
+  Lock,
+  Search,
+  ShieldCheck,
+  Users,
+  Vault,
   Zap,
-  Contact,
   Webhook,
   SquarePen,
   Settings,
@@ -25,6 +32,7 @@ import {
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
@@ -39,12 +47,29 @@ import { NavUser } from "@/components/dashboard/nav-user"
 import { NavProjects } from "@/components/dashboard/nav-projects"
 import { DashboardBreadcrumbs } from "@/components/dashboard/breadcrumbs"
 import { EditProjectSheet } from "@/components/projects/edit-project-sheet"
+import { CommandPalette, usePalette } from "@/components/layout/command-palette"
+import { NotificationsBell } from "@/components/layout/notifications-bell"
+import { ShortcutsDialog } from "@/components/layout/shortcuts-dialog"
+import { VaultSession } from "@/components/layout/vault-gate"
+import { StepUpDialog } from "@/components/vault/step-up-dialog"
 import { HeaderProvider, useHeader } from "@/contexts/header-context"
 import { useProjects } from "@/contexts/projects-context"
+import type { UserPreferences } from "@/lib/db/schema"
+import type { Role } from "@/lib/permissions"
+import { lockVault, useVault } from "@/lib/vault/store"
 import { type Project } from "@/types"
+
+/** Moduł klientów i sejfu w powłoce panelu (brak = osoba bez dostępu do CRM, np. rola „manager”). */
+export type CrmShellInfo = {
+  workspace: { id: string; name: string; role: Role } | null
+  preferences: UserPreferences
+  counts: { inbox: number; tasks: number }
+  canSeeActivity: boolean
+}
 
 interface DashboardLayoutProps {
   children: React.ReactNode
+  crm: CrmShellInfo | null
 }
 
 const primaryNavigation = [
@@ -54,24 +79,38 @@ const primaryNavigation = [
 
 const workspaceNavigation = [
   { name: "Projekty", href: "/dashboard/projects", icon: FolderOpen },
-  { name: "Klienci", href: "/dashboard/clients", icon: Contact },
   { name: "Raporty", href: "/dashboard/reports", icon: BarChart3 },
   { name: "GitHub Webhooks", href: "/dashboard/github-webhook", icon: Webhook },
 ]
 
-function DashboardLayoutInner({ children }: DashboardLayoutProps) {
+type NavItem = { name: string; href: string; icon: React.ComponentType; badge?: number }
+
+function DashboardLayoutInner({ children, crm }: DashboardLayoutProps) {
   const { headerContent } = useHeader()
   const pathname = usePathname()
   const { projects, refreshProjects, reorderProjects } = useProjects()
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  const openPalette = usePalette((s) => s.setOpen)
+  const vaultUnlocked = useVault((s) => s.status === "unlocked")
+
+  const clientNavigation: NavItem[] = crm
+    ? [
+        { name: "Klienci", href: "/dashboard/clients", icon: Users },
+        { name: "Sejf dostępów", href: "/dashboard/vault", icon: Vault },
+        { name: "Do przejrzenia", href: "/dashboard/inbox", icon: Inbox, badge: crm.counts.inbox },
+        { name: "Kondycja haseł", href: "/dashboard/security", icon: ShieldCheck, badge: crm.counts.tasks },
+        ...(crm.canSeeActivity ? [{ name: "Dziennik zdarzeń", href: "/dashboard/activity", icon: Activity }] : []),
+      ]
+    : []
 
   // Function to check if a navigation item is active
   const isActive = (href: string) => {
     if (href === "/dashboard") {
       return pathname === "/dashboard"
     }
-    return pathname.startsWith(href)
+    return pathname === href || pathname.startsWith(`${href}/`)
   }
 
   // Handle project editing from sidebar
@@ -103,20 +142,28 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
     }
   }, [])
 
-  const renderNavItems = (items: typeof primaryNavigation) =>
+  const renderNavItems = (items: NavItem[]) =>
     items.map((item) => (
       <SidebarMenuItem key={item.name}>
         <SidebarMenuButton asChild isActive={isActive(item.href)} tooltip={item.name}>
-          <Link href={item.href}>
+          <Link href={item.href} aria-current={isActive(item.href) ? "page" : undefined}>
             <item.icon />
             <span>{item.name}</span>
           </Link>
         </SidebarMenuButton>
+        {item.badge ? (
+          <SidebarMenuBadge className="text-[11px] font-medium" aria-label={`${item.badge} do zrobienia`}>
+            {item.badge}
+          </SidebarMenuBadge>
+        ) : null}
       </SidebarMenuItem>
     ))
 
   return (
     <SidebarProvider>
+      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded focus:bg-background focus:px-3 focus:py-2">
+        Przejdź do treści
+      </a>
       <Sidebar variant="inset" collapsible="icon">
         <SidebarHeader className="pb-0">
           <SidebarMenu>
@@ -150,7 +197,16 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
         <SidebarContent className="gap-0">
           <SidebarGroup>
             <SidebarGroupContent>
-              <SidebarMenu>{renderNavItems(primaryNavigation)}</SidebarMenu>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton onClick={() => openPalette(true)} tooltip="Szukaj (Ctrl K)">
+                    <Search />
+                    <span>Szukaj</span>
+                    <kbd className="ml-auto rounded border bg-muted px-1.5 text-[10px] text-muted-foreground group-data-[collapsible=icon]:hidden">Ctrl K</kbd>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                {renderNavItems(primaryNavigation)}
+              </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
 
@@ -161,10 +217,27 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
             </SidebarGroupContent>
           </SidebarGroup>
 
+          {crm && (
+            <SidebarGroup className="pt-0">
+              <SidebarGroupLabel>Klienci i dostępy</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>{renderNavItems(clientNavigation)}</SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          )}
+
           <NavProjects projects={projects} onEditProject={handleEditProject} onReorderProjects={reorderProjects} />
         </SidebarContent>
         <SidebarFooter className="gap-1">
           <SidebarMenu>
+            {crm && vaultUnlocked && (
+              <SidebarMenuItem>
+                <SidebarMenuButton onClick={() => lockVault("manual")} tooltip="Zablokuj sejf (Ctrl ⇧ L)">
+                  <Lock />
+                  <span>Zablokuj sejf</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname.startsWith("/dashboard/settings")} tooltip="Ustawienia">
                 <Link href="/dashboard/settings">
@@ -174,7 +247,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
-          <NavUser />
+          <NavUser onShortcuts={() => setShortcutsOpen(true)} />
         </SidebarFooter>
         <SidebarRail />
       </Sidebar>
@@ -187,6 +260,27 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
           <div className="min-w-0 flex-1">
             <DashboardBreadcrumbs />
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="hidden h-8 w-56 justify-start gap-2 text-muted-foreground lg:flex"
+            onClick={() => openPalette(true)}
+          >
+            <Search className="size-4" />
+            <span className="flex-1 truncate text-left font-normal">Szukaj…</span>
+            <kbd className="rounded border bg-muted px-1.5 text-[10px]">Ctrl K</kbd>
+          </Button>
+          {crm?.workspace && vaultUnlocked && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="size-8 text-muted-foreground" onClick={() => lockVault("manual")} aria-label="Zablokuj sejf">
+                  <Lock className="size-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Sejf odblokowany — kliknij, aby zablokować</TooltipContent>
+            </Tooltip>
+          )}
+          <NotificationsBell icon={<Bell className="size-4" aria-hidden />} />
           <ThemeToggle />
         </header>
         {headerContent && (
@@ -194,7 +288,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
             {headerContent}
           </div>
         )}
-        <div className="dashboard-scroll min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
+        <div id="main" tabIndex={-1} className="dashboard-scroll min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
           {children}
         </div>
       </SidebarInset>
@@ -206,14 +300,20 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
         project={selectedProject}
       />
 
+      {crm?.workspace && <VaultSession workspace={{ id: crm.workspace.id, role: crm.workspace.role }} preferences={crm.preferences} />}
+      <Suspense>
+        <CommandPalette crm={Boolean(crm)} onShortcuts={() => setShortcutsOpen(true)} />
+      </Suspense>
+      <StepUpDialog />
+      <ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
     </SidebarProvider>
   )
 }
 
-export function DashboardLayout({ children }: DashboardLayoutProps) {
+export function DashboardLayout({ children, crm }: DashboardLayoutProps) {
   return (
     <HeaderProvider>
-      <DashboardLayoutInner>{children}</DashboardLayoutInner>
+      <DashboardLayoutInner crm={crm}>{children}</DashboardLayoutInner>
     </HeaderProvider>
   )
 }

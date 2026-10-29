@@ -2,14 +2,15 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { useSession } from "next-auth/react"
-import type { Session } from "next-auth"
+import { useSession } from "@/lib/auth/use-session"
+import type { AppSession as Session } from "@/lib/auth/types"
 import { Command } from "@/components/ui/command"
 import { CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Search, Zap } from "lucide-react"
 import { toast } from "sonner"
+import { claimCtrlK } from "@/components/layout/command-palette"
 
 interface QuickAddTaskCommandProps {
   projectId: string
@@ -26,6 +27,9 @@ export function QuickAddTaskCommand({ projectId, onTaskCreated, onOptimisticCrea
   const [loading, setLoading] = useState(false)
   const { data: session } = useSession() as { data: Session | null }
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // On project boards Ctrl+K adds a task; the global palette opens with "/" or the search button.
+  useEffect(() => claimCtrlK(), [])
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {

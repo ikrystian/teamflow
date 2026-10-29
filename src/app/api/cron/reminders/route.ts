@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
+import { getSession } from "@/lib/auth/session"
 import { processDueReminders } from "@/lib/reminders"
-import type { Session } from "next-auth"
+import type { AppSession as Session } from "@/lib/auth/types"
 
 // Sends due task reminders as web-push notifications. Called both by the
 // dashboard's 5-minute tick (authenticated user) and, optionally, by system
@@ -22,7 +21,7 @@ export async function GET(request: NextRequest) {
       const hasValidCronSecret = token === cronSecret
 
       if (!hasValidCronSecret) {
-        const session = (await getServerSession(authOptions)) as Session | null
+        const session = (await getSession()) as Session | null
         if (!session?.user?.id) {
           return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }

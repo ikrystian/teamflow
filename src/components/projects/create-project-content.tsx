@@ -15,12 +15,14 @@ interface CreateProjectContentProps {
   onProjectCreated: () => void
   onClose?: () => void
   showIconSelector?: boolean
+  defaultClientId?: string | null
 }
 
 export function CreateProjectContent({
   onProjectCreated,
   onClose,
-  showIconSelector = true
+  showIconSelector = true,
+  defaultClientId = null
 }: CreateProjectContentProps) {
   const { refreshProjects } = useProjects()
   const [name, setName] = useState("")
@@ -28,7 +30,7 @@ export function CreateProjectContent({
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [color, setColor] = useState("#3B82F6")
   const [icon, setIcon] = useState<string | null>(null)
-  const [clientId, setClientId] = useState<string | null>(null)
+  const [clientId, setClientId] = useState<string | null>(defaultClientId)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [fieldErrors, setFieldErrors] = useState<Partial<CreateProjectFormData>>({})

@@ -1,3 +1,5 @@
+// Moduł projektów i zadań (MongoDB). Konta, sesje, klienci (CRM), sejf dostępów
+// i dziennik zdarzeń są w PostgreSQL (src/lib/db/schema.ts, Drizzle).
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,11 +10,15 @@ datasource db {
 }
 
 
+// Profil użytkownika w module projektów. `id` jest identyczne z `user.id` w PostgreSQL
+// (Better Auth) — dokument tworzy i synchronizuje src/lib/identity.ts.
 model User {
   id                  String               @id @default(cuid()) @map("_id")
   name                String?
   email               String               @unique
-  password            String
+  // Przestarzałe: skrót bcrypt sprzed migracji na Better Auth. Logowanie używa
+  // tabeli `account` w PostgreSQL; pole jest czyszczone przez `migrate:legacy --purge`.
+  password            String?
   avatarUrl           String?
   phone               String?
   location            String?
@@ -26,13 +32,10 @@ model User {
   createdChatRooms    ChatRoom[]           @relation("ChatRoomCreator")
   comments            Comment[]
   sentMessages        Message[]            @relation("MessageSender")
-  passwordResetTokens PasswordResetToken[]
   createdProjects     Project[]            @relation("ProjectCreator")
-  createdClients      Client[]             @relation("ClientCreator")
   uploadedDocuments   ProjectDocument[]
   projectMemberships  ProjectMember[]
   pushSubscriptions   PushSubscription[]
-  sessions            Session[]
   createdTasks        Task[]               @relation("TaskCreator")
   assignedTasks       Task[]
   taskAttachments     TaskAttachment[]
@@ -66,32 +69,16 @@ model Project {
   archived       Boolean           @default(false)
   sortOrder      Int               @default(0)
   slackChannelId String?
+  // Identyfikator klienta z modułu CRM (clients.id w PostgreSQL, UUID).
   clientId       String?
   githubRepo     String?
   chatRooms      ChatRoom[]
   createdBy      User              @relation("ProjectCreator", fields: [createdById], references: [id])
-  client         Client?           @relation(fields: [clientId], references: [id])
   documents      ProjectDocument[]
   members        ProjectMember[]
   tasks          Task[]
 }
 
-model Client {
-  id            String    @id @default(cuid()) @map("_id")
-  name          String
-  contactPerson String?
-  email         String?
-  phone         String?
-  website       String?
-  address       String?
-  taxId         String?
-  notes         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  createdById   String
-  createdBy     User      @relation("ClientCreator", fields: [createdById], references: [id])
-  projects      Project[]
-}
 
 model Task {
   id                     String           @id @default(cuid()) @map("_id")
@@ -252,16 +239,6 @@ model ProjectDocument {
   project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
-model Session {
-  id           String   @id @default(cuid()) @map("_id")
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  userAgent    String?
-  ipAddress    String?
-  createdAt    DateTime @default(now())
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
 
 model PushSubscription {
   id        String   @id @default(cuid()) @map("_id")
@@ -327,15 +304,6 @@ model GithubWebhookLog {
   ipAddress    String?
 }
 
-model PasswordResetToken {
-  id        String   @id @default(cuid()) @map("_id")
-  token     String   @unique
-  userId    String
-  expires   DateTime
-  used      Boolean  @default(false)
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
 
 model ProjectMember {
   id        String   @id @default(cuid()) @map("_id")

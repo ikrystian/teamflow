@@ -1,9 +1,10 @@
 "use client"
 
+import Link from "next/link"
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { useSession } from "next-auth/react"
-import { type Session, type User } from "next-auth"
+import { useSession } from "@/lib/auth/use-session"
+import type { AppSession as Session } from "@/lib/auth/types"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -16,6 +17,7 @@ import { PageHeader } from "@/components/dashboard/page-header"
 import { toast } from "sonner"
 import { ProjectMembersManager } from "./project-members-manager"
 import { type Project } from "@/types"
+import { SafeHtml } from "@/components/ui/safe-html"
 
 interface ProjectSettingsContentProps {
   projectId: string
@@ -333,7 +335,7 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
         <ProjectMembersManager
           projectId={projectId}
           createdById={project.createdById as string}
-          currentUserId={(session.user as User).id}
+          currentUserId={session.user.id}
         />
       )}
 
@@ -434,6 +436,12 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
+            <div className="rounded-lg border border-amber-300 bg-amber-50/60 p-3 text-sm dark:border-amber-800 dark:bg-amber-950/30">
+              Te dane są zapisywane bez szyfrowania end-to-end. Hasła i klucze przechowuj w{" "}
+              <Link href="/dashboard/vault" className="font-medium underline-offset-4 hover:underline">sejfie klienta</Link>
+              {" "}— istniejące wpisy przeniesiesz jednym kliknięciem na stronie{" "}
+              <Link href={`/dashboard/projects/${projectId}/info`} className="font-medium underline-offset-4 hover:underline">Informacje o projekcie</Link>.
+            </div>
             {/* Existing credentials list */}
             {credentialsList.length > 0 && (
               <div className="space-y-4">
@@ -700,10 +708,7 @@ function CredentialItem({
       </div>
 
       {isVisible ? (
-        <div
-          className="prose prose-sm max-w-none text-foreground"
-          dangerouslySetInnerHTML={{ __html: credential.content }}
-        />
+        <SafeHtml className="prose prose-sm max-w-none text-foreground" html={credential.content} />
       ) : (
         <div className="text-sm text-muted-foreground italic">
           Dane dostępowe są ukryte. Kliknij &quot;Pokaż&quot; aby je wyświetlić.

@@ -1,33 +1,26 @@
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "./auth"
-import type { Session } from "next-auth"
+import { unstable_rethrow } from "next/navigation"
+import { getSession, type AppSession } from "./auth/session"
+import { isSystemAdmin } from "./roles"
 
 /**
  * Check if the current user has admin privileges
  * Admin privileges are granted to:
- * 1. Users with role="admin" in the database
+ * 1. Users with role="admin" (Better Auth user, mirrored to the project profile)
  * 2. Users with email="krystian@bpcoders.pl" (fallback)
  */
 export async function isAdmin(): Promise<boolean> {
   try {
-    const session = await getServerSession(authOptions) as Session | null
-    
+    const session = await getSession()
+
     if (!session?.user) {
       return false
     }
 
-    // Check if user has admin role
-    if (session.user.role === 'admin') {
-      return true
-    }
-
-    // Fallback: check for specific admin email
-    if (session.user.email === 'krystian@bpcoders.pl') {
-      return true
-    }
-
-    return false
+    // Admin role or the fallback admin e-mail (see lib/roles.ts)
+    return isSystemAdmin(session.user.role, session.user.email)
   } catch (error) {
+    // Let Next.js internals (dynamic rendering bail-out, redirects) propagate
+    unstable_rethrow(error)
     console.error('Error checking admin status:', error)
     return false
   }
@@ -37,10 +30,10 @@ export async function isAdmin(): Promise<boolean> {
  * Get current session with admin check
  * Returns session if user is admin, null otherwise
  */
-export async function getAdminSession(): Promise<Session | null> {
+export async function getAdminSession(): Promise<AppSession | null> {
   try {
-    const session = await getServerSession(authOptions) as Session | null
-    
+    const session = await getSession()
+
     if (!session?.user) {
       return null
     }
@@ -52,6 +45,7 @@ export async function getAdminSession(): Promise<Session | null> {
 
     return session
   } catch (error) {
+    unstable_rethrow(error)
     console.error('Error getting admin session:', error)
     return null
   }

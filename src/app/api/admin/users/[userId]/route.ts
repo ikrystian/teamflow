@@ -1,21 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAdminSession } from "@/lib/admin"
 import { prisma } from "@/lib/prisma"
-import bcrypt from "bcryptjs"
 import { ASSIGNABLE_ROLES } from "@/lib/roles"
+import { deleteUserEverywhere, migrateLegacyUser, setDisplayName, setEmail, setPasswordByAdmin, setSystemRole, type SystemRole } from "@/lib/identity"
 
 // Type for user update data
 interface UserUpdateData {
   name?: string | null
-  email?: string
-  role?: string
   phone?: string | null
   location?: string | null
   bio?: string | null
   jobTitle?: string | null
   company?: string | null
   website?: string | null
-  password?: string
 }
 
 // Type for user with role field (workaround for Prisma type issue)
@@ -136,37 +133,38 @@ export async function PATCH(
       return NextResponse.json({ error: "Cannot change your own role" }, { status: 400 })
     }
 
-    // Check if email is already taken by another user
-    if (email) {
-      const existingUser = await prisma.user.findFirst({
-        where: {
-          email,
-          NOT: { id: userId }
-        }
-      })
+    if (password && password.trim() && password.trim().length < 12) {
+      return NextResponse.json({ error: "Hasło musi mieć co najmniej 12 znaków" }, { status: 400 })
+    }
 
-      if (existingUser) {
+    // Konto (logowanie, rola, e-mail) jest w PostgreSQL — zmiany trafiają tam i do profilu projektów.
+    // Konto sprzed migracji (tylko w MongoDB) jest najpierw przenoszone.
+    const target = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } })
+    if (!target) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 })
+    }
+    await migrateLegacyUser(target.email)
+    if (email !== undefined && email.trim()) {
+      try {
+        await setEmail(userId, email)
+      } catch {
         return NextResponse.json({ error: "Email already taken" }, { status: 400 })
       }
     }
+    if (role !== undefined) await setSystemRole(userId, role as SystemRole)
+    if (name !== undefined && name?.trim()) await setDisplayName(userId, name.trim())
+    if (password && password.trim()) await setPasswordByAdmin(userId, password.trim())
 
     // Prepare update data
     const updateData: UserUpdateData = {}
 
     if (name !== undefined) updateData.name = name?.trim() || null
-    if (email !== undefined) updateData.email = email.trim()
-    if (role !== undefined) updateData.role = role
     if (phone !== undefined) updateData.phone = phone?.trim() || null
     if (location !== undefined) updateData.location = location?.trim() || null
     if (bio !== undefined) updateData.bio = bio?.trim() || null
     if (jobTitle !== undefined) updateData.jobTitle = jobTitle?.trim() || null
     if (company !== undefined) updateData.company = company?.trim() || null
     if (website !== undefined) updateData.website = website?.trim() || null
-
-    // Hash password if provided
-    if (password && password.trim()) {
-      updateData.password = await bcrypt.hash(password.trim(), 12)
-    }
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
@@ -223,10 +221,16 @@ export async function DELETE(
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
-    // Delete user (cascade will handle related records)
-    await prisma.user.delete({
-      where: { id: userId }
-    })
+    // Konto znika z PostgreSQL (sesje, klucze sejfu, przypisania), a profil projektów jest
+    // anonimizowany — zadania, komentarze i czas pracy zostają w historii projektów.
+    try {
+      await deleteUserEverywhere(userId, { id: session.user.id, name: session.user.name ?? session.user.email })
+    } catch (error) {
+      if (error instanceof Error && error.message === "OWNER") {
+        return NextResponse.json({ error: "Ta osoba jest właścicielem przestrzeni klientów — najpierw przenieś własność (Ustawienia → Zespół)" }, { status: 400 })
+      }
+      throw error
+    }
 
     return NextResponse.json({ message: "User deleted successfully" })
   } catch (error) {

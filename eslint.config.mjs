@@ -3,16 +3,60 @@
 import nextCoreWebVitals from "eslint-config-next/core-web-vitals";
 import nextTypescript from "eslint-config-next/typescript";
 
+// Kod modułu klientów i sejfu: sekrety i szkice żyją wyłącznie w pamięci karty.
+const VAULT_MODULE_FILES = [
+  "src/lib/crypto/**",
+  "src/lib/vault/**",
+  "src/lib/dal/**",
+  "src/server/**",
+  "src/components/vault/**",
+  "src/components/clients/**",
+  "src/components/security/**",
+  "src/components/public/**",
+  "src/components/auth/**",
+  "src/components/layout/**",
+  "src/components/settings/account-security.tsx",
+  "src/components/settings/vault-security.tsx",
+  "src/components/settings/vault-preferences.tsx",
+  "src/components/settings/data.tsx",
+  "src/components/settings/team.tsx",
+  "src/components/projects/project-access-card.tsx",
+];
+
 const eslintConfig = [
   {
-    ignores: [".next/**"],
+    ignores: [".next/**", "out/**", "build/**", "coverage/**", "playwright-report/**", "test-results/**", "next-env.d.ts"],
   },
   ...nextCoreWebVitals,
   ...nextTypescript,
   {
-    files: ["src/lib/auth.ts"],
     rules: {
-      "@typescript-eslint/no-explicit-any": "off",
+      // XSS jest zagrożeniem numer jeden — skrypt w zalogowanej karcie widzi odszyfrowany sejf.
+      // Treści HTML od użytkowników renderuje wyłącznie components/ui/safe-html.tsx (DOMPurify).
+      "react/no-danger": "error",
+      "no-restricted-syntax": [
+        "error",
+        { selector: "JSXAttribute[name.name='dangerouslySetInnerHTML']", message: "Zakaz dangerouslySetInnerHTML — użyj <SafeHtml> (ochrona przed XSS)." },
+        { selector: "MemberExpression[property.name='innerHTML']", message: "Zakaz innerHTML — używaj tekstu (ochrona przed XSS)." },
+        { selector: "CallExpression[callee.name='eval']", message: "Zakaz eval." },
+      ],
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [{ group: ["**/lib/dal/*", "@/lib/dal/*"], importNames: ["default"], message: "DAL jest server-only." }],
+        },
+      ],
+      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_", destructuredArrayIgnorePattern: "^_" }],
+    },
+  },
+  {
+    files: VAULT_MODULE_FILES,
+    rules: {
+      "no-restricted-globals": [
+        "error",
+        { name: "localStorage", message: "Zakaz localStorage — sekrety i szkice żyją tylko w pamięci." },
+        { name: "sessionStorage", message: "Zakaz sessionStorage." },
+      ],
     },
   },
   {

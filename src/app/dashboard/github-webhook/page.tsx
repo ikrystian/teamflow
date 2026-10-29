@@ -1,7 +1,5 @@
 import { redirect } from "next/navigation"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
-import { DashboardLayout } from "@/components/dashboard/layout"
+import { getSession } from "@/lib/auth/session"
 import { GithubWebhookLogs } from "@/components/dashboard/github-webhook-logs"
 
 export const metadata = {
@@ -10,15 +8,13 @@ export const metadata = {
 }
 
 export default async function GithubWebhookPage() {
-  const session = await getServerSession(authOptions)
+  const session = await getSession()
 
   if (!session) {
     redirect("/auth/signin")
   }
 
   return (
-    <DashboardLayout>
-      <GithubWebhookLogs />
-    </DashboardLayout>
+    <GithubWebhookLogs />
   )
 }

@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
+import { getSession } from "@/lib/auth/session"
 import { prisma } from "@/lib/prisma"
-import type { Session } from "next-auth"
+import type { AppSession as Session } from "@/lib/auth/types"
 import type { Prisma } from "@prisma/client"
 
 // Paginated task listing for a single project, used by the Kanban board to load
@@ -15,7 +14,7 @@ export async function GET(
   { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions) as Session | null
+    const session = await getSession() as Session | null
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

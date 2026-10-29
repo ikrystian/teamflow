@@ -15,3 +15,11 @@ export function isManagerRole(role: string | null | undefined): boolean {
 export function isAdminRole(role: string | null | undefined): boolean {
   return role === ROLE_ADMIN
 }
+
+/** Konta z uprawnieniami administratora niezależnie od roli (dotychczasowa reguła nexusa). */
+export const FALLBACK_ADMIN_EMAILS = ["krystian@bpcoders.pl"]
+
+/** Administrator systemu: rola "admin" albo adres z listy awaryjnej. */
+export function isSystemAdmin(role: string | null | undefined, email: string | null | undefined): boolean {
+  return isAdminRole(role) || (!!email && FALLBACK_ADMIN_EMAILS.includes(email.toLowerCase()))
+}

@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/lib/auth/use-session"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import type { Task, User, TaskStatus } from "@/types"
-import type { Session } from "next-auth"
+import type { AppSession as Session } from "@/lib/auth/types"
 import { usePageHeader } from "@/contexts/header-context"
 import { formatTaskDueDateWithRelative, formatCreatedDate } from "@/lib/date-utils"
 import Link from "next/link"
@@ -126,7 +126,7 @@ function EmptyState({ icon: Icon, text }: { icon: React.ComponentType<{ classNam
   )
 }
 
-export function DashboardContent() {
+export function DashboardContent({ crmSection }: { crmSection?: React.ReactNode }) {
   const { data: session } = useSession() as { data: Session | null }
   const [tasks, setTasks] = useState<Task[]>([])
   const [, setUsers] = useState<User[]>([])
@@ -391,6 +391,9 @@ export function DashboardContent() {
             icon={Sparkles}
           />
         </div>
+
+        {/* Clients & vault (CRM module) */}
+        {crmSection}
 
         {/* User Report Summary */}
         <UserReportSummary />

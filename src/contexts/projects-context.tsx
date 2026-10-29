@@ -1,7 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react'
-import { useSession } from 'next-auth/react'
+import { useSession } from '@/lib/auth/use-session'
 import { type Project } from "@/types"
 
 interface ProjectsContextType {

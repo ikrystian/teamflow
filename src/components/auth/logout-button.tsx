@@ -4,20 +4,18 @@ import { useState } from "react"
 import { LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
-import { logout, forceLogout } from "@/lib/logout"
+import { logout } from "@/lib/logout"
 
 interface LogoutButtonProps {
   variant?: "button" | "dropdown"
   className?: string
   children?: React.ReactNode
-  force?: boolean
 }
 
-export function LogoutButton({ 
-  variant = "button", 
-  className, 
+export function LogoutButton({
+  variant = "button",
+  className,
   children,
-  force = false 
 }: LogoutButtonProps) {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
@@ -25,19 +23,8 @@ export function LogoutButton({
     if (isLoggingOut) return
     
     setIsLoggingOut(true)
-    try {
-      if (force) {
-        await forceLogout()
-      } else {
-        await logout()
-      }
-    } catch (error) {
-      console.error("Logout failed:", error)
-      // Try force logout as fallback
-      await forceLogout()
-    } finally {
-      // Don't set to false since we should be redirected
-    }
+    // logout() always redirects to the sign-in page, also when the API call fails
+    await logout()
   }
 
   if (variant === "dropdown") {

@@ -1,12 +1,12 @@
 import { randomBytes } from "crypto"
+import { env } from "@/lib/env"
 import { prisma } from "@/lib/prisma"
 
 /**
  * Build the absolute, publicly accessible read-only URL for a task share token.
  */
 export function buildTaskShareUrl(shareToken: string): string {
-  const base = process.env.NEXTAUTH_URL || "http://localhost:3000"
-  return `${base}/public/task/${shareToken}`
+  return new URL(`/public/task/${shareToken}`, env.APP_URL).toString()
 }
 
 /**

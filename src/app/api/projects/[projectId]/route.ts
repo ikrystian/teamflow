@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
+import { getSession } from "@/lib/auth/session"
 import { prisma } from "@/lib/prisma"
 import { isAdmin } from "@/lib/admin"
 import { unlink, rm } from "fs/promises"
 import { join } from "path"
 import { existsSync } from "fs"
-import type { Session } from "next-auth"
+import type { AppSession as Session } from "@/lib/auth/types"
+import { isAssignableClient, withClientRef } from "@/lib/crm/directory"
 
 // Helper function to safely delete files and directories
 async function deleteFilesSafely(paths: string[]) {
@@ -36,7 +36,7 @@ export async function GET(
   { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions) as Session | null
+    const session = await getSession() as Session | null
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -77,12 +77,6 @@ export async function GET(
           name: true,
           email: true,
           avatarUrl: true
-        }
-      },
-      client: {
-        select: {
-          id: true,
-          name: true
         }
       },
       members: {
@@ -184,8 +178,9 @@ export async function GET(
       }))
     }
 
+    // Klient pochodzi z modułu CRM (PostgreSQL) — dołączany po identyfikatorze.
     const projectWithMappedTasks = {
-      ...project,
+      ...(await withClientRef(project)),
       tasks: mappedTasks
     }
 
@@ -204,7 +199,7 @@ export async function PATCH(
   { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions) as Session | null
+    const session = await getSession() as Session | null
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -264,6 +259,11 @@ export async function PATCH(
       )
     }
 
+    // Niezmieniony identyfikator przepuszczamy (np. klient sprzed importu do CRM).
+    if (clientId && clientId !== existingProject.clientId && !(await isAssignableClient(session.user.id, clientId))) {
+      return NextResponse.json({ error: "Nieprawidłowy klient" }, { status: 400 })
+    }
+
     const project = await prisma.project.update({
       where: {
         id: projectId
@@ -290,13 +290,6 @@ export async function PATCH(
         ...(githubRepo !== undefined && { githubRepo: githubRepo || null })
       },
       include: {
-
-        client: {
-          select: {
-            id: true,
-            name: true
-          }
-        },
         tasks: {
           where: { deletedAt: null, archived: false }, // hide soft-deleted tasks
           select: {
@@ -317,7 +310,7 @@ export async function PATCH(
       }
     })
 
-    return NextResponse.json({ project })
+    return NextResponse.json({ project: await withClientRef(project) })
   } catch (error) {
     console.error("Error updating project:", error)
     return NextResponse.json(
@@ -332,7 +325,7 @@ export async function DELETE(
   { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions) as Session | null
+    const session = await getSession() as Session | null
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

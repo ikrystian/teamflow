@@ -1,19 +1,14 @@
-import { redirect } from "next/navigation"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
-import { DashboardLayout } from "@/components/dashboard/layout"
+import { CrmDashboardSection } from "@/components/clients/crm-dashboard-section"
 import { DashboardContent } from "@/components/dashboard/content"
+import { getAuthState, optionalWorkspace } from "@/lib/dal/session"
+import { isManagerRole } from "@/lib/roles"
 
 export default async function Dashboard() {
-  const session = await getServerSession(authOptions)
-
-  if (!session) {
-    redirect("/auth/signin")
-  }
+  // Sesję sprawdza layout panelu; sekcja klientów tylko dla osób z dostępem do CRM i sejfu.
+  const state = await getAuthState()
+  const ctx = state && state.hasVault && !isManagerRole(state.user.role) ? await optionalWorkspace(state) : null
 
   return (
-    <DashboardLayout>
-      <DashboardContent />
-    </DashboardLayout>
+    <DashboardContent crmSection={ctx ? <CrmDashboardSection ctx={ctx} /> : null} />
   )
 }

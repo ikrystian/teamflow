@@ -1,12 +1,14 @@
+import type { Metadata } from "next"
 import { redirect } from "next/navigation"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
+import { getSession } from "@/lib/auth/session"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ArrowRight, Users, Calendar, BarChart3, Clock, CheckCircle, Zap, Star, Lightbulb, Shield, Sparkles, ChevronDown, Play, TrendingUp, Target, Layers } from "lucide-react"
 
+export const metadata: Metadata = { robots: { index: true, follow: true } }
+
 export default async function Home() {
-  const session = await getServerSession(authOptions)
+  const session = await getSession()
 
   if (session) {
     redirect("/dashboard")
@@ -398,30 +400,6 @@ export default async function Home() {
         </div>
       </footer>
 
-      {/* Intersection Observer Script */}
-      <script dangerouslySetInnerHTML={{
-        __html: `
-          if (typeof window !== 'undefined') {
-            const observerOptions = {
-              threshold: 0.1,
-              rootMargin: '0px 0px -100px 0px'
-            };
-
-            const observer = new IntersectionObserver((entries) => {
-              entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                  entry.target.classList.add('is-visible');
-                }
-              });
-            }, observerOptions);
-
-            document.addEventListener('DOMContentLoaded', () => {
-              const fadeElements = document.querySelectorAll('.fade-in-section');
-              fadeElements.forEach(el => observer.observe(el));
-            });
-          }
-        `
-      }} />
     </div>
   )
 }

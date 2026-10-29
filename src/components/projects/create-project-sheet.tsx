@@ -14,12 +14,15 @@ interface CreateProjectSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onProjectCreated: () => void
+  /** Preselected CRM client (e.g. when creating a project from the client card). */
+  defaultClientId?: string | null
 }
 
 export function CreateProjectSheet({
   open,
   onOpenChange,
   onProjectCreated,
+  defaultClientId,
 }: CreateProjectSheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -33,6 +36,7 @@ export function CreateProjectSheet({
               onProjectCreated={onProjectCreated}
               onClose={() => onOpenChange(false)}
               showIconSelector={true}
+              defaultClientId={defaultClientId}
             />
           </div>
         </SheetHeader>

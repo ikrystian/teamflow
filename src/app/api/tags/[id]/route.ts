@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
+import { getSession } from "@/lib/auth/session"
 import { prisma } from "@/lib/prisma"
 
 // GET /api/tags/[id] - Get a specific tag
@@ -9,7 +8,7 @@ export async function GET(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const session = await getServerSession(authOptions)
+        const session = await getSession()
 
         if (!session?.user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -55,7 +54,7 @@ export async function PATCH(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const session = await getServerSession(authOptions)
+        const session = await getSession()
 
         if (!session?.user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -111,7 +110,7 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const session = await getServerSession(authOptions)
+        const session = await getSession()
 
         if (!session?.user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
