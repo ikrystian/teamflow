@@ -13,6 +13,15 @@ const nextConfig: NextConfig = {
     // Szyfrogramy załączników sejfu i importów CSV mogą przekraczać domyślny 1 MB.
     serverActions: { bodySizeLimit: "16mb" },
   },
+  turbopack: {
+    // Usuwanie plików z katalogu uploads/ wymaga dynamicznej ścieżki; jest zabezpieczone walidacją prefiksu.
+    ignoreIssue: [
+      {
+        path: /src\/app\/api\/projects\/\[projectId\]\/route\.ts$/,
+        title: /Dynamic filesystem access/,
+      },
+    ],
+  },
   images: {
     remotePatterns: [
       {
