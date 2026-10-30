@@ -99,12 +99,12 @@ function DashboardLayoutInner({ children, crm }: DashboardLayoutProps) {
 
   const clientNavigation: NavItem[] = crm
     ? [
-      { name: "Klienci", href: "/dashboard/clients", icon: Users },
-      { name: "Sejf dostępów", href: "/dashboard/vault", icon: Vault },
-      { name: "Do przejrzenia", href: "/dashboard/inbox", icon: Inbox, badge: crm.counts.inbox },
-      { name: "Kondycja haseł", href: "/dashboard/security", icon: ShieldCheck, badge: crm.counts.tasks },
-      ...(crm.canSeeActivity ? [{ name: "Dziennik zdarzeń", href: "/dashboard/activity", icon: Activity }] : []),
-    ]
+        { name: "Klienci", href: "/dashboard/clients", icon: Users },
+        { name: "Sejf dostępów", href: "/dashboard/vault", icon: Vault },
+        { name: "Do przejrzenia", href: "/dashboard/inbox", icon: Inbox, badge: crm.counts.inbox },
+        { name: "Kondycja haseł", href: "/dashboard/security", icon: ShieldCheck, badge: crm.counts.tasks },
+        ...(crm.canSeeActivity ? [{ name: "Dziennik zdarzeń", href: "/dashboard/activity", icon: Activity }] : []),
+      ]
     : []
 
   // Function to check if a navigation item is active
@@ -134,7 +134,7 @@ function DashboardLayoutInner({ children, crm }: DashboardLayoutProps) {
   // idempotent, so overlapping calls from several open tabs are harmless.
   useEffect(() => {
     const tick = () => {
-      fetch("/api/cron/reminders").catch(() => { })
+      fetch("/api/cron/reminders").catch(() => {})
     }
     const initial = setTimeout(tick, 5000)
     const interval = setInterval(tick, 5 * 60 * 1000)

@@ -39,7 +39,7 @@ export const dynamic = "force-dynamic"
 // Convert basic HTML (stored from TipTap editor) to Markdown so ReactMarkdown can render it properly.
 function htmlToMarkdown(html: string): string {
   if (!html) return ""
-
+  
   // If it doesn't look like HTML (no tag-like structure), return it as is
   if (!/<[a-z][\s\S]*>/i.test(html)) {
     return html
@@ -128,10 +128,10 @@ function getMarkdownComponents(projectColor: string): Record<string, React.Compo
       <h1 className="text-lg font-bold text-neutral-900 dark:text-neutral-50 mt-6 mb-3 border-b pb-1.5 border-neutral-100 dark:border-neutral-800" {...props} />
     ),
     h2: ({ node, ...props }) => (
-      <h2
-        className="text-base font-semibold text-neutral-900 dark:text-neutral-50 mt-5 mb-2.5 border-l-2 pl-2"
+      <h2 
+        className="text-base font-semibold text-neutral-900 dark:text-neutral-50 mt-5 mb-2.5 border-l-2 pl-2" 
         style={{ borderLeftColor: projectColor }}
-        {...props}
+        {...props} 
       />
     ),
     h3: ({ node, ...props }) => (
@@ -141,12 +141,12 @@ function getMarkdownComponents(projectColor: string): Record<string, React.Compo
       <p className="text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed mb-3" {...props} />
     ),
     a: ({ node, ...props }) => (
-      <a
-        className="hover:underline font-medium transition-colors"
+      <a 
+        className="hover:underline font-medium transition-colors" 
         style={{ color: projectColor }}
-        target="_blank"
-        rel="noopener noreferrer"
-        {...props}
+        target="_blank" 
+        rel="noopener noreferrer" 
+        {...props} 
       />
     ),
     ul: ({ node, ...props }) => (
@@ -159,10 +159,10 @@ function getMarkdownComponents(projectColor: string): Record<string, React.Compo
       <li className="mb-0.5 text-neutral-600 dark:text-neutral-300" {...props} />
     ),
     blockquote: ({ node, ...props }) => (
-      <blockquote
-        className="border-l-2 pl-4 italic my-3 text-neutral-500 dark:text-neutral-400"
+      <blockquote 
+        className="border-l-2 pl-4 italic my-3 text-neutral-500 dark:text-neutral-400" 
         style={{ borderLeftColor: projectColor, backgroundColor: `${projectColor}08` }}
-        {...props}
+        {...props} 
       />
     ),
     code({ node, className, children, ...props }) {
@@ -174,8 +174,8 @@ function getMarkdownComponents(projectColor: string): Record<string, React.Compo
           </code>
         </pre>
       ) : (
-        <code
-          className="px-1 py-0.5 rounded font-mono text-[11px] font-medium"
+        <code 
+          className="px-1 py-0.5 rounded font-mono text-[11px] font-medium" 
           style={{ color: projectColor, backgroundColor: `${projectColor}15` }}
           {...props}
         >
@@ -306,21 +306,21 @@ export async function generateMetadata({
 const formatDate = (date: Date | null) =>
   date
     ? new Date(date).toLocaleDateString("pl-PL", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    })
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
     : null
 
 const formatDateTime = (date: Date | null) =>
   date
     ? new Date(date).toLocaleString("pl-PL", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
     : null
 
 const displayName = (
@@ -372,9 +372,9 @@ export default async function PublicTaskPage({
   return (
     <div className="min-h-screen text-neutral-800 dark:text-neutral-100 font-sans antialiased relative overflow-hidden pb-16">
       <GlassAtmosphere />
-
+      
       {/* Decorative top blur blob */}
-      <div
+      <div 
         className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[350px] opacity-20 dark:opacity-15 blur-3xl pointer-events-none transition-all duration-1000"
         style={{
           background: `radial-gradient(circle 450px at 50% -50px, ${projectColor}, transparent)`
@@ -387,7 +387,7 @@ export default async function PublicTaskPage({
           <div className="flex items-center gap-2 sm:gap-3">
             <NexusLogo size={28} className="size-7" />
             <span className="font-semibold text-sm tracking-tight text-neutral-900 dark:text-neutral-50">Nexus</span>
-
+            
             <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium border bg-neutral-50 text-neutral-600 dark:bg-neutral-900 dark:text-neutral-400 dark:border-neutral-800">
               <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: projectColor }} />
               Karta zadania
@@ -403,7 +403,7 @@ export default async function PublicTaskPage({
       </nav>
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 relative z-10">
-
+        
         {/* Breadcrumbs & Navigation Path */}
         <div className="flex items-center gap-1.5 text-[11px] text-neutral-400 dark:text-neutral-500 mb-3 font-semibold tracking-wide uppercase">
           <span>Projekty</span>
@@ -424,7 +424,7 @@ export default async function PublicTaskPage({
                   </span>
                 )}
                 {task.taskStatus && (
-                  <span
+                  <span 
                     className="text-[10px] font-bold px-2.5 py-0.5 rounded-full border uppercase tracking-wider"
                     style={{
                       borderColor: `${task.taskStatus.color}35`,
@@ -436,12 +436,13 @@ export default async function PublicTaskPage({
                   </span>
                 )}
                 {task.priority && (
-                  <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border uppercase tracking-wider ${task.priority === "HIGH" || task.priority === "URGENT"
+                  <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border uppercase tracking-wider ${
+                    task.priority === "HIGH" || task.priority === "URGENT"
                       ? "border-red-500/20 bg-red-500/5 text-red-600 dark:text-red-400"
                       : task.priority === "MEDIUM"
-                        ? "border-amber-500/20 bg-amber-500/5 text-amber-600 dark:text-amber-400"
-                        : "border-neutral-500/20 bg-neutral-50/5 text-neutral-600 dark:text-neutral-400"
-                    }`}>
+                      ? "border-amber-500/20 bg-amber-500/5 text-amber-600 dark:text-amber-400"
+                      : "border-neutral-500/20 bg-neutral-50/5 text-neutral-600 dark:text-neutral-400"
+                  }`}>
                     {getPriorityDisplayName(task.priority)}
                   </span>
                 )}
@@ -478,17 +479,17 @@ export default async function PublicTaskPage({
 
         {/* Dashboard Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-
+          
           {/* Left / Main Column */}
           <div className="lg:col-span-2 space-y-6">
-
+            
             {/* Description */}
             {task.description && !isDescriptionEmpty(task.description) && (
               <section className="glass-surface rounded-2xl border p-6 sm:p-8">
                 <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-5 flex items-center gap-2">
                   <FileText className="h-4 w-4" style={{ color: projectColor }} /> Opis zadania
                 </h2>
-
+                
                 <div className="prose prose-neutral max-w-none dark:prose-invert prose-sm sm:prose-base prose-headings:font-bold prose-headings:tracking-tight">
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm, remarkBreaks]}
@@ -512,16 +513,16 @@ export default async function PublicTaskPage({
                       {completedTodos} z {task.todos.length} ({progressPercent}%)
                     </span>
                   </div>
-
+                  
                   {/* Beautiful Progress Bar */}
                   <div className="w-full bg-neutral-100 dark:bg-neutral-800 h-2 rounded-full overflow-hidden mt-3 border border-neutral-200/20 dark:border-neutral-700/20">
-                    <div
-                      className="h-full transition-all duration-700 ease-out rounded-full shadow-sm"
-                      style={{ width: `${progressPercent}%`, backgroundColor: projectColor }}
+                    <div 
+                      className="h-full transition-all duration-700 ease-out rounded-full shadow-sm" 
+                      style={{ width: `${progressPercent}%`, backgroundColor: projectColor }} 
                     />
                   </div>
                 </div>
-
+                
                 <div className="grid grid-cols-1 gap-2">
                   {task.todos.map((todo) => (
                     <div
@@ -536,10 +537,11 @@ export default async function PublicTaskPage({
                         )}
                       </span>
                       <span
-                        className={`text-sm transition-colors duration-200 ${todo.isCompleted
+                        className={`text-sm transition-colors duration-200 ${
+                          todo.isCompleted
                             ? "text-neutral-400 line-through dark:text-neutral-500 font-normal"
                             : "text-neutral-800 dark:text-neutral-200 font-medium"
-                          }`}
+                        }`}
                       >
                         {todo.title}
                       </span>
@@ -551,14 +553,14 @@ export default async function PublicTaskPage({
 
             {/* Changes / What was done */}
             {task.changes && task.changes.trim() && (
-              <section
+              <section 
                 className="glass-surface rounded-2xl border border-l-4 p-6 sm:p-8"
                 style={{ borderLeftColor: projectColor }}
               >
                 <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-5 flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" /> Co zostało zrobione
                 </h2>
-
+                
                 <div className="prose prose-neutral max-w-none dark:prose-invert prose-sm sm:prose-base prose-headings:font-bold prose-headings:tracking-tight">
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm, remarkBreaks]}
@@ -578,8 +580,8 @@ export default async function PublicTaskPage({
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {task.images.map((image) => (
-                    <div
-                      key={image.id}
+                    <div 
+                      key={image.id} 
                       className="group relative overflow-hidden rounded-xl border border-neutral-200/60 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 aspect-video shadow-sm hover:shadow-md transition-all duration-300"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -615,7 +617,7 @@ export default async function PublicTaskPage({
                       className="flex items-center justify-between p-3.5 rounded-xl border border-neutral-200/60 dark:border-neutral-800/80 hover:border-neutral-300 dark:hover:border-neutral-700 bg-neutral-50/20 hover:bg-neutral-50 dark:bg-neutral-900/10 dark:hover:bg-neutral-800/20 transition-all duration-200 group"
                     >
                       <div className="flex items-center gap-3.5 min-w-0">
-                        <div
+                        <div 
                           className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0 transition-colors"
                           style={{ backgroundColor: `${projectColor}15`, color: projectColor }}
                         >
@@ -641,13 +643,13 @@ export default async function PublicTaskPage({
 
           {/* Right Column / Sidebar */}
           <div className="space-y-6">
-
+            
             {/* Meta Properties Pane */}
             <div className="glass-surface rounded-2xl border p-6">
               <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-5 flex items-center gap-2">
                 <Info className="h-3.5 w-3.5" style={{ color: projectColor }} /> Informacje
               </h3>
-
+              
               <div className="space-y-4">
                 {/* Assignee */}
                 <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800/40 pb-3.5">
@@ -747,12 +749,12 @@ export default async function PublicTaskPage({
                     {totalTime % 1 === 0 ? totalTime : totalTime.toFixed(1)}h
                   </span>
                 </div>
-
+                
                 <div className="relative border-l border-neutral-200 dark:border-neutral-800 pl-4 ml-1 space-y-4 max-h-56 overflow-y-auto pr-1">
                   {task.timeEntries.map((entry) => (
                     <div key={entry.id} className="relative text-xs group">
                       {/* Timeline dot */}
-                      <div
+                      <div 
                         className="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full border bg-white dark:bg-neutral-900 transition-transform group-hover:scale-125"
                         style={{ borderColor: projectColor }}
                       />
@@ -789,8 +791,8 @@ export default async function PublicTaskPage({
 
                 <div className="space-y-3.5 max-h-96 overflow-y-auto pr-1">
                   {task.comments.map((comment) => (
-                    <div
-                      key={comment.id}
+                    <div 
+                      key={comment.id} 
                       className="text-xs p-3.5 rounded-xl border border-neutral-100/80 dark:border-neutral-800 bg-neutral-50/20 hover:bg-neutral-50/40 dark:bg-neutral-900/10 dark:hover:bg-neutral-900/30 transition-all duration-200"
                     >
                       <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-neutral-100 dark:border-neutral-800/40">

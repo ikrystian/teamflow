@@ -66,7 +66,7 @@ export default async function Home() {
                   w jednej intuicyjnej platformie stworzonej dla nowoczesnych zespołów.
                 </p>
               </div>
-
+              
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/auth/signup">
                   <Button size="lg" className="group w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white text-lg px-8 py-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-300">
@@ -172,7 +172,7 @@ export default async function Home() {
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-3">Zarządzanie zadaniami</h3>
               <p className="text-gray-600 leading-relaxed">
-                Twórz, przypisuj i śledź zadania z potężnymi tablicami kanban,
+                Twórz, przypisuj i śledź zadania z potężnymi tablicami kanban, 
                 niestandardowymi przepływami pracy i automatyzacją procesów.
               </p>
             </div>
@@ -183,7 +183,7 @@ export default async function Home() {
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-3">Współpraca zespołowa</h3>
               <p className="text-gray-600 leading-relaxed">
-                Współpraca w czasie rzeczywistym z komentarzami, dyskusjami
+                Współpraca w czasie rzeczywistym z komentarzami, dyskusjami 
                 i udostępnianiem plików w jednym miejscu.
               </p>
             </div>
@@ -194,7 +194,7 @@ export default async function Home() {
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-3">Śledzenie czasu</h3>
               <p className="text-gray-600 leading-relaxed">
-                Dokładne raporty czasowe i analityka produktywności
+                Dokładne raporty czasowe i analityka produktywności 
                 z automatycznym śledzeniem aktywności.
               </p>
             </div>
@@ -205,7 +205,7 @@ export default async function Home() {
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-3">Widok kalendarza</h3>
               <p className="text-gray-600 leading-relaxed">
-                Wizualizacja terminów, kamieni milowych i harmonogramów
+                Wizualizacja terminów, kamieni milowych i harmonogramów 
                 projektów w przejrzystym kalendarzu.
               </p>
             </div>
@@ -216,7 +216,7 @@ export default async function Home() {
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-3">Analityka</h3>
               <p className="text-gray-600 leading-relaxed">
-                Szczegółowe raporty i metryki wydajności
+                Szczegółowe raporty i metryki wydajności 
                 z inteligentными wglądami w produktywność zespołu.
               </p>
             </div>
@@ -227,7 +227,7 @@ export default async function Home() {
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-3">Bezpieczeństwo</h3>
               <p className="text-gray-600 leading-relaxed">
-                Zabezpieczenia na poziomie enterprise z szyfrowaniem danych
+                Zabezpieczenia na poziomie enterprise z szyfrowaniem danych 
                 i kontrolą dostępu opartą na rolach.
               </p>
             </div>
@@ -244,7 +244,7 @@ export default async function Home() {
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900">
                 Zbudowany dla nowoczesnych zespołów
               </h2>
-
+              
               <div className="space-y-6">
                 {[
                   {
@@ -272,7 +272,7 @@ export default async function Home() {
                     color: "bg-purple-600"
                   }
                 ].map((benefit, index) => (
-                  <div
+                  <div 
                     key={index}
                     className="flex items-start space-x-4 group cursor-pointer p-4 rounded-2xl hover:bg-gray-50 transition-all duration-300"
                   >
@@ -303,7 +303,7 @@ export default async function Home() {
                     { label: "Zadowolenie klientów", value: "98%", color: "text-purple-600" },
                     { label: "Czas działania", value: "99.9%", color: "text-orange-600" }
                   ].map((stat, index) => (
-                    <div
+                    <div 
                       key={index}
                       className="flex justify-between items-center group cursor-pointer p-3 rounded-lg hover:bg-white transition-all duration-300"
                     >
@@ -330,7 +330,7 @@ export default async function Home() {
               Gotowy na transformację?
             </h2>
             <p className="text-xl text-blue-100 max-w-2xl mx-auto leading-relaxed">
-              Dołącz do tysięcy zespołów, które już korzystają z Nexus, aby realizować projekty
+              Dołącz do tysięcy zespołów, które już korzystają z Nexus, aby realizować projekty 
               szybciej i bardziej efektywnie niż kiedykolwiek wcześniej.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -361,14 +361,14 @@ export default async function Home() {
                 Nowoczesne zarządzanie projektami dla nowoczesnych zespołów.
               </p>
             </div>
-
+            
             {[
               {
                 title: "Produkt",
                 links: ["Funkcje", "Korzyści", "Cennik"]
               },
               {
-                title: "Wsparcie",
+                title: "Wsparcie", 
                 links: ["Centrum pomocy", "Kontakt", "Dokumentacja"]
               },
               {
@@ -390,7 +390,7 @@ export default async function Home() {
               </div>
             ))}
           </div>
-
+          
           <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
             <p>&copy; 2025 Nexus. Wszystkie prawa zastrzeżone.</p>
           </div>
