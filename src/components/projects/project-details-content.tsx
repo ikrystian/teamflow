@@ -572,8 +572,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
       createdBy: task.createdBy ? {
         ...task.createdBy,
         email: projectMembers.find(m => m.id === task.createdBy?.id)?.email || ''
-      } : undefined,
-      timeEntries: []
+      } : undefined
     }))
   }
 
