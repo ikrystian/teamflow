@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { GlassAtmosphere } from "@/components/layout/glass-atmosphere";
+import { NexusLogo } from "@/components/ui/nexus-logo";
 
 export default function LegalLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -7,7 +8,10 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
       <GlassAtmosphere />
       <header className="glass-surface sticky top-0 z-10 border-b">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4">
-          <Link href="/" className="font-semibold">Nexus</Link>
+          <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
+            <NexusLogo size={24} className="size-6" />
+            Nexus
+          </Link>
           <nav className="flex flex-wrap gap-3 text-sm text-muted-foreground">
             <Link href="/legal/privacy" className="hover:underline">Prywatność</Link>
             <Link href="/legal/terms" className="hover:underline">Regulamin</Link>

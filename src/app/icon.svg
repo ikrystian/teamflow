@@ -1,10 +1,72 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#3b82f6"/>
-      <stop offset="1" stop-color="#1d4ed8"/>
+    <!-- Background: Obsidian glass with subtle depth -->
+    <linearGradient id="nexus-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0c101d"/>
+      <stop offset="50%" stop-color="#070a14"/>
+      <stop offset="100%" stop-color="#020408"/>
     </linearGradient>
+
+    <!-- Glass Rim Highlight -->
+    <linearGradient id="nexus-rim" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.28"/>
+      <stop offset="45%" stop-color="#6366f1" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.1"/>
+    </linearGradient>
+
+    <!-- Ambient Core Glow -->
+    <radialGradient id="nexus-ambient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#6366f1" stop-opacity="0.55"/>
+      <stop offset="60%" stop-color="#8b5cf6" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Left Pillar: Electric Cyan -> Indigo -->
+    <linearGradient id="nexus-left" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#4f46e5"/>
+    </linearGradient>
+
+    <!-- Right Pillar: Indigo -> Vibrant Fuchsia -->
+    <linearGradient id="nexus-right" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#818cf8"/>
+      <stop offset="50%" stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#ec4899"/>
+    </linearGradient>
+
+    <!-- Diagonal Traverse: High-energy Spectral Stream -->
+    <linearGradient id="nexus-diag" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="25%" stop-color="#60a5fa"/>
+      <stop offset="50%" stop-color="#818cf8"/>
+      <stop offset="75%" stop-color="#c084fc"/>
+      <stop offset="100%" stop-color="#f472b6"/>
+    </linearGradient>
+
+    <!-- Overlap shadow for 3D depth -->
+    <filter id="nexus-shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="-0.4" dy="0.8" stdDeviation="0.9" flood-color="#000000" flood-opacity="0.7"/>
+    </filter>
   </defs>
-  <rect width="32" height="32" rx="7" fill="url(#g)"/>
-  <path transform="translate(5.2 5.2) scale(0.9)" d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" fill="#fff" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/>
+
+  <!-- Base Squircle -->
+  <rect width="32" height="32" rx="7.5" fill="url(#nexus-bg)"/>
+  <rect width="31" height="31" x="0.5" y="0.5" rx="7" fill="none" stroke="url(#nexus-rim)" stroke-width="1"/>
+  <circle cx="16" cy="16" r="9" fill="url(#nexus-ambient)"/>
+
+  <!-- Left Pillar -->
+  <rect x="6.5" y="6.5" width="4" height="19" rx="2" fill="url(#nexus-left)"/>
+
+  <!-- Right Pillar -->
+  <rect x="21.5" y="6.5" width="4" height="19" rx="2" fill="url(#nexus-right)"/>
+
+  <!-- Diagonal Nexus Beam with drop shadow over pillars -->
+  <g filter="url(#nexus-shadow)">
+    <line x1="8.5" y1="8.5" x2="23.5" y2="23.5" stroke="url(#nexus-diag)" stroke-width="4" stroke-linecap="round"/>
+  </g>
+
+  <!-- Central Nexus Core: 4-point brilliant star flare -->
+  <circle cx="16" cy="16" r="3.2" fill="#38bdf8" opacity="0.45"/>
+  <circle cx="16" cy="16" r="1.3" fill="#ffffff"/>
+  <path d="M 16 13.2 Q 16 16 13.2 16 Q 16 16 16 18.8 Q 16 16 18.8 16 Q 16 16 16 13.2 Z" fill="#ffffff"/>
 </svg>

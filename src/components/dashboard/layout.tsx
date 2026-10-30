@@ -4,6 +4,8 @@ import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { Suspense, useEffect, useState } from "react"
 
+import { NexusLogo } from "@/components/ui/nexus-logo"
+
 import {
   Activity,
   Bell,
@@ -17,7 +19,6 @@ import {
   ShieldCheck,
   Users,
   Vault,
-  Zap,
   Webhook,
   SquarePen,
   Settings,
@@ -98,12 +99,12 @@ function DashboardLayoutInner({ children, crm }: DashboardLayoutProps) {
 
   const clientNavigation: NavItem[] = crm
     ? [
-        { name: "Klienci", href: "/dashboard/clients", icon: Users },
-        { name: "Sejf dostępów", href: "/dashboard/vault", icon: Vault },
-        { name: "Do przejrzenia", href: "/dashboard/inbox", icon: Inbox, badge: crm.counts.inbox },
-        { name: "Kondycja haseł", href: "/dashboard/security", icon: ShieldCheck, badge: crm.counts.tasks },
-        ...(crm.canSeeActivity ? [{ name: "Dziennik zdarzeń", href: "/dashboard/activity", icon: Activity }] : []),
-      ]
+      { name: "Klienci", href: "/dashboard/clients", icon: Users },
+      { name: "Sejf dostępów", href: "/dashboard/vault", icon: Vault },
+      { name: "Do przejrzenia", href: "/dashboard/inbox", icon: Inbox, badge: crm.counts.inbox },
+      { name: "Kondycja haseł", href: "/dashboard/security", icon: ShieldCheck, badge: crm.counts.tasks },
+      ...(crm.canSeeActivity ? [{ name: "Dziennik zdarzeń", href: "/dashboard/activity", icon: Activity }] : []),
+    ]
     : []
 
   // Function to check if a navigation item is active
@@ -133,7 +134,7 @@ function DashboardLayoutInner({ children, crm }: DashboardLayoutProps) {
   // idempotent, so overlapping calls from several open tabs are harmless.
   useEffect(() => {
     const tick = () => {
-      fetch("/api/cron/reminders").catch(() => {})
+      fetch("/api/cron/reminders").catch(() => { })
     }
     const initial = setTimeout(tick, 5000)
     const interval = setInterval(tick, 5 * 60 * 1000)
@@ -172,9 +173,7 @@ function DashboardLayoutInner({ children, crm }: DashboardLayoutProps) {
             <SidebarMenuItem className="flex items-center gap-1">
               <SidebarMenuButton asChild size="lg" className="h-10 flex-1 hover:bg-transparent active:bg-transparent">
                 <Link href="/dashboard">
-                  <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-primary to-[oklch(0.45_0.2_290)] text-primary-foreground shadow-sm">
-                    <Zap className="size-3.5! fill-current" />
-                  </div>
+                  <NexusLogo size={24} className="size-6 shrink-0" />
                   <span className="truncate text-sm font-semibold tracking-tight">Nexus</span>
                 </Link>
               </SidebarMenuButton>

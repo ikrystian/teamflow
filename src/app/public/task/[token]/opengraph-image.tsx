@@ -125,22 +125,18 @@ export default async function Image({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            <span
-              style={{
-                display: 'flex',
-                height: 36,
-                width: 36,
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: 10,
-                backgroundColor: '#ffffff',
-                color: '#09090b',
-                fontWeight: 800,
-                fontSize: 18,
-              }}
+            <svg
+              width="36"
+              height="36"
+              viewBox="0 0 32 32"
+              style={{ display: 'flex' }}
             >
-              N
-            </span>
+              <rect width="32" height="32" rx="7.5" fill="#0c101d" stroke="#6366f1" strokeWidth="1" />
+              <rect x="6.5" y="6.5" width="4" height="19" rx="2" fill="#38bdf8" />
+              <rect x="21.5" y="6.5" width="4" height="19" rx="2" fill="#ec4899" />
+              <line x1="8.5" y1="8.5" x2="23.5" y2="23.5" stroke="#818cf8" strokeWidth="4" strokeLinecap="round" />
+              <circle cx="16" cy="16" r="2.2" fill="#ffffff" />
+            </svg>
             <span
               style={{
                 fontSize: 22,
