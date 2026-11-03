@@ -25,6 +25,7 @@ import {
   Settings,
   Info,
   Send,
+  Archive,
 } from "lucide-react"
 import Link from "next/link"
 import { KanbanBoard } from "@/components/shared/kanban-board"
@@ -120,6 +121,8 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const { viewMode, updateViewMode, isLoaded: viewPreferencesLoaded } = useProjectViewPreferences(projectId)
   const [taskFilter, setTaskFilter] = useState<"all" | "mine" | string>("all")
+  // Board only: when on, archived tasks are shown too and can be restored per column.
+  const [showArchived, setShowArchived] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const router = useRouter()
   // const { projects } = useProjects()
@@ -218,6 +221,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         order: "asc",
       })
       if (assigneeFilter) params.set("assigneeId", assigneeFilter)
+      if (showArchived) params.set("includeArchived", "true")
       try {
         const response = await fetch(`/api/projects/${projectId}/tasks?${params.toString()}`)
         if (!response.ok) return { tasks: [], total: 0 }
@@ -228,7 +232,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
         return { tasks: [], total: 0 }
       }
     },
-    [projectId, assigneeFilter]
+    [projectId, assigneeFilter, showArchived]
   )
 
   // Load the first page (and total count) of every column. Used on initial board
@@ -392,6 +396,19 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                 </Button>
               ))}
             </div>
+
+            {viewMode === "board" && (
+              <Button
+                variant={showArchived ? "secondary" : "outline"}
+                size="sm"
+                onClick={() => setShowArchived(prev => !prev)}
+                title={showArchived ? "Ukryj zarchiwizowane zadania" : "Pokaż zarchiwizowane zadania"}
+                aria-pressed={showArchived}
+              >
+                <Archive className="h-4 w-4" />
+                <span className="hidden lg:inline">{showArchived ? "Ukryj archiwum" : "Pokaż archiwum"}</span>
+              </Button>
+            )}
 
             {/* Below lg the outline buttons collapse to icons so the fixed-height
                 header doesn't overflow horizontally on medium screens. */}
@@ -867,6 +884,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                 columnTotals={columnTotals}
                 columnHasMore={columnHasMore}
                 onLoadMore={loadMoreColumn}
+                showArchived={showArchived}
                 onTaskUpdated={handleTaskUpdated}
                 onTaskEdit={handleEditTask}
                 onTimeTracking={handleTimeTracking}

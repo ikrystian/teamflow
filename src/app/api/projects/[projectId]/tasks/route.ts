@@ -55,6 +55,7 @@ export async function GET(
     const statusId = searchParams.get("statusId")
     const assigneeId = searchParams.get("assigneeId")
     const order = searchParams.get("order") === "asc" ? "asc" : "desc"
+    const includeArchived = searchParams.get("includeArchived") === "true"
 
     const skipParam = parseInt(searchParams.get("skip") ?? "", 10)
     const takeParam = parseInt(searchParams.get("take") ?? "", 10)
@@ -66,7 +67,8 @@ export async function GET(
     const where: Prisma.TaskWhereInput = {
       projectId,
       deletedAt: null, // hide soft-deleted tasks
-      archived: false, // hide archived tasks
+      // hide archived tasks unless the board asks to show them
+      ...(!includeArchived && { archived: false }),
       ...(statusId && { statusId }),
       ...(assigneeId && { assigneeId }),
     }

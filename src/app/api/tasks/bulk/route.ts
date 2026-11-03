@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 
     const { taskIds, statusId, projectId, assigneeId, action } = await request.json()
 
-    if (action !== "delete" && action !== "archive") {
+    if (action !== "delete" && action !== "archive" && action !== "unarchive") {
       return NextResponse.json({ error: "Invalid action" }, { status: 400 })
     }
 
@@ -36,7 +36,8 @@ export async function POST(request: NextRequest) {
       whereClause = {
         statusId,
         deletedAt: null,
-        archived: false,
+        // "unarchive" works on the archived tasks, every other action on the active ones
+        archived: action === "unarchive",
         ...(projectId && { projectId }),
         ...(assigneeId && { assigneeId })
       }
@@ -93,6 +94,16 @@ export async function POST(request: NextRequest) {
         },
         data: {
           archived: true
+        }
+      })
+      return NextResponse.json({ success: true, count: allowedTaskIds.length })
+    } else if (action === "unarchive") {
+      await prisma.task.updateMany({
+        where: {
+          id: { in: allowedTaskIds }
+        },
+        data: {
+          archived: false
         }
       })
       return NextResponse.json({ success: true, count: allowedTaskIds.length })

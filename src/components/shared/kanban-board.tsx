@@ -8,7 +8,7 @@ import { ClickableAvatar } from "@/components/ui/clickable-avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar, Clock, MoreHorizontal, Plus, AlertCircle, Trash2, X, Check, Loader2, Send, CalendarClock, GitBranch, Archive, BarChart3, Timer, Images, MessageSquare } from "lucide-react"
+import { Calendar, Clock, MoreHorizontal, Plus, AlertCircle, Trash2, X, Check, Loader2, Send, CalendarClock, GitBranch, Archive, ArchiveRestore, BarChart3, Timer, Images, MessageSquare } from "lucide-react"
 import { ImageLightbox } from "@/components/ui/image-lightbox"
 import {
   DropdownMenu,
@@ -105,6 +105,8 @@ export interface KanbanBoardProps {
   columnTotals?: Record<string, number>
   columnHasMore?: Record<string, boolean>
   onLoadMore?: (statusId: string) => void
+  /** Archived tasks are shown on the board; the columns offer to restore them. */
+  showArchived?: boolean
 }
 
 interface StatusColumn extends TaskStatus {
@@ -302,6 +304,11 @@ function SortableTaskCard({
                         )}
                         {task.title}
                       </h4>
+                      {task.archived && (
+                        <Badge variant="outline" className="text-[10px] font-medium text-muted-foreground">
+                          Zarchiwizowane
+                        </Badge>
+                      )}
                       {task.changesSentAt && (
                         <div title="Wiadomość wysłana na Slack" className="inline-flex">
                           <Send className="h-3 w-3 text-green-600 flex-shrink-0" />
@@ -722,6 +729,7 @@ function KanbanColumn({
   columnTotal,
   serverHasMore,
   onLoadMore,
+  showArchived,
 }: {
   status: StatusColumn
   tasks: Task[]
@@ -754,6 +762,8 @@ function KanbanColumn({
   serverHasMore?: boolean
   /** Called when the scroll sentinel appears, to fetch the next server page. */
   onLoadMore?: (statusId: string) => void
+  /** Whether archived tasks are visible on the board (enables "restore" in the menu). */
+  showArchived?: boolean
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -807,7 +817,7 @@ function KanbanColumn({
     }
   }
 
-  const handleBulkAction = async (action: "delete" | "archive") => {
+  const handleBulkAction = async (action: "delete" | "archive" | "unarchive") => {
     setBulkLoading(true)
     try {
       const response = await fetch("/api/tasks/bulk", {
@@ -826,7 +836,9 @@ function KanbanColumn({
         toast.success(
           action === "delete"
             ? `Usunięto ${data.count} zadań z kolumny`
-            : `Zarchiwizowano ${data.count} zadań z kolumny`
+            : action === "archive"
+              ? `Zarchiwizowano ${data.count} zadań z kolumny`
+              : `Przywrócono ${data.count} zadań z archiwum`
         )
         onTaskCreated() // Refresh the board
       } else {
@@ -944,6 +956,16 @@ function KanbanColumn({
                 <Archive className="mr-2 h-4 w-4" />
                 Archiwizuj wszystkie zadania
               </DropdownMenuItem>
+              {showArchived && (
+                <DropdownMenuItem
+                  onClick={() => handleBulkAction("unarchive")}
+                  disabled={bulkLoading}
+                  className="cursor-pointer"
+                >
+                  <ArchiveRestore className="mr-2 h-4 w-4" />
+                  Przywróć zarchiwizowane zadania
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 onClick={() => {
@@ -1203,6 +1225,7 @@ export function KanbanBoard({
   columnTotals,
   columnHasMore,
   onLoadMore,
+  showArchived,
 }: KanbanBoardProps) {
   const { data: sessionFromHook } = useSession()
   const session: Session | null = (sessionProp ?? (sessionFromHook as Session | null)) ?? null
@@ -1613,6 +1636,7 @@ export function KanbanBoard({
             columnTotal={columnTotals?.[status.id]}
             serverHasMore={columnHasMore?.[status.id]}
             onLoadMore={onLoadMore}
+            showArchived={showArchived}
           />
         )) : (
           <div className="flex items-center justify-center w-full h-64 text-muted-foreground">
