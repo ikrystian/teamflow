@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { deleteGithubBranch } from "@/lib/github"
 import { sendDoneTaskChangesToSlack } from "@/lib/slack-task-message"
+import { MERGE_REQUEST_ESTIMATE_DESCRIPTION, commitEntryDescription } from "@/lib/time-entry-descriptions"
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 const OPENROUTER_MODEL = "deepseek/deepseek-v4-flash"
@@ -327,7 +328,7 @@ async function persistSubtask(
       taskId,
       userId: loggedUserId,
       hours: workHours,
-      description: `Automatyczne zaraportowanie: ${title}`,
+      description: commitEntryDescription(title),
       date: new Date(),
     },
   })
@@ -574,7 +575,7 @@ export async function POST(request: NextRequest) {
       const existingEntry = await prisma.timeEntry.findFirst({
         where: {
           taskId: task.id,
-          description: "Automatyczne zalogowanie czasu zaplanowanego (merge-request)",
+          description: MERGE_REQUEST_ESTIMATE_DESCRIPTION,
         },
       })
 
@@ -582,7 +583,7 @@ export async function POST(request: NextRequest) {
         await prisma.timeEntry.create({
           data: {
             hours: task.estimatedHours,
-            description: "Automatyczne zalogowanie czasu zaplanowanego (merge-request)",
+            description: MERGE_REQUEST_ESTIMATE_DESCRIPTION,
             date: new Date(),
             taskId: task.id,
             userId: loggedUserId,

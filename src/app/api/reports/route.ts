@@ -1,30 +1,23 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSession } from "@/lib/auth/session"
 import { prisma } from "@/lib/prisma"
+import { isSystemAdmin } from "@/lib/roles"
 import type { AppSession as Session } from "@/lib/auth/types"
-import type { Prisma } from "@prisma/client"
+import { type DateRange, daysBetween, dayKeyInZone, isDayKey, isValidTimeZone } from "@/lib/reports/period"
+import { type TimeReportInput, buildTimeCsv, buildTimeReport } from "@/lib/reports/time-report"
 
-type TaskWithIncludes = Prisma.TaskGetPayload<{
-  include: {
-    taskStatus: true
-    project: true
-    timeEntries: true
-    taskTags: {
-      include: {
-        tag: true
-      }
-    }
-    assignee: {
-      select: {
-        id: true
-        name: true
-        email: true
-        avatarUrl: true
-      }
-    }
-  }
-}>
+const DEFAULT_TIME_ZONE = "Europe/Warsaw"
+const MAX_RANGE_DAYS = 3660
 
+function parseRange(from: string | null, to: string | null): DateRange | null | "invalid" {
+  if (!from && !to) return null
+  if (!isDayKey(from) || !isDayKey(to) || from > to || daysBetween(from, to) > MAX_RANGE_DAYS) return "invalid"
+  return { from, to }
+}
+
+// Raport czasu: godziny z wpisów czasu i podzadań (jak na kartach zadań) w wybranym
+// okresie. Okres przychodzi jako daty kalendarzowe (`from`/`to`, włącznie) wraz ze
+// strefą użytkownika (`tz`); `format=csv` zwraca pojedyncze wpisy z okresu.
 export async function GET(request: NextRequest) {
   try {
     const session = await getSession() as Session | null
@@ -33,296 +26,124 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const userId = session.user.id
     const { searchParams } = new URL(request.url)
-    const timeRange = searchParams.get("timeRange") || "month" // week, month, quarter, year, custom
-    const startDate = searchParams.get("startDate")
-    const endDate = searchParams.get("endDate")
-    const projectId = searchParams.get("projectId") // optional: filter by a single project ("all" or null = all projects)
+    const tzParam = searchParams.get("tz")
+    const timeZone = tzParam && isValidTimeZone(tzParam) ? tzParam : DEFAULT_TIME_ZONE
+    const range = parseRange(searchParams.get("from"), searchParams.get("to"))
+    const compareRange = parseRange(searchParams.get("compareFrom"), searchParams.get("compareTo"))
+    const projectParam = searchParams.get("projectId")
+    const projectId = projectParam && projectParam !== "all" ? projectParam : null
+    const personParam = searchParams.get("personId")
+    const personId = personParam && personParam !== "all" ? personParam : null
 
-    // Calculate date range
-    let dateFilter = {}
-    const now = new Date()
-
-    if (timeRange === "custom" && startDate && endDate) {
-      dateFilter = {
-        gte: new Date(startDate),
-        lte: new Date(endDate)
-      }
-    } else if (timeRange === "week") {
-      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-      dateFilter = { gte: weekAgo }
-    } else if (timeRange === "month") {
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-      dateFilter = { gte: monthStart }
-    } else if (timeRange === "quarter") {
-      const quarterAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
-      dateFilter = { gte: quarterAgo }
-    } else if (timeRange === "year") {
-      const yearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
-      dateFilter = { gte: yearAgo }
+    if (range === "invalid" || compareRange === "invalid") {
+      return NextResponse.json({ error: "Nieprawidłowy zakres dat" }, { status: 400 })
     }
 
-    // Get all tasks with time entries for the current user
+    // Administrator widzi wszystkie projekty, pozostali — te, których są członkami
+    // lub autorami (jak lista projektów). Zarchiwizowane projekty zostają w raporcie,
+    // bo ich godziny to wciąż przepracowany czas.
+    const admin = isSystemAdmin(session.user.role, session.user.email)
+    const projects = await prisma.project.findMany({
+      where: admin ? {} : { OR: [{ createdById: userId }, { members: { some: { userId } } }] },
+      select: { id: true, name: true, color: true, slug: true, archived: true },
+      orderBy: [{ archived: "asc" }, { sortOrder: "asc" }],
+    })
+
+    if (projectId && !projects.some((project) => project.id === projectId)) {
+      return NextResponse.json({ error: "Project not found or access denied" }, { status: 404 })
+    }
+
+    // Bez `include: { project }` — na MongoDB relacja dociąga cały dokument projektu
+    // (z obrazkiem base64) do każdego zadania. Projekty łączymy w pamięci.
     const tasks = await prisma.task.findMany({
       where: {
-        assigneeId: session.user.id,
         deletedAt: null,
-        ...(Object.keys(dateFilter).length > 0 && { createdAt: dateFilter }),
-        ...(projectId && projectId !== "all" && { projectId })
+        OR: projectId
+          ? [{ projectId }]
+          : [
+              { projectId: { in: projects.map((project) => project.id) } },
+              admin
+                ? { projectId: null }
+                : { projectId: null, OR: [{ assigneeId: userId }, { createdById: userId }] },
+            ],
       },
-      include: {
-        taskStatus: true,
-        project: true,
-        timeEntries: {
-          where: Object.keys(dateFilter).length > 0 ? { date: dateFilter } : {}
+      select: {
+        id: true,
+        key: true,
+        title: true,
+        projectId: true,
+        assigneeId: true,
+        createdById: true,
+        statusId: true,
+        estimatedHours: true,
+        archived: true,
+      },
+    })
+    const taskIds = tasks.map((task) => task.id)
+
+    const [entries, subtasks, statuses, taskTags] = await Promise.all([
+      prisma.timeEntry.findMany({
+        where: { taskId: { in: taskIds } },
+        select: { id: true, taskId: true, userId: true, hours: true, date: true, description: true },
+      }),
+      prisma.todo.findMany({
+        where: { taskId: { in: taskIds }, timeSpent: { not: null } },
+        select: { id: true, taskId: true, title: true, timeSpent: true, createdAt: true },
+      }),
+      prisma.taskStatus.findMany({
+        select: { id: true, name: true, color: true, order: true },
+        orderBy: { order: "asc" },
+      }),
+      prisma.taskTag.findMany({
+        where: { taskId: { in: taskIds } },
+        select: { taskId: true, tag: { select: { id: true, name: true, color: true } } },
+      }),
+    ])
+
+    const personIds = new Set<string>(entries.map((entry) => entry.userId))
+    for (const task of tasks) {
+      if (task.assigneeId) personIds.add(task.assigneeId)
+      if (task.createdById) personIds.add(task.createdById)
+    }
+    if (personId) personIds.add(personId)
+    const people = await prisma.user.findMany({
+      where: { id: { in: [...personIds] } },
+      select: { id: true, name: true, email: true, avatarUrl: true },
+    })
+
+    const input: TimeReportInput = {
+      tasks,
+      entries,
+      subtasks,
+      projects,
+      people,
+      statuses,
+      taskTags,
+      range,
+      compareRange: range ? compareRange : null,
+      personId,
+      timeZone,
+      today: dayKeyInZone(new Date(), timeZone),
+    }
+
+    if (searchParams.get("format") === "csv") {
+      const suffix = range ? (range.from === range.to ? range.from : `${range.from}_${range.to}`) : "caly-okres"
+      return new NextResponse(`﻿${buildTimeCsv(input)}`, {
+        headers: {
+          "Content-Type": "text/csv; charset=utf-8",
+          "Content-Disposition": `attachment; filename="raport-czasu-${suffix}.csv"`,
+          "Cache-Control": "no-store",
         },
-        assignee: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatarUrl: true
-          }
-        },
-        taskTags: {
-          include: {
-            tag: true
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    })
-
-    // Calculate total hours from time entries
-    const totalHours = tasks.reduce((sum: number, task: TaskWithIncludes) => {
-      const taskHours = task.timeEntries.reduce((taskSum: number, entry) => taskSum + entry.hours, 0)
-      return sum + taskHours
-    }, 0)
-
-    // Calculate total estimated hours
-    const totalEstimatedHours = tasks.reduce((sum: number, task: TaskWithIncludes) => sum + (task.estimatedHours || 0), 0)
-
-    // Count tasks by status
-    const tasksByStatus = tasks.reduce((acc: Record<string, { name: string; count: number; color: string }>, task: TaskWithIncludes) => {
-      const statusName = task.taskStatus?.name || 'No Status'
-      const statusColor = task.taskStatus?.color || '#gray'
-      if (!acc[statusName]) {
-        acc[statusName] = { name: statusName, count: 0, color: statusColor }
-      }
-      acc[statusName].count++
-      return acc
-    }, {} as Record<string, { name: string; count: number; color: string }>)
-
-    // Count tasks by priority
-    const tasksByPriority = tasks.reduce((acc: Record<string, number>, task: TaskWithIncludes) => {
-      const priority = task.priority || 'None'
-      if (!acc[priority]) {
-        acc[priority] = 0
-      }
-      acc[priority]++
-      return acc
-    }, {} as Record<string, number>)
-
-    // Calculate hours by project
-    interface ProjectStat {
-      id: string
-      name: string
-      color: string
-      totalHours: number
-      estimatedHours: number
-      taskCount: number
-      completedTasks: number
+      })
     }
 
-    const projectStats = tasks.reduce((acc: Record<string, ProjectStat>, task: TaskWithIncludes) => {
-      // Skip tasks without a project
-      if (!task.project) {
-        return acc
-      }
-
-      const projectId = task.project.id
-      const projectName = task.project.name
-      const projectColor = task.project.color || '#3b82f6'
-
-      if (!acc[projectId]) {
-        acc[projectId] = {
-          id: projectId,
-          name: projectName,
-          color: projectColor,
-          totalHours: 0,
-          estimatedHours: 0,
-          taskCount: 0,
-          completedTasks: 0
-        }
-      }
-
-      const taskHours = task.timeEntries.reduce((sum: number, entry) => sum + entry.hours, 0)
-      acc[projectId].totalHours += taskHours
-      acc[projectId].estimatedHours += task.estimatedHours || 0
-      acc[projectId].taskCount++
-
-      if (task.taskStatus?.name === 'Done') {
-        acc[projectId].completedTasks++
-      }
-
-      return acc
-    }, {} as Record<string, ProjectStat>)
-
-    // Calculate daily hours for chart
-    const dailyHoursMap = new Map<string, number>()
-    tasks.forEach((task) => {
-      task.timeEntries.forEach((entry) => {
-        const dateKey = entry.date.toISOString().split('T')[0]
-        dailyHoursMap.set(dateKey, (dailyHoursMap.get(dateKey) || 0) + entry.hours)
-      })
+    return NextResponse.json({
+      ...buildTimeReport(input),
+      projectOptions: projects,
+      generatedAt: new Date().toISOString(),
     })
-
-    const dailyHours = Array.from(dailyHoursMap.entries())
-      .map(([date, hours]) => ({ date, hours }))
-      .sort((a, b) => a.date.localeCompare(b.date))
-
-    // Calculate tag statistics
-    interface TagStat {
-      id: string
-      name: string
-      color: string
-      totalHours: number
-      estimatedHours: number
-      taskCount: number
-      completedTasks: number
-    }
-
-    const tagStats = tasks.reduce((acc: Record<string, TagStat>, task: TaskWithIncludes) => {
-      const taskHours = task.timeEntries.reduce((sum: number, entry) => sum + entry.hours, 0)
-      const isCompleted = task.taskStatus?.name === 'Done'
-
-      task.taskTags.forEach((taskTag) => {
-        const tag = taskTag.tag
-        if (!acc[tag.id]) {
-          acc[tag.id] = {
-            id: tag.id,
-            name: tag.name,
-            color: tag.color,
-            totalHours: 0,
-            estimatedHours: 0,
-            taskCount: 0,
-            completedTasks: 0
-          }
-        }
-
-        acc[tag.id].totalHours += taskHours
-        acc[tag.id].estimatedHours += task.estimatedHours || 0
-        acc[tag.id].taskCount++
-        if (isCompleted) {
-          acc[tag.id].completedTasks++
-        }
-      })
-
-      return acc
-    }, {} as Record<string, TagStat>)
-
-    // Calculate weekly hours for chart
-    const weeklyHoursMap = new Map<string, number>()
-    tasks.forEach((task) => {
-      task.timeEntries.forEach((entry) => {
-        const date = new Date(entry.date)
-        const weekStart = new Date(date)
-        weekStart.setDate(date.getDate() - date.getDay())
-        const weekKey = weekStart.toISOString().split('T')[0]
-        weeklyHoursMap.set(weekKey, (weeklyHoursMap.get(weekKey) || 0) + entry.hours)
-      })
-    })
-
-    const weeklyHours = Array.from(weeklyHoursMap.entries())
-      .map(([week, hours]) => ({ week, hours }))
-      .sort((a, b) => a.week.localeCompare(b.week))
-
-    // Top 10 tasks by time spent
-    const tasksWithTime = tasks.map((task) => {
-      const totalTime = task.timeEntries.reduce((sum: number, entry) => sum + entry.hours, 0)
-      return {
-        id: task.id,
-        title: task.title,
-        project: task.project?.name || 'No Project',
-        projectColor: task.project?.color || '#3b82f6',
-        status: task.taskStatus?.name || 'No Status',
-        statusColor: task.taskStatus?.color || '#gray',
-        totalHours: totalTime,
-        estimatedHours: task.estimatedHours || 0,
-        difference: totalTime - (task.estimatedHours || 0),
-        priority: task.priority
-      }
-    }).filter((task) => task.totalHours > 0)
-      .sort((a, b) => b.totalHours - a.totalHours)
-      .slice(0, 10)
-
-    // Calculate average time per task
-    const tasksWithTimeCount = tasksWithTime.length
-    const averageTimePerTask = tasksWithTimeCount > 0 ? totalHours / tasksWithTimeCount : 0
-
-    // Get completion status
-    const doneStatus = await prisma.taskStatus.findFirst({
-      where: { name: 'Done' }
-    })
-    const completedTasksCount = tasks.filter((t) => t.statusId === doneStatus?.id).length
-    const completionRate = tasks.length > 0 ? (completedTasksCount / tasks.length) * 100 : 0
-
-    // Estimated vs Actual comparison data
-    const estimatedVsActual = Object.values(projectStats).map((project) => ({
-      project: project.name,
-      estimated: Math.round(project.estimatedHours * 100) / 100,
-      actual: Math.round(project.totalHours * 100) / 100,
-      color: project.color
-    }))
-
-    // Response data
-    const reportData = {
-      summary: {
-        totalTasks: tasks.length,
-        completedTasks: completedTasksCount,
-        completionRate: Math.round(completionRate * 100) / 100,
-        totalHours: Math.round(totalHours * 100) / 100,
-        totalEstimatedHours: Math.round(totalEstimatedHours * 100) / 100,
-        averageTimePerTask: Math.round(averageTimePerTask * 100) / 100,
-        timeVariance: Math.round((totalHours - totalEstimatedHours) * 100) / 100
-      },
-      charts: {
-        tasksByStatus: Object.values(tasksByStatus),
-        tasksByPriority: Object.entries(tasksByPriority).map(([priority, count]) => ({
-          priority,
-          count
-        })),
-        dailyHours,
-        weeklyHours,
-        estimatedVsActual
-      },
-      tables: {
-        topTasksByTime: tasksWithTime,
-        projectStats: Object.values(projectStats).map((project) => ({
-          ...project,
-          totalHours: Math.round(project.totalHours * 100) / 100,
-          estimatedHours: Math.round(project.estimatedHours * 100) / 100,
-          completionRate: project.taskCount > 0
-            ? Math.round((project.completedTasks / project.taskCount) * 100 * 100) / 100
-            : 0
-        })),
-        tagStats: Object.values(tagStats).map((tag) => ({
-          ...tag,
-          totalHours: Math.round(tag.totalHours * 100) / 100,
-          estimatedHours: Math.round(tag.estimatedHours * 100) / 100,
-          completionRate: tag.taskCount > 0
-            ? Math.round((tag.completedTasks / tag.taskCount) * 100 * 100) / 100
-            : 0
-        }))
-      },
-      timeRange,
-      projectId: projectId && projectId !== "all" ? projectId : null,
-      generatedAt: new Date().toISOString()
-    }
-
-    return NextResponse.json(reportData)
   } catch (error) {
     console.error("Error fetching reports:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

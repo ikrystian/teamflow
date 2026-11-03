@@ -7,6 +7,7 @@ import { sendDoneTaskChangesToSlack } from "@/lib/slack-task-message"
 import { computeAutoMoveAt } from "@/lib/auto-move-tasks"
 import { isDoneStatusName, isInProgressStatusName, isTodoStatusName, managerCanEditStatus, managerCanMoveTask } from "@/lib/task-status-helpers"
 import { isManagerRole } from "@/lib/roles"
+import { AUTO_DONE_ESTIMATE_DESCRIPTION } from "@/lib/time-entry-descriptions"
 import type { AppSession as Session } from "@/lib/auth/types"
 
 export async function GET(
@@ -560,7 +561,7 @@ export async function PATCH(
           await prisma.timeEntry.create({
             data: {
               hours: finalEstimatedHours,
-              description: "Automatycznie zarejestrowany czas (szacowany) po oznaczeniu zadania jako zrobione",
+              description: AUTO_DONE_ESTIMATE_DESCRIPTION,
               taskId: resolvedTaskId,
               userId: timeEntryUserId
             }

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma"
 import { deleteGithubBranch } from "@/lib/github"
 import { sendDoneTaskChangesToSlack } from "@/lib/slack-task-message"
 import { isDoneStatusName, isInProgressStatusName } from "@/lib/task-status-helpers"
+import { AUTO_DONE_ESTIMATE_DESCRIPTION } from "@/lib/time-entry-descriptions"
 
 const HOUR_MS = 60 * 60 * 1000
 
@@ -142,7 +143,7 @@ export async function processDueAutoMoves() {
           await prisma.timeEntry.create({
             data: {
               hours: task.estimatedHours,
-              description: "Automatycznie zarejestrowany czas (szacowany) po oznaczeniu zadania jako zrobione",
+              description: AUTO_DONE_ESTIMATE_DESCRIPTION,
               taskId: task.id,
               userId: timeEntryUserId,
             },

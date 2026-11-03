@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useSession } from "@/lib/auth/use-session"
 import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
+import { useCountUp } from "@/hooks/use-count-up"
 import type { Task, User, TaskStatus } from "@/types"
 import type { AppSession as Session } from "@/lib/auth/types"
 import { usePageHeader } from "@/contexts/header-context"
@@ -24,27 +25,6 @@ const pluralizeTasks = (count: number) =>
 
 /** Staggered entrance step for the dashboard's choreographed load (see .glass-rise). */
 const rise = (step: number) => ({ "--rise": step }) as React.CSSProperties
-
-/** Counts from the previously shown value to `target`, so figures roll rather than jump. */
-function useCountUp(target: number) {
-  const [value, setValue] = useState(0)
-  const shown = useRef(0)
-
-  useEffect(() => {
-    const from = shown.current
-    const duration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 900
-    const start = performance.now()
-    let frame = requestAnimationFrame(function tick(now) {
-      const t = duration ? Math.min(1, (now - start) / duration) : 1
-      shown.current = Math.round(from + (target - from) * (1 - (1 - t) ** 4))
-      setValue(shown.current)
-      if (t < 1) frame = requestAnimationFrame(tick)
-    })
-    return () => cancelAnimationFrame(frame)
-  }, [target])
-
-  return value
-}
 
 interface StatTileProps {
   index: string

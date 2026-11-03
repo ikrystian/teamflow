@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { format } from "date-fns"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -113,7 +114,8 @@ export function TimeTrackingSheet({
         body: JSON.stringify({
           hours: parseFloat(hours),
           description: description.trim() || undefined,
-          date: date ? date.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          // Lokalna data kalendarzowa — toISOString() przesuwał wybrany dzień o jeden wstecz (UTC).
+          date: format(date ?? new Date(), "yyyy-MM-dd"),
         }),
       })
 

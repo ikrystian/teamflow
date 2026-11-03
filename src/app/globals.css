@@ -810,3 +810,47 @@ html {
     display: none !important;
   }
 }
+
+/* --- Raporty ---------------------------------------------------------------- */
+
+/* Źródła godzin w raporcie czasu. Trzy barwy przechodzą walidację palety (CVD,
+   pasmo jasności, kontrast) w obu motywach; szacunki celowo dostają neutralną
+   szarość — to czas planowany, nie zmierzony. */
+:root {
+  --report-manual: var(--chart-1);
+  --report-subtask: var(--chart-2);
+  --report-commit: var(--chart-3);
+  --report-estimate: oklch(0.65 0.01 286);
+}
+
+.dark {
+  --report-manual: oklch(0.64 0.15 277);
+  --report-subtask: oklch(0.66 0.12 185);
+  --report-commit: oklch(0.67 0.14 70);
+  --report-estimate: oklch(0.5 0.008 286);
+}
+
+/* Słupki rosną od osi, pasek źródeł od lewej — ta sama krzywa co reszta szkła. */
+@utility report-grow-y {
+  transform-origin: bottom;
+  animation: report-grow-y 0.7s var(--glass-ease) both;
+  animation-delay: calc(min(var(--rise, 0), 40) * 14ms + 120ms);
+}
+
+@utility report-grow-x {
+  transform-origin: left;
+  animation: report-grow-x 0.9s var(--glass-ease) both;
+  animation-delay: 160ms;
+}
+
+@keyframes report-grow-y {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+@keyframes report-grow-x {
+  from {
+    transform: scaleX(0);
+  }
+}
