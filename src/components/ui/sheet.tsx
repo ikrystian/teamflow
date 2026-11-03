@@ -4,6 +4,7 @@ import * as React from "react"
 import * as SheetPrimitive from "@radix-ui/react-dialog"
 import { XIcon } from "lucide-react"
 
+import { useSwipeToDismiss } from "@/hooks/use-swipe"
 import { cn } from "@/lib/utils"
 
 function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
@@ -48,34 +49,60 @@ function SheetContent({
   className,
   children,
   side = "right",
+  ref,
   ...props
 }: Omit<React.ComponentProps<typeof SheetPrimitive.Content>, 'children'> & {
   children?: React.ReactNode
   side?: "top" | "right" | "bottom" | "left"
 }) {
+  // The content only mounts while open, so track the node itself for the gesture.
+  const [content, setContent] = React.useState<HTMLDivElement | null>(null)
+  const closeRef = React.useRef<HTMLButtonElement>(null)
+  const contentRef = React.useCallback(
+    (node: HTMLDivElement | null) => {
+      setContent(node)
+      if (typeof ref === "function") ref(node)
+      else if (ref) ref.current = node
+    },
+    [ref]
+  )
+
+  // Touch: drag the sheet back toward the edge it came from to close it.
+  useSwipeToDismiss(content, {
+    direction: side === "bottom" ? "down" : side === "left" ? "left" : "right",
+    enabled: side !== "top",
+    onDismiss: () => closeRef.current?.click(),
+  })
+
   return (
     <SheetPortal>
       <SheetOverlay />
       <SheetPrimitive.Content
+        ref={contentRef}
         data-slot="sheet-content"
+        data-side={side}
         className={cn(
           "glass-surface-soft data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
+          // Side sheets leave horizontal panning to the swipe-to-close gesture.
           side === "right" &&
-          "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm",
+          "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-0 right-0 h-full w-3/4 touch-pan-y border-l pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] sm:max-w-sm",
           side === "left" &&
-          "data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left inset-y-0 left-0 h-full w-3/4 border-r sm:max-w-sm",
+          "data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left inset-y-0 left-0 h-full w-3/4 touch-pan-y border-r pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] sm:max-w-sm",
           side === "top" &&
-          "data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top inset-x-0 top-0 h-auto border-b",
+          "data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top inset-x-0 top-0 h-auto border-b pt-[env(safe-area-inset-top)]",
           side === "bottom" &&
-          "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom inset-x-0 bottom-0 h-auto border-t",
+          "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom inset-x-0 bottom-0 h-auto border-t pb-[env(safe-area-inset-bottom)]",
           className
         )}
         {...props}
       >
         {children}
-        <SheetPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">
+        <SheetPrimitive.Close
+          ref={closeRef}
+          className="ring-offset-background focus-visible:ring-ring data-[state=open]:bg-secondary absolute top-[calc(env(safe-area-inset-top)+0.625rem)] right-[calc(env(safe-area-inset-right)+0.625rem)] flex size-9 items-center justify-center rounded-md opacity-70 transition-opacity hover:bg-accent hover:opacity-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus:outline-hidden disabled:pointer-events-none"
+        >
           <XIcon className="size-4" />
-          <span className="sr-only">Close</span>
+          <span className="sr-only">Zamknij</span>
         </SheetPrimitive.Close>
       </SheetPrimitive.Content>
     </SheetPortal>

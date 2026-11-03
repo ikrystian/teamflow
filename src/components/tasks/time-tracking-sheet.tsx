@@ -197,7 +197,7 @@ export function TimeTrackingSheet({
 
   return (
     <Sheet open={open} onOpenChange={handleClose}>
-      <SheetContent className="w-[600px] sm:max-w-[600px] overflow-hidden flex flex-col">
+      <SheetContent className="w-full sm:w-[600px] sm:max-w-[600px] overflow-hidden flex flex-col">
         <SheetHeader className="pb-4 border-b">
           <SheetTitle className="flex items-center gap-2 text-left">
             <Clock className="h-5 w-5" />

@@ -20,6 +20,9 @@ import {
   monitorForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter"
 import { toast } from "sonner"
+import { useIsMobile } from "@/hooks/use-mobile"
+import { useSwipe } from "@/hooks/use-swipe"
+import { cn } from "@/lib/utils"
 import { QuickAddTaskCommand } from "./quick-add-task-command"
 
 interface ProjectDailyViewProps {
@@ -41,6 +44,17 @@ interface TaskWithTime extends Task {
   duration?: number
 }
 
+// Height of one hour row in the time grid; task blocks are positioned with it.
+const SLOT_HEIGHT = 60
+
+/** "10:00 – 11:30", a start time, or the due time for tasks without a slot. */
+function taskTimeLabel(task: TaskWithTime): string {
+  if (task.displayStartTime && task.displayEndTime) return `${task.displayStartTime} – ${task.displayEndTime}`
+  if (task.displayStartTime || task.displayEndTime) return (task.displayStartTime || task.displayEndTime)!
+  if (task.dueDate) return `termin ${format(new Date(task.dueDate), "HH:mm")}`
+  return ""
+}
+
 const getPriorityColor = (priority?: string) => {
   switch (priority) {
     case 'high': return 'bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/20'
@@ -51,13 +65,15 @@ const getPriorityColor = (priority?: string) => {
 }
 
 // Draggable Task Component
-function DraggableTask({ task, layout, top, height, isUpdating, onTaskClick }: {
+function DraggableTask({ task, layout, top, height, isUpdating, onTaskClick, showAssignee = false }: {
   task: TaskWithTime
   layout: { width: number; left: number; column: number }
   top: number
   height: number
   isUpdating: boolean
   onTaskClick?: (task: Task) => void
+  /** Single-column (phone) day view: people aren't columns, so tag the block. */
+  showAssignee?: boolean
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -77,7 +93,16 @@ function DraggableTask({ task, layout, top, height, isUpdating, onTaskClick }: {
   return (
     <div
       ref={ref}
-      className={`absolute p-2 rounded-md border cursor-grab active:cursor-grabbing hover:shadow-sm transition-all pointer-events-auto ${getPriorityColor(task.priority)} ${isUpdating ? 'animate-pulse' : ''}`}
+      role="button"
+      tabIndex={0}
+      aria-label={[task.title, taskTimeLabel(task), showAssignee ? task.assignee?.name : undefined].filter(Boolean).join(", ")}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault()
+          onTaskClick?.(task)
+        }
+      }}
+      className={`absolute overflow-hidden p-2 rounded-md border cursor-grab active:cursor-grabbing hover:shadow-sm transition-all pointer-events-auto outline-none focus-visible:ring-2 focus-visible:ring-ring [-webkit-touch-callout:none] select-none ${getPriorityColor(task.priority)} ${isUpdating ? 'animate-pulse' : ''}`}
       style={{
         top: `${top}px`,
         height: `${height - 4}px`,
@@ -92,7 +117,14 @@ function DraggableTask({ task, layout, top, height, isUpdating, onTaskClick }: {
         }
       }}
     >
-      <div className="text-xs font-medium truncate">{task.title}</div>
+      <div className="flex items-start gap-1.5">
+        <div className="min-w-0 flex-1 text-xs font-medium truncate">{task.title}</div>
+        {showAssignee && task.assignee?.name && (
+          <span aria-hidden className="flex size-5 shrink-0 items-center justify-center rounded-full bg-background/70 text-[10px] font-semibold">
+            {task.assignee.name.charAt(0).toUpperCase()}
+          </span>
+        )}
+      </div>
       {(task.displayStartTime || task.displayEndTime) && (
         <div className="flex items-center gap-1 mt-1">
           <Clock className="h-3 w-3" />
@@ -163,6 +195,12 @@ export function ProjectDailyView({
 }: ProjectDailyViewProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [viewMode, setViewMode] = useState<"day" | "week">("day")
+  // Phones get a one-column timeline (day) and an agenda list (week) instead
+  // of the wide grids.
+  const isMobile = useIsMobile()
+  // Side the next day/week slides in from after navigating.
+  const [slideFrom, setSlideFrom] = useState<"left" | "right" | null>(null)
+  const [swipeArea, setSwipeArea] = useState<HTMLDivElement | null>(null)
   const [optimisticTasks, setOptimisticTasks] = useState<Task[]>(tasks)
   const [updatingTasks, setUpdatingTasks] = useState<Set<string>>(new Set())
 
@@ -262,6 +300,7 @@ export function ProjectDailyView({
   }, [tasksForDate])
 
   const navigateDate = (direction: 'prev' | 'next') => {
+    setSlideFrom(direction === 'next' ? 'right' : 'left')
     if (viewMode === 'week') {
       setSelectedDate(direction === 'prev' ? subWeeks(selectedDate, 1) : addWeeks(selectedDate, 1))
     } else if (direction === 'prev') {
@@ -272,8 +311,15 @@ export function ProjectDailyView({
   }
 
   const goToToday = () => {
+    setSlideFrom(null)
     setSelectedDate(new Date())
   }
+
+  // Swipe the calendar sideways to move a day (or week) back and forth.
+  useSwipe(swipeArea, {
+    axis: "x",
+    onSwipe: (direction) => navigateDate(direction === "left" ? "next" : "prev"),
+  })
 
   const formatDate = (date: Date) => {
     return format(date, "EEEE, d MMMM yyyy", { locale: pl })
@@ -293,18 +339,18 @@ export function ProjectDailyView({
       // Calculate duration in hours
       const durationHours = (endHour - startHour) + (endMinutes - startMinutes) / 60
 
-      // Each hour slot is 60px (min-h-[60px]), so multiply by duration
-      return Math.max(1, durationHours) * 60
+      // Each hour slot is SLOT_HEIGHT px, so multiply by duration
+      return Math.max(1, durationHours) * SLOT_HEIGHT
     }
-    return 60 // Default height for 1 hour
+    return SLOT_HEIGHT // Default height for 1 hour
   }
 
   const getTaskTopOffset = (task: TaskWithTime) => {
     if (task.startTime) {
       const start = new Date(task.startTime)
       const minutes = start.getMinutes()
-      // Calculate offset based on minutes (60px per hour)
-      return (minutes / 60) * 60
+      // Calculate offset based on minutes (SLOT_HEIGHT px per hour)
+      return (minutes / 60) * SLOT_HEIGHT
     }
     return 0
   }
@@ -523,235 +569,317 @@ export function ProjectDailyView({
     }
   }
 
-  return (
-    <div className={className}>
-        <div>
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                {viewMode === "day" ? "Widok dzienny" : "Widok tygodniowy"}
-              </div>
-              <div>
-                {viewMode === "day"
-                  ? `Zadania z podziałem na osoby i godziny dla ${formatDate(selectedDate)}`
-                  : `Zadania w tygodniu ${format(weekDays[0], "d MMM", { locale: pl })} – ${format(weekDays[6], "d MMM yyyy", { locale: pl })}`}
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                {/* Przełącznik widoku dzień / tydzień */}
-                <div className="flex items-center rounded-md border p-0.5">
-                  <Button
-                    variant={viewMode === "day" ? "default" : "ghost"}
-                    size="sm"
-                    className="h-7 px-2"
-                    onClick={() => setViewMode("day")}
-                  >
-                    Dzień
-                  </Button>
-                  <Button
-                    variant={viewMode === "week" ? "default" : "ghost"}
-                    size="sm"
-                    className="h-7 px-2"
-                    onClick={() => setViewMode("week")}
-                  >
-                    Tydzień
-                  </Button>
+  // Block geometry shared by the day and week grids.
+  const renderTaskBlocks = (dayTasks: TaskWithTime[], showAssignee = false) => {
+    const taskLayouts = calculateTaskLayout(dayTasks)
+    return dayTasks.map(task => {
+      const height = getTaskHeight(task)
+      const topOffset = getTaskTopOffset(task)
+      const startHour = task.startTime ? new Date(task.startTime).getHours() : 8
+      const slotIndex = startHour - 8 // 8 is the first hour
+      const top = slotIndex * SLOT_HEIGHT + topOffset + 8 // + the hour label's top padding
+
+      const layout = taskLayouts[task.id] || { width: 100, left: 0, column: 0 }
+
+      return (
+        <DraggableTask
+          key={task.id}
+          task={task}
+          layout={layout}
+          top={top}
+          height={height}
+          isUpdating={updatingTasks.has(task.id)}
+          onTaskClick={onTaskClick}
+          showAssignee={showAssignee}
+        />
+      )
+    })
+  }
+
+  const hourRow = (hour: number, displayTime: string, slots: React.ReactNode, compact = false) => (
+    <div
+      key={hour}
+      className={cn("grid border-b border-border", compact ? "grid-cols-[2.75rem_1fr] gap-2" : "grid-cols-[100px_1fr] gap-4")}
+      style={{ height: SLOT_HEIGHT }}
+    >
+      <div className="flex items-start pt-2">
+        <span className={cn("text-muted-foreground font-mono", compact ? "text-xs" : "text-sm")}>{displayTime}</span>
+      </div>
+      {slots}
+    </div>
+  )
+
+  const weekRange = `${format(weekDays[0], "d MMM", { locale: pl })} – ${format(weekDays[6], "d MMM yyyy", { locale: pl })}`
+
+  const dayView = isMobile ? (
+    /* Telefon: jedna oś czasu; osoba przy zadaniu zamiast kolumn na osoby. */
+    <div className="relative">
+      <div>
+        {timeSlots.map(({ hour, displayTime }) =>
+          hourRow(hour, displayTime, (
+            <DroppableTimeSlot assigneeId="" hour={hour}>
+              <div></div>
+            </DroppableTimeSlot>
+          ), true)
+        )}
+      </div>
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+        <div className="grid grid-cols-[2.75rem_1fr] gap-2 h-full">
+          <div></div>
+          <div className="relative">{renderTaskBlocks(tasksForDate, true)}</div>
+        </div>
+      </div>
+    </div>
+  ) : (
+    <div className="overflow-x-auto">
+      <div className="min-w-[800px]">
+
+        {/* Time slots grid */}
+        <div className="relative">
+          {/* Time grid background */}
+          <div>
+            {timeSlots.map(({ hour, displayTime }) =>
+              hourRow(hour, displayTime, (
+                <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Object.keys(tasksByAssignee).length}, 1fr)` }}>
+                  {Object.keys(tasksByAssignee).map(assigneeId => (
+                    <DroppableTimeSlot key={`${assigneeId}-${hour}`} assigneeId={assigneeId} hour={hour}>
+                      <div></div>
+                    </DroppableTimeSlot>
+                  ))}
                 </div>
-                {projectId && (
-                  <QuickAddTaskCommand
-                    projectId={projectId}
-                    onTaskCreated={onTaskCreated}
-                    onOptimisticCreate={onOptimisticCreate}
-                    onOptimisticRollback={onOptimisticRollback}
-                  />
-                )}
-                <Button variant="outline" size="sm" onClick={goToToday}>
-                  Dzisiaj
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => navigateDate('prev')}>
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
+              ))
+            )}
+          </div>
 
-                <Button variant="outline" size="sm" onClick={() => navigateDate('next')}>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                {onCreateTask && (
-                  <Button onClick={onCreateTask} size="sm">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Dodaj zadanie
-                  </Button>
-                )}
-
-
-
-                <DatePicker
-                  value={selectedDate}
-                  onChange={(date) => date && setSelectedDate(date)}
-                />
+          {/* Tasks overlay */}
+          <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+            <div className="grid grid-cols-[100px_1fr] gap-4 h-full">
+              <div></div> {/* Time column spacer */}
+              <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Object.keys(tasksByAssignee).length}, 1fr)` }}>
+                {Object.keys(tasksByAssignee).map((assigneeId) => (
+                  <div key={assigneeId} className="relative">
+                    {renderTaskBlocks(tasksByAssignee[assigneeId] || [])}
+                  </div>
+                ))}
               </div>
-
             </div>
           </div>
         </div>
-        <div>
-          {viewMode === "day" ? (
-          <div className="overflow-x-auto">
-            <div className="min-w-[800px]">
+      </div>
+    </div>
+  )
 
-              {/* Time slots grid */}
-              <div className="relative">
-                {/* Time grid background */}
-                <div className="space-y-1">
-                  {timeSlots.map(({ hour, displayTime }) => (
-                    <div key={hour} className="grid grid-cols-[100px_1fr] gap-4 min-h-[60px] border-b border-border">
-                      <div className="flex items-start pt-2">
-                        <span className="text-sm text-muted-foreground font-mono">{displayTime}</span>
-                      </div>
-                      <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Object.keys(tasksByAssignee).length}, 1fr)` }}>
-                        {Object.keys(tasksByAssignee).map(assigneeId => (
-                          <DroppableTimeSlot key={`${assigneeId}-${hour}`} assigneeId={assigneeId} hour={hour}>
-                            <div></div>
-                          </DroppableTimeSlot>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Tasks overlay */}
-                <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
-                  <div className="grid grid-cols-[100px_1fr] gap-4 h-full">
-                    <div></div> {/* Time column spacer */}
-                    <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Object.keys(tasksByAssignee).length}, 1fr)` }}>
-                      {Object.keys(tasksByAssignee).map((assigneeId) => {
-                        const assigneeTasks = tasksByAssignee[assigneeId] || []
-                        const taskLayouts = calculateTaskLayout(assigneeTasks)
-
-                        return (
-                          <div key={assigneeId} className="relative">
-                            {assigneeTasks.map(task => {
-                              const height = getTaskHeight(task)
-                              const topOffset = getTaskTopOffset(task)
-                              const startHour = task.startTime ? new Date(task.startTime).getHours() : 8
-                              const slotIndex = startHour - 8 // 8 is the first hour
-                              const top = slotIndex * 61 + topOffset + 8 // 61px per slot (60px + 1px border) + 8px padding
-
-                              const layout = taskLayouts[task.id] || { width: 100, left: 0, column: 0 }
-
-                              return (
-                                <DraggableTask
-                                  key={task.id}
-                                  task={task}
-                                  layout={layout}
-                                  top={top}
-                                  height={height}
-                                  isUpdating={updatingTasks.has(task.id)}
-                                  onTaskClick={onTaskClick}
-                                />
-                              )
-                            })}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+  const weekView = isMobile ? (
+    /* Telefon: agenda — dni jeden pod drugim, zadania w kolejności godzin. */
+    <ol className="space-y-2" aria-label={`Zadania w tygodniu ${weekRange}`}>
+      {tasksByWeekDay.map(({ day, tasks: dayTasks }) => {
+        const today = isSameDay(day, new Date())
+        const sorted = [...dayTasks].sort((a, b) => {
+          const time = (t: TaskWithTime) => new Date(t.startTime || t.dueDate || 0).getTime()
+          return time(a) - time(b)
+        })
+        return (
+          <li key={day.toISOString()} className={cn("rounded-xl border bg-card/60", today && "border-primary/40")}>
+            <button
+              type="button"
+              onClick={() => { setSlideFrom(null); setSelectedDate(day); setViewMode("day") }}
+              className="flex min-h-11 w-full items-center justify-between gap-2 px-3 py-2 text-left"
+              aria-label={`${format(day, "EEEE, d MMMM", { locale: pl })}: ${dayTasks.length} zadań — pokaż dzień`}
+            >
+              <span className={cn("text-sm font-medium first-letter:uppercase", today ? "text-primary" : "text-foreground")}>
+                {format(day, "EEEE, d MMMM", { locale: pl })}
+              </span>
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                {today && <Badge variant="secondary" className="text-[10px]">Dziś</Badge>}
+                <span className="tabular-nums">{dayTasks.length}</span>
+                <ChevronRight className="h-4 w-4" />
+              </span>
+            </button>
+            {sorted.length > 0 && (
+              <ul className="space-y-1.5 border-t px-2 py-2">
+                {sorted.map(task => (
+                  <li key={task.id}>
+                    <button
+                      type="button"
+                      onClick={() => onTaskClick?.(task)}
+                      className={cn("flex min-h-11 w-full items-center gap-3 rounded-md border px-2.5 py-2 text-left", getPriorityColor(task.priority))}
+                    >
+                      <span className="w-[5.5rem] shrink-0 font-mono text-[11px] tabular-nums opacity-80">{taskTimeLabel(task) || "—"}</span>
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium">{task.title}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </li>
+        )
+      })}
+    </ol>
+  ) : (
+    /* Widok tygodniowy: kolumny = dni tygodnia, wiersze = godziny. */
+    <div className="overflow-x-auto">
+      <div className="min-w-[900px]">
+        {/* Nagłówki dni */}
+        <div className="grid grid-cols-[100px_1fr] gap-4 border-b pb-2 mb-1">
+          <div></div>
+          <div className="grid grid-cols-7 gap-2">
+            {weekDays.map(day => (
+              <button
+                key={day.toISOString()}
+                type="button"
+                onClick={() => { setSlideFrom(null); setSelectedDate(day); setViewMode("day") }}
+                title="Przejdź do widoku dnia"
+                className={`text-center text-sm rounded py-1 transition-colors hover:bg-muted ${
+                  isSameDay(day, new Date())
+                    ? "font-semibold text-primary bg-primary/10"
+                    : "font-medium text-muted-foreground"
+                }`}
+              >
+                {format(day, "EEE d.MM", { locale: pl })}
+              </button>
+            ))}
           </div>
-          ) : (
-          /* Widok tygodniowy: kolumny = dni tygodnia, wiersze = godziny. */
-          <div className="overflow-x-auto">
-            <div className="min-w-[900px]">
-              {/* Nagłówki dni */}
-              <div className="grid grid-cols-[100px_1fr] gap-4 border-b pb-2 mb-1">
-                <div></div>
+        </div>
+
+        <div className="relative">
+          {/* Siatka godzin */}
+          <div>
+            {timeSlots.map(({ hour, displayTime }) =>
+              hourRow(hour, displayTime, (
                 <div className="grid grid-cols-7 gap-2">
                   {weekDays.map(day => (
-                    <button
-                      key={day.toISOString()}
-                      type="button"
-                      onClick={() => { setSelectedDate(day); setViewMode("day") }}
-                      title="Przejdź do widoku dnia"
-                      className={`text-center text-sm rounded py-1 transition-colors hover:bg-muted ${
-                        isSameDay(day, new Date())
-                          ? "font-semibold text-primary bg-primary/10"
-                          : "font-medium text-muted-foreground"
-                      }`}
+                    <DroppableTimeSlot
+                      key={`${day.toISOString()}-${hour}`}
+                      assigneeId=""
+                      hour={hour}
+                      date={day.toISOString()}
                     >
-                      {format(day, "EEE d.MM", { locale: pl })}
-                    </button>
+                      <div></div>
+                    </DroppableTimeSlot>
                   ))}
                 </div>
-              </div>
+              ))
+            )}
+          </div>
 
-              <div className="relative">
-                {/* Siatka godzin */}
-                <div className="space-y-1">
-                  {timeSlots.map(({ hour, displayTime }) => (
-                    <div key={hour} className="grid grid-cols-[100px_1fr] gap-4 min-h-[60px] border-b border-border">
-                      <div className="flex items-start pt-2">
-                        <span className="text-sm text-muted-foreground font-mono">{displayTime}</span>
-                      </div>
-                      <div className="grid grid-cols-7 gap-2">
-                        {weekDays.map(day => (
-                          <DroppableTimeSlot
-                            key={`${day.toISOString()}-${hour}`}
-                            assigneeId=""
-                            hour={hour}
-                            date={day.toISOString()}
-                          >
-                            <div></div>
-                          </DroppableTimeSlot>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Nakładka z zadaniami */}
-                <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
-                  <div className="grid grid-cols-[100px_1fr] gap-4 h-full">
-                    <div></div> {/* Time column spacer */}
-                    <div className="grid grid-cols-7 gap-2">
-                      {tasksByWeekDay.map(({ day, tasks: dayTasks }) => {
-                        const taskLayouts = calculateTaskLayout(dayTasks)
-
-                        return (
-                          <div key={day.toISOString()} className="relative">
-                            {dayTasks.map(task => {
-                              const height = getTaskHeight(task)
-                              const topOffset = getTaskTopOffset(task)
-                              const startHour = task.startTime ? new Date(task.startTime).getHours() : 8
-                              const slotIndex = startHour - 8 // 8 is the first hour
-                              const top = slotIndex * 61 + topOffset + 8 // 61px per slot (60px + 1px border) + 8px padding
-
-                              const layout = taskLayouts[task.id] || { width: 100, left: 0, column: 0 }
-
-                              return (
-                                <DraggableTask
-                                  key={task.id}
-                                  task={task}
-                                  layout={layout}
-                                  top={top}
-                                  height={height}
-                                  isUpdating={updatingTasks.has(task.id)}
-                                  onTaskClick={onTaskClick}
-                                />
-                              )
-                            })}
-                          </div>
-                        )
-                      })}
-                    </div>
+          {/* Nakładka z zadaniami */}
+          <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+            <div className="grid grid-cols-[100px_1fr] gap-4 h-full">
+              <div></div> {/* Time column spacer */}
+              <div className="grid grid-cols-7 gap-2">
+                {tasksByWeekDay.map(({ day, tasks: dayTasks }) => (
+                  <div key={day.toISOString()} className="relative">
+                    {renderTaskBlocks(dayTasks)}
                   </div>
-                </div>
+                ))}
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className={cn("space-y-4", className)}>
+      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+        <div className="min-w-0">
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
+            <Calendar className="h-4 w-4" />
+            {viewMode === "day" ? "Widok dzienny" : "Widok tygodniowy"}
+          </h2>
+          <p className="text-xs text-muted-foreground first-letter:uppercase" aria-live="polite">
+            {viewMode === "day"
+              ? isMobile ? formatDate(selectedDate) : `Zadania z podziałem na osoby i godziny dla ${formatDate(selectedDate)}`
+              : isMobile ? weekRange : `Zadania w tygodniu ${weekRange}`}
+          </p>
+        </div>
+        <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto">
+          {/* Przełącznik widoku dzień / tydzień */}
+          <div role="group" aria-label="Zakres kalendarza" className="flex items-center rounded-md border p-0.5">
+            <Button
+              variant={viewMode === "day" ? "default" : "ghost"}
+              size="sm"
+              className="h-7 px-2 pointer-coarse:h-8 pointer-coarse:px-3"
+              aria-pressed={viewMode === "day"}
+              onClick={() => { setSlideFrom(null); setViewMode("day") }}
+            >
+              Dzień
+            </Button>
+            <Button
+              variant={viewMode === "week" ? "default" : "ghost"}
+              size="sm"
+              className="h-7 px-2 pointer-coarse:h-8 pointer-coarse:px-3"
+              aria-pressed={viewMode === "week"}
+              onClick={() => { setSlideFrom(null); setViewMode("week") }}
+            >
+              Tydzień
+            </Button>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="icon"
+              className="size-8 pointer-coarse:size-9"
+              onClick={() => navigateDate('prev')}
+              aria-label={viewMode === "day" ? "Poprzedni dzień" : "Poprzedni tydzień"}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm" className="pointer-coarse:h-9" onClick={goToToday}>
+              {isMobile ? "Dziś" : "Dzisiaj"}
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="size-8 pointer-coarse:size-9"
+              onClick={() => navigateDate('next')}
+              aria-label={viewMode === "day" ? "Następny dzień" : "Następny tydzień"}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <DatePicker
+              value={selectedDate}
+              onChange={(date) => {
+                if (!date) return
+                setSlideFrom(null)
+                setSelectedDate(date)
+              }}
+              compact={isMobile}
+              className={isMobile ? "size-9" : "ml-1 h-8 w-auto"}
+            />
+          </div>
+          {projectId && (
+            <div className="min-w-0 basis-full sm:w-56 sm:basis-auto">
+              <QuickAddTaskCommand
+                projectId={projectId}
+                onTaskCreated={onTaskCreated}
+                onOptimisticCreate={onOptimisticCreate}
+                onOptimisticRollback={onOptimisticRollback}
+              />
+            </div>
           )}
+          {onCreateTask && (
+            <Button onClick={onCreateTask} size="sm" className="max-sm:hidden">
+              <Plus className="mr-2 h-4 w-4" />
+              Dodaj zadanie
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Swiping sideways moves to the previous / next day or week; vertical
+          scrolling and pinch zoom stay with the browser. */}
+      <div ref={setSwipeArea} className="touch-pan-y touch-pinch-zoom">
+        <div
+          key={`${viewMode}-${selectedDate.toDateString()}`}
+          className={cn(
+            slideFrom && "animate-in fade-in-0 duration-200",
+            slideFrom === "right" && "slide-in-from-right-8",
+            slideFrom === "left" && "slide-in-from-left-8"
+          )}
+        >
+          {viewMode === "day" ? dayView : weekView}
 
           {viewMode === "day" && tasksForDate.length === 0 && (
             <div className="text-center py-8">
@@ -768,7 +896,7 @@ export function ProjectDailyView({
               )}
             </div>
           )}
-          {viewMode === "week" && tasksByWeekDay.every(({ tasks: dayTasks }) => dayTasks.length === 0) && (
+          {viewMode === "week" && !isMobile && tasksByWeekDay.every(({ tasks: dayTasks }) => dayTasks.length === 0) && (
             <div className="text-center py-8">
               <Calendar className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">Brak zadań w tym tygodniu</h3>
@@ -779,5 +907,6 @@ export function ProjectDailyView({
           )}
         </div>
       </div>
+    </div>
   )
 }

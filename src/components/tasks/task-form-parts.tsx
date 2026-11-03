@@ -79,7 +79,7 @@ export function NativeSelect({
       )}
       <select
         className={cn(
-          "h-8 w-full cursor-pointer appearance-none truncate rounded-md border border-transparent bg-transparent pr-7 text-[13px] outline-none transition-colors",
+          "h-8 w-full cursor-pointer appearance-none truncate rounded-md border border-transparent bg-transparent pr-7 text-[13px] outline-none transition-colors pointer-coarse:h-10 pointer-coarse:text-base",
           "hover:bg-accent focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/20 disabled:cursor-default disabled:hover:bg-transparent",
           leading ? "pl-7" : "pl-2.5"
         )}
@@ -262,7 +262,7 @@ export function SubtaskList({
               size="icon"
               onClick={() => onChange((prev) => prev.filter((s) => s.id !== subtask.id))}
               aria-label="Usuń podzadanie"
-              className="size-7 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive focus-visible:opacity-100"
+              className="size-7 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive focus-visible:opacity-100 pointer-coarse:size-9 pointer-coarse:opacity-100"
             >
               <X />
             </Button>

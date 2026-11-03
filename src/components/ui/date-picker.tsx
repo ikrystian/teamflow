@@ -19,24 +19,29 @@ export function DatePicker({
   value,
   onChange,
   className,
+  compact = false,
 }: {
   value?: Date
   onChange: (date?: Date) => void
   className?: string
+  /** Icon-only trigger, for tight toolbars that already show the date elsewhere. */
+  compact?: boolean
 }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button
           variant={"outline"}
+          size={compact ? "icon" : "default"}
+          aria-label={compact ? `Wybierz datę${value ? ` (wybrano ${format(value, "PPP", { locale: pl })})` : ""}` : undefined}
           className={cn(
-            "w-full justify-start text-left font-normal",
+            !compact && "w-full justify-start text-left font-normal",
             !value && "text-muted-foreground",
             className
           )}
         >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {value ? format(value, "PPP", { locale: pl }) : <span>Wybierz datę</span>}
+          <CalendarIcon className={cn("h-4 w-4", !compact && "mr-2")} />
+          {!compact && (value ? format(value, "PPP", { locale: pl }) : <span>Wybierz datę</span>)}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0">

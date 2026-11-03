@@ -26,7 +26,7 @@ export function CreateProjectSheet({
 }: CreateProjectSheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[500px] sm:max-w-[500px] overflow-hidden flex flex-col">
+      <SheetContent className="w-full sm:w-[500px] sm:max-w-[500px] overflow-hidden flex flex-col">
         <SheetHeader className="pb-4 border-b">
           <VisuallyHidden>
             <SheetTitle>Utwórz nowy projekt</SheetTitle>

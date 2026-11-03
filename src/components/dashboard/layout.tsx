@@ -39,6 +39,7 @@ import {
   SidebarProvider,
   SidebarRail,
   SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
@@ -86,6 +87,16 @@ const workspaceNavigation = [
 ]
 
 type NavItem = { name: string; href: string; icon: React.ComponentType; badge?: number }
+
+/** On phones the sidebar is a drawer over the page; close it once a link navigated. */
+function CloseMobileSidebarOnNavigate() {
+  const pathname = usePathname()
+  const { setOpenMobile } = useSidebar()
+  useEffect(() => {
+    setOpenMobile(false)
+  }, [pathname, setOpenMobile])
+  return null
+}
 
 function DashboardLayoutInner({ children, crm }: DashboardLayoutProps) {
   const { headerContent } = useHeader()
@@ -163,6 +174,7 @@ function DashboardLayoutInner({ children, crm }: DashboardLayoutProps) {
 
   return (
     <SidebarProvider>
+      <CloseMobileSidebarOnNavigate />
       <GlassAtmosphere />
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded focus:bg-background focus:px-3 focus:py-2">
         Przejdź do treści
@@ -255,9 +267,9 @@ function DashboardLayoutInner({ children, crm }: DashboardLayoutProps) {
       {/* The inset panel owns scrolling: the top bar and page header stay put
           while only the page body scrolls, Linear-style. It is the one frosted
           pane for the page, so everything inside renders as glass tiles. */}
-      <SidebarInset className="h-svh overflow-hidden md:h-[calc(100svh-1rem)] md:border">
+      <SidebarInset className="h-svh overflow-hidden pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)] md:h-[calc(100svh-1rem)] md:border">
         <header className="flex h-12 shrink-0 items-center gap-2 border-b px-3">
-          <SidebarTrigger className="text-muted-foreground" />
+          <SidebarTrigger className="text-muted-foreground pointer-coarse:size-10" />
           <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-4" />
           <div className="min-w-0 flex-1">
             <DashboardBreadcrumbs />
@@ -290,7 +302,9 @@ function DashboardLayoutInner({ children, crm }: DashboardLayoutProps) {
             {headerContent}
           </div>
         )}
-        <div id="main" tabIndex={-1} className="dashboard-scroll page-rise min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
+        {/* Bottom inset keeps content clear of the home indicator (iOS) when the
+            page runs edge to edge. */}
+        <div id="main" tabIndex={-1} className="dashboard-scroll page-rise min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain pb-[env(safe-area-inset-bottom)]">
           {children}
         </div>
       </SidebarInset>

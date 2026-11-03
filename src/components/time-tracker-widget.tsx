@@ -252,9 +252,10 @@ export function TimeTrackerWidget() {
     return (
       <Button
         onClick={() => setIsVisible(true)}
-        className="fixed bottom-6 right-6 z-50 h-12 w-12 rounded-full shadow-2xl"
+        className="fixed right-4 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-50 h-12 w-12 rounded-full shadow-2xl sm:right-6 sm:bottom-6"
         size="icon"
         title="Otwórz śledzenie czasu"
+        aria-label="Otwórz śledzenie czasu"
       >
         <Clock className="h-5 w-5" />
       </Button>
@@ -263,13 +264,20 @@ export function TimeTrackerWidget() {
 
   return (
     <Card
+      role="region"
+      aria-label="Śledzenie czasu"
       className={cn(
-        "glass-surface-soft fixed bottom-6 right-6 z-50 transition-all duration-300 pt-0 gap-0",
-        isMinimized ? "w-64" : "w-96"
+        "glass-surface-soft fixed z-50 transition-all duration-300 pt-0 gap-0",
+        // Phones: a compact pill above the home indicator while minimized,
+        // a full-width panel when expanded (w-96 would not fit the screen).
+        "right-3 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] sm:right-6 sm:bottom-6",
+        isMinimized
+          ? "w-auto max-sm:pb-0 sm:w-64"
+          : "left-3 max-h-[calc(100dvh-1.5rem-env(safe-area-inset-bottom))] overflow-y-auto overscroll-contain sm:left-auto sm:w-96"
       )}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between p-3 border-b bg-muted/50">
+      {/* Header (phones: only when expanded — the pill has its own controls) */}
+      <div className={cn("flex items-center justify-between p-3 border-b bg-muted/50", isMinimized && "max-sm:hidden")}>
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-primary" />
           <span className="font-semibold text-sm">Śledzenie czasu</span>
@@ -279,7 +287,9 @@ export function TimeTrackerWidget() {
             variant="ghost"
             size="sm"
             onClick={() => setIsMinimized(!isMinimized)}
-            className="h-7 w-7 p-0"
+            className="h-7 w-7 p-0 pointer-coarse:size-9"
+            aria-label={isMinimized ? "Rozwiń śledzenie czasu" : "Zwiń śledzenie czasu"}
+            aria-expanded={!isMinimized}
           >
             {isMinimized ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </Button>
@@ -287,7 +297,8 @@ export function TimeTrackerWidget() {
             variant="ghost"
             size="sm"
             onClick={() => setIsVisible(false)}
-            className="h-7 w-7 p-0"
+            className="h-7 w-7 p-0 pointer-coarse:size-9"
+            aria-label="Ukryj śledzenie czasu"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -325,9 +336,9 @@ export function TimeTrackerWidget() {
                   <Search className="ml-2 h-3 w-3 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-80 p-0" align="start">
+              <PopoverContent className="w-[min(20rem,calc(100vw-2rem))] p-0" align="start">
                 <Command>
-                  <CommandInput placeholder="Szukaj zadania..." className="h-9" />
+                  <CommandInput placeholder="Szukaj zadania..." className="h-9 pointer-coarse:text-base" />
                   <CommandList>
                     <CommandEmpty>Nie znaleziono zadań.</CommandEmpty>
                     <CommandGroup>
@@ -410,7 +421,7 @@ export function TimeTrackerWidget() {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Nad czym pracowałeś?"
               rows={2}
-              className="text-xs resize-none"
+              className="text-xs resize-none pointer-coarse:text-base"
               disabled={isSaving}
             />
           </div>
@@ -430,18 +441,30 @@ export function TimeTrackerWidget() {
 
       {/* Minimized View */}
       {isMinimized && (
-        <div className="p-3 flex items-center justify-between">
-          <div className="text-2xl font-mono font-bold tabular-nums">
+        <div className="p-3 flex items-center justify-between gap-1 max-sm:p-1.5 max-sm:pl-3">
+          <Clock aria-hidden className="mr-1 size-4 shrink-0 text-primary sm:hidden" />
+          <div className="text-2xl font-mono font-bold tabular-nums max-sm:mr-1 max-sm:text-base">
             {formatTime(seconds)}
           </div>
           <Button
             onClick={handleStartPause}
             size="sm"
             variant={isRunning ? "outline" : "default"}
-            className="h-8 px-3"
+            className="h-8 px-3 max-sm:size-9 max-sm:px-0"
             disabled={!selectedTask}
+            aria-label={isRunning ? "Pauza" : "Start"}
           >
             {isRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-9 sm:hidden"
+            onClick={() => setIsMinimized(false)}
+            aria-label="Rozwiń śledzenie czasu"
+            aria-expanded={false}
+          >
+            <ChevronUp className="h-4 w-4" />
           </Button>
         </div>
       )}
