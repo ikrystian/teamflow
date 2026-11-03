@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation"
 import { getSession } from "@/lib/auth/session"
+import { resolveProjectRoute } from "@/lib/project-route"
 import { ProjectDetailsContent } from "@/components/projects/project-details-content"
 
 interface ProjectPageProps {
   params: Promise<{
-    projectId: string
+    slug: string
   }>
 }
 
@@ -15,9 +16,10 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     redirect("/auth/signin")
   }
 
-  const { projectId } = await params
+  const { slug } = await params
+  const project = await resolveProjectRoute(slug)
 
   return (
-    <ProjectDetailsContent projectId={projectId} />
+    <ProjectDetailsContent projectId={project.id} />
   )
 }
