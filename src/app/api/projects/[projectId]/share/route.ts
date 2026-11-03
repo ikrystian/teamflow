@@ -37,6 +37,14 @@ export async function POST(
     // Generate a unique share token
     const shareToken = randomBytes(32).toString('hex')
 
+    await prisma.project.update({
+      where: {
+        id: projectId
+      },
+      data: {
+        shareToken
+      }
+    })
 
     return NextResponse.json({
       shareToken,

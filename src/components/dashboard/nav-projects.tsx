@@ -12,10 +12,12 @@ import {
   ChevronRight,
   Edit,
   GripVertical,
+  ArchiveRestore,
 } from "lucide-react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useState, useEffect, useRef } from "react"
+import { toast } from "sonner"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,6 +63,8 @@ import {
 } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge"
 import { DropIndicator } from "@/components/ui/drop-indicator"
 import { reorderWithEdge, type Edge } from "@/lib/dnd-utils"
+import { useProjects } from "@/contexts/projects-context"
+import { ShareProjectDialog } from "@/components/projects/share-project-dialog"
 
 // Import all possible project icons
 import * as LucideIcons from "lucide-react"
@@ -110,12 +114,14 @@ function ProjectIcon({ iconName, color, className = "w-4 h-4" }: {
 interface SortableProjectItemProps {
   project: Project
   onEditProject?: (project: Project) => void
-  onDeleteProject?: (project: Project) => void
+  onDeleteProject: (project: Project) => void
+  onArchiveProject: (project: Project) => void
+  onShareProject: (project: Project) => void
   isMobile: boolean
   isActive: boolean
 }
 
-function SortableProjectItem({ project, onEditProject, onDeleteProject, isMobile, isActive }: SortableProjectItemProps) {
+function SortableProjectItem({ project, onEditProject, onDeleteProject, onArchiveProject, onShareProject, isMobile, isActive }: SortableProjectItemProps) {
   const ref = useRef<HTMLLIElement>(null)
   const handleRef = useRef<HTMLButtonElement>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -238,16 +244,19 @@ function SortableProjectItem({ project, onEditProject, onDeleteProject, isMobile
             </Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem disabled>
+          <DropdownMenuItem onClick={() => onShareProject(project)}>
             <Share className="mr-2 h-4 w-4" />
             Udostępnij projekt
           </DropdownMenuItem>
-          <DropdownMenuItem disabled>
+          <DropdownMenuItem onClick={() => onArchiveProject(project)}>
             <Archive className="mr-2 h-4 w-4" />
             Archiwizuj projekt
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem disabled className="text-destructive">
+          <DropdownMenuItem
+            onClick={() => onDeleteProject(project)}
+            className="text-destructive focus:text-destructive"
+          >
             <Trash2 className="mr-2 h-4 w-4" />
             Usuń projekt
           </DropdownMenuItem>
@@ -260,12 +269,15 @@ function SortableProjectItem({ project, onEditProject, onDeleteProject, isMobile
 export function NavProjects({ projects, onEditProject, onDeleteProject, onReorderProjects }: NavProjectsProps) {
   const { isMobile } = useSidebar()
   const pathname = usePathname()
+  const router = useRouter()
+  const { refreshProjects, removeProject } = useProjects()
   const [showArchived, setShowArchived] = useState(false)
   const [archivedProjects, setArchivedProjects] = useState<Project[]>([])
   const [archivedProjectsLoaded, setArchivedProjectsLoaded] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [projectToShare, setProjectToShare] = useState<Project | null>(null)
 
   const activeProjects = projects.filter(project => !project.archived)
   const archivedProjectsFromProps = projects.filter(project => project.archived)
@@ -324,6 +336,41 @@ export function NavProjects({ projects, onEditProject, onDeleteProject, onReorde
     ? archivedProjectsFromProps.length
     : archivedProjects.length
 
+  // Dialog otwierany z DropdownMenu potrafi zostawić pointer-events: none na body
+  const shareDialogOpen = projectToShare !== null
+  useEffect(() => {
+    if (!deleteDialogOpen && !shareDialogOpen) {
+      const timer = setTimeout(() => {
+        document.body.style.pointerEvents = ''
+      }, 150)
+      return () => clearTimeout(timer)
+    }
+  }, [deleteDialogOpen, shareDialogOpen])
+
+  const handleArchiveProject = async (project: Project) => {
+    const archived = !project.archived
+    try {
+      const response = await fetch(`/api/projects/${project.id}/archive`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ archived }),
+      })
+
+      if (!response.ok) {
+        toast.error(archived ? "Nie udało się zarchiwizować projektu" : "Nie udało się przywrócić projektu")
+        return
+      }
+
+      await refreshProjects()
+      // Wymuś ponowne pobranie listy zarchiwizowanych
+      setArchivedProjectsLoaded(false)
+      toast.success(archived ? `Zarchiwizowano projekt ${project.name}` : `Przywrócono projekt ${project.name}`)
+    } catch (error) {
+      console.error("Error archiving/unarchiving project:", error)
+      toast.error("Wystąpił błąd podczas zmiany statusu projektu")
+    }
+  }
+
   const handleDeleteProject = (project: Project) => {
     setProjectToDelete(project)
     setDeleteDialogOpen(true)
@@ -339,21 +386,25 @@ export function NavProjects({ projects, onEditProject, onDeleteProject, onReorde
       })
 
       if (response.ok) {
-        if (onDeleteProject) {
-          onDeleteProject(projectToDelete)
-        }
+        removeProject(projectToDelete.id)
+        onDeleteProject?.(projectToDelete)
 
         setArchivedProjects(prev => prev.filter(p => p.id !== projectToDelete.id))
         setDeleteDialogOpen(false)
         setProjectToDelete(null)
+        toast.success(`Usunięto projekt ${projectToDelete.name}`)
+
+        if (isProjectActive(projectToDelete.id)) {
+          router.push("/dashboard/projects")
+        }
       } else {
-        const errorData = await response.json()
+        const errorData = await response.json().catch(() => ({}))
         console.error("Failed to delete project:", errorData.error)
-        alert("Nie udało się usunąć projektu. Spróbuj ponownie.")
+        toast.error("Nie udało się usunąć projektu. Spróbuj ponownie.")
       }
     } catch (error) {
       console.error("Error deleting project:", error)
-      alert("Wystąpił błąd podczas usuwania projektu.")
+      toast.error("Wystąpił błąd podczas usuwania projektu.")
     } finally {
       setIsDeleting(false)
     }
@@ -370,6 +421,8 @@ export function NavProjects({ projects, onEditProject, onDeleteProject, onReorde
             project={project}
             onEditProject={onEditProject}
             onDeleteProject={handleDeleteProject}
+            onArchiveProject={handleArchiveProject}
+            onShareProject={setProjectToShare}
             isMobile={isMobile}
             isActive={isProjectActive(project.id)}
           />
@@ -474,12 +527,12 @@ export function NavProjects({ projects, onEditProject, onDeleteProject, onReorde
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem disabled>
+                  <DropdownMenuItem onClick={() => setProjectToShare(project)}>
                     <Share className="mr-2 h-4 w-4" />
                     Udostępnij projekt
                   </DropdownMenuItem>
-                  <DropdownMenuItem disabled>
-                    <Archive className="mr-2 h-4 w-4" />
+                  <DropdownMenuItem onClick={() => handleArchiveProject(project)}>
+                    <ArchiveRestore className="mr-2 h-4 w-4" />
                     Przywróć projekt
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -496,6 +549,12 @@ export function NavProjects({ projects, onEditProject, onDeleteProject, onReorde
           )
         })}
       </SidebarMenu>
+
+      <ShareProjectDialog
+        project={projectToShare}
+        open={shareDialogOpen}
+        onOpenChange={(open) => !open && setProjectToShare(null)}
+      />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
