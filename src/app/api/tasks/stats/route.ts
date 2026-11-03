@@ -23,7 +23,6 @@ export async function GET(request: NextRequest) {
     const whereClause = {
       statusId,
       deletedAt: null,
-      archived: false,
       ...(projectId && { projectId }),
       ...(assigneeId && { assigneeId })
     }
