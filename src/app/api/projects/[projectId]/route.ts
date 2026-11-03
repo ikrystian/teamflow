@@ -7,6 +7,7 @@ import { join } from "path"
 import { existsSync } from "fs"
 import type { AppSession as Session } from "@/lib/auth/types"
 import { isAssignableClient, withClientRef } from "@/lib/crm/directory"
+import { uploadsFilePath } from "@/lib/uploads"
 
 // Helper function to safely delete files and directories
 async function deleteFilesSafely(paths: string[]) {
@@ -381,15 +382,15 @@ export async function DELETE(
     const directoriesToDelete: string[] = []
 
     // 1. Delete project image if exists
-    if (existingProject.imageUrl && existingProject.imageUrl.startsWith("/uploads/projects/")) {
-      const projectImagePath = join(process.cwd(), /*turbopackIgnore: true*/ existingProject.imageUrl)
+    const projectImagePath = existingProject.imageUrl?.startsWith("/uploads/projects/") ? uploadsFilePath(existingProject.imageUrl) : null
+    if (projectImagePath) {
       filesToDelete.push(projectImagePath)
     }
 
     // 2. Delete project documents
     for (const document of existingProject.documents) {
-      if (document.url.startsWith("/uploads/projects/")) {
-        const documentPath = join(process.cwd(), /*turbopackIgnore: true*/ document.url)
+      const documentPath = document.url.startsWith("/uploads/projects/") ? uploadsFilePath(document.url) : null
+      if (documentPath) {
         filesToDelete.push(documentPath)
       }
     }
@@ -398,16 +399,16 @@ export async function DELETE(
     for (const task of existingProject.tasks) {
       // Delete task images
       for (const image of task.images) {
-        if (image.url.startsWith("/uploads/tasks/")) {
-          const imagePath = join(process.cwd(), /*turbopackIgnore: true*/ image.url)
+        const imagePath = image.url.startsWith("/uploads/tasks/") ? uploadsFilePath(image.url) : null
+        if (imagePath) {
           filesToDelete.push(imagePath)
         }
       }
 
       // Delete task attachments
       for (const attachment of task.attachments) {
-        if (attachment.url.startsWith("/uploads/tasks/")) {
-          const attachmentPath = join(process.cwd(), /*turbopackIgnore: true*/ attachment.url)
+        const attachmentPath = attachment.url.startsWith("/uploads/tasks/") ? uploadsFilePath(attachment.url) : null
+        if (attachmentPath) {
           filesToDelete.push(attachmentPath)
         }
       }

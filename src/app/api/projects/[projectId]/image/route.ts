@@ -5,6 +5,7 @@ import { writeFile, mkdir, unlink } from "fs/promises"
 import { join } from "path"
 import { existsSync } from "fs"
 import type { AppSession as Session } from "@/lib/auth/types"
+import { uploadsFilePath } from "@/lib/uploads"
 
 export async function POST(
   request: NextRequest,
@@ -55,8 +56,8 @@ export async function POST(
     }
 
     // Delete old image file if exists
-    if (project.imageUrl && project.imageUrl.startsWith("/uploads/projects/")) {
-      const oldFilePath = join(process.cwd(), /*turbopackIgnore: true*/ project.imageUrl)
+    const oldFilePath = project.imageUrl?.startsWith("/uploads/projects/") ? uploadsFilePath(project.imageUrl) : null
+    if (oldFilePath) {
       try {
         if (existsSync(oldFilePath)) {
           await unlink(oldFilePath)
@@ -127,8 +128,8 @@ export async function DELETE(
     }
 
     // Delete image file if exists
-    if (project.imageUrl && project.imageUrl.startsWith("/uploads/projects/")) {
-      const filePath = join(process.cwd(), /*turbopackIgnore: true*/ project.imageUrl)
+    const filePath = project.imageUrl?.startsWith("/uploads/projects/") ? uploadsFilePath(project.imageUrl) : null
+    if (filePath) {
       try {
         if (existsSync(filePath)) {
           await unlink(filePath)

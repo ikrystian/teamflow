@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { writeFile, mkdir, unlink } from "fs/promises"
 import { join } from "path"
 import { existsSync } from "fs"
+import { uploadsFilePath } from "@/lib/uploads"
 
 export async function GET(
   request: NextRequest,
@@ -191,8 +192,8 @@ export async function DELETE(
     }
 
     // Delete file from filesystem
-    const filepath = join(process.cwd(), /*turbopackIgnore: true*/ document.url)
-    if (existsSync(filepath)) {
+    const filepath = uploadsFilePath(document.url)
+    if (filepath && existsSync(filepath)) {
       await unlink(filepath)
     }
 
