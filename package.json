@@ -15,7 +15,7 @@
     "setup": "bash scripts/setup.sh",
     "db:up": "docker compose up -d --wait",
     "db:down": "docker compose down",
-    "db:push": "prisma db push && node scripts/fix-mongo-indexes.js && node scripts/fix-mongo-nulls.js",
+    "db:push": "prisma db push && node scripts/fix-mongo-indexes.js && node scripts/fix-mongo-nulls.js && tsx scripts/backfill-project-slugs.ts",
     "db:pg:migrate": "tsx scripts/migrate-pg.ts",
     "db:pg:generate": "drizzle-kit generate",
     "db:pg:studio": "drizzle-kit studio",

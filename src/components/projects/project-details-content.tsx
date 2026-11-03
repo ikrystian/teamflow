@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { type Task, type Project, type TaskStatus } from "@/types"
 import { formatTaskDueDateWithRelative } from "@/lib/date-utils"
+import { projectPath } from "@/lib/project-slug"
 import { softDeleteTaskWithUndo } from "@/lib/task-delete"
 import { isManagerRole } from "@/lib/roles"
 import { managerCanEditStatus } from "@/lib/task-status-helpers"
@@ -413,14 +414,14 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
             {/* Below lg the outline buttons collapse to icons so the fixed-height
                 header doesn't overflow horizontally on medium screens. */}
             <Button variant="outline" size="sm" title="Ustawienia" className="max-sm:hidden" asChild>
-              <Link href={`/dashboard/projects/${projectId}/settings`}>
+              <Link href={projectPath(project, "/settings")}>
                 <Settings className="h-4 w-4" />
                 <span className="hidden lg:inline">Ustawienia</span>
               </Link>
             </Button>
 
             <Button variant="outline" size="sm" title="Informacje o projekcie" className="max-sm:hidden" asChild>
-              <Link href={`/dashboard/projects/${projectId}/info`}>
+              <Link href={projectPath(project, "/info")}>
                 <Info className="h-4 w-4" />
                 <span className="hidden lg:inline">Informacje</span>
               </Link>

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { TypeIcon } from "@/components/vault/category"
 import { useSession } from "@/lib/auth/use-session"
+import { projectPath } from "@/lib/project-slug"
 import { hasVaultKey, saveCredential, useVault } from "@/lib/vault/store"
 import { emptyOverview, emptySecrets } from "@/lib/vault/types"
 
@@ -35,6 +36,7 @@ function htmlToText(html: string): string {
 
 interface ProjectAccessCardProps {
   projectId: string
+  projectSlug?: string | null
   projectName: string
   client: { id: string; name: string } | null
   legacyRaw: string | null | undefined
@@ -45,7 +47,7 @@ interface ProjectAccessCardProps {
  * Dane dostępowe projektu pochodzą z sejfu klienta (szyfrowanie end-to-end). Dawne, jawne
  * dane dostępowe projektu można jednym kliknięciem przenieść do sejfu jako bezpieczne notatki.
  */
-export function ProjectAccessCard({ projectId, projectName, client, legacyRaw, onLegacyCleared }: ProjectAccessCardProps) {
+export function ProjectAccessCard({ projectId, projectSlug, projectName, client, legacyRaw, onLegacyCleared }: ProjectAccessCardProps) {
   const { data: session } = useSession()
   const status = useVault((s) => s.status)
   const vaultClient = useVault((s) => (client ? s.clients.find((c) => c.id === client.id) : undefined))
@@ -57,7 +59,7 @@ export function ProjectAccessCard({ projectId, projectName, client, legacyRaw, o
 
   const crmAllowed = session?.user.role !== "manager"
   const unlocked = status === "unlocked"
-  const unlockHref = `/auth/unlock?next=${encodeURIComponent(`/dashboard/projects/${projectId}/info`)}`
+  const unlockHref = `/auth/unlock?next=${encodeURIComponent(projectPath({ id: projectId, slug: projectSlug }, "/info"))}`
   const canMigrate = Boolean(client && unlocked && vaultClient?.canEdit && hasVaultKey(client.id))
 
   async function migrateLegacy() {

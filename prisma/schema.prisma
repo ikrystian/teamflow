@@ -46,6 +46,9 @@ model User {
 model Project {
   id             String            @id @default(cuid()) @map("_id")
   name           String
+  // URL segment of /dashboard/projects/[slug], set once at creation.
+  // Unique via a partial index created by scripts/fix-mongo-indexes.js.
+  slug           String?
   description    String?
   readme         String?
   status         String            @default("In Progress")

@@ -63,6 +63,7 @@ import {
 } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge"
 import { DropIndicator } from "@/components/ui/drop-indicator"
 import { reorderWithEdge, type Edge } from "@/lib/dnd-utils"
+import { projectPath } from "@/lib/project-slug"
 import { useProjects } from "@/contexts/projects-context"
 import { ShareProjectDialog } from "@/components/projects/share-project-dialog"
 
@@ -187,7 +188,7 @@ function SortableProjectItem({ project, onEditProject, onDeleteProject, onArchiv
         tooltip={project.name}
         isActive={isActive}
       >
-        <Link href={`/dashboard/projects/${project.id}`}>
+        <Link href={projectPath(project)}>
           <ProjectIcon
             iconName={project.icon}
             color={project.color}
@@ -217,14 +218,14 @@ function SortableProjectItem({ project, onEditProject, onDeleteProject, onArchiv
           align="end"
         >
           <DropdownMenuItem asChild>
-            <Link href={`/dashboard/projects/${project.id}`}>
+            <Link href={projectPath(project)}>
               <Eye className="mr-2 h-4 w-4" />
               Zobacz projekt
             </Link>
           </DropdownMenuItem>
 
           <DropdownMenuItem asChild>
-            <Link href={`/dashboard/projects/${project.id}/info`}>
+            <Link href={projectPath(project, "/info")}>
               <Info className="h-5 w-5" />
               Informacje o projekcie
             </Link>
@@ -238,7 +239,7 @@ function SortableProjectItem({ project, onEditProject, onDeleteProject, onArchiv
           )}
 
           <DropdownMenuItem asChild>
-            <Link href={`/dashboard/projects/${project.id}/settings`}>
+            <Link href={projectPath(project, "/settings")}>
               <Settings className="mr-2 h-4 w-4" />
               Ustawienia
             </Link>
@@ -282,8 +283,9 @@ export function NavProjects({ projects, onEditProject, onDeleteProject, onReorde
   const activeProjects = projects.filter(project => !project.archived)
   const archivedProjectsFromProps = projects.filter(project => project.archived)
 
-  const isProjectActive = (projectId: string) => {
-    return pathname.startsWith(`/dashboard/projects/${projectId}`)
+  const isProjectActive = (project: Project) => {
+    const path = projectPath(project)
+    return pathname === path || pathname.startsWith(`${path}/`)
   }
 
   useEffect(() => {
@@ -394,7 +396,7 @@ export function NavProjects({ projects, onEditProject, onDeleteProject, onReorde
         setProjectToDelete(null)
         toast.success(`Usunięto projekt ${projectToDelete.name}`)
 
-        if (isProjectActive(projectToDelete.id)) {
+        if (isProjectActive(projectToDelete)) {
           router.push("/dashboard/projects")
         }
       } else {
@@ -424,7 +426,7 @@ export function NavProjects({ projects, onEditProject, onDeleteProject, onReorde
             onArchiveProject={handleArchiveProject}
             onShareProject={setProjectToShare}
             isMobile={isMobile}
-            isActive={isProjectActive(project.id)}
+            isActive={isProjectActive(project)}
           />
         ))}
 
@@ -465,9 +467,9 @@ export function NavProjects({ projects, onEditProject, onDeleteProject, onReorde
               <SidebarMenuButton
                 asChild
                 tooltip={`${project.name} (zarchiwizowany)`}
-                isActive={isProjectActive(project.id)}
+                isActive={isProjectActive(project)}
               >
-                <Link href={`/dashboard/projects/${project.id}`}>
+                <Link href={projectPath(project)}>
                   <div className="opacity-60">
                     <ProjectIcon
                       iconName={project.icon}
@@ -500,14 +502,14 @@ export function NavProjects({ projects, onEditProject, onDeleteProject, onReorde
                   align="end"
                 >
                   <DropdownMenuItem asChild>
-                    <Link href={`/dashboard/projects/${project.id}`}>
+                    <Link href={projectPath(project)}>
                       <Eye className="mr-2 h-4 w-4" />
                       Zobacz projekt
                     </Link>
                   </DropdownMenuItem>
 
                   <DropdownMenuItem asChild>
-                    <Link href={`/dashboard/projects/${project.id}/info`}>
+                    <Link href={projectPath(project, "/info")}>
                       <Info className="h-5 w-5" />
                       Informacje o projekcie
                     </Link>
@@ -521,7 +523,7 @@ export function NavProjects({ projects, onEditProject, onDeleteProject, onReorde
                   )}
 
                   <DropdownMenuItem asChild>
-                    <Link href={`/dashboard/projects/${project.id}/settings`}>
+                    <Link href={projectPath(project, "/settings")}>
                       <Settings className="mr-2 h-4 w-4" />
                       Ustawienia
                     </Link>

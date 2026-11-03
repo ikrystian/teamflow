@@ -12,6 +12,7 @@ import { formatDate, daysUntil } from "@/lib/format";
 import { ROLE_LABELS, seesAllClients } from "@/lib/permissions";
 import { isAdmin } from "@/lib/admin";
 import { projectsForClient } from "@/lib/crm/projects";
+import { projectPath } from "@/lib/project-slug";
 
 export default async function ClientOverviewPage({ params }: PageProps<"/dashboard/clients/[clientId]">) {
   const { clientId } = await params;
@@ -126,7 +127,7 @@ export default async function ClientOverviewPage({ params }: PageProps<"/dashboa
         <CardContent className="space-y-2 text-sm">
           {activeProjects.slice(0, 5).map((p) => (
             <p key={p.id} className="flex items-center justify-between gap-2">
-              <Link href={`/dashboard/projects/${p.id}`} className="flex min-w-0 items-center gap-2 hover:underline">
+              <Link href={projectPath(p)} className="flex min-w-0 items-center gap-2 hover:underline">
                 <span className="size-2.5 shrink-0 rounded-sm" style={{ backgroundColor: p.color }} aria-hidden />
                 <span className="truncate">{p.name}</span>
               </Link>

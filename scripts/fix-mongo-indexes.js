@@ -2,7 +2,7 @@
 /**
  * MongoDB unique indexes treat documents with a missing (or null) field as
  * having the value null, so a plain unique index on an optional field
- * (Task.key, Task.shareToken, Project.shareToken) rejects the second document
+ * (Task.key, Task.shareToken, Project.shareToken, Project.slug) rejects the second document
  * that lacks the field.
  *
  * Prisma cannot declare partial indexes in the schema, so those fields carry
@@ -25,6 +25,7 @@ const PARTIAL_UNIQUE_INDEXES = [
   { collection: 'Task', field: 'key', name: 'Task_key_key' },
   { collection: 'Task', field: 'shareToken', name: 'Task_shareToken_key' },
   { collection: 'Project', field: 'shareToken', name: 'Project_shareToken_key' },
+  { collection: 'Project', field: 'slug', name: 'Project_slug_key' },
 ]
 
 async function main() {

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { sendPushToUser, isPushConfigured } from "@/lib/push"
 import { isDoneStatusName } from "@/lib/task-status-helpers"
+import { projectPath } from "@/lib/project-slug"
 
 /**
  * Deliver every task reminder whose time has elapsed as a web-push
@@ -26,6 +27,7 @@ export async function processDueReminders() {
     },
     include: {
       taskStatus: { select: { name: true } },
+      project: { select: { id: true, slug: true } },
     },
   })
 
@@ -52,7 +54,7 @@ export async function processDueReminders() {
           title: `Przypomnienie: ${task.title}`,
           body: dueText,
           tag: `task-reminder-${task.id}`,
-          url: task.projectId ? `/dashboard/projects/${task.projectId}` : "/dashboard/tasks",
+          url: task.project ? projectPath(task.project) : "/dashboard/tasks",
         })
       }
 

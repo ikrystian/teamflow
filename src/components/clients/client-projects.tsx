@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import type { ClientProject } from "@/lib/crm/projects";
 import { formatRelative } from "@/lib/format";
+import { projectPath } from "@/lib/project-slug";
 
 /** Projekty klienta z modułu projektów: postęp zadań, zaległości i zalogowany czas. */
 export function ClientProjects({ clientId, clientName, projects }: { clientId: string; clientName: string; projects: ClientProject[] }) {
@@ -43,7 +44,7 @@ export function ClientProjects({ clientId, clientName, projects }: { clientId: s
           {projects.map((p) => {
             const progress = p.totalTasks ? Math.round((p.doneTasks / p.totalTasks) * 100) : 0;
             return (
-              <Link key={p.id} href={`/dashboard/projects/${p.id}`} className="group rounded-xl focus-visible:outline-none">
+              <Link key={p.id} href={projectPath(p)} className="group rounded-xl focus-visible:outline-none">
                 <Card className="h-full transition-colors group-hover:border-primary/40">
                   <CardHeader className="pb-3">
                     <CardTitle className="flex items-center gap-2 text-base">

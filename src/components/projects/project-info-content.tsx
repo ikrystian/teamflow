@@ -24,9 +24,11 @@ import { FileUpload } from "@/components/ui/file-upload"
 import { ProjectAccessCard } from "./project-access-card"
 import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { SafeHtml } from "@/components/ui/safe-html"
+import { projectPath } from "@/lib/project-slug"
 
 interface ProjectDetails {
   id: string
+  slug?: string | null
   name: string
   description?: string
   readme?: string
@@ -117,7 +119,7 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
   usePageHeader(
     project ? (
       <PageHeader
-        backHref={`/dashboard/projects/${projectId}`}
+        backHref={projectPath(project)}
         title={project.name}
         description="Informacje, dane dostępowe i dokumenty projektu"
         meta={<Badge variant="outline" className="text-[11px]">{project.status}</Badge>}
@@ -396,6 +398,7 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
       {/* Access Credentials — z sejfu klienta (E2E) */}
       <ProjectAccessCard
         projectId={projectId}
+        projectSlug={project.slug}
         projectName={project.name}
         client={crmClient}
         legacyRaw={project.credentials}

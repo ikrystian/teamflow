@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth/session"
 import { prisma } from "@/lib/prisma"
 import type { AppSession as Session } from "@/lib/auth/types"
 import { isAssignableClient, withClientRef, withClientRefs } from "@/lib/crm/directory"
+import { generateUniqueProjectSlug } from "@/lib/project-slug"
 
 export async function GET(request: NextRequest) {
   try {
@@ -129,6 +130,7 @@ export async function POST(request: NextRequest) {
     const result = await prisma.project.create({
       data: {
         name,
+        slug: await generateUniqueProjectSlug(prisma, name),
         description,
         createdById: session.user.id,
         imageUrl,

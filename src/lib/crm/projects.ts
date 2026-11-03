@@ -9,6 +9,7 @@ import { isDoneStatusName } from "@/lib/task-status-helpers";
  */
 export type ClientProject = {
   id: string;
+  slug: string | null;
   name: string;
   color: string;
   icon: string | null;
@@ -31,6 +32,7 @@ export async function projectsForClient(clientId: string, viewer: { userId: stri
     orderBy: [{ archived: "asc" }, { sortOrder: "asc" }],
     select: {
       id: true,
+      slug: true,
       name: true,
       color: true,
       icon: true,
@@ -63,6 +65,7 @@ export async function projectsForClient(clientId: string, viewer: { userId: stri
     const last = own.reduce((max, t) => (t.updatedAt > max ? t.updatedAt : max), p.updatedAt);
     return {
       id: p.id,
+      slug: p.slug,
       name: p.name,
       color: p.color,
       icon: p.icon,

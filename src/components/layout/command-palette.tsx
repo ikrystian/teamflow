@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { create } from "zustand";
 import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator, CommandShortcut } from "@/components/ui/command";
 import { useProjects } from "@/contexts/projects-context";
+import { projectPath } from "@/lib/project-slug";
 import { api } from "@/lib/vault/api";
 import { normalize } from "@/lib/vault/search";
 import { lockVault, searchVault, useVault } from "@/lib/vault/store";
@@ -171,7 +172,7 @@ export function CommandPalette({ onShortcuts, crm = true }: { onShortcuts: () =>
           {matchedProjects.length ? (
             <CommandGroup heading="Projekty">
               {matchedProjects.map((p) => (
-                <CommandItem key={p.id} value={`project-${p.id}`} onSelect={() => go(`/dashboard/projects/${p.id}`)}>
+                <CommandItem key={p.id} value={`project-${p.id}`} onSelect={() => go(projectPath(p))}>
                   <FolderOpen aria-hidden style={{ color: p.color || undefined }} /> {p.name}
                   {p.client ? <span className="truncate text-xs text-muted-foreground">{p.client.name}</span> : null}
                 </CommandItem>

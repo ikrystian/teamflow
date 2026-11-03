@@ -38,6 +38,7 @@ import {
 import Link from "next/link"
 import Image from "next/image"
 import { type Project } from "@/types"
+import { projectPath } from "@/lib/project-slug"
 
 type ProjectFilter = "active" | "archived" | "all"
 
@@ -304,7 +305,7 @@ export function ProjectsContent() {
                   </DropdownMenu>
                 </div>
 
-                <Link href={`/dashboard/projects/${project.id}`} className="block">
+                <Link href={projectPath(project)} className="block">
                   {/* Project Image */}
                   <div className="relative h-36 bg-muted cursor-pointer border-b">
                     {project.imageUrl ? (

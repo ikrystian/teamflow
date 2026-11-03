@@ -27,7 +27,7 @@ const prisma = new PrismaClient()
 const NULLABLE_FIELDS = {
   User: ['name', 'password', 'avatarUrl', 'phone', 'location', 'bio', 'jobTitle', 'company', 'website'],
   Project: [
-    'description', 'readme', 'imageUrl', 'repositoryUrl', 'databaseUrl', 'serverUrl',
+    'slug', 'description', 'readme', 'imageUrl', 'repositoryUrl', 'databaseUrl', 'serverUrl',
     'apiUrl', 'adminPanelUrl', 'stagingUrl', 'productionUrl', 'credentials',
     'shareToken', 'icon', 'slackChannelId', 'clientId', 'githubRepo',
   ],

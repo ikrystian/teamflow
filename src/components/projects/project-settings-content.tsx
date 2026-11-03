@@ -18,6 +18,7 @@ import { toast } from "sonner"
 import { ProjectMembersManager } from "./project-members-manager"
 import { type Project } from "@/types"
 import { SafeHtml } from "@/components/ui/safe-html"
+import { projectPath } from "@/lib/project-slug"
 
 interface ProjectSettingsContentProps {
   projectId: string
@@ -62,7 +63,7 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
   usePageHeader(
     project ? (
       <PageHeader
-        backHref={`/dashboard/projects/${projectId}`}
+        backHref={projectPath(project)}
         title="Ustawienia projektu"
         description={project.name}
       />
@@ -440,7 +441,7 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
               Te dane są zapisywane bez szyfrowania end-to-end. Hasła i klucze przechowuj w{" "}
               <Link href="/dashboard/vault" className="font-medium underline-offset-4 hover:underline">sejfie klienta</Link>
               {" "}— istniejące wpisy przeniesiesz jednym kliknięciem na stronie{" "}
-              <Link href={`/dashboard/projects/${projectId}/info`} className="font-medium underline-offset-4 hover:underline">Informacje o projekcie</Link>.
+              <Link href={projectPath(project, "/info")} className="font-medium underline-offset-4 hover:underline">Informacje o projekcie</Link>.
             </div>
             {/* Existing credentials list */}
             {credentialsList.length > 0 && (

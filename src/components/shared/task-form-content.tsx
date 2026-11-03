@@ -1111,6 +1111,9 @@ export function TaskFormContent({
       value={title}
       onChange={(e) => setTitle(e.target.value)}
       required
+      // Radix Dialog keeps focus on an already-focused element inside it, so
+      // this wins over its default "focus the first button" on open.
+      autoFocus={isCreateMode}
       minRows={1}
       className="w-full resize-none border-none bg-transparent p-0 text-xl font-semibold tracking-tight outline-none placeholder:text-muted-foreground/60 sm:text-2xl"
     />

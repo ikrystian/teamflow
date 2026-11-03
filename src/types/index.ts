@@ -67,6 +67,7 @@ export interface Client {
 
 export interface Project {
   id: string;
+  slug?: string | null;
   name: string;
   description?: string;
   status?: string;
