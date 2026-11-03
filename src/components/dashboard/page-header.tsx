@@ -19,6 +19,8 @@ interface PageHeaderProps {
   meta?: ReactNode
   actions?: ReactNode
   className?: string
+  /** Extra classes for the h1, e.g. to hide it visually on phones where the top bar shows it. */
+  titleClassName?: string
 }
 
 /**
@@ -34,13 +36,14 @@ export function PageHeader({
   meta,
   actions,
   className,
+  titleClassName,
 }: PageHeaderProps) {
   const backButton = onBack ? (
-    <Button variant="ghost" size="icon" className="size-8 shrink-0 text-muted-foreground" onClick={onBack} aria-label="Wróć">
+    <Button variant="ghost" size="icon" className="size-8 shrink-0 text-muted-foreground pointer-coarse:size-10" onClick={onBack} aria-label="Wróć">
       <ArrowLeft />
     </Button>
   ) : backHref ? (
-    <Button variant="ghost" size="icon" className="size-8 shrink-0 text-muted-foreground" asChild>
+    <Button variant="ghost" size="icon" className="size-8 shrink-0 text-muted-foreground pointer-coarse:size-10" asChild>
       <Link href={backHref} aria-label="Wróć">
         <ArrowLeft />
       </Link>
@@ -54,7 +57,7 @@ export function PageHeader({
         {icon && <div className="shrink-0">{icon}</div>}
         <div className="min-w-0">
           <div className="flex min-w-0 items-center gap-2">
-            <h1 className="truncate text-base font-semibold tracking-tight text-foreground">{title}</h1>
+            <h1 className={cn("truncate text-base font-semibold tracking-tight text-foreground", titleClassName)}>{title}</h1>
             {meta}
           </div>
           {description && (

@@ -173,8 +173,9 @@ export function TaskComments({ taskId, readOnly = false, onCommentsChanged }: Ta
                     <button
                       type="button"
                       onClick={() => handleDeleteComment(comment.id)}
-                      className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive/80 transition-opacity"
+                      className="-m-1.5 rounded p-1.5 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100 text-destructive hover:text-destructive/80 transition-opacity"
                       title="Usuń komentarz"
+                      aria-label="Usuń komentarz"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>

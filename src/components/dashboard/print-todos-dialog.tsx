@@ -64,7 +64,7 @@ export function PrintTodosDialog({ tasks }: PrintTodosDialogProps) {
           Drukuj listę zadań
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-4xl max-h-[90dvh] overflow-y-auto">
         <DialogHeader className="print:hidden">
           <DialogTitle>Lista zadań na dzisiaj</DialogTitle>
           <DialogDescription>

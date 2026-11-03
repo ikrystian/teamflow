@@ -352,20 +352,21 @@ export function ProjectMembersManager({
               const isCreator = member.user.id === createdById
 
               return (
+                // Wraps on phones: the role and its controls drop below the person.
                 <div
                   key={member.id}
-                  className="flex items-center justify-between p-3 border rounded-lg bg-background"
+                  className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-3 border rounded-lg bg-background"
                 >
-                  <div className="flex items-center space-x-3">
-                    <Avatar className="h-10 w-10">
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <Avatar className="h-10 w-10 shrink-0">
                       <AvatarImage src={member.user.avatarUrl || ""} />
                       <AvatarFallback>
                         {getUserInitials(member.user.name, member.user.email)}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex flex-col">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-medium">
+                    <div className="flex min-w-0 flex-col">
+                      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                        <span className="truncate font-medium">
                           {member.user.name || member.user.email}
                         </span>
                         {isCreator && (
@@ -376,14 +377,14 @@ export function ProjectMembersManager({
                         )}
                       </div>
                       {member.user.name && (
-                        <span className="text-sm text-muted-foreground">
+                        <span className="truncate text-sm text-muted-foreground">
                           {member.user.email}
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-2">
+                  <div className="ml-auto flex shrink-0 items-center gap-2">
                     <Badge className={roleInfo?.color}>
                       <RoleIcon className="mr-1 h-3 w-3" />
                       {roleInfo?.label}
@@ -409,7 +410,8 @@ export function ProjectMembersManager({
                           variant="outline"
                           size="sm"
                           onClick={() => removeMember(member.user.id)}
-                          className="h-8 w-8 p-0"
+                          className="h-8 w-8 p-0 pointer-coarse:size-9"
+                          aria-label={`Usuń ${member.user.name || member.user.email} z projektu`}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

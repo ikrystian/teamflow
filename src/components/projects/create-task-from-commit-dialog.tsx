@@ -66,7 +66,7 @@ export function CreateTaskFromCommitDialog({
       <Tooltip>
         <TooltipTrigger asChild>
           <DialogTrigger asChild>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" aria-label="Utwórz zadanie z commita" className="pointer-coarse:size-9 pointer-coarse:px-0">
               <GitCommitHorizontal className="h-4 w-4" />
             </Button>
           </DialogTrigger>
@@ -86,6 +86,10 @@ export function CreateTaskFromCommitDialog({
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="https://github.com/owner/repo/commit/abc123..."
+            aria-label="URL commita"
+            type="url"
+            inputMode="url"
+            enterKeyHint="go"
             autoFocus
             disabled={loading}
           />

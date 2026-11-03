@@ -172,16 +172,18 @@ export function UserTasksBoardContent() {
   }
 
   return (
-    <div className="space-y-4 p-4 md:p-6 relative" id="user-tasks-board">
-      <Tabs defaultValue="board" className="w-full">
-        <div className="flex items-center justify-between gap-4 mb-4">
+    // The board fills the screen below the header (its columns scroll on their
+    // own); the logs tab scrolls inside the same space.
+    <div className="relative flex h-full flex-col p-4 md:p-6" id="user-tasks-board">
+      <Tabs defaultValue="board" className="flex min-h-0 w-full flex-1 flex-col">
+        <div className="flex shrink-0 items-center justify-between gap-4 mb-4">
           <TabsList className="grid w-full sm:w-[240px] grid-cols-2">
             <TabsTrigger value="board"><LayoutGrid />Tablica</TabsTrigger>
             <TabsTrigger value="logs"><Webhook />Logi GitHub</TabsTrigger>
           </TabsList>
         </div>
 
-        <TabsContent value="board" className="mt-0">
+        <TabsContent value="board" className="mt-0 min-h-0 flex-1">
           {tasks.length === 0 ? (
             <Card className="border-dashed shadow-none">
               <CardContent className="py-12">
@@ -218,7 +220,7 @@ export function UserTasksBoardContent() {
           )}
         </TabsContent>
 
-        <TabsContent value="logs" className="mt-0">
+        <TabsContent value="logs" className="mt-0 min-h-0 flex-1 overflow-y-auto">
           <GithubWebhookLogs embedMode />
         </TabsContent>
       </Tabs>

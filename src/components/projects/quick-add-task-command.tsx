@@ -108,12 +108,12 @@ export function QuickAddTaskCommand({ projectId, onTaskCreated, onOptimisticCrea
       <Button
         onClick={() => setOpen(true)}
         variant="outline"
-        className="relative h-8 w-full justify-start text-sm text-muted-foreground sm:pr-12"
+        className="relative h-8 w-full min-w-0 justify-start text-sm text-muted-foreground sm:pr-12 pointer-coarse:h-9"
       >
         <Plus className="mr-2 h-4 w-4" />
-        <span className="hidden lg:inline">Szybkie dodanie zadania...</span>
-        <span className="inline lg:hidden">Dodaj zadanie...</span>
-        <kbd className="pointer-events-none absolute right-[0.3rem] top-[0.3rem] hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+        <span className="hidden truncate lg:inline">Szybkie dodanie zadania...</span>
+        <span className="inline truncate lg:hidden">Dodaj zadanie...</span>
+        <kbd className="pointer-events-none absolute right-[0.3rem] top-1/2 -translate-y-1/2 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
           <span className="text-xs">⌘</span>K
         </kbd>
       </Button>
@@ -128,7 +128,8 @@ export function QuickAddTaskCommand({ projectId, onTaskCreated, onOptimisticCrea
               value={input}
               onValueChange={setInput}
               onKeyDown={handleKeyDown}
-              className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              enterKeyHint="done"
+              className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 pointer-coarse:text-base"
             />
           </div>
           <CommandList>

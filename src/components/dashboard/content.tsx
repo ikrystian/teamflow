@@ -139,7 +139,7 @@ function TaskRow({ task, person, dateLabel, dateTone = "default", isDone, isComp
           <Button
             variant="ghost"
             size="icon"
-            className="size-7 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-success/10 hover:text-success focus-visible:opacity-100"
+            className="size-7 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-success/10 hover:text-success focus-visible:opacity-100 pointer-coarse:size-9 pointer-coarse:opacity-100"
             onClick={onMarkDone}
             disabled={isCompleting}
             title="Oznacz jako zakończone"

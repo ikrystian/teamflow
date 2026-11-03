@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback, useId } from "react"
 import { useSession } from "@/lib/auth/use-session"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -14,6 +14,9 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
@@ -61,6 +64,7 @@ import {
   formatEstimatedHours,
   formatProjectDisplay,
 } from "@/lib/task-format-utils"
+import { cn } from "@/lib/utils"
 import { TaskDetailsDialog } from "../tasks/task-details-dialog"
 
 // Domyślny termin wykonania dla nowych zadań: teraz + 1 dzień + 1 godzina.
@@ -137,6 +141,8 @@ function SortableTaskCard({
   showProjectName,
   showDetailsMenuItem,
   enableMarkComplete,
+  canMoveTo,
+  onMove,
 }: {
   task: Task
   onEdit: (task: Task) => void
@@ -152,6 +158,10 @@ function SortableTaskCard({
   showProjectName: boolean
   showDetailsMenuItem: boolean
   enableMarkComplete: boolean
+  /** Whether the menu may move this card into the given column. */
+  canMoveTo: (task: Task, status: TaskStatus) => boolean
+  /** Move the card to another column from its menu — the alternative to dragging. */
+  onMove: (task: Task, statusId: string) => void
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -161,6 +171,9 @@ function SortableTaskCard({
   // Lightbox for the cover thumbnail — navigates through all task images.
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
+  // Input that last pressed the card: touch long-presses start a drag, so they
+  // must not also open the context menu.
+  const pointerTypeRef = useRef("mouse")
 
   useEffect(() => {
     const element = ref.current
@@ -186,7 +199,11 @@ function SortableTaskCard({
           },
         })
       },
-      onDragStart: () => setIsDragging(true),
+      onDragStart: () => {
+        setIsDragging(true)
+        // Haptic tick when a long-press lifts the card (Android; no-op elsewhere).
+        if (pointerTypeRef.current === "touch") navigator.vibrate?.(10)
+      },
       onDrop: () => setIsDragging(false),
     })
   }, [task.id, task.statusId, canDrag])
@@ -241,10 +258,14 @@ function SortableTaskCard({
   ]
 
   const handleContextMenu = (e: React.MouseEvent) => {
+    // On touch screens a long-press picks the card up instead; the menu has its own button there.
+    if (pointerTypeRef.current === "touch") return
     e.preventDefault()
     e.stopPropagation()
     setIsContextMenuOpen(true)
   }
+
+  const moveDisabled = !canDrag || !!isUpdating
 
   const handleDelete = async () => {
     setIsContextMenuOpen(false)
@@ -255,15 +276,18 @@ function SortableTaskCard({
   }
 
   return (
-    <div className="relative">
+    <li className="relative">
+      {/* No touch-action override: a swipe over the card scrolls the column,
+          a long-press starts the native drag. */}
       <div
         ref={ref}
-        className={`touch-none ${canDrag ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'} transition-all duration-200 ${isDeleting ? 'opacity-0 scale-95' : 'opacity-100 scale-100 animate-in fade-in'
+        onPointerDown={(e) => { pointerTypeRef.current = e.pointerType }}
+        className={`[-webkit-touch-callout:none] ${canDrag ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'} transition-all duration-200 ${isDeleting ? 'opacity-0 scale-95' : 'opacity-100 scale-100 animate-in fade-in'
           } ${isDragging ? 'opacity-40' : ''}`}
       >
         <DropdownMenu open={isContextMenuOpen} onOpenChange={setIsContextMenuOpen}>
           <Card
-            className={`relative mb-2 cursor-pointer gap-0 transition-all border-l-[3px] ${isDragging ? '' : 'hover-card-border-animate'}`}
+            className={`relative mb-2 cursor-pointer gap-0 transition-all border-l-[3px] has-[[data-card-title]:focus-visible]:ring-2 has-[[data-card-title]:focus-visible]:ring-ring/60 pointer-coarse:active:scale-[0.98] ${isDragging ? '' : 'hover-card-border-animate'}`}
             style={{
               borderLeftColor: completed
                 ? '#10B981'
@@ -278,16 +302,18 @@ function SortableTaskCard({
             <CardContent
               onContextMenu={handleContextMenu}
 
-              className="py-2 px-3 pr-6 select-none pb-3 kanban-card cursor-pointer group relative"
+              className="py-2 px-3 pr-6 pointer-coarse:pr-10 select-none pb-3 kanban-card cursor-pointer group relative"
               onClick={(event) => { onViewDetails(task); event.stopPropagation() }}
             >
-              {/* Menu button - visible on card hover */}
+              {/* Menu button: revealed on hover/focus with a mouse, always shown
+                  (with a 44px hit area) on touch screens, which have no hover. */}
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   onClick={(e) => e.stopPropagation()}
                   size="sm"
-                  className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 focus:outline-none bg-card/90 transition-opacity duration-200"
+                  aria-label={`Akcje zadania: ${task.title}`}
+                  className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 pointer-coarse:size-8 pointer-coarse:opacity-100 pointer-coarse:after:absolute pointer-coarse:after:-inset-1.5 bg-card/90 transition-opacity duration-200"
                 >
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
@@ -297,12 +323,17 @@ function SortableTaskCard({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1">
                       <h4 className="kanban-card-text font-medium text-sm leading-tight cursor-pointer">
-                        {task.key && (
-                          <span className="text-muted-foreground  text-xs font-mono mr-1">
-                            [{task.key}]
-                          </span>
-                        )}
-                        {task.title}
+                        {/* Keyboard / screen-reader entry to the task. Pointer input
+                            passes through to the card (which also stays draggable);
+                            Enter's click bubbles up to the card's handler. */}
+                        <button type="button" data-card-title className="pointer-events-none text-left outline-none">
+                          {task.key && (
+                            <span className="text-muted-foreground  text-xs font-mono mr-1">
+                              [{task.key}]
+                            </span>
+                          )}
+                          {task.title}
+                        </button>
                       </h4>
                       {task.archived && (
                         <Badge variant="outline" className="text-[10px] font-medium text-muted-foreground">
@@ -476,9 +507,27 @@ function SortableTaskCard({
                 </div>
               </div>
             </CardContent>
-            <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem onClick={handleDelete} className="text-red-600">
-                <Trash2 className="mr-2 h-4 w-4" />
+            <DropdownMenuContent align="end" className="w-56">
+              {/* Moving from the menu is the single-tap alternative to dragging
+                  (keyboard, screen readers, and phones where columns are a swipe apart). */}
+              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Przenieś do kolumny</DropdownMenuLabel>
+              <DropdownMenuRadioGroup
+                value={task.statusId ?? ""}
+                onValueChange={(statusId) => onMove(task, statusId)}
+              >
+                {taskStatuses.map((status) => (
+                  <DropdownMenuRadioItem
+                    key={status.id}
+                    value={status.id}
+                    disabled={moveDisabled || (status.id !== task.statusId && !canMoveTo(task, status))}
+                  >
+                    {status.name}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleDelete} variant="destructive">
+                <Trash2 />
                 Usuń
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -497,7 +546,7 @@ function SortableTaskCard({
         onOpenChange={setLightboxOpen}
         onIndexChange={setLightboxIndex}
       />
-    </div>
+    </li>
   )
 }
 
@@ -657,8 +706,11 @@ function QuickAddTask({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Wpisz nazwę zadania..."
+            aria-label={`Nazwa nowego zadania w kolumnie ${status.name}`}
+            enterKeyHint="done"
             autoFocus
-            className="text-xs h-7"
+            // 16px on touch screens, otherwise iOS zooms in when the field gets focus.
+            className="text-xs h-7 pointer-coarse:h-9 pointer-coarse:text-base"
             disabled={loading}
           />
           {!hideProjectSelect && !projectId && projects && projects.length > 0 && (
@@ -686,12 +738,13 @@ function QuickAddTask({
           <div className="flex gap-2 items-center">
             <Button
               type="button"
-              className="w-6 h-6"
+              className="w-6 h-6 pointer-coarse:size-9"
               variant="ghost"
               size="sm"
               onClick={handleCancel}
               disabled={loading}
               data-action="cancel"
+              aria-label="Anuluj dodawanie"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -730,6 +783,8 @@ function KanbanColumn({
   serverHasMore,
   onLoadMore,
   showArchived,
+  canMoveTo,
+  onMove,
 }: {
   status: StatusColumn
   tasks: Task[]
@@ -764,8 +819,11 @@ function KanbanColumn({
   onLoadMore?: (statusId: string) => void
   /** Whether archived tasks are visible on the board (enables "restore" in the menu). */
   showArchived?: boolean
+  canMoveTo: (task: Task, status: TaskStatus) => boolean
+  onMove: (task: Task, statusId: string) => void
 }) {
-  const ref = useRef<HTMLDivElement>(null)
+  const headingId = useId()
+  const ref = useRef<HTMLElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const sentinelRef = useRef<HTMLDivElement>(null)
   const [isOver, setIsOver] = useState(false)
@@ -917,16 +975,20 @@ function KanbanColumn({
   }, [hasMore, tasks.length, serverMode, onLoadMore, status.id])
 
   return (
-    <div className="flex-shrink-0 w-80">
-      <div
-        ref={scrollContainerRef}
-        className={`kanban-scroll rounded-xl border p-2.5 overflow-y-auto h-[calc(100svh-200px)] md:h-[calc(100svh-216px)] transition-colors ${isOver ? 'bg-primary/10 border-primary/30 ring-2 ring-primary/15' : 'bg-muted/50 border-border/60'
-          }`}
-      >
-        <div className="flex items-center justify-between mb-2.5 px-1">
-          <div className="flex items-center gap-2">
-            <h3 className="font-medium text-[13px]">{status.name}</h3>
-            <Badge variant="secondary" className="text-[11px] tabular-nums text-muted-foreground">
+    // The whole column (header included) is the drop target and fills the
+    // board's height; only the card list scrolls. Phones see one column at a
+    // time, with the next one peeking in, and the board snaps between them.
+    <section
+      ref={ref}
+      aria-labelledby={headingId}
+      data-kanban-column={status.id}
+      className={`flex w-[calc(100vw-3.5rem)] max-w-sm shrink-0 snap-start flex-col rounded-xl border transition-colors md:w-80 ${isOver ? 'bg-primary/10 border-primary/30 ring-2 ring-primary/15' : 'bg-muted/50 border-border/60'
+        }`}
+    >
+        <div className="flex shrink-0 items-center justify-between gap-2 px-3.5 pt-2.5 pb-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <h3 id={headingId} className="truncate font-medium text-[13px]">{status.name}</h3>
+            <Badge variant="secondary" className="text-[11px] tabular-nums text-muted-foreground" aria-label={`${badgeCount} zadań`}>
               {badgeCount}
             </Badge>
           </div>
@@ -936,7 +998,8 @@ function KanbanColumn({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 w-7 p-0 focus:outline-none hover:bg-muted-foreground/10 text-muted-foreground hover:text-foreground"
+                aria-label={`Akcje kolumny ${status.name}`}
+                className="h-7 w-7 p-0 pointer-coarse:size-9 hover:bg-muted-foreground/10 text-muted-foreground hover:text-foreground"
               >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
@@ -981,7 +1044,10 @@ function KanbanColumn({
           </DropdownMenu>
         </div>
 
-        <div ref={ref} className="space-y-2 min-h-[400px]">
+        <div
+          ref={scrollContainerRef}
+          className="kanban-scroll min-h-0 flex-1 space-y-2 overflow-y-auto px-2.5 pb-2.5"
+        >
           {tasks.length === 0 && (
             <div className="text-center py-8 text-muted-foreground text-sm">
               <div className="mb-2">Brak zadań</div>
@@ -989,24 +1055,30 @@ function KanbanColumn({
             </div>
           )}
 
-          {visibleTasks.map((task) => (
-            <SortableTaskCard
-              key={task.id}
-              task={task}
-              onEdit={onEdit}
-              onTimeTracking={onTimeTracking}
-              onViewDetails={onViewDetails}
-              onDelete={onDelete}
-              canEdit={canEdit(task)}
-              canDrag={canDrag(task)}
-              isUpdating={updatingTasks.has(task.id)}
-              onMarkComplete={onMarkComplete}
-              taskStatuses={taskStatuses}
-              showProjectName={showProjectName}
-              showDetailsMenuItem={showDetailsMenuItem}
-              enableMarkComplete={enableMarkComplete}
-            />
-          ))}
+          {visibleTasks.length > 0 && (
+            <ul aria-labelledby={headingId} className="space-y-2">
+              {visibleTasks.map((task) => (
+                <SortableTaskCard
+                  key={task.id}
+                  task={task}
+                  onEdit={onEdit}
+                  onTimeTracking={onTimeTracking}
+                  onViewDetails={onViewDetails}
+                  onDelete={onDelete}
+                  canEdit={canEdit(task)}
+                  canDrag={canDrag(task)}
+                  isUpdating={updatingTasks.has(task.id)}
+                  onMarkComplete={onMarkComplete}
+                  taskStatuses={taskStatuses}
+                  showProjectName={showProjectName}
+                  showDetailsMenuItem={showDetailsMenuItem}
+                  enableMarkComplete={enableMarkComplete}
+                  canMoveTo={canMoveTo}
+                  onMove={onMove}
+                />
+              ))}
+            </ul>
+          )}
 
           {/* Bottom sentinel: when it scrolls into view the next page is revealed */}
           {hasMore && (
@@ -1034,7 +1106,6 @@ function KanbanColumn({
             </div>
           )}
         </div>
-      </div>
 
       {/* Delete Confirmation AlertDialog */}
       <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
@@ -1202,7 +1273,110 @@ function KanbanColumn({
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </section>
+  )
+}
+
+/**
+ * Phone-sized strip of column chips above the board: shows where the user is
+ * (the board scrolls one column at a time there), jumps to a column on tap,
+ * and doubles as drop targets so a card can be dragged straight to a column
+ * that is off-screen.
+ */
+function KanbanColumnTabs({
+  statuses,
+  counts,
+  activeIndex,
+  onSelect,
+}: {
+  statuses: TaskStatus[]
+  counts: Record<string, number>
+  activeIndex: number
+  onSelect: (index: number) => void
+}) {
+  const stripRef = useRef<HTMLUListElement>(null)
+
+  // Keep the active chip in view as the board is swiped.
+  useEffect(() => {
+    const strip = stripRef.current
+    const chip = strip?.children[activeIndex] as HTMLElement | undefined
+    if (!strip || !chip) return
+    strip.scrollTo({ left: chip.offsetLeft - (strip.clientWidth - chip.offsetWidth) / 2, behavior: "smooth" })
+  }, [activeIndex])
+
+  useEffect(() => {
+    const element = stripRef.current
+    if (!element) return
+    return autoScrollForElements({
+      element,
+      canScroll: ({ source }) => source.data.type === "task",
+    })
+  }, [])
+
+  return (
+    <nav aria-label="Kolumny tablicy" className="-mx-4 md:hidden">
+      <ul ref={stripRef} className="flex gap-1.5 overflow-x-auto overscroll-x-contain px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {statuses.map((status, index) => (
+          <KanbanColumnTab
+            key={status.id}
+            status={status}
+            count={counts[status.id] ?? 0}
+            active={index === activeIndex}
+            onSelect={() => onSelect(index)}
+          />
+        ))}
+      </ul>
+    </nav>
+  )
+}
+
+function KanbanColumnTab({
+  status,
+  count,
+  active,
+  onSelect,
+}: {
+  status: TaskStatus
+  count: number
+  active: boolean
+  onSelect: () => void
+}) {
+  const ref = useRef<HTMLButtonElement>(null)
+  const [isOver, setIsOver] = useState(false)
+
+  useEffect(() => {
+    const element = ref.current
+    if (!element) return
+    return dropTargetForElements({
+      element,
+      canDrop: ({ source }) => source.data.type === "task",
+      // Same shape as a column target: dropping here appends to that column.
+      getData: () => ({ type: "column", statusId: status.id }),
+      onDragEnter: () => setIsOver(true),
+      onDragLeave: () => setIsOver(false),
+      onDrop: () => setIsOver(false),
+    })
+  }, [status.id])
+
+  return (
+    <li className="shrink-0">
+      <button
+        ref={ref}
+        type="button"
+        onClick={onSelect}
+        aria-current={active ? "true" : undefined}
+        aria-label={`${status.name}, ${count} zadań`}
+        className={cn(
+          "flex h-9 items-center gap-2 rounded-full border px-3 text-[13px] font-medium whitespace-nowrap transition-colors",
+          active ? "border-primary/40 bg-primary/10 text-foreground" : "bg-card text-muted-foreground",
+          isOver && "border-primary bg-primary/20 text-foreground ring-2 ring-primary/25"
+        )}
+      >
+        <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ backgroundColor: status.color || "var(--muted-foreground)" }} />
+        {status.name}
+        <span aria-hidden className="tabular-nums text-muted-foreground">{count}</span>
+      </button>
+    </li>
   )
 }
 
@@ -1237,6 +1411,10 @@ export function KanbanBoard({
   const [updatingTasks, setUpdatingTasks] = useState<Set<string>>(new Set())
   const [taskDetailsDialogOpen, setTaskDetailsDialogOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  // A card is being dragged: column snapping is paused so auto-scroll can glide.
+  const [isDragging, setIsDragging] = useState(false)
+  // Column scrolled into view on phones (drives the column chips).
+  const [activeColumn, setActiveColumn] = useState(0)
 
   const taskStatuses = taskStatusesProp ?? fetchedTaskStatuses
   const shouldShowProjectName = showProjectName ?? !projectId
@@ -1249,6 +1427,52 @@ export function KanbanBoard({
   const canDragTask = (task: Task): boolean => {
     if (!isManager) return true
     return managerCanDragFrom(statusNameById(task.statusId) ?? task.taskStatus?.name)
+  }
+
+  // Columns offered by a card's "move to" menu — the same rules as dropping.
+  const canMoveTaskTo = (task: Task, status: TaskStatus): boolean => {
+    if (!canDragTask(task)) return false
+    if (!isManager) return true
+    return managerCanMoveTask(statusNameById(task.statusId) ?? task.taskStatus?.name, status.name)
+  }
+
+  const handleMoveFromMenu = async (task: Task, statusId: string) => {
+    const status = taskStatuses.find(s => s.id === statusId)
+    if (!status || task.statusId === statusId) return
+    if (await handleTaskDrop(task.id, statusId)) {
+      // The card leaves the visible column on phones, so confirm where it went.
+      toast.success(`Przeniesiono do „${status.name}”`, { id: `move-task-${task.id}` })
+    }
+  }
+
+  // Board column under the left edge of the viewport (phones show one at a time).
+  // Scroll events already arrive once per frame, and setState bails out while
+  // the column stays the same.
+  useEffect(() => {
+    const board = boardRef.current
+    if (!board) return
+    const onScroll = () => {
+      const columns = board.querySelectorAll<HTMLElement>("[data-kanban-column]")
+      const edge = board.scrollLeft + parseFloat(getComputedStyle(board).scrollPaddingLeft || "0")
+      let closest = 0
+      columns.forEach((column, index) => {
+        if (Math.abs(column.offsetLeft - edge) < Math.abs(columns[closest].offsetLeft - edge)) closest = index
+      })
+      setActiveColumn(closest)
+    }
+    board.addEventListener("scroll", onScroll, { passive: true })
+    return () => board.removeEventListener("scroll", onScroll)
+  }, [])
+
+  const scrollToColumn = (index: number) => {
+    const board = boardRef.current
+    const column = board?.querySelectorAll<HTMLElement>("[data-kanban-column]")[index]
+    if (!board || !column) return
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    board.scrollTo({
+      left: column.offsetLeft - parseFloat(getComputedStyle(board).scrollPaddingLeft || "0"),
+      behavior: reduceMotion ? "auto" : "smooth",
+    })
   }
 
   // Keep latest data accessible inside the drag monitor without re-registering it.
@@ -1334,7 +1558,9 @@ export function KanbanBoard({
   useEffect(() => {
     return monitorForElements({
       canMonitor: ({ source }) => source.data.type === "task",
+      onDragStart: () => setIsDragging(true),
       onDrop: ({ source, location }) => {
+        setIsDragging(false)
         const target = location.current.dropTargets[0]
         if (!target) return
         handleTaskDrop(
@@ -1349,23 +1575,24 @@ export function KanbanBoard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  /** Moves a card (drop or "move to" menu); resolves true once the server accepted it. */
   const handleTaskDrop = async (
     taskId: string,
     newStatusId: string,
     /** Card the drop landed on (with the closest edge); none = column background. */
     target?: { taskId: string; edge: Edge | null }
-  ) => {
+  ): Promise<boolean> => {
     const currentTasks = displayTasksRef.current
 
     // Ignore drops that don't resolve to a real status column
     const newStatus = taskStatusesRef.current.find(status => status.id === newStatusId)
-    if (!newStatus) return
+    if (!newStatus) return false
 
     const task = currentTasks.find(t => t.id === taskId)
-    if (!task) return
+    if (!task) return false
 
     // Dropping a card onto itself never moves anything.
-    if (target?.taskId === taskId) return
+    if (target?.taskId === taskId) return false
 
     // Managers may only move tasks out of "To Test" (into "To Do"/"Archive") or
     // reorder within "To Do"/"To Test". Block disallowed drops before the
@@ -1377,7 +1604,7 @@ export function KanbanBoard({
         toast.error("Jako Manager nie możesz przenieść zadania do tej kolumny.", {
           id: `move-task-${taskId}`,
         })
-        return
+        return false
       }
     }
 
@@ -1407,7 +1634,7 @@ export function KanbanBoard({
       const taskTime = getTime(task)
       const beforeTime = before ? getTime(before) : -Infinity
       const afterTime = after ? getTime(after) : Infinity
-      if (taskTime > beforeTime && taskTime < afterTime) return
+      if (taskTime > beforeTime && taskTime < afterTime) return false
     }
 
     // Encode the position as a createdAt between the new neighbours (columns
@@ -1421,7 +1648,7 @@ export function KanbanBoard({
       newCreatedAt = new Date(getTime(before) + 60000).toISOString()
     }
 
-    if (sameColumn && !newCreatedAt) return
+    if (sameColumn && !newCreatedAt) return false
 
     // Mark task as updating
     setUpdatingTasks(prev => new Set(prev).add(taskId))
@@ -1451,6 +1678,7 @@ export function KanbanBoard({
         // handled server-side by the task PATCH endpoint (it detects the move to
         // Done), so no extra client call is needed here.
         onTaskUpdatedRef.current()
+        return true
       } else {
         // Rollback on error
         setOptimisticTasks(prevTasks =>
@@ -1476,6 +1704,7 @@ export function KanbanBoard({
         return newSet
       })
     }
+    return false
   }
 
   // Insert a temporary task card immediately so adding a task feels instant.
@@ -1604,9 +1833,30 @@ export function KanbanBoard({
     }
   }
 
+  // Column badge counts (server totals when paginated, loaded cards otherwise).
+  const columnCounts = Object.fromEntries(
+    taskStatuses.map(status => [status.id, columnTotals?.[status.id] ?? getTasksByStatus(status).length])
+  )
+
   return (
-    <>
-      <div ref={boardRef} className="kanban-scroll flex space-x-4 overflow-x-auto pb-1">
+    // Fills the height its parent gives it: columns stretch to the bottom of
+    // the screen and scroll on their own, so the page itself never scrolls.
+    <div className="flex h-full min-h-0 flex-col gap-3">
+      {taskStatuses.length > 1 && (
+        <KanbanColumnTabs
+          statuses={taskStatuses}
+          counts={columnCounts}
+          activeIndex={activeColumn}
+          onSelect={scrollToColumn}
+        />
+      )}
+      <div
+        ref={boardRef}
+        data-dragging={isDragging || undefined}
+        // Phones: the strip runs edge to edge and snaps column by column
+        // (snapping pauses mid-drag so auto-scroll can glide across columns).
+        className="kanban-scroll relative -mx-4 flex min-h-0 flex-1 snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-1 data-[dragging]:snap-none md:mx-0 md:snap-none md:scroll-px-0 md:gap-4 md:px-0"
+      >
         {taskStatuses.length > 0 ? taskStatuses.map((status) => (
           <KanbanColumn
             key={status.id}
@@ -1637,6 +1887,8 @@ export function KanbanBoard({
             serverHasMore={columnHasMore?.[status.id]}
             onLoadMore={onLoadMore}
             showArchived={showArchived}
+            canMoveTo={canMoveTaskTo}
+            onMove={handleMoveFromMenu}
           />
         )) : (
           <div className="flex items-center justify-center w-full h-64 text-muted-foreground">
@@ -1657,6 +1909,6 @@ export function KanbanBoard({
         canEdit={selectedTask ? canEditTask(selectedTask) : false}
         projects={projects}
       />
-    </>
+    </div>
   )
 }

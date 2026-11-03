@@ -1,7 +1,8 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { useSwipeToDismiss } from "@/hooks/use-swipe"
 import { cn } from "@/lib/utils"
 import type { Task } from "@/types"
 import { TaskFormContent } from "../shared/task-form-content"
@@ -60,11 +61,20 @@ export function TaskDetailsDialog({
     }
   }, [open, isCreateMode, task])
 
+  // Phones: drag the sheet down by its grab handle or header to close it.
+  const [content, setContent] = useState<HTMLDivElement | null>(null)
+  useSwipeToDismiss(content, {
+    direction: "down",
+    handle: "[data-swipe-handle], .modal-form > header",
+    onDismiss: () => onOpenChange(false),
+  })
+
   if (!isCreateMode && !task) return null
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        ref={setContent}
         // Pinned a fixed distance from the top of the viewport (instead of
         // vertically centered) so the dialog doesn't jump when its content
         // grows or shrinks, e.g. after expanding a section.
@@ -73,11 +83,19 @@ export function TaskDetailsDialog({
         // content | properties columns; the form collapses them when narrower.
         className={cn(
           "top-[5vh] flex max-h-[90vh] translate-y-0 flex-col gap-0 overflow-hidden p-0",
+          // Phones: a full-height sheet that slides up from the bottom edge and
+          // keeps its footer above the home indicator.
+          "max-sm:inset-x-0 max-sm:top-[calc(env(safe-area-inset-top)+0.5rem)] max-sm:bottom-0 max-sm:max-h-none max-sm:max-w-none max-sm:translate-x-0 max-sm:rounded-b-none max-sm:border-x-0 max-sm:border-b-0 max-sm:pb-[env(safe-area-inset-bottom)]",
+          "max-sm:duration-300 max-sm:data-[state=open]:animate-in max-sm:data-[state=open]:slide-in-from-bottom max-sm:data-[state=closed]:animate-out max-sm:data-[state=closed]:slide-out-to-bottom",
+          "[&_.modal-form>header]:max-sm:touch-none",
           isCreateMode ? "sm:max-w-3xl" : "md:max-w-5xl"
         )}
         showCloseButton={false}
         disableAnimation
       >
+        <div data-swipe-handle aria-hidden className="flex h-4 shrink-0 touch-none items-end justify-center sm:hidden">
+          <span className="h-1 w-10 rounded-full bg-muted-foreground/30" />
+        </div>
         <DialogHeader className="sr-only">
           <DialogTitle>{isCreateMode ? "Nowe zadanie" : task?.title}</DialogTitle>
           <DialogDescription>

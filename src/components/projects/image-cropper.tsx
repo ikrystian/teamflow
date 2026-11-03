@@ -125,7 +125,7 @@ export function ImageCropper({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-4xl max-h-[90dvh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Kadruj zdjęcie</DialogTitle>
         </DialogHeader>

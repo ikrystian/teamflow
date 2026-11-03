@@ -8,6 +8,11 @@ const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner
       className="toaster group"
+      // Phones: stay clear of the home indicator / notch.
+      mobileOffset={{
+        bottom: "calc(env(safe-area-inset-bottom) + 16px)",
+        top: "calc(env(safe-area-inset-top) + 16px)",
+      }}
       toastOptions={{
         classNames: {
           toast:

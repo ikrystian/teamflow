@@ -51,14 +51,14 @@ export function TaskBoardFilters({
 
   return (
     <div className="flex items-center space-x-3">
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-2 max-sm:hidden">
         <Filter className="h-4 w-4" />
         <span className="text-sm font-medium text-foreground/80">Filtruj:</span>
       </div>
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="flex items-center space-x-2 h-9">
+          <Button variant="outline" className="flex items-center space-x-2 h-9" aria-label={`Filtr zadań: ${getFilterLabel()}`}>
             {getFilterIcon()}
             <span className="text-sm">{getFilterLabel()}</span>
             <Badge variant="secondary" className="ml-2 text-xs">

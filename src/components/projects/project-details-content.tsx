@@ -12,6 +12,15 @@ import { PageLoadingLayout } from "@/components/ui/page-loading-layout"
 import { useProjectViewPreferences } from "@/hooks/use-project-view-preferences"
 import { usePageHeader } from "@/contexts/header-context"
 import { PageHeader } from "@/components/dashboard/page-header"
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 
 import {
@@ -26,6 +35,7 @@ import {
   Info,
   Send,
   Archive,
+  MoreHorizontal,
 } from "lucide-react"
 import Link from "next/link"
 import { KanbanBoard } from "@/components/shared/kanban-board"
@@ -53,6 +63,7 @@ import { isManagerRole } from "@/lib/roles"
 import { managerCanEditStatus } from "@/lib/task-status-helpers"
 import { toast } from "sonner"
 import { SafeHtml } from "@/components/ui/safe-html"
+import { cn } from "@/lib/utils"
 
 interface ProjectDetailsContentProps {
   projectId: string
@@ -365,20 +376,25 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     setTasks(prev => prev.filter(t => t.id !== tempId))
   }
 
+  const lastSlackSendLabel = lastSlackSendAt ? new Date(lastSlackSendAt).toLocaleString("pl-PL") : "brak"
+
   // Set page header content
   usePageHeader(
     project ? (
       <PageHeader
         backHref="/dashboard/projects"
         title={project.name}
-        icon={<span className="block size-2.5 rounded-full" style={{ backgroundColor: project.color || "var(--primary)" }} />}
+        // Phones already show the project name in the top bar; this row keeps
+        // its width for the view switcher and actions.
+        titleClassName="max-sm:sr-only"
+        icon={<span className="block size-2.5 rounded-full max-sm:hidden" style={{ backgroundColor: project.color || "var(--primary)" }} />}
         meta={project.status ? (
           <Badge variant="outline" className="hidden text-[11px] lg:inline-flex">{project.status}</Badge>
         ) : null}
         actions={
           <>
             {/* View Toggle */}
-            <div className="flex h-8 items-center rounded-md border bg-muted/60 p-0.5">
+            <div role="group" aria-label="Widok zadań" className="flex h-8 items-center rounded-md border bg-muted/60 p-0.5 pointer-coarse:h-10">
               {([
                 { mode: "list", icon: List, label: "Lista" },
                 { mode: "board", icon: LayoutGrid, label: "Tablica" },
@@ -390,8 +406,9 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                   size="sm"
                   onClick={() => updateViewMode(mode)}
                   title={label}
+                  aria-label={label}
                   aria-pressed={viewMode === mode}
-                  className={`h-full rounded-[5px] px-2 text-muted-foreground hover:bg-transparent hover:text-foreground ${viewMode === mode ? "bg-card text-foreground shadow-xs dark:bg-accent" : ""}`}
+                  className={`h-full rounded-[5px] px-2 text-muted-foreground hover:bg-transparent hover:text-foreground pointer-coarse:px-2.5 ${viewMode === mode ? "bg-card text-foreground shadow-xs dark:bg-accent" : ""}`}
                 >
                   <Icon className="h-4 w-4" />
                 </Button>
@@ -404,7 +421,9 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                 size="sm"
                 onClick={() => setShowArchived(prev => !prev)}
                 title={showArchived ? "Ukryj zarchiwizowane zadania" : "Pokaż zarchiwizowane zadania"}
+                aria-label="Zarchiwizowane zadania"
                 aria-pressed={showArchived}
+                className="max-sm:hidden"
               >
                 <Archive className="h-4 w-4" />
                 <span className="hidden lg:inline">{showArchived ? "Ukryj archiwum" : "Pokaż archiwum"}</span>
@@ -414,30 +433,73 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
             {/* Below lg the outline buttons collapse to icons so the fixed-height
                 header doesn't overflow horizontally on medium screens. */}
             <Button variant="outline" size="sm" title="Ustawienia" className="max-sm:hidden" asChild>
-              <Link href={projectPath(project, "/settings")}>
+              <Link href={projectPath(project, "/settings")} aria-label="Ustawienia projektu">
                 <Settings className="h-4 w-4" />
                 <span className="hidden lg:inline">Ustawienia</span>
               </Link>
             </Button>
 
             <Button variant="outline" size="sm" title="Informacje o projekcie" className="max-sm:hidden" asChild>
-              <Link href={projectPath(project, "/info")}>
+              <Link href={projectPath(project, "/info")} aria-label="Informacje o projekcie">
                 <Info className="h-4 w-4" />
                 <span className="hidden lg:inline">Informacje</span>
               </Link>
             </Button>
 
-            <Button size="sm" onClick={handleCreateTask} title="Dodaj zadanie">
+            <Button size="sm" onClick={handleCreateTask} title="Dodaj zadanie" aria-label="Dodaj zadanie" className="pointer-coarse:h-10 pointer-coarse:min-w-10">
               <Plus className="h-4 w-4" />
               <span className="hidden lg:inline">Dodaj zadanie</span>
             </Button>
+
+            {/* Phones: the secondary actions hidden above collapse into one menu. */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className="size-10 sm:hidden" aria-label="Więcej akcji projektu">
+                  <MoreHorizontal />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuItem asChild>
+                  <Link href={projectPath(project, "/info")}>
+                    <Info />
+                    Informacje o projekcie
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={projectPath(project, "/settings")}>
+                    <Settings />
+                    Ustawienia projektu
+                  </Link>
+                </DropdownMenuItem>
+                {viewMode === "board" && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuCheckboxItem
+                      checked={showArchived}
+                      onCheckedChange={(checked) => setShowArchived(checked === true)}
+                    >
+                      Pokaż zarchiwizowane
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="flex items-start gap-2 text-xs font-normal text-muted-foreground">
+                      <Send className="mt-0.5 size-3.5 shrink-0" />
+                      <span>
+                        Ostatnia wysyłka na Slack:{" "}
+                        <span className="font-medium text-foreground">{lastSlackSendLabel}</span>
+                      </span>
+                    </DropdownMenuLabel>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </>
         }
       />
     ) : (
       <PageHeader title="Ładowanie projektu..." />
     ),
-    [project, viewMode, projectId] // Re-render when project, viewMode or projectId changes
+    // showArchived / lastSlackSendLabel keep the archive toggle and the menu in sync.
+    [project, viewMode, projectId, showArchived, lastSlackSendLabel]
   )
 
   const handleTaskUpdated = (updatedTask?: Task) => {
@@ -666,7 +728,14 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
     <div
       // The backdrop lives on ::before at half opacity, so only the background
       // fades — not the board on top of it. `isolate` keeps the -z layer inside.
-      className={`space-y-6 p-4 md:p-6 relative isolate min-h-full ${project.imageUrl ? "before:pointer-events-none before:absolute before:inset-0 before:-z-10 before:bg-(image:--tasks-bg) before:bg-cover before:bg-center before:bg-no-repeat before:bg-fixed before:opacity-20" : ""}`}
+      className={cn(
+        "relative isolate p-4 md:p-6",
+        // The board fills the screen below the header and its columns scroll on
+        // their own; list and calendar scroll with the page.
+        viewMode === "board" ? "flex h-full flex-col gap-3 md:gap-4" : "min-h-full space-y-6",
+        // Fixed backgrounds jank (or are ignored) on mobile browsers.
+        project.imageUrl && "before:pointer-events-none before:absolute before:inset-0 before:-z-10 before:bg-(image:--tasks-bg) before:bg-cover before:bg-center before:bg-no-repeat before:opacity-20 md:before:bg-fixed"
+      )}
       id="tasks"
       style={
         project.imageUrl
@@ -692,13 +761,16 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                       `Zadania przypisane do ${getProjectMembers(project).find(m => m.id === taskFilter)?.name || "Nieznany użytkownik"}`}
                 </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <QuickAddTaskCommand
-                  projectId={projectId}
-                  onTaskCreated={refreshActiveView}
-                  onOptimisticCreate={handleOptimisticCreate}
-                  onOptimisticRollback={handleOptimisticRollback}
-                />
+              {/* Phones: quick add takes the free width; the full "add" form is the + in the header. */}
+              <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+                <div className="min-w-0 basis-full sm:w-56 sm:basis-auto">
+                  <QuickAddTaskCommand
+                    projectId={projectId}
+                    onTaskCreated={refreshActiveView}
+                    onOptimisticCreate={handleOptimisticCreate}
+                    onOptimisticRollback={handleOptimisticRollback}
+                  />
+                </div>
                 <TaskBoardFilters
                   currentUserId={session?.user?.id}
                   selectedFilter={taskFilter}
@@ -709,7 +781,7 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                   projectId={projectId}
                   onTaskCreated={refreshActiveView}
                 />
-                <Button onClick={handleCreateTask} size="sm">
+                <Button onClick={handleCreateTask} size="sm" className="max-sm:hidden">
                   <Plus />
                   Dodaj zadanie
                 </Button>
@@ -736,11 +808,11 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                 </Button>
               </div>
             ) : (
-              <div className="space-y-2">
+              <ul className="space-y-2">
                 {getFilteredTasks(tasks).map((task) => (
-                  <div
+                  <li
                     key={task.id}
-                    className={`border rounded-lg bg-card p-3.5 hover:bg-accent/40 cursor-pointer transition-colors border-l-[3px] hover-card-border-animate ${deletingTaskIds.has(task.id) ? ' task-deleting' : ''}`}
+                    className={`border rounded-lg bg-card p-3.5 hover:bg-accent/40 cursor-pointer transition-colors border-l-[3px] hover-card-border-animate has-[[data-card-title]:focus-visible]:ring-2 has-[[data-card-title]:focus-visible]:ring-ring/60 pointer-coarse:active:bg-accent/60 ${deletingTaskIds.has(task.id) ? ' task-deleting' : ''}`}
                     style={{
                       borderLeftColor: project.color || '#3B82F6',
                       '--hover-border-color': project.color || '#3B82F6',
@@ -748,9 +820,14 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                     onClick={() => !deletingTaskIds.has(task.id) && handleTaskDetails(task)}
                   >
                     <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <h4 className="text-sm font-medium">{task.title}</h4>
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <h3 className="min-w-0 text-sm font-medium break-words">
+                            {/* Keyboard / screen-reader entry; pointer taps land on the whole row. */}
+                            <button type="button" data-card-title className="pointer-events-none text-left outline-none">
+                              {task.title}
+                            </button>
+                          </h3>
 
                           {task.priority && (
                             <Badge className={getPriorityColor(task.priority)} variant="outline">
@@ -759,28 +836,28 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                           )}
                         </div>
                         {task.description && (
-                          <SafeHtml className="text-[13px] text-muted-foreground mb-2 line-clamp-2" html={task.description} />
+                          <SafeHtml className="text-[13px] text-muted-foreground mb-2 line-clamp-2 break-words" html={task.description} />
                         )}
-                        <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
                           {task.assignee && (
-                            <div className="flex items-center space-x-1">
+                            <div className="flex min-w-0 items-center gap-1">
                               <Avatar className="h-4 w-4">
                                 <AvatarImage src={task.assignee.avatarUrl ?? undefined} />
                                 <AvatarFallback className="text-xs">
                                   {task.assignee.name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
                                 </AvatarFallback>
                               </Avatar>
-                              <span>{task.assignee.name}</span>
+                              <span className="truncate">{task.assignee.name}</span>
                             </div>
                           )}
                           {task.dueDate && (
-                            <div className="flex items-center space-x-1">
+                            <div className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
                               <span>Termin {formatTaskDueDateWithRelative(task.dueDate)}</span>
                             </div>
                           )}
                           {task.subtasks.length > 0 && (
-                            <div className="flex items-center space-x-1">
+                            <div className="flex items-center gap-1">
                               <CheckCircle className="h-3 w-3" />
                               <span>{task.subtasks.filter((st: { isCompleted: boolean }) => st.isCompleted).length}/{task.subtasks.length} podzadań</span>
                             </div>
@@ -788,9 +865,9 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             )}
           </div>
         </div>
@@ -827,32 +904,30 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
             }}
           />
         ) : (
-          <div>
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <>
+            <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 sm:gap-3">
+              {/* Phones show this in the header's "more" menu to save a row. */}
               <p
-                className="flex h-8 items-center gap-1.5 rounded-md border bg-card/80 px-2.5 text-xs text-muted-foreground backdrop-blur-sm"
+                className="flex h-8 items-center gap-1.5 rounded-md border bg-card/80 px-2.5 text-xs text-muted-foreground backdrop-blur-sm max-sm:hidden"
                 title="Przeciągnij zadania między kolumnami, aby zaktualizować ich status"
               >
                 <Send className="h-3.5 w-3.5" />
                 Ostatnia wysyłka na Slack:{" "}
-                <span className="font-medium text-foreground">
-                  {lastSlackSendAt
-                    ? new Date(lastSlackSendAt).toLocaleString("pl-PL")
-                    : "brak"}
-                </span>
+                <span className="font-medium text-foreground">{lastSlackSendLabel}</span>
               </p>
-              <div className="flex min-w-0 flex justify-end items-center gap-2">
+              <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:flex-none">
                 <CreateTaskFromCommitDialog
                   projectId={projectId}
                   onTaskCreated={refreshActiveView}
                 />
-                <QuickAddTaskCommand
-                  projectId={projectId}
-                  onTaskCreated={refreshActiveView}
-                  onOptimisticCreate={handleOptimisticCreate}
-                  onOptimisticRollback={handleOptimisticRollback}
-                />
-
+                <div className="min-w-0 flex-1 sm:w-64 sm:flex-none">
+                  <QuickAddTaskCommand
+                    projectId={projectId}
+                    onTaskCreated={refreshActiveView}
+                    onOptimisticCreate={handleOptimisticCreate}
+                    onOptimisticRollback={handleOptimisticRollback}
+                  />
+                </div>
               </div>
             </div>
             {boardLoaded && boardTotal === 0 ? (
@@ -878,23 +953,25 @@ export function ProjectDetailsContent({ projectId }: ProjectDetailsContentProps)
                 </CardContent>
               </Card>
             ) : (
-              <KanbanBoard
-                projectId={projectId}
-                tasks={transformTasksForKanban(boardTasks)}
-                taskStatuses={taskStatuses}
-                columnTotals={columnTotals}
-                columnHasMore={columnHasMore}
-                onLoadMore={loadMoreColumn}
-                showArchived={showArchived}
-                onTaskUpdated={handleTaskUpdated}
-                onTaskEdit={handleEditTask}
-                onTimeTracking={handleTimeTracking}
-                onTaskDelete={handleDeleteTask}
-                canEditTask={canEditTask}
-                onCreateTask={handleCreateTask}
-              />
+              <div className="min-h-0 flex-1">
+                <KanbanBoard
+                  projectId={projectId}
+                  tasks={transformTasksForKanban(boardTasks)}
+                  taskStatuses={taskStatuses}
+                  columnTotals={columnTotals}
+                  columnHasMore={columnHasMore}
+                  onLoadMore={loadMoreColumn}
+                  showArchived={showArchived}
+                  onTaskUpdated={handleTaskUpdated}
+                  onTaskEdit={handleEditTask}
+                  onTimeTracking={handleTimeTracking}
+                  onTaskDelete={handleDeleteTask}
+                  canEditTask={canEditTask}
+                  onCreateTask={handleCreateTask}
+                />
+              </div>
             )}
-          </div>
+          </>
         )}
 
 

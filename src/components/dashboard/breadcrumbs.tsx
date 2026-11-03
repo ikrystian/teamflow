@@ -127,28 +127,31 @@ export function DashboardBreadcrumbs() {
         case 'new':
           label = 'Nowe zadanie'
           break
-        default:
-          // Check if it's a dynamic segment (UUID-like)
-          if (segment.length > 10) {
-            // Try to find the name for this ID
-            const project = projects.find(p => p.id === segment)
+        default: {
+          const previousSegment = segments[i - 1]
+
+          // Project URLs carry a human-readable slug (older links: the id),
+          // which can be short, so resolve it before the id heuristics below.
+          if (previousSegment === 'projects') {
+            const project = projects.find(p => p.slug === segment || p.id === segment)
             if (project) {
               label = project.name
               break
             }
-
-            // Check if we have a cached name for this project
             if (missingProjects[segment]) {
               label = missingProjects[segment]
               break
             }
+            // The API looks projects up by id only; a slug missing from the
+            // list (e.g. an archived project) can't be fetched by name.
+            const looksLikeId = /^[a-z0-9]{20,}$/.test(segment)
+            if (looksLikeId) fetchMissingProject(segment)
+            label = projectsLoading || looksLikeId ? 'Ładowanie projektu...' : 'Projekt'
+            break
+          }
 
-            // If it's a project segment and we don't have the name, try to fetch it
-            const previousSegment = segments[i - 1]
-            if (previousSegment === 'projects') {
-              fetchMissingProject(segment)
-            }
-
+          // Check if it's a dynamic segment (UUID-like)
+          if (segment.length > 10) {
             const user = users.find(u => u.id === segment)
             if (user) {
               label = user.name
@@ -156,18 +159,10 @@ export function DashboardBreadcrumbs() {
             }
 
             // If no match found, check if data is still loading
-            if (projectsLoading || dataLoading) {
-              label = 'Ładowanie...'
-            } else {
-              // For project segments, show a more user-friendly label while fetching
-              if (previousSegment === 'projects') {
-                label = missingProjects[segment] || 'Ładowanie projektu...'
-              } else {
-                label = 'Szczegóły'
-              }
-            }
+            label = projectsLoading || dataLoading ? 'Ładowanie...' : 'Szczegóły'
           }
           break
+        }
       }
 
       breadcrumbs.push({

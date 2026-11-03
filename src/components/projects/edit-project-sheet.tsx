@@ -123,7 +123,7 @@ export function EditProjectSheet({
 
   return (
     <Sheet open={open} onOpenChange={handleClose}>
-      <SheetContent className="w-[500px] sm:max-w-[500px] overflow-hidden flex flex-col">
+      <SheetContent className="w-full sm:w-[500px] sm:max-w-[500px] overflow-hidden flex flex-col">
         <SheetHeader className="pb-4 border-b">
           <SheetTitle className="text-left">Edytuj projekt</SheetTitle>
           <SheetDescription className="text-left">

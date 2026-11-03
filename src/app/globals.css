@@ -411,12 +411,30 @@ body {
     border-color 0.18s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-.hover-card-border-animate:hover {
-  transform: translateY(-1px);
-  border-top-color: color-mix(in oklch, var(--hover-border-color, var(--primary)) 45%, var(--border)) !important;
-  border-right-color: color-mix(in oklch, var(--hover-border-color, var(--primary)) 45%, var(--border)) !important;
-  border-bottom-color: color-mix(in oklch, var(--hover-border-color, var(--primary)) 45%, var(--border)) !important;
-  box-shadow: 0 4px 14px -6px color-mix(in oklch, var(--hover-border-color, var(--primary)) 35%, transparent);
+/* Only on real hover: touch screens would keep the last tapped card "lifted". */
+@media (hover: hover) {
+  .hover-card-border-animate:hover {
+    transform: translateY(-1px);
+    border-top-color: color-mix(in oklch, var(--hover-border-color, var(--primary)) 45%, var(--border)) !important;
+    border-right-color: color-mix(in oklch, var(--hover-border-color, var(--primary)) 45%, var(--border)) !important;
+    border-bottom-color: color-mix(in oklch, var(--hover-border-color, var(--primary)) 45%, var(--border)) !important;
+    box-shadow: 0 4px 14px -6px color-mix(in oklch, var(--hover-border-color, var(--primary)) 35%, transparent);
+  }
+}
+
+/* --- Touch ------------------------------------------------------------------
+   Controls skip double-tap-to-zoom (pinch zoom stays), so repeated taps on
+   arrows and steppers never zoom the page. */
+:where(a, button, input, select, textarea, label, summary, [role="button"], [role="tab"], [role="radio"]) {
+  touch-action: manipulation;
+}
+
+/* iOS zooms into any focused field under 16px; the rich-text editor uses a
+   smaller prose size, so lift it on touch screens instead of blocking zoom. */
+@media (pointer: coarse) {
+  .ProseMirror {
+    font-size: 1rem;
+  }
 }
 
 /* Dashboard scroll area: same thin, theme-aware scrollbar as the kanban strip */
@@ -612,8 +630,10 @@ body {
     transition: --glass-spot-strength 0.6s var(--glass-ease);
   }
 
-  [data-slot="card"]:hover {
-    --glass-spot-strength: 1;
+  @media (hover: hover) {
+    [data-slot="card"]:hover {
+      --glass-spot-strength: 1;
+    }
   }
 
   /* Display type: Fraunces with its soft, slightly wonky italic for accents */
