@@ -17,8 +17,11 @@ import {
   Edit,
   Eye,
   ListChecks,
-  Clock
+  Clock,
+  Copy,
+  Check,
 } from "lucide-react"
+import { toast } from "sonner"
 import Link from "next/link"
 import { FileUpload } from "@/components/ui/file-upload"
 import { ProjectAccessCard } from "./project-access-card"
@@ -113,7 +116,19 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
   const [isEditingReadme, setIsEditingReadme] = useState(false)
   const [readmeContent, setReadmeContent] = useState("")
   const [readmeLoading, setReadmeLoading] = useState(false)
+  const [copiedId, setCopiedId] = useState(false)
   const router = useRouter()
+
+  const copyProjectId = async () => {
+    try {
+      await navigator.clipboard.writeText(projectId)
+      setCopiedId(true)
+      toast.success("Skopiowano ID projektu do schowka")
+      setTimeout(() => setCopiedId(false), 2000)
+    } catch {
+      toast.error("Nie udało się skopiować ID projektu")
+    }
+  }
 
   // Set page header content
   usePageHeader(
@@ -121,7 +136,13 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
       <PageHeader
         backHref={projectPath(project)}
         title={project.name}
-        description="Informacje, dane dostępowe i dokumenty projektu"
+        description={
+          <span className="flex items-center gap-2">
+            <span>Informacje, dane dostępowe i dokumenty projektu</span>
+            <span className="text-muted-foreground/40">•</span>
+            <span className="font-mono text-[11px] text-muted-foreground">ID: {project.id}</span>
+          </span>
+        }
         meta={<Badge variant="outline" className="text-[11px]">{project.status}</Badge>}
       />
     ) : (
@@ -340,6 +361,28 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
               </dd>
             </div>
             <div className="space-y-1">
+              <dt className="text-xs font-medium text-muted-foreground">ID projektu</dt>
+              <dd className="flex items-center gap-1.5 text-sm font-medium">
+                <code className="rounded border bg-muted/60 px-1.5 py-0.5 font-mono text-xs text-foreground select-all">
+                  {project.id}
+                </code>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-6 text-muted-foreground hover:text-foreground"
+                  onClick={copyProjectId}
+                  title="Kopiuj ID projektu"
+                >
+                  {copiedId ? (
+                    <Check className="size-3 text-green-500" />
+                  ) : (
+                    <Copy className="size-3" />
+                  )}
+                  <span className="sr-only">Kopiuj ID projektu</span>
+                </Button>
+              </dd>
+            </div>
+            <div className="space-y-1">
               <dt className="text-xs font-medium text-muted-foreground">Status</dt>
               <dd><Badge variant="secondary">{project.status}</Badge></dd>
             </div>
@@ -369,6 +412,16 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
                 {new Date(project.updatedAt).toLocaleDateString('pl-PL', { year: 'numeric', month: 'long', day: 'numeric' })}
               </dd>
             </div>
+            {project.slug && (
+              <div className="space-y-1">
+                <dt className="text-xs font-medium text-muted-foreground">Slug</dt>
+                <dd className="text-sm font-medium">
+                  <code className="rounded border bg-muted/60 px-1.5 py-0.5 font-mono text-xs text-foreground select-all">
+                    {project.slug}
+                  </code>
+                </dd>
+              </div>
+            )}
             <div className="space-y-1.5 sm:col-span-2 lg:col-span-4">
               <dt className="flex items-center justify-between text-xs font-medium text-muted-foreground">
                 <span>Postęp zadań</span>

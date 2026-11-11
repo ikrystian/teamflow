@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Key, Save, Eye, EyeOff, X, Plus, Edit, Trash2, Share2, Copy, ExternalLink, Trash, MessageSquare, GitBranch } from "lucide-react"
+import { Key, Save, Eye, EyeOff, X, Plus, Edit, Trash2, Share2, Copy, ExternalLink, Trash, MessageSquare, GitBranch, Info, Check } from "lucide-react"
 import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { usePageHeader } from "@/contexts/header-context"
 import { PageHeader } from "@/components/dashboard/page-header"
@@ -56,8 +56,20 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
   // GitHub integration state
   const [githubRepo, setGithubRepo] = useState("")
   const [savingGithub, setSavingGithub] = useState(false)
+  const [copiedId, setCopiedId] = useState(false)
 
   const router = useRouter()
+
+  const copyProjectId = async () => {
+    try {
+      await navigator.clipboard.writeText(projectId)
+      setCopiedId(true)
+      toast.success("Skopiowano ID projektu do schowka")
+      setTimeout(() => setCopiedId(false), 2000)
+    } catch {
+      toast.error("Nie udało się skopiować ID projektu")
+    }
+  }
 
   // Set page header content
   usePageHeader(
@@ -65,7 +77,13 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
       <PageHeader
         backHref={projectPath(project)}
         title="Ustawienia projektu"
-        description={project.name}
+        description={
+          <span className="flex items-center gap-2">
+            <span>{project.name}</span>
+            <span className="text-muted-foreground/40">•</span>
+            <span className="font-mono text-[11px] text-muted-foreground">ID: {project.id}</span>
+          </span>
+        }
       />
     ) : (
       <PageHeader title="Ładowanie ustawień projektu..." />
@@ -329,7 +347,71 @@ export function ProjectSettingsContent({ projectId }: ProjectSettingsContentProp
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6 p-4 md:p-6" id="settings">
-      {/* Header */}
+      {/* Project Identifiers */}
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            <Info className="h-5 w-5" />
+            <span>Informacje o projekcie</span>
+          </CardTitle>
+          <CardDescription>
+            Identyfikator i podstawowe dane projektu w systemie
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="projectIdInput" className="text-sm font-medium">ID projektu</Label>
+              <div className="flex max-w-md gap-2">
+                <Input
+                  id="projectIdInput"
+                  value={project.id}
+                  readOnly
+                  className="font-mono text-sm bg-muted/50 select-all cursor-default"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={copyProjectId}
+                  className="shrink-0"
+                >
+                  {copiedId ? (
+                    <>
+                      <Check className="h-4 w-4 mr-2 text-green-500" />
+                      Skopiowano
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4 mr-2" />
+                      Kopiuj
+                    </>
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Unikalny identyfikator projektu używany w API, webhookach i integracjach.
+              </p>
+            </div>
+            {project.slug && (
+              <div className="space-y-2">
+                <Label htmlFor="projectSlugInput" className="text-sm font-medium">Slug projektu</Label>
+                <div className="max-w-md">
+                  <Input
+                    id="projectSlugInput"
+                    value={project.slug}
+                    readOnly
+                    className="font-mono text-sm bg-muted/50 select-all cursor-default"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Identyfikator używany w adresie URL strony projektu.
+                </p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Project Members */}
       {session?.user?.id && (
