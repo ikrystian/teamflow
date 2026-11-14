@@ -1,5 +1,14 @@
 import { z } from "zod"
 
+// The image selector yields a data URL for a freshly cropped picture (the API
+// stores it as a file). A project that already has an image carries its link
+// instead: /uploads/projects/... or, in old records, an external URL.
+const projectImageSchema = z
+  .string()
+  .regex(/^(data:image\/|\/|https?:\/\/)/i, "Nieprawidłowy obraz projektu")
+  .optional()
+  .nullable()
+
 // Create project validation schema
 export const createProjectSchema = z.object({
   name: z
@@ -16,11 +25,7 @@ export const createProjectSchema = z.object({
     .string()
     .regex(/^#[0-9A-F]{6}$/i, "Nieprawidłowy format koloru")
     .optional(),
-  imageUrl: z
-    .string()
-    .url("Nieprawidłowy URL obrazu")
-    .optional()
-    .nullable(),
+  imageUrl: projectImageSchema,
   icon: z
     .string()
     .optional()
@@ -47,11 +52,7 @@ export const editProjectSchema = z.object({
     .string()
     .regex(/^#[0-9A-F]{6}$/i, "Nieprawidłowy format koloru")
     .optional(),
-  imageUrl: z
-    .string()
-    .url("Nieprawidłowy URL obrazu")
-    .optional()
-    .nullable(),
+  imageUrl: projectImageSchema,
   icon: z
     .string()
     .optional()

@@ -8,6 +8,13 @@ import { existsSync } from "fs"
 import type { AppSession as Session } from "@/lib/auth/types"
 import { isAssignableClient, withClientRef } from "@/lib/crm/directory"
 import { uploadsFilePath } from "@/lib/uploads"
+import {
+  INVALID_PROJECT_IMAGE_MESSAGE,
+  decodeInlineImage,
+  deleteProjectImage,
+  isInlineImage,
+  saveProjectImage,
+} from "@/lib/project-image"
 
 // Helper function to safely delete files and directories
 async function deleteFilesSafely(paths: string[]) {
@@ -265,6 +272,22 @@ export async function PATCH(
       return NextResponse.json({ error: "Nieprawidłowy klient" }, { status: 400 })
     }
 
+    // imageUrl: null removes the image; a base64 data URL (what the form sends
+    // for a freshly cropped picture) replaces it and is stored as a file, so
+    // only its link is saved. Any other value — typically the form echoing
+    // back the current link — leaves the image as it is: a client can never
+    // point the project at a file it did not upload.
+    let newImageUrl: string | null | undefined // undefined = keep the current image
+    if (imageUrl === null || imageUrl === "") {
+      newImageUrl = null
+    } else if (isInlineImage(imageUrl)) {
+      const image = decodeInlineImage(imageUrl)
+      if (!image) {
+        return NextResponse.json({ error: INVALID_PROJECT_IMAGE_MESSAGE }, { status: 400 })
+      }
+      newImageUrl = await saveProjectImage(image)
+    }
+
     const project = await prisma.project.update({
       where: {
         id: projectId
@@ -275,7 +298,7 @@ export async function PATCH(
         ...(readme !== undefined && { readme }),
         ...(status && { status }),
         ...(archived !== undefined && { archived }),
-        ...(imageUrl !== undefined && { imageUrl }),
+        ...(newImageUrl !== undefined && { imageUrl: newImageUrl }),
         ...(color && { color }),
         ...(icon !== undefined && { icon }),
         ...(repositoryUrl !== undefined && { repositoryUrl }),
@@ -309,7 +332,16 @@ export async function PATCH(
           }
         }
       }
+    }).catch(async (error) => {
+      // Do not leave the just-written file behind when the update failed.
+      await deleteProjectImage(newImageUrl)
+      throw error
     })
+
+    // Replaced or removed — the previous file is no longer referenced.
+    if (newImageUrl !== undefined) {
+      await deleteProjectImage(existingProject.imageUrl)
+    }
 
     return NextResponse.json({ project: await withClientRef(project) })
   } catch (error) {

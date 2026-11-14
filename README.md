@@ -37,6 +37,7 @@ Mailpit SMTP `1027` / podgląd poczty http://localhost:8028.
 | `npm run db:pg:migrate` | migracje PostgreSQL (właściciel schematu z `POSTGRES_MIGRATION_URL`) |
 | `npm run db:pg:generate` | nowa migracja po zmianie `src/lib/db/schema.ts` |
 | `npm run migrate:legacy [-- --purge]` | konta sprzed scalenia → Better Auth, import klientów do CRM |
+| `npm run migrate:project-images [-- --dry-run]` | obrazki projektów zapisane w bazie jako base64 → pliki w `uploads/projects/` (w bazie zostaje link); uruchamiane też przez `db:push` |
 | `npm run db:pg:seed` | dane demonstracyjne modułu klientów (tryb `saas` lub świeża instalacja) |
 | `npm run lint` · `typecheck` · `test` · `build` | jakość, testy jednostkowe, build (`npm run ci` — wszystko) |
 | `npm run test:e2e` | Playwright — kryteria akceptacji modułu klientów i test scalenia |
