@@ -17,6 +17,10 @@ const schema = z.object({
   BETTER_AUTH_SECRET: z.string().min(32, "BETTER_AUTH_SECRET (lub NEXTAUTH_SECRET) musi mieć min. 32 znaki"),
   CRON_SECRET: z.preprocess(emptyToUndefined, z.string().min(16).optional()),
   CAPTCHA_SECRET: z.string().min(16),
+  /** Klucz AES-256 (32 bajty, base64) do szyfrowania plików .env projektów; domyślnie wyprowadzany z BETTER_AUTH_SECRET. */
+  ENV_ENCRYPTION_KEY: z
+    .string()
+    .refine((v) => Buffer.from(v, "base64").length === 32, "ENV_ENCRYPTION_KEY musi być 32 bajtami zakodowanymi w base64 (openssl rand -base64 32)"),
   POSTGRES_URL: z.string().min(1, "Brak POSTGRES_URL (baza modułu klientów i sejfu)"),
   POSTGRES_SSL: z.enum(["disable", "require"]).default("disable"),
   REDIS_URL: z.preprocess(emptyToUndefined, z.string().optional()),
@@ -52,6 +56,8 @@ function fromLegacy(source: NodeJS.ProcessEnv): Record<string, string | undefine
     APP_URL: source.APP_URL || source.NEXTAUTH_URL || undefined,
     // Sekret CAPTCHA wyprowadzany z sekretu uwierzytelniania, gdy nie podano osobnego.
     CAPTCHA_SECRET: source.CAPTCHA_SECRET || (authSecret ? createHmac("sha256", authSecret).update("nexus:captcha").digest("base64url") : undefined),
+    // Klucz plików .env projektów — tak samo wyprowadzany z sekretu uwierzytelniania, gdy nie podano osobnego.
+    ENV_ENCRYPTION_KEY: source.ENV_ENCRYPTION_KEY || (authSecret ? createHmac("sha256", authSecret).update("nexus:project-env").digest("base64") : undefined),
     EMAIL_FROM: source.EMAIL_FROM || smtpFrom,
   };
 }

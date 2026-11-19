@@ -78,6 +78,7 @@ model Project {
   chatRooms      ChatRoom[]
   createdBy      User              @relation("ProjectCreator", fields: [createdById], references: [id])
   documents      ProjectDocument[]
+  envFiles       ProjectEnvFile[]
   members        ProjectMember[]
   tasks          Task[]
 }
@@ -305,6 +306,27 @@ model GithubWebhookLog {
   statusCode   Int      @default(200)
   processedAt  DateTime @default(now())
   ipAddress    String?
+}
+
+
+// Treść plików .env projektu. `ciphertext` to AES-256-GCM (src/lib/project-env/crypto.ts),
+// jawny tekst nigdy nie trafia do bazy.
+model ProjectEnvFile {
+  id          String   @id @default(cuid()) @map("_id")
+  projectId   String
+  // Nazwa pliku, np. ".env.production" — unikalna w obrębie projektu.
+  name        String
+  ciphertext  String
+  // Liczba zmiennych, liczona przy zapisie, żeby lista nie wymagała odszyfrowania.
+  varCount    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String
+  updatedById String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, name])
+  @@index([projectId])
 }
 
 

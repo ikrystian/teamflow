@@ -53,6 +53,7 @@ src/lib/identity.ts          most kont: PostgreSQL (Better Auth) ↔ profil proj
 src/lib/crm/…                klienci CRM w module projektów (katalog, projekty klienta)
 src/lib/crypto, lib/vault    kryptografia i magazyn sejfu w przeglądarce (testy na wektorach RFC)
 src/lib/dal, server/actions  warstwa danych modułu klientów (server-only, RLS, dziennik, step-up)
+src/lib/project-env/…        pliki .env projektów: AES-256-GCM po stronie serwera (klucz `ENV_ENCRYPTION_KEY`), kolekcja `ProjectEnvFile` w MongoDB
 src/proxy.ts                 CSP z nonce, nagłówki bezpieczeństwa, przekierowanie niezalogowanych
 ```
 

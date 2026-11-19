@@ -25,6 +25,7 @@ import { toast } from "sonner"
 import Link from "next/link"
 import { FileUpload } from "@/components/ui/file-upload"
 import { ProjectAccessCard } from "./project-access-card"
+import { ProjectEnvCard } from "./project-env-card"
 import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { SafeHtml } from "@/components/ui/safe-html"
 import { projectPath } from "@/lib/project-slug"
@@ -457,6 +458,9 @@ export function ProjectInfoContent({ projectId }: ProjectInfoContentProps) {
         legacyRaw={project.credentials}
         onLegacyCleared={() => setProject((prev) => (prev ? { ...prev, credentials: undefined } : prev))}
       />
+
+      {/* Pliki .env — szyfrowane na serwerze, dostępne dla twórcy, członków i adminów */}
+      <ProjectEnvCard projectId={projectId} />
 
       {/* Project README */}
       <Card>
