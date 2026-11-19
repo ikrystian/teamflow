@@ -1,8 +1,10 @@
+import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { DashboardLayout, type CrmShellInfo } from "@/components/dashboard/layout"
 import { TimeTrackerWidget } from "@/components/time-tracker-widget"
 import { listReminders } from "@/lib/dal/activity"
 import { listAccessRequests } from "@/lib/dal/requests"
+import { NOTES_PANEL_COOKIE } from "@/lib/notes/panel"
 import { currentPath, getAuthState, optionalWorkspace } from "@/lib/dal/session"
 import { auditScope } from "@/lib/permissions"
 import { isManagerRole } from "@/lib/roles"
@@ -33,9 +35,11 @@ export default async function Layout({ children }: { children: React.ReactNode }
     }
   }
 
+  const notesDefaultOpen = (await cookies()).get(NOTES_PANEL_COOKIE)?.value === "1"
+
   return (
     <>
-      <DashboardLayout crm={crm}>{children}</DashboardLayout>
+      <DashboardLayout crm={crm} notesDefaultOpen={notesDefaultOpen}>{children}</DashboardLayout>
       <TimeTrackerWidget />
     </>
   )

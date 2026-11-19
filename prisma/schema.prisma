@@ -29,6 +29,8 @@ model User {
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
   role                String               @default("user")
+  // Data publikacji najnowszego wpisu changelogu, który użytkownik już widział (popup „Co nowego”).
+  changelogSeenAt     DateTime?
   createdChatRooms    ChatRoom[]           @relation("ChatRoomCreator")
   comments            Comment[]
   sentMessages        Message[]            @relation("MessageSender")
@@ -340,4 +342,50 @@ model ProjectMember {
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, userId])
+}
+
+// Wpisy changelogu („Co nowego”) dodawane przez administratora w ustawieniach.
+// Opublikowane wpisy pokazują się użytkownikom raz, w popupie na dashboardzie.
+model ChangelogEntry {
+  id          String    @id @default(cuid()) @map("_id")
+  title       String
+  /// HTML z edytora TipTap (sanityzowany przy wyświetlaniu).
+  content     String
+  /// null = szkic.
+  publishedAt DateTime?
+  createdById String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([publishedAt])
+}
+
+// Prywatne notatki użytkownika z prawego panelu panelu sterowania. Widzi je wyłącznie
+// właściciel (`userId` = `user.id` z Better Auth). Bez relacji Prisma: własność i spójność
+// `groupId` pilnują trasy /api/notes i /api/note-groups (zawsze filtr po `userId`).
+model NoteGroup {
+  id        String   @id @default(cuid()) @map("_id")
+  userId    String
+  name      String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Note {
+  id        String   @id @default(cuid()) @map("_id")
+  userId    String
+  // null = „Bez grupy”
+  groupId   String?
+  title     String   @default("")
+  // HTML z edytora Tiptap.
+  content   String   @default("")
+  // Czysty tekst do podglądu na liście, liczony przy zapisie (src/lib/notes/text.ts).
+  excerpt   String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, groupId])
 }

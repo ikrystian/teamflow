@@ -124,6 +124,9 @@ export function DashboardBreadcrumbs() {
         case 'github-webhook':
           label = 'GitHub Webhooks'
           break
+        case 'changelog':
+          label = 'Changelog'
+          break
         case 'new':
           label = 'Nowe zadanie'
           break

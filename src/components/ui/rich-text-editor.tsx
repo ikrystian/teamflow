@@ -13,7 +13,10 @@ import {
   Quote,
   Undo,
   Redo,
-  ImageIcon
+  ImageIcon,
+  Heading2,
+  Heading3,
+  Link as LinkIcon
 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 
@@ -25,6 +28,8 @@ interface RichTextEditorProps {
   showToolbarOnFocus?: boolean
   /** When false the editor is read-only (no toolbar, content not editable). */
   editable?: boolean
+  /** Adds heading (H2/H3) and link buttons to the toolbar — for longer, structured texts. */
+  extended?: boolean
 }
 
 export function RichTextEditor({
@@ -33,13 +38,15 @@ export function RichTextEditor({
   placeholder = "Enter description...",
   onImageUpload,
   showToolbarOnFocus = false,
-  editable = true
+  editable = true,
+  extended = false
 }: RichTextEditorProps) {
   const [toolbarVisible, setToolbarVisible] = useState(false)
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      // In the extended editor links are edited, so a click must place the cursor, not navigate.
+      extended ? StarterKit.configure({ link: { openOnClick: false } }) : StarterKit,
       Image.configure({
         HTMLAttributes: {
           class: 'max-w-full h-auto rounded-lg',
@@ -89,6 +96,19 @@ export function RichTextEditor({
     input.click()
   }, [editor, onImageUpload])
 
+  const editLink = useCallback(() => {
+    if (!editor) return
+    const previous = editor.getAttributes('link').href as string | undefined
+    const url = window.prompt('Adres linku (puste usuwa link)', previous ?? 'https://')
+    if (url === null) return
+    const chain = editor.chain().focus().extendMarkRange('link')
+    if (url.trim() === '' || url.trim() === 'https://') {
+      chain.unsetLink().run()
+    } else {
+      chain.setLink({ href: url.trim() }).run()
+    }
+  }, [editor])
+
   if (!editor) {
     return null
   }
@@ -96,6 +116,33 @@ export function RichTextEditor({
   return (
     <div className="border rounded-md">
       <div className={`border-b p-2 flex flex-wrap gap-1 toolbar ${!editable || (showToolbarOnFocus && !toolbarVisible) ? 'hidden' : ''}`}>
+        {extended && (
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              aria-label="Nagłówek"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+              className={editor.isActive('heading', { level: 2 }) ? 'bg-muted' : ''}
+            >
+              <Heading2 className="h-4 w-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              aria-label="Podtytuł"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+              className={editor.isActive('heading', { level: 3 }) ? 'bg-muted' : ''}
+            >
+              <Heading3 className="h-4 w-4" />
+            </Button>
+            <div className="w-px h-6 bg-border mx-1" />
+          </>
+        )}
         <Button
           type="button"
           variant="ghost"
@@ -146,6 +193,19 @@ export function RichTextEditor({
         >
           <Quote className="h-4 w-4" />
         </Button>
+        {extended && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            aria-label="Link"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={editLink}
+            className={editor.isActive('link') ? 'bg-muted' : ''}
+          >
+            <LinkIcon className="h-4 w-4" />
+          </Button>
+        )}
         <div className="w-px h-6 bg-border mx-1" />
         <Button
           type="button"

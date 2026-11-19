@@ -50,6 +50,7 @@ export default async function SettingsLayout({ children }: { children: React.Rea
             items: [
               { href: "/dashboard/settings/smtp", label: "SMTP", icon: "mail" as const },
               { href: "/dashboard/settings/users", label: "Użytkownicy", icon: "users" as const },
+              { href: "/dashboard/settings/changelog", label: "Changelog", icon: "sparkles" as const },
             ],
           },
         ]

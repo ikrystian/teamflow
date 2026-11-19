@@ -54,6 +54,8 @@ import { GlassAtmosphere } from "@/components/layout/glass-atmosphere"
 import { NotificationsBell } from "@/components/layout/notifications-bell"
 import { ShortcutsDialog } from "@/components/layout/shortcuts-dialog"
 import { VaultSession } from "@/components/layout/vault-gate"
+import { NotesPanel, NotesToggleButton } from "@/components/notes/notes-panel"
+import { NotesPanelProvider } from "@/components/notes/notes-panel-provider"
 import { StepUpDialog } from "@/components/vault/step-up-dialog"
 import { HeaderProvider, useHeader } from "@/contexts/header-context"
 import { useProjects } from "@/contexts/projects-context"
@@ -73,6 +75,8 @@ export type CrmShellInfo = {
 interface DashboardLayoutProps {
   children: React.ReactNode
   crm: CrmShellInfo | null
+  /** Stan prawego panelu notatek z ciasteczka — panel nie miga po przeładowaniu. */
+  notesDefaultOpen?: boolean
 }
 
 const primaryNavigation = [
@@ -274,6 +278,7 @@ function DashboardLayoutInner({ children, crm }: DashboardLayoutProps) {
           <div className="min-w-0 flex-1">
             <DashboardBreadcrumbs />
           </div>
+          <NotesToggleButton />
           <Button
             variant="outline"
             size="sm"
@@ -308,6 +313,7 @@ function DashboardLayoutInner({ children, crm }: DashboardLayoutProps) {
           {children}
         </div>
       </SidebarInset>
+      <NotesPanel />
 
       <EditProjectSheet
         open={editDialogOpen}
@@ -326,10 +332,12 @@ function DashboardLayoutInner({ children, crm }: DashboardLayoutProps) {
   )
 }
 
-export function DashboardLayout({ children, crm }: DashboardLayoutProps) {
+export function DashboardLayout({ children, crm, notesDefaultOpen = false }: DashboardLayoutProps) {
   return (
     <HeaderProvider>
-      <DashboardLayoutInner crm={crm}>{children}</DashboardLayoutInner>
+      <NotesPanelProvider defaultOpen={notesDefaultOpen}>
+        <DashboardLayoutInner crm={crm}>{children}</DashboardLayoutInner>
+      </NotesPanelProvider>
     </HeaderProvider>
   )
 }

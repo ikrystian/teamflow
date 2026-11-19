@@ -391,4 +391,7 @@ export async function anonymizeProfile(userId: string) {
   });
   await prisma.pushSubscription.deleteMany({ where: { userId } });
   await prisma.projectMember.deleteMany({ where: { userId } });
+  // Prywatne notatki z panelu notatek to dane osobowe — znikają razem z kontem.
+  await prisma.note.deleteMany({ where: { userId } });
+  await prisma.noteGroup.deleteMany({ where: { userId } });
 }

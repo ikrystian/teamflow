@@ -325,3 +325,23 @@ export const clientEventSchema = z.object({
   credentialId: uuid.optional(),
   metadata: z.record(z.string(), z.union([z.string().max(200), z.number(), z.boolean()])).optional(),
 });
+
+// --- Changelog („Co nowego”) -----------------------------------------------------
+
+const changelogTitle = z.string().trim().min(1, "Podaj tytuł wpisu").max(200, "Tytuł może mieć najwyżej 200 znaków");
+/** HTML z edytora TipTap; sanityzowany przy wyświetlaniu (SafeHtml). */
+const changelogContent = z.string().max(200_000, "Treść wpisu jest za długa");
+
+export const changelogCreateSchema = z.object({
+  title: changelogTitle,
+  content: changelogContent,
+  publish: z.boolean().optional(),
+});
+
+export const changelogUpdateSchema = z.object({
+  title: changelogTitle.optional(),
+  content: changelogContent.optional(),
+  published: z.boolean().optional(),
+});
+
+export const changelogSeenSchema = z.object({ entryId: z.string().min(1).max(64) });

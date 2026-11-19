@@ -254,6 +254,74 @@ body {
   height: 0;
 }
 
+/* Rich text from the TipTap editor (changelog „Co nowego”, in the editor and the popup).
+   Tailwind's preflight strips heading sizes and list markers, and the typography plugin
+   is not loaded, so the structure the editor produces is styled here. */
+.rich-text h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 1.25em 0 0.5em;
+}
+
+.rich-text h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 1em 0 0.4em;
+}
+
+.rich-text :is(h2, h3):first-child {
+  margin-top: 0;
+}
+
+.rich-text p {
+  margin: 0.5em 0;
+}
+
+.rich-text ul,
+.rich-text ol {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.rich-text ul {
+  list-style: disc;
+}
+
+.rich-text ol {
+  list-style: decimal;
+}
+
+.rich-text li > p {
+  margin: 0.15em 0;
+}
+
+.rich-text a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.rich-text strong {
+  font-weight: 600;
+}
+
+.rich-text blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1em;
+  margin: 1em 0;
+  font-style: italic;
+  color: var(--muted-foreground);
+}
+
+.rich-text img {
+  max-width: 100%;
+  height: auto;
+  margin: 0.75em 0;
+  border-radius: calc(var(--radius) - 2px);
+}
+
 .flex-row-reverse+.flex-row-reverse {
   margin-top: 0rem;
 }

@@ -1,11 +1,11 @@
 "use client";
 
-import { Bell, Building2, Database, KeyRound, ListChecks, Mail, Palette, Shield, Tag, User, Users, UsersRound, Vault } from "lucide-react";
+import { Bell, Building2, Database, KeyRound, ListChecks, Mail, Palette, Shield, Sparkles, Tag, User, Users, UsersRound, Vault } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-const ICONS = { user: User, shield: Shield, vault: Vault, bell: Bell, key: KeyRound, palette: Palette, list: ListChecks, tag: Tag, team: UsersRound, building: Building2, database: Database, mail: Mail, users: Users };
+const ICONS = { user: User, shield: Shield, vault: Vault, bell: Bell, key: KeyRound, palette: Palette, list: ListChecks, tag: Tag, team: UsersRound, building: Building2, database: Database, mail: Mail, users: Users, sparkles: Sparkles };
 
 export type SettingsNavGroup = { label: string; items: { href: string; label: string; icon: keyof typeof ICONS }[] };
 
